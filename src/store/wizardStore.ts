@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { WizardState, UserMode, FinancialGoal } from '../types';
+import type { WizardState, UserMode, FinancialGoal, SavingsBreakdown } from '../types';
 import { DEFAULTS } from '../engine/defaults';
 
 export function createInitialState(): WizardState {
@@ -29,6 +29,7 @@ export function createInitialState(): WizardState {
       targetPrice: DEFAULTS.property.targetPrice,
       ownershipCosts: DEFAULTS.property.ownershipCosts,
       mortgageRate: DEFAULTS.property.mortgageRate,
+      fixationYears: DEFAULTS.property.fixationYears,
       loanTermYears: DEFAULTS.property.loanTermYears,
     },
   };
@@ -42,6 +43,8 @@ export type WizardAction =
   | { type: 'UPDATE_INCOME'; field: string; value: number }
   | { type: 'UPDATE_EXPENSES'; field: string; value: number }
   | { type: 'UPDATE_SAVINGS'; field: string; value: number }
+  | { type: 'UPDATE_SAVINGS_BREAKDOWN'; field: keyof SavingsBreakdown; value: number }
+  | { type: 'UPDATE_DEBT_PRINCIPAL'; value: number }
   | { type: 'SET_GOALS'; goals: FinancialGoal[] }
   | { type: 'UPDATE_PROPERTY'; field: string; value: number }
   | { type: 'SET_NUMBER_OF_CHILDREN'; count: number }
@@ -100,6 +103,16 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       return { ...state, expenses: { ...state.expenses, [action.field]: action.value } };
     case 'UPDATE_SAVINGS':
       return { ...state, savings: { ...state.savings, [action.field]: action.value } };
+    case 'UPDATE_SAVINGS_BREAKDOWN': {
+      const prev: SavingsBreakdown = state.savings.breakdown
+        ?? { current: 0, savingsAccount: 0, investments: 0 };
+      const breakdown: SavingsBreakdown = { ...prev, [action.field]: action.value };
+      // Když je rozpad vyplněn, celkové úspory se drží jako jeho součet.
+      const totalSavings = breakdown.current + breakdown.savingsAccount + breakdown.investments;
+      return { ...state, savings: { ...state.savings, breakdown, totalSavings } };
+    }
+    case 'UPDATE_DEBT_PRINCIPAL':
+      return { ...state, existingDebtPrincipal: action.value };
     case 'SET_GOALS':
       return { ...state, goals: action.goals };
     case 'UPDATE_PROPERTY':

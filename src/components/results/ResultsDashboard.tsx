@@ -12,6 +12,7 @@ import RetirementPlanner from './RetirementPlanner';
 import CustomGoalPlanner from './CustomGoalPlanner';
 import ChildCostPlanner from './ChildCostPlanner';
 import AllocationSummary from './AllocationSummary';
+import EducationalGlossary from './EducationalGlossary';
 import { evaluateScenario } from '../../engine/scenarios';
 import { monthlyDisposable } from '../../engine/cashflow';
 import { calculateDefaultAllocations } from '../../engine/allocation';
@@ -137,6 +138,9 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
             onChangeAllocation={handleChangeAllocation}
           />
         )}
+
+        {/* Educational glossary — always shown */}
+        <EducationalGlossary />
       </div>
 
       <Disclaimer />

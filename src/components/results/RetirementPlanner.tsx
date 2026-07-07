@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import type { WizardState } from '../../types';
 import { monthlyDisposable } from '../../engine/cashflow';
-import { retirementProjection } from '../../engine/savings';
+import { retirementProjection, fourPercentTarget, yearOfReachingTarget } from '../../engine/savings';
 import { DEFAULTS } from '../../engine/defaults';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
 
 const INFLATION = DEFAULTS.averageCzInflation;
@@ -24,11 +24,15 @@ export default function RetirementPlanner({ state }: Props) {
   const disposable = monthlyDisposable(state);
   const [monthlyAmount, setMonthlyAmount] = useState(Math.max(0, Math.round(disposable * 0.3)));
   const [yearsToRetirement, setYearsToRetirement] = useState(30);
+  const [monthlyRent, setMonthlyRent] = useState(30000);
   const [rates, setRates] = useState(() =>
     Object.fromEntries(instruments.map((i) => [i.key, i.rate]))
   );
   const [showInflation, setShowInflation] = useState(false);
   const [showInflationInfo, setShowInflationInfo] = useState(false);
+  const [showRentInfo, setShowRentInfo] = useState(false);
+
+  const targetPortfolio = fourPercentTarget(monthlyRent);
 
   const nominalProjections = instruments.map((inst) => ({
     ...inst,
@@ -105,6 +109,50 @@ export default function RetirementPlanner({ state }: Props) {
         </div>
       </div>
 
+      {/* 4% rule / renta target */}
+      <div className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+              Požadovaná měsíční renta
+              <button
+                onClick={() => setShowRentInfo(!showRentInfo)}
+                className="ml-1 text-emerald-600 hover:text-emerald-800 text-sm"
+                aria-label="Informace o 4% pravidle"
+              >ⓘ</button>
+            </label>
+            <div className="relative">
+              <input
+                type="number"
+                value={monthlyRent}
+                onChange={(e) => setMonthlyRent(Math.max(0, Number(e.target.value)))}
+                className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kč</span>
+            </div>
+          </div>
+          <div className="flex-1 sm:text-right">
+            <p className="text-sm text-gray-500 dark:text-gray-400">Potřebná hodnota portfolia</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+              {targetPortfolio === Infinity ? '—' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}
+            </p>
+          </div>
+        </div>
+        {showRentInfo && (
+          <div className="mt-3 text-sm text-emerald-800 dark:text-emerald-300 space-y-2">
+            <p className="font-semibold">Co je „pravidlo 4 %"?</p>
+            <p>
+              Podle pravidla 4 % můžete každý rok bezpečně vybrat zhruba 4 % hodnoty svého portfolia, aniž byste ho vyčerpali.
+              Pro rentu {monthlyRent.toLocaleString('cs-CZ')} Kč měsíčně (tj. {(monthlyRent * 12).toLocaleString('cs-CZ')} Kč ročně)
+              tak potřebujete portfolio o hodnotě přibližně <strong>{targetPortfolio === Infinity ? '—' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}</strong> (renta × 300).
+            </p>
+            <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80">
+              Jde o zjednodušený orientační výpočet. Skutečná bezpečná míra výběru závisí na délce renty, složení portfolia a vývoji trhů.
+            </p>
+          </div>
+        )}
+      </div>
+
       {/* Inflation toggle */}
       <div className="flex items-center gap-3 mb-4">
         <label className="flex items-center gap-2 cursor-pointer">
@@ -141,6 +189,14 @@ export default function RetirementPlanner({ state }: Props) {
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
+          {targetPortfolio !== Infinity && targetPortfolio > 0 && (
+            <ReferenceLine
+              y={targetPortfolio}
+              stroke="#059669"
+              strokeDasharray="6 4"
+              label={{ value: 'Cíl renty', position: 'insideTopRight', fill: '#059669', fontSize: 12 }}
+            />
+          )}
           <XAxis dataKey="year" label={{ value: 'Roky', position: 'insideBottom', offset: -5 }} />
           <YAxis tickFormatter={fmt} />
           <Tooltip
@@ -205,12 +261,16 @@ export default function RetirementPlanner({ state }: Props) {
                 <th className="text-right py-2 text-gray-500 dark:text-gray-400">
                   {showInflation ? 'Reálný zisk' : 'Složené úroky'}
                 </th>
+                <th className="text-right py-2 text-gray-500 dark:text-gray-400">Cíl renty</th>
               </tr>
             </thead>
             <tbody>
               {tableProjections.map((p) => {
                 const finalValue = p.data[p.data.length - 1]?.portfolioValue ?? 0;
                 const compoundInterest = finalValue - totalContributions;
+                const reachedYear = targetPortfolio !== Infinity
+                  ? yearOfReachingTarget(p.data, targetPortfolio)
+                  : null;
                 return (
                   <tr key={p.key} className="border-b border-gray-100 dark:border-gray-700/50">
                     <td className="py-2 text-gray-900 dark:text-white">
@@ -233,6 +293,13 @@ export default function RetirementPlanner({ state }: Props) {
                     <td className={`text-right py-2 font-semibold ${compoundInterest >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {compoundInterest >= 0 ? '+' : ''}{compoundInterest.toLocaleString('cs-CZ')} Kč
                     </td>
+                    <td className="text-right py-2">
+                      {reachedYear !== null ? (
+                        <span className="text-green-600 font-medium">za {reachedYear} {reachedYear === 1 ? 'rok' : reachedYear < 5 ? 'roky' : 'let'}</span>
+                      ) : (
+                        <span className="text-gray-400 dark:text-gray-500">nedosaženo</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
@@ -242,7 +309,7 @@ export default function RetirementPlanner({ state }: Props) {
                 <td colSpan={2} className="py-2 text-gray-600 dark:text-gray-400 text-sm">
                   Celkové vklady: {totalContributions.toLocaleString('cs-CZ')} Kč
                 </td>
-                <td colSpan={2} />
+                <td colSpan={3} />
               </tr>
             </tfoot>
           </table>

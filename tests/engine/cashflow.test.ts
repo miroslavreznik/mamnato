@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable, savingsRate } from '../../src/engine/cashflow';
+import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable, savingsRate, necessaryMonthlyExpenses, discretionaryMonthlyExpenses, emergencyRunwayMonths } from '../../src/engine/cashflow';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -74,5 +74,35 @@ describe('savingsRate', () => {
   it('returns 0 when income is 0', () => {
     const state = makeState({ income: { person1NetMonthly: 0 } });
     expect(savingsRate(state)).toBe(0);
+  });
+});
+
+describe('necessary vs discretionary expenses', () => {
+  it('treats only "other" as discretionary', () => {
+    const state = makeState(); // total 29000, other 3000
+    expect(discretionaryMonthlyExpenses(state)).toBe(3000);
+    expect(necessaryMonthlyExpenses(state)).toBe(26000);
+  });
+
+  it('necessary + discretionary equals total', () => {
+    const state = makeState();
+    expect(necessaryMonthlyExpenses(state) + discretionaryMonthlyExpenses(state))
+      .toBe(totalMonthlyExpenses(state));
+  });
+});
+
+describe('emergencyRunwayMonths', () => {
+  it('divides savings by necessary monthly expenses', () => {
+    const state = makeState({ savings: { totalSavings: 260000 } });
+    // necessary = 26000 → runway = 10
+    expect(emergencyRunwayMonths(state)).toBeCloseTo(10, 5);
+  });
+
+  it('returns Infinity when there are no necessary expenses', () => {
+    const state = makeState({
+      expenses: { rent: 0, existingLoans: 0, insurance: 0, food: 0, transport: 0, children: 0, utilities: 0, other: 3000 },
+      savings: { totalSavings: 100000 },
+    });
+    expect(emergencyRunwayMonths(state)).toBe(Infinity);
   });
 });

@@ -118,6 +118,20 @@ export default function Step6Property() {
         </select>
       </div>
 
+      <div className="mb-4">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Doba fixace úrokové sazby</label>
+        <select
+          value={state.property.fixationYears ?? DEFAULTS.property.fixationYears}
+          onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'fixationYears', value: parseInt(e.target.value) })}
+          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          {[1, 3, 5, 7, 10].map((y) => (
+            <option key={y} value={y}>{y} {y === 1 ? 'rok' : y < 5 ? 'roky' : 'let'}</option>
+          ))}
+        </select>
+        <p className="mt-1 text-xs text-gray-400">Po dobu fixace máte garantovanou úrokovou sazbu. Po jejím konci se sazba přepočítá dle aktuálních podmínek.</p>
+      </div>
+
       <div className="mt-4 space-y-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
         <div className="flex justify-between">
           <span className="text-gray-600 dark:text-gray-300">Doporučená akontace (20 %):</span>

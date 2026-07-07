@@ -42,7 +42,7 @@ export default function DtiDstiIndicator({ state }: Props) {
           <div className="flex items-center gap-2 mb-1">
             <span className={`w-3 h-3 rounded-full ${dotClasses[dtiColor]}`} />
             <span className="font-semibold">DTI</span>
-            <Tooltip text="DTI říká, kolikrát váš roční příjem pokryje celkový dluh. Limit ČNB je 8,5×." />
+            <Tooltip text="DTI říká, kolikrát váš roční příjem pokryje celkový dluh (nová hypotéka i zůstatek stávajících úvěrů). Limit ČNB je 8,5×." />
           </div>
           <div className="text-2xl font-bold">{dtiVal === Infinity ? '∞' : dtiVal.toFixed(1)}×</div>
           <div className="text-xs mt-1">Limit ČNB: {DEFAULTS.dtiLimit}×</div>

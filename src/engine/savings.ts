@@ -166,6 +166,22 @@ export function investmentComparison(
   return result;
 }
 
+// Cílová hodnota portfolia pro požadovanou měsíční rentu dle pravidla bezpečného výběru.
+// Při 4 % ročně: portfolio × 0,04 = roční renta → portfolio = měsíční renta × 12 / 0,04 (= × 300).
+export function fourPercentTarget(monthlyIncome: number, withdrawalRate: number = 0.04): number {
+  if (withdrawalRate <= 0) return Infinity;
+  return (monthlyIncome * 12) / withdrawalRate;
+}
+
+// První rok, kdy hodnota portfolia dosáhne cílové částky; null pokud v horizontu nedosaženo.
+export function yearOfReachingTarget(
+  projection: RetirementProjectionPoint[],
+  target: number
+): number | null {
+  const point = projection.find((p) => p.portfolioValue >= target);
+  return point ? point.year : null;
+}
+
 export function retirementProjection(
   monthlyContribution: number,
   years: number,

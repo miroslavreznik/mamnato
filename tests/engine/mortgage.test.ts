@@ -86,6 +86,16 @@ describe('dti', () => {
     const state = makeState({ income: { person1NetMonthly: 0 } });
     expect(dti(state)).toBe(Infinity);
   });
+
+  it('includes existing debt principal in total debt', () => {
+    const state = makeState({ existingDebtPrincipal: 200000 });
+    // total debt = 5000000 + 200000 = 5200000; annual = 432000
+    expect(dti(state)).toBeCloseTo(5200000 / 432000, 2);
+  });
+
+  it('is unchanged when existing debt principal is absent', () => {
+    expect(dti(makeState())).toBeCloseTo(dti(makeState({ existingDebtPrincipal: 0 })), 5);
+  });
 });
 
 describe('dsti', () => {

@@ -1,5 +1,5 @@
 import { useWizard } from '../../../store/wizardStore';
-import { totalMonthlyIncome, totalMonthlyExpenses } from '../../../engine/cashflow';
+import { totalMonthlyIncome, totalMonthlyExpenses, necessaryMonthlyExpenses, discretionaryMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
 import Alert from '../../ui/Alert';
 import StepNavigation from '../StepNavigation';
@@ -12,7 +12,7 @@ const categories: { field: string; label: string; tooltip: string; step: number;
   { field: 'food', label: 'Jídlo a potraviny', tooltip: 'Nákupy potravin, obědy v práci, restaurace.', step: 500 },
   { field: 'transport', label: 'Doprava', tooltip: 'Pohonné hmoty, MHD, údržba auta, pojistka vozidla.', step: 500 },
   { field: 'children', label: 'Výdaje na děti', tooltip: 'Školka, kroužky, oblečení, kapesné, jídlo pro děti.', step: 500, familyOnly: true },
-  { field: 'other', label: 'Ostatní výdaje', tooltip: 'Oblečení, zábava, sport, dovolená, předplatné služeb.', step: 500 },
+  { field: 'other', label: 'Zbytné výdaje (zábava, dovolená, koníčky, předplatné)', tooltip: 'Výdaje, které lze při výpadku příjmů omezit: zábava, sport, dovolená, restaurace nad rámec běžné stravy, předplatné služeb. Slouží k výpočtu doporučené rezervy a odolnosti rozpočtu.', step: 500 },
 ];
 
 export default function Step3Expenses() {
@@ -20,9 +20,13 @@ export default function Step3Expenses() {
   const isFamily = state.mode === 'family';
   const income = totalMonthlyIncome(state);
   const expenses = totalMonthlyExpenses(state);
+  const necessary = necessaryMonthlyExpenses(state);
+  const discretionary = discretionaryMonthlyExpenses(state);
   const ratio = income > 0 ? expenses / income : 0;
 
   const visibleCategories = categories.filter((c) => !c.familyOnly || isFamily);
+
+  const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
   return (
     <div>
@@ -40,11 +44,27 @@ export default function Step3Expenses() {
         />
       ))}
 
-      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm text-gray-600">
-        Celkem výdaje:{' '}
-        <span className="font-semibold text-gray-900 dark:text-white">
-          {expenses.toLocaleString('cs-CZ')} Kč/měsíc
-        </span>
+      <NumberInput
+        label="Zůstatek stávajících úvěrů (nepovinné)"
+        value={state.existingDebtPrincipal ?? 0}
+        onChange={(v) => dispatch({ type: 'UPDATE_DEBT_PRINCIPAL', value: v })}
+        tooltip="Zbývající jistina k doplacení u stávajících úvěrů (spotřebitelské úvěry, leasingy). Nezadávejte splátku, ale celkový zůstatek dluhu. Slouží k výpočtu ukazatele DTI dle ČNB, který se počítá z celkového dluhu."
+        step={50000}
+      />
+
+      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm text-gray-600 space-y-1">
+        <div className="flex justify-between">
+          <span>Celkem výdaje:</span>
+          <span className="font-semibold text-gray-900 dark:text-white">{fmt(expenses)} Kč/měsíc</span>
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+          <span>z toho nezbytné</span>
+          <span>{fmt(necessary)} Kč</span>
+        </div>
+        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+          <span>z toho zbytné</span>
+          <span>{fmt(discretionary)} Kč</span>
+        </div>
       </div>
 
       {ratio > 1 && (

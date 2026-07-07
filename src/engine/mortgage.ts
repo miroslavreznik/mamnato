@@ -35,10 +35,11 @@ export function monthsToSaveDownPayment(state: WizardState): number {
 }
 
 export function dti(state: WizardState): number {
-  const loanAmount = state.property.targetPrice
-    - effectiveDownPayment(state);
+  const newLoan = state.property.targetPrice - effectiveDownPayment(state);
+  // Limit ČNB se vztahuje na celkový dluh, tedy vč. zůstatku stávajících úvěrů.
+  const totalDebt = newLoan + (state.existingDebtPrincipal ?? 0);
   const annualIncome = totalMonthlyIncome(state) * 12;
-  return annualIncome > 0 ? loanAmount / annualIncome : Infinity;
+  return annualIncome > 0 ? totalDebt / annualIncome : Infinity;
 }
 
 export function dsti(state: WizardState): number {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, allocateGoals } from '../../src/engine/savings';
+import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, allocateGoals, fourPercentTarget, yearOfReachingTarget } from '../../src/engine/savings';
 import type { CustomGoal } from '../../src/types';
 import type { WizardState } from '../../src/types';
 
@@ -181,5 +181,38 @@ describe('allocateGoals', () => {
     expect(orderBA[0].achievable).toBe(true);  // B achievable
     expect(orderBA[1].achievable).toBe(false); // A not achievable
     expect(orderBA[1].monthlyAllocation).toBe(5000); // A gets leftover
+  });
+});
+
+describe('fourPercentTarget', () => {
+  it('returns monthly income times 300 at default 4% rate', () => {
+    expect(fourPercentTarget(30000)).toBe(30000 * 300);
+    expect(fourPercentTarget(30000)).toBe((30000 * 12) / 0.04);
+  });
+
+  it('respects a custom withdrawal rate', () => {
+    expect(fourPercentTarget(30000, 0.05)).toBe((30000 * 12) / 0.05);
+  });
+
+  it('returns Infinity for non-positive withdrawal rate', () => {
+    expect(fourPercentTarget(30000, 0)).toBe(Infinity);
+  });
+});
+
+describe('yearOfReachingTarget', () => {
+  it('returns the first year the portfolio reaches the target', () => {
+    const projection = retirementProjection(10000, 30, 0.07);
+    const target = 1000000;
+    const year = yearOfReachingTarget(projection, target);
+    expect(year).not.toBeNull();
+    expect(projection[year!].portfolioValue).toBeGreaterThanOrEqual(target);
+    if (year! > 0) {
+      expect(projection[year! - 1].portfolioValue).toBeLessThan(target);
+    }
+  });
+
+  it('returns null when the target is not reached within the horizon', () => {
+    const projection = retirementProjection(1000, 5, 0.02);
+    expect(yearOfReachingTarget(projection, 100000000)).toBeNull();
   });
 });

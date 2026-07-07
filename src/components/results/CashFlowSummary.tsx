@@ -1,6 +1,7 @@
 import type { WizardState } from '../../types';
-import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable, savingsRate } from '../../engine/cashflow';
+import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable, savingsRate, necessaryMonthlyExpenses, emergencyRunwayMonths } from '../../engine/cashflow';
 import Alert from '../ui/Alert';
+import Tooltip from '../ui/Tooltip';
 import { useState } from 'react';
 
 interface Props {
@@ -15,17 +16,22 @@ const expenseLabels: Record<string, string> = {
   food: 'Jídlo',
   transport: 'Doprava',
   children: 'Výdaje na děti',
-  other: 'Ostatní',
+  other: 'Zbytné výdaje',
 };
 
 export default function CashFlowSummary({ state }: Props) {
   const [expanded, setExpanded] = useState(false);
   const income = totalMonthlyIncome(state);
   const expenses = totalMonthlyExpenses(state);
+  const necessary = necessaryMonthlyExpenses(state);
   const disposable = monthlyDisposable(state);
   const rate = savingsRate(state);
+  const runway = emergencyRunwayMonths(state);
 
   const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
+
+  const runwayColor = runway >= 6 ? 'text-green-600' : runway >= 3 ? 'text-amber-600' : 'text-red-600';
+  const runwayLabel = runway === Infinity ? '∞' : `${runway.toFixed(1)} měs.`;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -59,6 +65,10 @@ export default function CashFlowSummary({ state }: Props) {
               })}
             </div>
           )}
+          <div className="flex justify-between items-center text-xs text-gray-400 dark:text-gray-500 mt-1">
+            <span>z toho nezbytné</span>
+            <span>{fmt(necessary)} Kč/měs.</span>
+          </div>
         </div>
 
         <div className="border-t dark:border-gray-600 pt-3">
@@ -77,7 +87,26 @@ export default function CashFlowSummary({ state }: Props) {
             <span className="text-gray-400 dark:text-gray-500 ml-1">(doporučeno 10–20 %)</span>
           </span>
         </div>
+
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-gray-500 dark:text-gray-400 flex items-center">
+            Rezerva vydrží
+            <Tooltip text="Jak dlouho by vaše úspory pokryly nezbytné výdaje, kdyby zcela vypadl příjem. Doporučuje se mít rezervu na 3–6 měsíců." />
+          </span>
+          <span className={`font-semibold ${runwayColor}`}>
+            {runwayLabel}
+            <span className="text-gray-400 dark:text-gray-500 ml-1 font-normal">(doporučeno 3–6)</span>
+          </span>
+        </div>
       </div>
+
+      {runway < 3 && state.savings.totalSavings >= 0 && (
+        <div className="mt-4">
+          <Alert type="warning">
+            Vaše rezerva by při výpadku příjmů vydržela méně než 3 měsíce. Než budete řešit velké cíle, je vhodné vytvořit nouzový fond ve výši 3–6 měsíců nezbytných výdajů.
+          </Alert>
+        </div>
+      )}
 
       {disposable < 0 && (
         <div className="mt-4">

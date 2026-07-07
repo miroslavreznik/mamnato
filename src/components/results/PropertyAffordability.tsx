@@ -16,6 +16,7 @@ export default function PropertyAffordability({ state }: Props) {
   const price = state.property.targetPrice;
   const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
   const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
+  const fixationYears = state.property.fixationYears ?? DEFAULTS.property.fixationYears;
   const dp = requiredDownPayment(price);
   const gap = downPaymentGap(state);
   const loanAmount = Math.max(0, price - effectiveDownPayment(state));
@@ -48,6 +49,7 @@ export default function PropertyAffordability({ state }: Props) {
         />
         <Row label="Úroková sazba" value={`${(rate * 100).toFixed(1)} % ročně`} />
         <Row label="Délka hypotéky" value={`${term} let`} />
+        <Row label="Fixace sazby" value={`${fixationYears} ${fixationYears === 1 ? 'rok' : fixationYears < 5 ? 'roky' : 'let'}`} />
 
         {gap > 0 && months !== Infinity && (
           <>
@@ -64,6 +66,12 @@ export default function PropertyAffordability({ state }: Props) {
             <p className="text-red-600 text-sm">Při současných příjmech a výdajích akontaci nelze naspořit.</p>
           </>
         )}
+      </div>
+
+      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+        <span className="font-semibold">Nezapomeňte na refixaci.</span>{' '}
+        Za {fixationYears} {fixationYears === 1 ? 'rok' : fixationYears < 5 ? 'roky' : 'let'} vám končí fixace úrokové sazby.
+        Zhruba rok předem začněte porovnávat nabídky refinancování u jiných bank — po skončení fixace lze hypotéku bez sankce přenést jinam.
       </div>
     </div>
   );

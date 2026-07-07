@@ -30,10 +30,14 @@ export interface WizardState {
     other: number;
   };
 
+  // Zůstatek jistiny stávajících úvěrů — pro výpočet DTI dle ČNB (nezahrnuje novou hypotéku)
+  existingDebtPrincipal?: number;
+
   // Step 4 — Savings
   savings: {
     totalSavings: number;
     downPaymentFromSavings?: number;
+    breakdown?: SavingsBreakdown;
   };
 
   // Step 5 — Goals
@@ -57,4 +61,10 @@ export interface CustomGoal {
   name: string;
   targetAmount: number;
   targetMonths: number;
+}
+
+export interface SavingsBreakdown {
+  current: number; // běžný účet
+  savingsAccount: number; // spořicí účet
+  investments: number; // investice (fondy, ETF, akcie)
 }

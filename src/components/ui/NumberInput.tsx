@@ -13,6 +13,7 @@ interface NumberInputProps {
   showSpinner?: boolean;
   error?: string;
   liveFormat?: boolean; // enable thousand separators while typing (default true for Kč)
+  disabled?: boolean;
 }
 
 function formatWithThousands(digits: string): string {
@@ -36,6 +37,7 @@ export default function NumberInput({
   showSpinner = true,
   error,
   liveFormat,
+  disabled = false,
 }: NumberInputProps) {
   // Default liveFormat: true for Kč, false for %, roky, měsíců, let, dětí
   const shouldLiveFormat = liveFormat ?? !['%', 'let', 'roky', 'měsíců', 'dětí'].includes(suffix);
@@ -179,7 +181,8 @@ export default function NumberInput({
           <button
             type="button"
             onClick={decrement}
-            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold"
+            disabled={disabled}
+            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700"
             aria-label="Snížit"
           >
             −
@@ -194,7 +197,8 @@ export default function NumberInput({
             onChange={handleChange}
             onFocus={handleFocus}
             onBlur={handleBlur}
-            className={`w-full px-3 py-2.5 pr-12 border rounded-lg text-base focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 dark:text-white ${
+            disabled={disabled}
+            className={`w-full px-3 py-2.5 pr-12 border rounded-lg text-base focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed ${
               isInvalid
                 ? 'border-red-400 focus:ring-red-400'
                 : 'border-gray-300 dark:border-gray-600 focus:ring-blue-500 focus:border-blue-500'
@@ -209,7 +213,8 @@ export default function NumberInput({
           <button
             type="button"
             onClick={increment}
-            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold"
+            disabled={disabled}
+            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700"
             aria-label="Zvýšit"
           >
             +
