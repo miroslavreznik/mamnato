@@ -14,9 +14,15 @@ interface Props {
 
 interface Row {
   name: string;
-  goals: number;
   free: number;
   [key: string]: number | string;
+}
+
+interface GoalSegment {
+  key: string;
+  label: string;
+  amount: number;
+  color: string;
 }
 
 function toggle(prev: Set<string>, key: string): Set<string> {
@@ -76,19 +82,46 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
     return { orderedKeys: keys, labelMap: labels, necessaryMap: necessary };
   }, [flowNow, flowAfter]);
 
-  const buildRow = (name: string, expenses: ExpenseCategory[], goalsTotal: number, free: number): Row => {
-    const row: Row = { name, goals: goalsTotal, free: Math.max(0, free) };
+  // Jednotlivé cíle jako samostatné segmenty grafu (místo jedné souhrnné „cíle").
+  // Součet částek odpovídá spoření na cíle z incomeFlow, takže sloupce sedí na příjem.
+  const goalSegments = useMemo<GoalSegment[]>(() => {
+    const palette = colors.goalColors;
+    const segs: GoalSegment[] = [];
+    const nextColor = () => palette[segs.length % palette.length];
+    if (state.goals.includes('retirement') && allocations.retirement > 0) {
+      segs.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement, color: nextColor() });
+    }
+    if (state.goals.includes('child') && allocations.child > 0) {
+      segs.push({ key: 'child', label: 'Rezerva na dítě', amount: allocations.child, color: nextColor() });
+    }
+    if (state.goals.includes('other')) {
+      (state.customGoals ?? []).forEach((g, i) => {
+        const amount = allocations.custom[i] ?? 0;
+        if (amount > 0) segs.push({ key: `custom-${i}`, label: g.name || `Vlastní cíl ${i + 1}`, amount, color: nextColor() });
+      });
+    }
+    return segs;
+  }, [state.goals, state.customGoals, allocations, colors.goalColors]);
+
+  const goalLabelByKey = useMemo(
+    () => Object.fromEntries(goalSegments.map((s) => [s.key, s.label])),
+    [goalSegments]
+  );
+
+  const buildRow = (name: string, expenses: ExpenseCategory[], free: number): Row => {
+    const row: Row = { name, free: Math.max(0, free) };
     for (const c of expenses) {
       row[c.key] = excluded.has(c.key) ? 0 : c.amount;
+    }
+    for (const s of goalSegments) {
+      row[s.key] = s.amount;
     }
     return row;
   };
 
-  const goalsNow = flowNow.goals.reduce((s, g) => s + g.amount, 0);
-  const data: Row[] = [buildRow('Nyní', flowNow.expenses, goalsNow, flowNow.free)];
+  const data: Row[] = [buildRow('Nyní', flowNow.expenses, flowNow.free)];
   if (flowAfter) {
-    const goalsAfter = flowAfter.goals.reduce((s, g) => s + g.amount, 0);
-    data.push(buildRow('Po koupi', flowAfter.expenses, goalsAfter, flowAfter.free));
+    data.push(buildRow('Po koupi', flowAfter.expenses, flowAfter.free));
   }
 
   const freeColor = (v: number) => (v >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400');
@@ -142,14 +175,16 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
             contentStyle={{ background: colors.surface, border: `1px solid ${colors.grid}`, borderRadius: 8, fontSize: 13 }}
             formatter={(value, name) => {
               const n = String(name);
-              const label = n === 'free' ? 'Volná rezerva' : n === 'goals' ? 'Spoření na cíle' : labelMap[n] ?? n;
+              const label = n === 'free' ? 'Volná rezerva' : goalLabelByKey[n] ?? labelMap[n] ?? n;
               return [fmtKc(Number(value)), label];
             }}
           />
           {orderedKeys.map((key) => (
             <Bar key={key} dataKey={key} stackId="a" fill={colors.categorical[key] ?? colors.primary} stroke={colors.surface} strokeWidth={2} radius={2} />
           ))}
-          <Bar dataKey="goals" stackId="a" fill={colors.categorical.goals} stroke={colors.surface} strokeWidth={2} radius={2} />
+          {goalSegments.map((s) => (
+            <Bar key={s.key} dataKey={s.key} stackId="a" fill={s.color} stroke={colors.surface} strokeWidth={2} radius={2} />
+          ))}
           <Bar dataKey="free" stackId="a" fill={colors.categorical.surplus} stroke={colors.surface} strokeWidth={2} radius={[2, 4, 4, 2]} />
         </BarChart>
       </ResponsiveContainer>
@@ -180,10 +215,12 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
               </button>
             );
           })}
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400">
-            <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.categorical.goals }} />
-            Spoření na cíle
-          </span>
+          {goalSegments.map((s) => (
+            <span key={s.key} className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400">
+              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
+              {s.label}
+            </span>
+          ))}
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400">
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.categorical.surplus }} />
             Volná rezerva

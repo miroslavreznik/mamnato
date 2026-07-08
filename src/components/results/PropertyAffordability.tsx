@@ -32,7 +32,7 @@ export default function PropertyAffordability({ state }: Props) {
       <div className="space-y-3 text-sm">
         <Row label="Cena nemovitosti" value={`${fmt(price)} Kč`} />
         <Row label="Potřebná akontace (20 %)" value={`${fmt(dp)} Kč`} />
-        <Row label="Akontace z úspor" value={`${fmt(effectiveDownPayment(state))} Kč`} />
+        <Row label="Pokryto z vlastních úspor" value={`${fmt(effectiveDownPayment(state))} Kč`} />
         <Row
           label="Chybějící akontace"
           value={`${fmt(gap)} Kč`}
