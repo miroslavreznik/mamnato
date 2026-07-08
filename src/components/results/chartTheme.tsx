@@ -36,6 +36,8 @@ export interface ChartColors {
   categorical: Record<string, string>;
   // Paleta pro jednotlivé cíle (důchod, dítě, vlastní…) — odlišná od výdajů
   goalColors: string[];
+  // Paleta pro skupiny zbytných výdajů (rozpad „za co utrácíte")
+  discretionaryColors: string[];
 }
 
 const LIGHT: ChartColors = {
@@ -62,6 +64,7 @@ const LIGHT: ChartColors = {
     surplus: '#c9c8c2',
   },
   goalColors: ['#4f46e5', '#0891b2', '#c026d3', '#0d9488', '#7c3aed'],
+  discretionaryColors: ['#e0651b', '#7c3aed', '#0ea5b7', '#db2777'],
 };
 
 const DARK: ChartColors = {
@@ -88,6 +91,7 @@ const DARK: ChartColors = {
     surplus: '#6b7280',
   },
   goalColors: ['#818cf8', '#22d3ee', '#e879f9', '#2dd4bf', '#a78bfa'],
+  discretionaryColors: ['#f97316', '#a78bfa', '#22d3ee', '#f472b6'],
 };
 
 export function useChartColors(): ChartColors {

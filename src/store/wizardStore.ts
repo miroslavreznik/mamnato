@@ -42,6 +42,8 @@ export type WizardAction =
   | { type: 'SET_MODE'; mode: UserMode; numberOfChildren?: number }
   | { type: 'UPDATE_INCOME'; field: string; value: number }
   | { type: 'UPDATE_EXPENSES'; field: string; value: number }
+  | { type: 'UPDATE_DISCRETIONARY_ITEM'; key: string; value: number }
+  | { type: 'CLEAR_DISCRETIONARY_BREAKDOWN' }
   | { type: 'UPDATE_SAVINGS'; field: string; value: number }
   | { type: 'UPDATE_SAVINGS_BREAKDOWN'; field: keyof SavingsBreakdown; value: number }
   | { type: 'UPDATE_DEBT_PRINCIPAL'; value: number }
@@ -101,6 +103,18 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       return { ...state, income: { ...state.income, [action.field]: action.value } };
     case 'UPDATE_EXPENSES':
       return { ...state, expenses: { ...state.expenses, [action.field]: action.value } };
+    case 'UPDATE_DISCRETIONARY_ITEM': {
+      const prev = state.expenses.discretionaryBreakdown ?? {};
+      const discretionaryBreakdown = { ...prev, [action.key]: action.value };
+      // Když je rozpis vyplněn, „other" (zbytné výdaje) se drží jako jeho součet.
+      const other = Object.values(discretionaryBreakdown).reduce((s, v) => s + v, 0);
+      return { ...state, expenses: { ...state.expenses, discretionaryBreakdown, other } };
+    }
+    case 'CLEAR_DISCRETIONARY_BREAKDOWN': {
+      const { discretionaryBreakdown: _drop, ...expenses } = state.expenses;
+      void _drop;
+      return { ...state, expenses };
+    }
     case 'UPDATE_SAVINGS':
       return { ...state, savings: { ...state.savings, [action.field]: action.value } };
     case 'UPDATE_SAVINGS_BREAKDOWN': {

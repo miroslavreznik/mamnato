@@ -22,6 +22,8 @@ export default function Step6Property() {
   const recommendedReserve = totalMonthlyExpenses(state) * 3;
   const lowReserve = reserve < recommendedReserve && reserve < totalSavings;
 
+  const hasOther = state.goals.includes('other');
+
   const setDownPayment = (v: number) => {
     const clamped = Math.max(0, Math.min(v, totalSavings));
     dispatch({ type: 'UPDATE_SAVINGS', field: 'downPaymentFromSavings', value: clamped });
@@ -146,8 +148,8 @@ export default function Step6Property() {
       <StepNavigation
         showBack={true}
         onBack={() => dispatch({ type: 'PREV_STEP' })}
-        onNext={() => dispatch({ type: 'NEXT_STEP' })}
-        nextLabel="Zobrazit výsledky"
+        onNext={() => dispatch({ type: 'GO_TO_STEP', step: hasOther ? 7 : 8 })}
+        nextLabel={hasOther ? 'Další' : 'Zobrazit výsledky'}
         nextDisabled={price < 500000}
       />
     </div>

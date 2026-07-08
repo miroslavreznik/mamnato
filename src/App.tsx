@@ -31,7 +31,8 @@ function App() {
   const handleEdit = () => {
     const state = loadState();
     const hasProperty = state?.goals.includes('property');
-    setReturnToStep(hasProperty ? 6 : 5);
+    const hasOther = state?.goals.includes('other');
+    setReturnToStep(hasProperty ? 6 : hasOther ? 7 : 5);
     setView('wizard');
   };
 
