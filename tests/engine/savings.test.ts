@@ -46,9 +46,14 @@ describe('cashFlowAfterPurchase', () => {
     expect(data[0].currentCashFlow).toBe(500000);
   });
 
-  it('afterPurchaseCashFlow starts at 0', () => {
-    const data = cashFlowAfterPurchase(makeState(), 1);
-    expect(data[0].afterPurchaseCashFlow).toBeCloseTo(0);
+  it('afterPurchaseCashFlow starts at leftover savings after down payment', () => {
+    // With a partial down payment, both lines share the same baseline (current savings)
+    const state = makeState({ savings: { totalSavings: 800000, downPaymentFromSavings: 500000 } });
+    const data = cashFlowAfterPurchase(state, 1);
+    // current starts at total savings
+    expect(data[0].currentCashFlow).toBe(800000);
+    // after purchase starts at savings minus down payment = 300000
+    expect(data[0].afterPurchaseCashFlow).toBe(300000);
   });
 });
 

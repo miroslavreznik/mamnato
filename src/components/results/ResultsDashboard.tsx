@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import CashFlowSummary from './CashFlowSummary';
+import ExpenseBreakdownChart from './ExpenseBreakdownChart';
 import SavingsChart from './SavingsChart';
 import PropertyAffordability from './PropertyAffordability';
 import DtiDstiIndicator from './DtiDstiIndicator';
@@ -94,6 +95,9 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
       <div className="space-y-6">
         {/* Always show cash flow summary */}
         <CashFlowSummary state={state} />
+
+        {/* Where does the money go — interactive breakdown */}
+        <ExpenseBreakdownChart state={state} />
 
         {hasNoGoals && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">

@@ -3,12 +3,14 @@ import type { WizardState } from '../../types';
 import { investmentComparison } from '../../engine/savings';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
+import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 
 interface Props {
   state: WizardState;
 }
 
 export default function InvestmentComparisonChart({ state }: Props) {
+  const colors = useChartColors();
   const [propertyRate, setPropertyRate] = useState(3);
   const [sp500Rate, setSp500Rate] = useState(7);
   const [rentGrowth, setRentGrowth] = useState(3);
@@ -21,21 +23,18 @@ export default function InvestmentComparisonChart({ state }: Props) {
     30
   );
 
-  const fmt = (n: number) => {
-    if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} M`;
-    if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)} tis`;
-    return `${n}`;
-  };
-
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Koupě vs. nájem + investice</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Koupě vs. nájem: vývoj čistého jmění</h3>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        Jak roste vaše čisté jmění, když koupíte nemovitost, versus když zůstanete v nájmu a rozdíl investujete. Nájem bez investic je pro srovnání jako čistý náklad.
+      </p>
 
       <ResponsiveContainer width="100%" height={350}>
-        <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="year" label={{ value: 'Roky', position: 'insideBottom', offset: -5 }} />
-          <YAxis tickFormatter={fmt} />
+        <LineChart data={data} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
+          <CartesianGrid {...gridProps(colors)} />
+          <XAxis dataKey="year" {...axisProps(colors)} label={{ value: 'Roky', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
+          <YAxis tickFormatter={fmtKcShort} {...axisProps(colors)} />
           <Tooltip
             content={
               <SortedTooltip
@@ -61,9 +60,9 @@ export default function InvestmentComparisonChart({ state }: Props) {
               return labels[value] ?? value;
             }}
           />
-          <Line type="monotone" dataKey="propertyNetWorth" stroke="#10b981" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="sp500NetWorth" stroke="#3b82f6" strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="rentingCost" stroke="#ef4444" strokeWidth={2} dot={false} strokeDasharray="5 5" />
+          <Line type="monotone" dataKey="propertyNetWorth" stroke={colors.positive} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="sp500NetWorth" stroke={colors.primary} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="rentingCost" stroke={colors.negative} strokeWidth={2} dot={false} strokeDasharray="5 5" />
         </LineChart>
       </ResponsiveContainer>
 

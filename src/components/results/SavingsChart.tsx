@@ -3,14 +3,16 @@ import type { WizardState } from '../../types';
 import { savingsProjection } from '../../engine/savings';
 import { requiredDownPayment, downPaymentGap, effectiveDownPayment } from '../../engine/mortgage';
 import { monthlyDisposable } from '../../engine/cashflow';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import Alert from '../ui/Alert';
+import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 
 interface Props {
   state: WizardState;
 }
 
 export default function SavingsChart({ state }: Props) {
+  const colors = useChartColors();
   const disposable = monthlyDisposable(state);
   const gap = downPaymentGap(state);
   const [showChart, setShowChart] = useState(gap > 0);
@@ -27,7 +29,6 @@ export default function SavingsChart({ state }: Props) {
   const downPayment = requiredDownPayment(state.property.targetPrice);
   const savings = effectiveDownPayment(state);
   const reserve = savings - downPayment;
-  const fmt = (n: number) => `${(n / 1000000).toFixed(1)} M`;
 
   // Down payment already covered — show confirmation
   if (gap <= 0 && !showChart) {
@@ -82,22 +83,29 @@ export default function SavingsChart({ state }: Props) {
       )}
 
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="year" label={{ value: 'Roky', position: 'insideBottom', offset: -5 }} />
-          <YAxis tickFormatter={fmt} />
+        <AreaChart data={chartData} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
+          <defs>
+            <linearGradient id="savings-grad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={colors.primary} stopOpacity={0.3} />
+              <stop offset="100%" stopColor={colors.primary} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid {...gridProps(colors)} />
+          <XAxis dataKey="year" {...axisProps(colors)} label={{ value: 'Roky', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
+          <YAxis tickFormatter={fmtKcShort} {...axisProps(colors)} />
           <Tooltip
             formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč`, 'Úspory']}
             labelFormatter={(label) => `Rok ${label}`}
+            contentStyle={{ background: colors.surface, border: `1px solid ${colors.grid}`, borderRadius: 8, fontSize: 13 }}
           />
           <ReferenceLine
             y={downPayment}
-            stroke="#ef4444"
+            stroke={colors.negative}
             strokeDasharray="5 5"
-            label={{ value: `Akontace: ${Math.round(downPayment).toLocaleString('cs-CZ')} Kč`, position: 'right', fill: '#ef4444', fontSize: 12 }}
+            label={{ value: `Akontace: ${Math.round(downPayment).toLocaleString('cs-CZ')} Kč`, position: 'insideTopRight', fill: colors.negative, fontSize: 12 }}
           />
-          <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={2} dot={false} />
-        </LineChart>
+          <Area type="monotone" dataKey="savings" stroke={colors.primary} strokeWidth={2} fill="url(#savings-grad)" dot={false} />
+        </AreaChart>
       </ResponsiveContainer>
 
       {gap <= 0 && (

@@ -5,15 +5,16 @@ import { retirementProjection, fourPercentTarget, yearOfReachingTarget } from '.
 import { DEFAULTS } from '../../engine/defaults';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
+import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 
 const INFLATION = DEFAULTS.averageCzInflation;
 
-const instruments = [
-  { key: 'sp500', label: 'SP500 / globální akcie', rate: 7, color: '#3b82f6' },
-  { key: 'bonds', label: 'Státní dluhopisy ČR', rate: 4, color: '#10b981' },
-  { key: 'savings', label: 'Spořicí účet', rate: 4.5, color: '#f59e0b' },
-  { key: 'gold', label: 'Zlato', rate: 3, color: '#a855f7' },
-  { key: 'cash', label: 'Hotovost (pod polštářem)', rate: 0, color: '#ef4444' },
+const instrumentDefs = [
+  { key: 'sp500', label: 'SP500 / globální akcie', rate: 7, colorRole: 'primary' as const },
+  { key: 'bonds', label: 'Státní dluhopisy ČR', rate: 4, colorRole: 'positive' as const },
+  { key: 'savings', label: 'Spořicí účet', rate: 4.5, colorRole: 'accent' as const },
+  { key: 'gold', label: 'Zlato', rate: 3, colorRole: 'accent2' as const },
+  { key: 'cash', label: 'Hotovost (pod polštářem)', rate: 0, colorRole: 'negative' as const },
 ];
 
 interface Props {
@@ -21,6 +22,8 @@ interface Props {
 }
 
 export default function RetirementPlanner({ state }: Props) {
+  const colors = useChartColors();
+  const instruments = instrumentDefs.map((i) => ({ ...i, color: colors[i.colorRole] }));
   const disposable = monthlyDisposable(state);
   const [monthlyAmount, setMonthlyAmount] = useState(Math.max(0, Math.round(disposable * 0.3)));
   const [yearsToRetirement, setYearsToRetirement] = useState(30);
@@ -66,11 +69,7 @@ export default function RetirementPlanner({ state }: Props) {
 
   const totalContributions = monthlyAmount * yearsToRetirement * 12;
 
-  const fmt = (n: number) => {
-    if (Math.abs(n) >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} M`;
-    if (Math.abs(n) >= 1_000) return `${(n / 1_000).toFixed(0)} tis`;
-    return `${n}`;
-  };
+  const fmt = fmtKcShort;
 
   // For the table, show real values when inflation is on, nominal otherwise
   const tableProjections = showInflation && realProjections ? realProjections : nominalProjections;
@@ -187,18 +186,18 @@ export default function RetirementPlanner({ state }: Props) {
       )}
 
       <ResponsiveContainer width="100%" height={350}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" />
+        <LineChart data={chartData} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
+          <CartesianGrid {...gridProps(colors)} />
           {targetPortfolio !== Infinity && targetPortfolio > 0 && (
             <ReferenceLine
               y={targetPortfolio}
-              stroke="#059669"
+              stroke={colors.positive}
               strokeDasharray="6 4"
-              label={{ value: 'Cíl renty', position: 'insideTopRight', fill: '#059669', fontSize: 12 }}
+              label={{ value: 'Cíl renty', position: 'insideTopRight', fill: colors.positive, fontSize: 12 }}
             />
           )}
-          <XAxis dataKey="year" label={{ value: 'Roky', position: 'insideBottom', offset: -5 }} />
-          <YAxis tickFormatter={fmt} />
+          <XAxis dataKey="year" {...axisProps(colors)} label={{ value: 'Roky', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
+          <YAxis tickFormatter={fmt} {...axisProps(colors)} />
           <Tooltip
             content={
               <SortedTooltip

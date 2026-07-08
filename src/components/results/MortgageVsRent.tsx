@@ -63,7 +63,7 @@ export default function MortgageVsRent({ state }: Props) {
         </div>
       </div>
 
-      <div className={`text-center p-3 rounded-lg ${diff > 0 ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+      <div className={`text-center p-3 rounded-lg ${diff > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'}`}>
         <span className="font-semibold">
           Vlastnictví je o {fmt(Math.abs(diff))} Kč {diff > 0 ? 'dražší' : 'levnější'} než nájem.
         </span>

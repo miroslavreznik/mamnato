@@ -97,10 +97,16 @@ export function cashFlowAfterPurchase(
     - state.expenses.rent - state.expenses.utilities + mortgage + ownershipCosts;
   const disposableAfter = totalMonthlyIncome(state) - expensesAfter;
 
+  // Obě řady vycházejí ze srovnatelné základny — dnešní výše úspor.
+  // Když nekoupím, úspory dál rostou disponibilní částkou.
+  // Když koupím, utratím akontaci a dál spořím (nižší) disponibilní částkou po koupi.
+  const startSavings = state.savings.totalSavings;
+  const downPayment = effectiveDownPayment(state);
+
   return Array.from({ length: months + 1 }, (_, i) => ({
     month: i,
-    currentCashFlow: currentDisposable * i + effectiveDownPayment(state),
-    afterPurchaseCashFlow: disposableAfter * i,
+    currentCashFlow: startSavings + currentDisposable * i,
+    afterPurchaseCashFlow: (startSavings - downPayment) + disposableAfter * i,
   }));
 }
 

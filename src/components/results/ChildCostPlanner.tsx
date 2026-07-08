@@ -2,13 +2,15 @@ import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import { CHILD_COSTS_CZ } from '../../engine/defaults';
 import { calculateChildCosts } from '../../engine/childCost';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useChartColors, gridProps, axisProps } from './chartTheme';
 
 interface Props {
   state: WizardState;
 }
 
 export default function ChildCostPlanner({ state }: Props) {
+  const colors = useChartColors();
   const isFamily = state.mode === 'family';
   const [numberOfChildren, setNumberOfChildren] = useState(state.numberOfChildren ?? 1);
   const [horizonYears, setHorizonYears] = useState(18);
@@ -140,16 +142,23 @@ export default function ChildCostPlanner({ state }: Props) {
       {/* Chart */}
       {result.yearlyBreakdown.length > 0 && (
         <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={result.yearlyBreakdown}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year" label={{ value: 'Věk dítěte', position: 'insideBottom', offset: -5 }} />
-            <YAxis tickFormatter={(n) => `${(n / 1000).toFixed(0)}k`} />
+          <AreaChart data={result.yearlyBreakdown} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
+            <defs>
+              <linearGradient id="child-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={colors.accent2} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={colors.accent2} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid {...gridProps(colors)} />
+            <XAxis dataKey="year" {...axisProps(colors)} label={{ value: 'Věk dítěte', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
+            <YAxis tickFormatter={(n) => `${(n / 1000).toFixed(0)}k`} {...axisProps(colors)} />
             <Tooltip
               formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč/měs`]}
               labelFormatter={(label) => `Věk: ${label} let`}
+              contentStyle={{ background: colors.surface, border: `1px solid ${colors.grid}`, borderRadius: 8, fontSize: 13 }}
             />
-            <Line type="stepAfter" dataKey="monthlyCost" stroke="#8b5cf6" strokeWidth={2} dot={false} name="Měsíční náklady" />
-          </LineChart>
+            <Area type="stepAfter" dataKey="monthlyCost" stroke={colors.accent2} strokeWidth={2} fill="url(#child-grad)" dot={false} name="Měsíční náklady" />
+          </AreaChart>
         </ResponsiveContainer>
       )}
 

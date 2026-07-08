@@ -1,5 +1,6 @@
 import type { GoalAllocations } from '../../engine/allocation';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useChartColors } from './chartTheme';
 
 interface Props {
   disposable: number;
@@ -9,20 +10,21 @@ interface Props {
 }
 
 export default function AllocationSummary({ disposable, allocations, activeGoals, onChangeAllocation }: Props) {
+  const colors = useChartColors();
   const items: Array<{ key: string; label: string; amount: number; color: string; goalKey: string; index: number | null }> = [];
 
   if (activeGoals.includes('property')) {
-    items.push({ key: 'mortgage', label: 'Hypotéka', amount: allocations.mortgage, color: '#3b82f6', goalKey: 'mortgage', index: null });
+    items.push({ key: 'mortgage', label: 'Hypotéka', amount: allocations.mortgage, color: colors.primary, goalKey: 'mortgage', index: null });
   }
   if (activeGoals.includes('retirement')) {
-    items.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement, color: '#10b981', goalKey: 'retirement', index: null });
+    items.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement, color: colors.positive, goalKey: 'retirement', index: null });
   }
   if (activeGoals.includes('child')) {
-    items.push({ key: 'child', label: 'Dítě (rezerva)', amount: allocations.child, color: '#f59e0b', goalKey: 'child', index: null });
+    items.push({ key: 'child', label: 'Dítě (rezerva)', amount: allocations.child, color: colors.accent, goalKey: 'child', index: null });
   }
   if (activeGoals.includes('other')) {
     allocations.custom.forEach((amount, i) => {
-      items.push({ key: `custom_${i}`, label: `Vlastní cíl ${i + 1}`, amount, color: '#8b5cf6', goalKey: 'custom', index: i });
+      items.push({ key: `custom_${i}`, label: `Vlastní cíl ${i + 1}`, amount, color: colors.accent2, goalKey: 'custom', index: i });
     });
   }
 
@@ -33,7 +35,7 @@ export default function AllocationSummary({ disposable, allocations, activeGoals
   // Pie chart data
   const pieData = [
     ...items.map((i) => ({ name: i.label, value: Math.max(0, i.amount), color: i.color })),
-    ...(reserve > 0 ? [{ name: 'Rezerva', value: reserve, color: '#d1d5db' }] : []),
+    ...(reserve > 0 ? [{ name: 'Rezerva', value: reserve, color: colors.neutral }] : []),
   ].filter((d) => d.value > 0);
 
   return (
@@ -139,10 +141,13 @@ export default function AllocationSummary({ disposable, allocations, activeGoals
                   nameKey="name"
                 >
                   {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
+                    <Cell key={i} fill={entry.color} stroke={colors.surface} strokeWidth={2} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč/měs`]} />
+                <Tooltip
+                  formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč/měs`]}
+                  contentStyle={{ background: colors.surface, border: `1px solid ${colors.grid}`, borderRadius: 8, fontSize: 13 }}
+                />
               </PieChart>
             </ResponsiveContainer>
           </div>

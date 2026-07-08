@@ -11,7 +11,7 @@ export default function Tooltip({ text }: TooltipProps) {
     <span className="relative inline-block ml-1">
       <button
         type="button"
-        className="w-5 h-5 rounded-full bg-gray-200 text-gray-600 text-xs font-bold inline-flex items-center justify-center hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-xs font-bold inline-flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
         onMouseEnter={() => setShow(true)}
         onMouseLeave={() => setShow(false)}
         onFocus={() => setShow(true)}

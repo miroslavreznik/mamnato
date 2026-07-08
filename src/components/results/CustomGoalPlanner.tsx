@@ -3,7 +3,8 @@ import type { WizardState, CustomGoal } from '../../types';
 import { monthlyDisposable } from '../../engine/cashflow';
 import { allocateGoals } from '../../engine/savings';
 import type { GoalAllocation } from '../../engine/savings';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { useChartColors, gridProps, axisProps } from './chartTheme';
 
 interface Props {
   state: WizardState;
@@ -64,6 +65,7 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
 }
 
 export default function CustomGoalPlanner({ state }: Props) {
+  const colors = useChartColors();
   const disposable = monthlyDisposable(state);
   const [goals, setGoals] = useState<CustomGoal[]>(() => {
     if (state.customGoals && state.customGoals.length > 0) {
@@ -301,17 +303,24 @@ export default function CustomGoalPlanner({ state }: Props) {
 
               {!isDeferred && chartMonths > 0 && (
                 <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={Array.from({ length: chartMonths + 1 }, (_, m) => ({ month: m, savings: chartAllocation * m }))}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" label={{ value: 'Měsíce', position: 'insideBottom', offset: -5 }} />
-                    <YAxis tickFormatter={(n) => `${(n / 1000).toFixed(0)}k`} />
+                  <AreaChart data={Array.from({ length: chartMonths + 1 }, (_, m) => ({ month: m, savings: chartAllocation * m }))} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
+                    <defs>
+                      <linearGradient id={`goal-grad-${goal.id}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={colors.primary} stopOpacity={0.3} />
+                        <stop offset="100%" stopColor={colors.primary} stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid {...gridProps(colors)} />
+                    <XAxis dataKey="month" {...axisProps(colors)} label={{ value: 'Měsíce', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
+                    <YAxis tickFormatter={(n) => `${(n / 1000).toFixed(0)}k`} {...axisProps(colors)} />
                     <Tooltip
                       formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč`]}
                       labelFormatter={(label) => `Měsíc ${label}`}
+                      contentStyle={{ background: colors.surface, border: `1px solid ${colors.grid}`, borderRadius: 8, fontSize: 13 }}
                     />
-                    <Line type="monotone" dataKey="savings" stroke="#3b82f6" strokeWidth={2} dot={false} name="Úspory" />
-                    <ReferenceLine y={goal.targetAmount} stroke="#ef4444" strokeDasharray="5 5" label={{ value: 'Cíl', position: 'right' }} />
-                  </LineChart>
+                    <Area type="monotone" dataKey="savings" stroke={colors.primary} strokeWidth={2} fill={`url(#goal-grad-${goal.id})`} dot={false} name="Úspory" />
+                    <ReferenceLine y={goal.targetAmount} stroke={colors.negative} strokeDasharray="5 5" label={{ value: 'Cíl', position: 'insideTopRight', fill: colors.negative, fontSize: 12 }} />
+                  </AreaChart>
                 </ResponsiveContainer>
               )}
             </div>
