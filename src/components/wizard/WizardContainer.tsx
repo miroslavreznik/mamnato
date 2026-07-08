@@ -9,7 +9,7 @@ import Step4Savings from './steps/Step4Savings';
 import Step5Goals from './steps/Step5Goals';
 import Step6Property from './steps/Step6Property';
 
-const TOTAL_STEPS = 7; // 6 wizard steps + step 7 = results
+const STEP_LABELS = ['Režim', 'Příjmy', 'Výdaje', 'Úspory', 'Cíle', 'Nemovitost'];
 
 interface WizardContainerProps {
   onComplete: () => void;
@@ -56,13 +56,23 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
     6: <Step6Property />,
   };
 
+  const hasProperty = state.goals.includes('property');
+  const labels = hasProperty ? STEP_LABELS : STEP_LABELS.slice(0, 5);
+
+  const handleStepClick = (step: number) => {
+    if (state.completedSteps.includes(step) || step === state.currentStep) {
+      dispatch({ type: 'GO_TO_STEP', step });
+    }
+  };
+
   return (
     <WizardContext.Provider value={{ state, dispatch }}>
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-gray-200/70 dark:ring-gray-700/70 border border-transparent p-6 sm:p-8">
         <StepIndicator
           currentStep={state.currentStep}
-          totalSteps={TOTAL_STEPS - 1}
+          labels={labels}
           completedSteps={state.completedSteps}
+          onStepClick={handleStepClick}
         />
         {steps[state.currentStep] ?? null}
       </div>

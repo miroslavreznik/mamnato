@@ -57,13 +57,14 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
         <div className="flex gap-2">
           <button
             onClick={onEdit}
-            className="px-4 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 min-h-[44px]"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"
           >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4v16h16v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z" /></svg>
             Upravit údaje
           </button>
           <button
             onClick={onReset}
-            className="px-4 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 min-h-[44px]"
+            className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/70 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors min-h-[44px]"
           >
             Začít znovu
           </button>
