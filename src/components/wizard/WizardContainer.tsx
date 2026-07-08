@@ -2,14 +2,22 @@ import { useReducer, useEffect, useState } from 'react';
 import { WizardContext, wizardReducer, createInitialState } from '../../store/wizardStore';
 import { saveState, loadState } from '../../store/localStorage';
 import StepIndicator from './StepIndicator';
+import type { StepItem } from './StepIndicator';
 import Step1Mode from './steps/Step1Mode';
 import Step2Income from './steps/Step2Income';
 import Step3Expenses from './steps/Step3Expenses';
 import Step4Savings from './steps/Step4Savings';
 import Step5Goals from './steps/Step5Goals';
 import Step6Property from './steps/Step6Property';
+import Step7CustomGoals from './steps/Step7CustomGoals';
 
-const STEP_LABELS = ['Režim', 'Příjmy', 'Výdaje', 'Úspory', 'Cíle', 'Nemovitost'];
+const BASE_STEPS: StepItem[] = [
+  { step: 1, label: 'Režim' },
+  { step: 2, label: 'Příjmy' },
+  { step: 3, label: 'Výdaje' },
+  { step: 4, label: 'Úspory' },
+  { step: 5, label: 'Cíle' },
+];
 
 interface WizardContainerProps {
   onComplete: () => void;
@@ -40,7 +48,7 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
   }, [state, initialized]);
 
   useEffect(() => {
-    if (state.currentStep > 6) {
+    if (state.currentStep > 7) {
       onComplete();
     }
   }, [state.currentStep, onComplete]);
@@ -54,10 +62,16 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
     4: <Step4Savings />,
     5: <Step5Goals />,
     6: <Step6Property />,
+    7: <Step7CustomGoals />,
   };
 
   const hasProperty = state.goals.includes('property');
-  const labels = hasProperty ? STEP_LABELS : STEP_LABELS.slice(0, 5);
+  const hasOther = state.goals.includes('other');
+  const stepItems: StepItem[] = [
+    ...BASE_STEPS,
+    ...(hasProperty ? [{ step: 6, label: 'Nemovitost' }] : []),
+    ...(hasOther ? [{ step: 7, label: 'Jiné cíle' }] : []),
+  ];
 
   const handleStepClick = (step: number) => {
     if (state.completedSteps.includes(step) || step === state.currentStep) {
@@ -70,7 +84,7 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-gray-200/70 dark:ring-gray-700/70 border border-transparent p-6 sm:p-8">
         <StepIndicator
           currentStep={state.currentStep}
-          labels={labels}
+          steps={stepItems}
           completedSteps={state.completedSteps}
           onStepClick={handleStepClick}
         />

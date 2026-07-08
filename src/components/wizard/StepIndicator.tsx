@@ -1,24 +1,32 @@
+export interface StepItem {
+  step: number;
+  label: string;
+}
+
 interface StepIndicatorProps {
   currentStep: number;
-  labels: string[];
+  steps: StepItem[];
   completedSteps: number[];
   onStepClick: (step: number) => void;
 }
 
-export default function StepIndicator({ currentStep, labels, completedSteps, onStepClick }: StepIndicatorProps) {
-  const total = labels.length;
-  const currentLabel = labels[currentStep - 1] ?? '';
+export default function StepIndicator({ currentStep, steps, completedSteps, onStepClick }: StepIndicatorProps) {
+  const total = steps.length;
+  const currentIndex = steps.findIndex((s) => s.step === currentStep);
+  const currentLabel = currentIndex >= 0 ? steps[currentIndex].label : '';
+  const position = currentIndex >= 0 ? currentIndex + 1 : currentStep;
 
   return (
     <nav className="mb-8" aria-label="Kroky průvodce">
       <div className="flex items-baseline justify-between mb-3">
         <span className="text-sm font-semibold text-gray-900 dark:text-white">{currentLabel}</span>
-        <span className="text-xs text-gray-400 dark:text-gray-500">Krok {currentStep} z {total}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500">Krok {position} z {total}</span>
       </div>
 
       <ol className="flex items-start">
-        {labels.map((label, i) => {
-          const step = i + 1;
+        {steps.map((item, i) => {
+          const step = item.step;
+          const label = item.label;
           const isCurrent = step === currentStep;
           const isCompleted = completedSteps.includes(step) && !isCurrent;
           const canJump = completedSteps.includes(step) || isCurrent;
@@ -45,7 +53,7 @@ export default function StepIndicator({ currentStep, labels, completedSteps, onS
                   {isCompleted ? (
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
                   ) : (
-                    step
+                    i + 1
                   )}
                 </Circle>
                 <span className={`hidden sm:block mt-1.5 text-[11px] leading-tight text-center max-w-[76px] ${isCurrent ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500'}`}>

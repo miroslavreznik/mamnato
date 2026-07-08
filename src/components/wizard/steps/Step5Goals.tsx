@@ -21,13 +21,16 @@ export default function Step5Goals() {
   };
 
   const hasProperty = state.goals.includes('property');
+  const hasOther = state.goals.includes('other');
 
   const handleNext = () => {
     if (hasProperty) {
-      dispatch({ type: 'NEXT_STEP' });
+      dispatch({ type: 'GO_TO_STEP', step: 6 }); // Nemovitost
+    } else if (hasOther) {
+      dispatch({ type: 'GO_TO_STEP', step: 7 }); // Vlastní cíle
     } else {
-      // Skip Step 6 (property) and go straight to results
-      dispatch({ type: 'GO_TO_STEP', step: 7 });
+      // Žádný krok navíc — rovnou na výsledky
+      dispatch({ type: 'GO_TO_STEP', step: 8 });
     }
   };
 
@@ -61,6 +64,7 @@ export default function Step5Goals() {
         showBack={true}
         onBack={() => dispatch({ type: 'PREV_STEP' })}
         onNext={handleNext}
+        nextLabel={hasProperty || hasOther ? 'Další' : 'Zobrazit výsledky'}
         nextDisabled={state.goals.length === 0}
       />
     </div>
