@@ -3,6 +3,7 @@ import type { WizardState } from '../../types';
 import { investmentComparison } from '../../engine/savings';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
+import NumField from '../ui/NumField';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 
 interface Props {
@@ -69,31 +70,31 @@ export default function InvestmentComparisonChart({ state }: Props) {
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Zhodnocení nemovitosti (% ročně)</label>
-          <input
-            type="number"
+          <NumField
             value={propertyRate}
-            onChange={(e) => setPropertyRate(Number(e.target.value))}
-            min={0} max={15} step={0.5}
+            onChange={setPropertyRate}
+            min={0} max={15}
+            ariaLabel="Zhodnocení nemovitosti (% ročně)"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
           />
         </div>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Výnos SP500 (% ročně)</label>
-          <input
-            type="number"
+          <NumField
             value={sp500Rate}
-            onChange={(e) => setSp500Rate(Number(e.target.value))}
-            min={0} max={20} step={0.5}
+            onChange={setSp500Rate}
+            min={0} max={20}
+            ariaLabel="Výnos SP500 (% ročně)"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
           />
         </div>
         <div>
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Růst nájmu (% ročně)</label>
-          <input
-            type="number"
+          <NumField
             value={rentGrowth}
-            onChange={(e) => setRentGrowth(Number(e.target.value))}
-            min={0} max={15} step={0.5}
+            onChange={setRentGrowth}
+            min={0} max={15}
+            ariaLabel="Růst nájmu (% ročně)"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
           />
         </div>

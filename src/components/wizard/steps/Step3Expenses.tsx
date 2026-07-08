@@ -3,6 +3,7 @@ import { useWizard } from '../../../store/wizardStore';
 import { totalMonthlyIncome, totalMonthlyExpenses, necessaryMonthlyExpenses, discretionaryMonthlyExpenses } from '../../../engine/cashflow';
 import { DISCRETIONARY_GROUPS, discretionaryGroupTotals, hasDiscretionaryBreakdown, itemKey } from '../../../engine/discretionary';
 import NumberInput from '../../ui/NumberInput';
+import NumField from '../../ui/NumField';
 import Alert from '../../ui/Alert';
 import StepNavigation from '../StepNavigation';
 
@@ -22,13 +23,10 @@ function ItemInput({ label, value, onChange }: { label: string; value: number; o
     <div className="flex items-center justify-between gap-2 py-1">
       <label className="text-sm text-gray-600 dark:text-gray-300">{label}</label>
       <div className="relative shrink-0">
-        <input
-          type="number"
-          value={value || ''}
-          min={0}
-          step={100}
-          placeholder="0"
-          onChange={(e) => onChange(Math.max(0, Number(e.target.value)))}
+        <NumField
+          value={value}
+          onChange={onChange}
+          ariaLabel={label}
           className="w-24 text-right pr-7 pl-2 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
         />
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">Kč</span>

@@ -4,6 +4,7 @@ import { CHILD_COSTS_CZ } from '../../engine/defaults';
 import { calculateChildCosts } from '../../engine/childCost';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
+import NumField from '../ui/NumField';
 
 interface Props {
   state: WizardState;
@@ -58,11 +59,11 @@ export default function ChildCostPlanner({ state }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Počet dětí</label>
-          <input
-            type="number"
+          <NumField
             value={numberOfChildren}
-            onChange={(e) => setNumberOfChildren(Math.max(1, Math.min(5, Number(e.target.value))))}
+            onChange={setNumberOfChildren}
             min={1} max={5}
+            ariaLabel="Počet dětí"
             className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
           {numberOfChildren > 1 && (
@@ -71,11 +72,11 @@ export default function ChildCostPlanner({ state }: Props) {
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horizont (roky)</label>
-          <input
-            type="number"
+          <NumField
             value={horizonYears}
-            onChange={(e) => setHorizonYears(Math.max(1, Math.min(26, Number(e.target.value))))}
+            onChange={setHorizonYears}
             min={1} max={26}
+            ariaLabel="Horizont v letech"
             className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
@@ -108,12 +109,11 @@ export default function ChildCostPlanner({ state }: Props) {
                 <tr key={range.label} className="border-b border-gray-100 dark:border-gray-700/50">
                   <td className="py-2 text-gray-900 dark:text-white">{range.label}</td>
                   <td className="text-right py-2">
-                    <input
-                      type="number"
+                    <NumField
                       value={customCosts[range.label]}
-                      onChange={(e) => setCustomCosts({ ...customCosts, [range.label]: Math.max(0, Number(e.target.value)) })}
+                      onChange={(v) => setCustomCosts({ ...customCosts, [range.label]: v })}
+                      ariaLabel={`Náklady ${range.label}`}
                       className="w-24 text-right px-2 py-1 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
-                      step={1000}
                     />
                   </td>
                 </tr>

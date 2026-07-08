@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useWizard } from '../../../store/wizardStore';
 import type { CustomGoal } from '../../../types';
 import { monthlyDisposable } from '../../../engine/cashflow';
+import NumField from '../../ui/NumField';
 import StepNavigation from '../StepNavigation';
 
 let nextId = 1;
@@ -99,12 +100,10 @@ export default function Step7CustomGoals() {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Kolik potřebuji (Kč)</label>
-                  <input
-                    type="number"
+                  <NumField
                     value={goal.targetAmount}
-                    min={0}
-                    step={10000}
-                    onChange={(e) => update(goal.id, 'targetAmount', Math.max(0, Number(e.target.value)))}
+                    onChange={(v) => update(goal.id, 'targetAmount', v)}
+                    ariaLabel="Kolik potřebuji"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>
@@ -112,11 +111,11 @@ export default function Step7CustomGoals() {
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                     Za jak dlouho ({timeUnit === 'months' ? 'měsíců' : 'let'})
                   </label>
-                  <input
-                    type="number"
+                  <NumField
                     value={toDisplay(goal.targetMonths)}
+                    onChange={(v) => update(goal.id, 'targetMonths', fromDisplay(v))}
                     min={1}
-                    onChange={(e) => update(goal.id, 'targetMonths', fromDisplay(Number(e.target.value)))}
+                    ariaLabel="Za jak dlouho"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>

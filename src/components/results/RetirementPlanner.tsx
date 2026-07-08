@@ -5,6 +5,7 @@ import { retirementProjection, fourPercentTarget, yearOfReachingTarget } from '.
 import { DEFAULTS } from '../../engine/defaults';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
+import NumField from '../ui/NumField';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 
 const INFLATION = DEFAULTS.averageCzInflation;
@@ -84,10 +85,10 @@ export default function RetirementPlanner({ state }: Props) {
             Měsíční částka k investování
           </label>
           <div className="relative">
-            <input
-              type="number"
+            <NumField
               value={monthlyAmount}
-              onChange={(e) => setMonthlyAmount(Math.max(0, Number(e.target.value)))}
+              onChange={setMonthlyAmount}
+              ariaLabel="Měsíční částka k investování"
               className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kč</span>
@@ -98,11 +99,11 @@ export default function RetirementPlanner({ state }: Props) {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Počet let do důchodu
           </label>
-          <input
-            type="number"
+          <NumField
             value={yearsToRetirement}
-            onChange={(e) => setYearsToRetirement(Math.max(1, Math.min(50, Number(e.target.value))))}
+            onChange={setYearsToRetirement}
             min={1} max={50}
+            ariaLabel="Počet let do důchodu"
             className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
@@ -121,10 +122,10 @@ export default function RetirementPlanner({ state }: Props) {
               >ⓘ</button>
             </label>
             <div className="relative">
-              <input
-                type="number"
+              <NumField
                 value={monthlyRent}
-                onChange={(e) => setMonthlyRent(Math.max(0, Number(e.target.value)))}
+                onChange={setMonthlyRent}
+                ariaLabel="Požadovaná měsíční renta"
                 className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kč</span>
@@ -277,12 +278,11 @@ export default function RetirementPlanner({ state }: Props) {
                       {p.label}
                     </td>
                     <td className="text-right py-2 text-gray-600 dark:text-gray-300">
-                      <input
-                        type="number"
+                      <NumField
                         value={rates[p.key]}
-                        onChange={(e) => setRates({ ...rates, [p.key]: Number(e.target.value) })}
+                        onChange={(v) => setRates({ ...rates, [p.key]: v })}
+                        ariaLabel={`Výnos ${p.label}`}
                         className="w-16 text-right px-1 py-0.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
-                        step={0.5}
                       />
                       <span className="ml-1">%</span>
                     </td>

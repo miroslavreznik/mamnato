@@ -5,6 +5,7 @@ import { allocateGoals } from '../../engine/savings';
 import type { GoalAllocation } from '../../engine/savings';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
+import NumField from '../ui/NumField';
 
 interface Props {
   state: WizardState;
@@ -209,10 +210,10 @@ export default function CustomGoalPlanner({ state }: Props) {
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cílová částka (Kč)</label>
-                  <input
-                    type="number"
+                  <NumField
                     value={goal.targetAmount}
-                    onChange={(e) => updateGoal(goal.id, 'targetAmount', Math.max(0, Number(e.target.value)))}
+                    onChange={(v) => updateGoal(goal.id, 'targetAmount', v)}
+                    ariaLabel="Cílová částka"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>
@@ -220,11 +221,11 @@ export default function CustomGoalPlanner({ state }: Props) {
                   <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
                     Za kolik {timeUnit === 'months' ? 'měsíců' : 'let'}
                   </label>
-                  <input
-                    type="number"
+                  <NumField
                     value={goal.targetMonths}
-                    onChange={(e) => updateGoal(goal.id, 'targetMonths', Math.max(1, Number(e.target.value)))}
+                    onChange={(v) => updateGoal(goal.id, 'targetMonths', v)}
                     min={1}
+                    ariaLabel="Za kolik měsíců/let"
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>

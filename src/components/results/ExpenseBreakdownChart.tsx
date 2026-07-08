@@ -5,6 +5,7 @@ import { incomeFlow } from '../../engine/expenseBreakdown';
 import type { ExpenseCategory } from '../../engine/expenseBreakdown';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
+import NumField from '../ui/NumField';
 
 interface Props {
   state: WizardState;
@@ -37,11 +38,10 @@ function GoalInput({ label, value, onChange }: { label: string; value: number; o
     <div className="flex items-center justify-between gap-2">
       <label className="text-sm text-gray-600 dark:text-gray-300">{label}</label>
       <div className="relative">
-        <input
-          type="number"
+        <NumField
           value={value}
-          min={0}
-          onChange={(e) => onChange(Math.max(0, Number(e.target.value)))}
+          onChange={onChange}
+          ariaLabel={label}
           className="w-28 text-right pr-8 pl-2 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
         />
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">Kč</span>
