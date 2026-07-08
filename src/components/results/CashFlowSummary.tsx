@@ -54,6 +54,7 @@ export default function CashFlowSummary({ state }: Props) {
           {expanded && (
             <div className="mt-2 ml-4 space-y-1 text-sm text-gray-500 dark:text-gray-400">
               {Object.entries(state.expenses).map(([key, val]) => {
+                if (typeof val !== 'number') return null; // discretionaryBreakdown je mapa, ne částka
                 if (val === 0 && key === 'children' && state.mode !== 'family') return null;
                 if (val === 0 && key === 'existingLoans') return null;
                 return (

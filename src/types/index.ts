@@ -28,6 +28,9 @@ export interface WizardState {
     children: number;
     utilities: number;
     other: number;
+    // Nepovinný podrobný rozpis zbytných výdajů (klíč „skupina.položka" → částka).
+    // Když je vyplněn, `other` se drží jako jeho součet.
+    discretionaryBreakdown?: Record<string, number>;
   };
 
   // Zůstatek jistiny stávajících úvěrů — pro výpočet DTI dle ČNB (nezahrnuje novou hypotéku)

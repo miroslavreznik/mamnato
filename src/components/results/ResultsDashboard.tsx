@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { WizardState } from '../../types';
 import ResultsOverview from './ResultsOverview';
 import ExpenseBreakdownChart from './ExpenseBreakdownChart';
+import DiscretionaryBreakdownChart from './DiscretionaryBreakdownChart';
 import CashFlowSummary from './CashFlowSummary';
 import SavingsChart from './SavingsChart';
 import PropertyAffordability from './PropertyAffordability';
@@ -15,6 +16,7 @@ import ChildCostPlanner from './ChildCostPlanner';
 import EducationalGlossary from './EducationalGlossary';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
+import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
 import Disclaimer from '../ui/Disclaimer';
 
 interface ResultsDashboardProps {
@@ -81,6 +83,11 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
           allocations={allocations}
           onChangeAllocation={handleChangeAllocation}
         />
+
+        {/* 2b) Rozpad zbytných výdajů — jen když je vyplněn podrobný rozpis */}
+        {hasDiscretionaryBreakdown(state.expenses.discretionaryBreakdown) && (
+          <DiscretionaryBreakdownChart state={state} />
+        )}
 
         {/* 3) Detailní cash flow */}
         <CashFlowSummary state={state} />
