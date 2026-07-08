@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { expenseCategories, breakdownSurplus } from '../../src/engine/expenseBreakdown';
+import { expenseCategories, breakdownSurplus, incomeFlow } from '../../src/engine/expenseBreakdown';
 import type { WizardState } from '../../src/types';
+import type { GoalAllocations } from '../../src/engine/allocation';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
   return {
@@ -64,5 +65,32 @@ describe('breakdownSurplus', () => {
     const state = makeState({ income: { person1NetMonthly: 20000 } });
     const cats = expenseCategories(state, false);
     expect(breakdownSurplus(state, cats, new Set())).toBe(20000 - 29000);
+  });
+});
+
+const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
+  mortgage: 0, retirement: 0, child: 0, custom: [], ...o,
+});
+
+describe('incomeFlow', () => {
+  it('free = income - expenses - goal savings', () => {
+    const state = makeState({ goals: ['property', 'retirement'] }); // income 50000, expenses 29000
+    const flow = incomeFlow(state, allocs({ retirement: 5000 }), false);
+    // free = 50000 - 29000 - 5000 = 16000
+    expect(flow.free).toBe(16000);
+    expect(flow.goals.find((g) => g.key === 'retirement')?.amount).toBe(5000);
+  });
+
+  it('excluded expense category increases free', () => {
+    const state = makeState({ goals: ['retirement'] });
+    const withOther = incomeFlow(state, allocs({ retirement: 5000 }), false);
+    const withoutOther = incomeFlow(state, allocs({ retirement: 5000 }), false, new Set(['other']));
+    expect(withoutOther.free).toBe(withOther.free + 3000);
+  });
+
+  it('mortgage is not a goal flow (it is a housing expense after purchase)', () => {
+    const state = makeState({ goals: ['property'] });
+    const flow = incomeFlow(state, allocs({ mortgage: 20000 }), true);
+    expect(flow.goals.find((g) => g.key === 'mortgage')).toBeUndefined();
   });
 });

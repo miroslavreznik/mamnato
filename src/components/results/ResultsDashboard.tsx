@@ -1,21 +1,18 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import type { WizardState } from '../../types';
-import CashFlowSummary from './CashFlowSummary';
+import ResultsOverview from './ResultsOverview';
 import ExpenseBreakdownChart from './ExpenseBreakdownChart';
+import CashFlowSummary from './CashFlowSummary';
 import SavingsChart from './SavingsChart';
 import PropertyAffordability from './PropertyAffordability';
 import DtiDstiIndicator from './DtiDstiIndicator';
 import MortgageVsRent from './MortgageVsRent';
 import CashFlowAfterChart from './CashFlowAfterChart';
 import InvestmentComparisonChart from './InvestmentComparisonChart';
-import ScenarioSummary from './ScenarioSummary';
 import RetirementPlanner from './RetirementPlanner';
 import CustomGoalPlanner from './CustomGoalPlanner';
 import ChildCostPlanner from './ChildCostPlanner';
-import AllocationSummary from './AllocationSummary';
 import EducationalGlossary from './EducationalGlossary';
-import { evaluateScenario } from '../../engine/scenarios';
-import { monthlyDisposable } from '../../engine/cashflow';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import Disclaimer from '../ui/Disclaimer';
@@ -28,25 +25,16 @@ interface ResultsDashboardProps {
 
 export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDashboardProps) {
   const modeLabels = { individual: 'Jednotlivec', couple: 'Pár', family: 'Rodina' };
-  const disposable = monthlyDisposable(state);
 
   const hasProperty = state.goals.includes('property');
   const hasRetirement = state.goals.includes('retirement');
   const hasOther = state.goals.includes('other');
   const hasChild = state.goals.includes('child');
   const hasNoGoals = state.goals.length === 0;
-  const hasMultipleGoals = state.goals.length > 1;
 
   const [allocations, setAllocations] = useState<GoalAllocations>(() =>
     calculateDefaultAllocations(state)
   );
-
-  const totalAllocated = useMemo(() => {
-    return allocations.mortgage + allocations.retirement + allocations.child
-      + allocations.custom.reduce((s, v) => s + v, 0);
-  }, [allocations]);
-
-  const isDeficit = totalAllocated > disposable;
 
   const handleChangeAllocation = (goal: string, index: number | null, value: number) => {
     setAllocations((prev) => {
@@ -82,22 +70,19 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
         </div>
       </div>
 
-      {/* Deficit banner */}
-      {isDeficit && hasMultipleGoals && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-700">
-          <p className="text-sm font-semibold text-red-700 dark:text-red-400">
-            Vaše cíle vyžadují {totalAllocated.toLocaleString('cs-CZ')} Kč/měs, ale k dispozici máte {disposable.toLocaleString('cs-CZ')} Kč/měs.
-            Chybí vám {(totalAllocated - disposable).toLocaleString('cs-CZ')} Kč/měs.
-          </p>
-        </div>
-      )}
-
       <div className="space-y-6">
-        {/* Always show cash flow summary */}
-        <CashFlowSummary state={state} />
+        {/* 1) Souhrn / verdikt na základě cílů */}
+        <ResultsOverview state={state} allocations={allocations} />
 
-        {/* Where does the money go — interactive breakdown */}
-        <ExpenseBreakdownChart state={state} />
+        {/* 2) Souhrnný graf: kam jde příjem (výdaje + cíle + volné) + ovládání cílů */}
+        <ExpenseBreakdownChart
+          state={state}
+          allocations={allocations}
+          onChangeAllocation={handleChangeAllocation}
+        />
+
+        {/* 3) Detailní cash flow */}
+        <CashFlowSummary state={state} />
 
         {hasNoGoals && (
           <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
@@ -114,7 +99,6 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
             <MortgageVsRent state={state} />
             <CashFlowAfterChart state={state} />
             <InvestmentComparisonChart state={state} />
-            <ScenarioSummary scenario={evaluateScenario(state)} />
           </>
         )}
 
@@ -131,16 +115,6 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
         {/* Custom goals section */}
         {hasOther && (
           <CustomGoalPlanner state={state} />
-        )}
-
-        {/* Allocation summary — only show when multiple goals */}
-        {hasMultipleGoals && (
-          <AllocationSummary
-            disposable={disposable}
-            allocations={allocations}
-            activeGoals={state.goals}
-            onChangeAllocation={handleChangeAllocation}
-          />
         )}
 
         {/* Educational glossary — always shown */}

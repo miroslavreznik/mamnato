@@ -2,12 +2,26 @@ import type { WizardState } from '../types';
 import { DEFAULTS } from './defaults';
 import { totalMonthlyIncome } from './cashflow';
 import { monthlyMortgagePayment, effectiveDownPayment } from './mortgage';
+import type { GoalAllocations } from './allocation';
 
 export interface ExpenseCategory {
   key: string;
   label: string;
   amount: number;
   necessary: boolean;
+}
+
+export interface GoalFlow {
+  key: string;
+  label: string;
+  amount: number;
+}
+
+export interface IncomeFlow {
+  income: number;
+  expenses: ExpenseCategory[];
+  goals: GoalFlow[];
+  free: number; // volná rezerva (může být záporná při schodku)
 }
 
 // Rozpad měsíčních výdajů po kategoriích pro dva stavy bydlení:
@@ -59,4 +73,41 @@ export function breakdownSurplus(
     .filter((c) => !excludedKeys.has(c.key))
     .reduce((sum, c) => sum + c.amount, 0);
   return income - spent;
+}
+
+// Spoření na cíle (měsíční toky). Nezahrnuje hypotéku — ta je výdajem v „Po koupi".
+function goalFlows(state: WizardState, allocations: GoalAllocations): GoalFlow[] {
+  const flows: GoalFlow[] = [];
+  if (state.goals.includes('retirement') && allocations.retirement > 0) {
+    flows.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement });
+  }
+  if (state.goals.includes('child') && allocations.child > 0) {
+    flows.push({ key: 'child', label: 'Rezerva na dítě', amount: allocations.child });
+  }
+  if (state.goals.includes('other')) {
+    const total = allocations.custom.reduce((s, v) => s + v, 0);
+    if (total > 0) flows.push({ key: 'custom', label: 'Vlastní cíle', amount: total });
+  }
+  return flows;
+}
+
+// Kompletní rozpad příjmu: výdaje + spoření na cíle + volná rezerva.
+// excludedKeys jsou vypnuté výdajové kategorie (odškrtnuté v grafu).
+export function incomeFlow(
+  state: WizardState,
+  allocations: GoalAllocations,
+  afterPurchase: boolean,
+  excludedKeys: Set<string> = new Set()
+): IncomeFlow {
+  const income = totalMonthlyIncome(state);
+  const expenses = expenseCategories(state, afterPurchase);
+  const goals = goalFlows(state, allocations);
+
+  const spentExpenses = expenses
+    .filter((c) => !excludedKeys.has(c.key))
+    .reduce((sum, c) => sum + c.amount, 0);
+  const spentGoals = goals.reduce((sum, g) => sum + g.amount, 0);
+  const free = income - spentExpenses - spentGoals;
+
+  return { income, expenses, goals, free };
 }

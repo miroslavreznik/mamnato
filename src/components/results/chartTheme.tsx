@@ -56,6 +56,7 @@ const LIGHT: ChartColors = {
     existingLoans: '#e34948',
     children: '#e87ba4',
     other: '#008300',
+    goals: '#4f46e5',
     surplus: '#c9c8c2',
   },
 };
@@ -80,6 +81,7 @@ const DARK: ChartColors = {
     existingLoans: '#e66767',
     children: '#d55181',
     other: '#008300',
+    goals: '#818cf8',
     surplus: '#6b7280',
   },
 };
