@@ -7,6 +7,7 @@ import {
   monthsToSaveDownPayment,
   effectiveDownPayment,
 } from '../../engine/mortgage';
+import Tooltip from '../ui/Tooltip';
 
 interface Props {
   state: WizardState;
@@ -31,12 +32,21 @@ export default function PropertyAffordability({ state }: Props) {
 
       <div className="space-y-3 text-sm">
         <Row label="Cena nemovitosti" value={`${fmt(price)} Kč`} />
-        <Row label="Potřebná akontace (20 %)" value={`${fmt(dp)} Kč`} />
-        <Row label="Pokryto z vlastních úspor" value={`${fmt(effectiveDownPayment(state))} Kč`} />
+        <Row
+          label="Potřebná akontace (20 %)"
+          value={`${fmt(dp)} Kč`}
+          tooltip="Kolik banka požaduje zaplatit z vlastních peněz. Obvykle 20 % ceny nemovitosti — zbytek pokryje hypotéka."
+        />
+        <Row
+          label="Pokryto z vlastních úspor"
+          value={`${fmt(effectiveDownPayment(state))} Kč`}
+          tooltip="Kolik z vašich naspořených peněz vložíte do akontace. Nastavuje se v kroku Nemovitost posuvníkem „Jak rozdělíte své úspory“."
+        />
         <Row
           label="Chybějící akontace"
           value={`${fmt(gap)} Kč`}
           highlight={gap > 0 ? 'red' : 'green'}
+          tooltip="Rozdíl mezi potřebnou akontací a tím, co pokryjete z úspor. Tuto částku je potřeba ještě naspořit, než se dá o hypotéku požádat."
         />
 
         <div className="border-t dark:border-gray-600 pt-3" />
@@ -77,16 +87,20 @@ export default function PropertyAffordability({ state }: Props) {
   );
 }
 
-function Row({ label, value, highlight, bold }: {
+function Row({ label, value, highlight, bold, tooltip }: {
   label: string;
   value: string;
   highlight?: 'red' | 'green';
   bold?: boolean;
+  tooltip?: string;
 }) {
   const valueColor = highlight === 'red' ? 'text-red-600' : highlight === 'green' ? 'text-green-600' : 'text-gray-900 dark:text-white';
   return (
     <div className="flex justify-between items-center">
-      <span className="text-gray-600 dark:text-gray-300">{label}</span>
+      <span className="text-gray-600 dark:text-gray-300 flex items-center">
+        {label}
+        {tooltip && <Tooltip text={tooltip} />}
+      </span>
       <span className={`${bold ? 'text-lg font-bold' : 'font-semibold'} ${valueColor}`}>{value}</span>
     </div>
   );
