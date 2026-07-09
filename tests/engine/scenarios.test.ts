@@ -62,12 +62,7 @@ describe('evaluateScenario', () => {
     expect(evaluateScenario(state).id).toBe('tight_but_possible');
   });
 
-  it('returns ready_in_1_2_years when gap > 0 and months <= 24', () => {
-    // This scenario can't actually be reached with current logic because
-    // gap > 0 triggers tight_but_possible first. But let's test the boundary.
-    // Actually looking at the code: `if (dstiValue > 0.35 || gap > 0)` catches gap > 0.
-    // So ready_in_1_2_years is unreachable in current implementation.
-    // Test it anyway by checking tight_but_possible for gap > 0 with months <= 24.
+  it('returns ready_in_1_2_years when gap > 0, months <= 24 and DSTI is comfortable', () => {
     const state = makeState({
       mode: 'couple',
       income: { person1NetMonthly: 40000, person2NetMonthly: 35000 },
@@ -76,7 +71,22 @@ describe('evaluateScenario', () => {
       property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
     });
     // gap = 1_000_000 - 900_000 = 100_000, disposable = 75000 - 25500 = 49500, months = 3
-    // But gap > 0 → tight_but_possible (due to evaluation order)
+    // loan = 4_100_000, payment ≈ 22_500 → DSTI ≈ 0.30 (<= 0.35) → ready_in_1_2_years
+    expect(evaluateScenario(state).id).toBe('ready_in_1_2_years');
+  });
+
+  it('returns tight_but_possible when gap > 0 but saving takes longer (months 25–60)', () => {
+    const state = makeState({
+      mode: 'couple',
+      income: { person1NetMonthly: 50000, person2NetMonthly: 40000 },
+      expenses: { rent: 25000, existingLoans: 0, insurance: 3000, food: 15000, transport: 8000, children: 0, utilities: 6000, other: 20000 },
+      savings: { totalSavings: 600000 },
+      property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
+    });
+    // income = 90000, expenses = 77000, disposable = 13000
+    // gap = 1_000_000 - 600_000 = 400_000, months = ceil(400000/13000) = 31 (in 25–60)
+    // loan = 4_400_000, payment ≈ 24_170 → DSTI ≈ 0.27 (<= 0.35)
+    // gap > 0 and months > 24 → tight_but_possible
     expect(evaluateScenario(state).id).toBe('tight_but_possible');
   });
 

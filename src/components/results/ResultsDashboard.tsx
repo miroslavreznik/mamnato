@@ -17,6 +17,8 @@ import EducationalGlossary from './EducationalGlossary';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
+import type { CustomGoal } from '../../types';
+import { saveState } from '../../store/localStorage';
 import Disclaimer from '../ui/Disclaimer';
 
 interface ResultsDashboardProps {
@@ -25,8 +27,13 @@ interface ResultsDashboardProps {
   onReset: () => void;
 }
 
-export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDashboardProps) {
+export default function ResultsDashboard({ state: initialState, onEdit, onReset }: ResultsDashboardProps) {
   const modeLabels = { individual: 'Jednotlivec', couple: 'Pár', family: 'Rodina' };
+
+  // Výsledková stránka pracuje s vlastní kopií stavu, aby úpravy cílů (např.
+  // ve „Vlastní finanční cíle") okamžitě přepočítaly souhrn i grafy a zároveň
+  // se uložily do prohlížeče.
+  const [state, setState] = useState<WizardState>(initialState);
 
   const hasProperty = state.goals.includes('property');
   const hasRetirement = state.goals.includes('retirement');
@@ -47,6 +54,14 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
       }
       return { ...prev, [goal]: value };
     });
+  };
+
+  // Úprava vlastních cílů v detailu → uložit a udržet zarovnané alokace.
+  const handleChangeCustomGoals = (goals: CustomGoal[]) => {
+    const next = { ...state, customGoals: goals };
+    setState(next);
+    saveState(next);
+    setAllocations((prev) => ({ ...prev, custom: goals.map((_, i) => prev.custom[i] ?? 0) }));
   };
 
   return (
@@ -122,7 +137,7 @@ export default function ResultsDashboard({ state, onEdit, onReset }: ResultsDash
 
         {/* Custom goals section */}
         {hasOther && (
-          <CustomGoalPlanner state={state} />
+          <CustomGoalPlanner state={state} onChangeGoals={handleChangeCustomGoals} />
         )}
 
         {/* Educational glossary — always shown */}

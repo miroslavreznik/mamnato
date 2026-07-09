@@ -30,7 +30,9 @@ export default function NumField({
   const [draft, setDraft] = useState('');
 
   const clamp = (n: number) => Math.max(min, Math.min(max, n));
-  const shown = focused ? draft : value ? String(value) : '';
+  // Během psaní ukazujeme přesně zadaný text; jinak hezky s oddělovači tisíců
+  // (např. „300 000", „7,5"), konzistentně s hlavním NumberInput.
+  const shown = focused ? draft : value ? value.toLocaleString('cs-CZ') : '';
 
   return (
     <input

@@ -122,8 +122,11 @@ export function evaluateScenario(state: WizardState): Scenario {
   if (disposable <= 0) return scenarios.cannot_afford_cashflow;
   if (dstiValue > 0.45) return scenarios.cannot_afford_dsti;
   if (months > 60) return scenarios.no_savings;
-  if (dstiValue > 0.35 || gap > 0) return scenarios.tight_but_possible;
+  // Splátka je na hraně limitu ČNB → napjaté bez ohledu na úspory.
+  if (dstiValue > 0.35) return scenarios.tight_but_possible;
+  // DSTI je v pohodě; rozhoduje, jak daleko je akontace.
   if (gap > 0 && months <= 24) return scenarios.ready_in_1_2_years;
+  if (gap > 0) return scenarios.tight_but_possible; // 24 < months <= 60
   if (dstiValue < 0.25 && dtiValue < 5) return scenarios.very_comfortable;
   return scenarios.ready_now;
 }

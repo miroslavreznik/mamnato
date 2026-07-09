@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { WizardState, CustomGoal } from '../../types';
 import { monthlyDisposable } from '../../engine/cashflow';
 import { allocateGoals } from '../../engine/savings';
@@ -9,6 +9,7 @@ import NumField from '../ui/NumField';
 
 interface Props {
   state: WizardState;
+  onChangeGoals: (goals: CustomGoal[]) => void;
 }
 
 let nextId = 1;
@@ -65,20 +66,29 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
   );
 }
 
-export default function CustomGoalPlanner({ state }: Props) {
+export default function CustomGoalPlanner({ state, onChangeGoals }: Props) {
   const colors = useChartColors();
   const disposable = monthlyDisposable(state);
-  const [goals, setGoals] = useState<CustomGoal[]>(() => {
-    if (state.customGoals && state.customGoals.length > 0) {
-      return state.customGoals.map((g) => ({ ...g, id: g.id || makeId() }));
+  // Cíle jsou zdrojem pravdy ve sdíleném stavu — změny se hned promítnou
+  // do souhrnu i grafu rozpočtu a uloží se do prohlížeče.
+  const goals = useMemo(() => state.customGoals ?? [], [state.customGoals]);
+  const setGoals = onChangeGoals;
+
+  // Kdyby uživatel dorazil bez zadaného cíle, nabídneme jeden prázdný.
+  useEffect(() => {
+    if (goals.length === 0) {
+      onChangeGoals([{ id: makeId(), name: '', targetAmount: 500000, targetMonths: 24 }]);
     }
-    return [{ id: makeId(), name: '', targetAmount: 500000, targetMonths: 24 }];
-  });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   const [timeUnit, setTimeUnit] = useState<'months' | 'years'>('months');
   const [deferredIds, setDeferredIds] = useState<Set<string>>(new Set());
   const [expandedTips, setExpandedTips] = useState<Set<string>>(new Set());
 
-  const toMonths = (g: CustomGoal) => timeUnit === 'years' ? g.targetMonths * 12 : g.targetMonths;
+  const toMonths = useCallback(
+    (g: CustomGoal) => (timeUnit === 'years' ? g.targetMonths * 12 : g.targetMonths),
+    [timeUnit]
+  );
 
   // Single memo: filter active goals, convert to months, allocate
   const { allocationMap, totalAllocated, totalNeeded } = useMemo(() => {
@@ -90,7 +100,7 @@ export default function CustomGoalPlanner({ state }: Props) {
     const needed = inMonths.reduce((sum, g) => sum + (g.targetMonths > 0 ? Math.ceil(g.targetAmount / g.targetMonths) : 0), 0);
     const allocated = allocs.reduce((sum, a) => sum + a.monthlyAllocation, 0);
     return { allocationMap: map, totalAllocated: allocated, totalNeeded: needed };
-  }, [goals, deferredIds, timeUnit, disposable]);
+  }, [goals, deferredIds, toMonths, disposable]);
 
   const addGoal = () => {
     setGoals([...goals, { id: makeId(), name: '', targetAmount: 500000, targetMonths: 24 }]);
