@@ -1,4 +1,4 @@
-import { useReducer, useEffect, useState } from 'react';
+import { useReducer, useEffect } from 'react';
 import { WizardContext, wizardReducer, createInitialState } from '../../store/wizardStore';
 import { saveState, loadState } from '../../store/localStorage';
 import StepIndicator from './StepIndicator';
@@ -26,34 +26,26 @@ interface WizardContainerProps {
 }
 
 export default function WizardContainer({ onComplete, returnToStep, resumeSavedState }: WizardContainerProps) {
-  const [state, dispatch] = useReducer(wizardReducer, createInitialState());
-  const [initialized, setInitialized] = useState(false);
-
-  useEffect(() => {
+  // Počáteční stav odvodíme rovnou z prohlížeče (líný inicializátor), takže
+  // není potřeba efekt na načtení ani příznak „initialized".
+  const [state, dispatch] = useReducer(wizardReducer, { returnToStep, resumeSavedState }, (init) => {
     const saved = loadState();
     if (saved) {
-      if (returnToStep) {
-        dispatch({ type: 'LOAD_STATE', state: { ...saved, currentStep: returnToStep } });
-      } else if (resumeSavedState) {
-        dispatch({ type: 'LOAD_STATE', state: saved });
-      }
+      if (init.returnToStep) return { ...saved, currentStep: init.returnToStep };
+      if (init.resumeSavedState) return saved;
     }
-    setInitialized(true);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return createInitialState();
+  });
 
   useEffect(() => {
-    if (initialized) {
-      saveState(state);
-    }
-  }, [state, initialized]);
+    saveState(state);
+  }, [state]);
 
   useEffect(() => {
     if (state.currentStep > 7) {
       onComplete();
     }
   }, [state.currentStep, onComplete]);
-
-  if (!initialized) return null;
 
   const steps: Record<number, React.ReactNode> = {
     1: <Step1Mode />,
