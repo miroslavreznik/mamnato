@@ -47,7 +47,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-gray-50 to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 transition-colors">
-      <header className="sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/70 dark:border-gray-800/80">
+      <header className="no-print sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/70 dark:border-gray-800/80">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <button
             onClick={() => setView('welcome')}
@@ -73,7 +73,7 @@ function App() {
         )}
       </main>
 
-      <footer className="max-w-3xl mx-auto px-4 pb-8 pt-4 text-center">
+      <footer className="no-print max-w-3xl mx-auto px-4 pb-8 pt-4 text-center">
         <p className="text-xs text-gray-400 dark:text-gray-600">
           MámNaTo? — orientační finanční přehled. Data zůstávají ve vašem prohlížeči.
         </p>

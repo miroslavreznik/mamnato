@@ -3,6 +3,7 @@ import { DEFAULTS } from '../../engine/defaults';
 import {
   requiredDownPayment,
   downPaymentGap,
+  downPaymentFraction,
   monthlyMortgagePayment,
   monthsToSaveDownPayment,
   effectiveDownPayment,
@@ -18,7 +19,9 @@ export default function PropertyAffordability({ state }: Props) {
   const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
   const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
   const fixationYears = state.property.fixationYears ?? DEFAULTS.property.fixationYears;
-  const dp = requiredDownPayment(price);
+  const dpFraction = downPaymentFraction(state);
+  const dpPct = Math.round(dpFraction * 100);
+  const dp = requiredDownPayment(price, dpFraction);
   const gap = downPaymentGap(state);
   const loanAmount = Math.max(0, price - effectiveDownPayment(state));
   const payment = monthlyMortgagePayment(loanAmount, rate, term);
@@ -33,9 +36,13 @@ export default function PropertyAffordability({ state }: Props) {
       <div className="space-y-3 text-sm">
         <Row label="Cena nemovitosti" value={`${fmt(price)} Kč`} />
         <Row
-          label="Potřebná akontace (20 %)"
+          label={`Potřebná akontace (${dpPct} %)`}
           value={`${fmt(dp)} Kč`}
-          tooltip="Kolik banka požaduje zaplatit z vlastních peněz. Obvykle 20 % ceny nemovitosti — zbytek pokryje hypotéka."
+          tooltip={
+            dpPct === 10
+              ? 'Žadateli do 36 let banka půjčí až 90 % ceny (LTV), takže z vlastního stačí 10 %.'
+              : 'Kolik banka požaduje zaplatit z vlastních peněz. Obvykle 20 % ceny nemovitosti (LTV 80 %) — zbytek pokryje hypotéka.'
+          }
         />
         <Row
           label="Pokryto z vlastních úspor"

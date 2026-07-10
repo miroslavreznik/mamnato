@@ -29,3 +29,30 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Tisk / uložení do PDF: schová interaktivní prvky a vynutí světlý, čitelný přehled */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  /* Karty výsledků nerozdělovat přes stránky */
+  main > div > div {
+    break-inside: avoid;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  /* Vynutit světlé pozadí a černý text (dark mód se pro tisk vypíná v JS) */
+  body {
+    background: #fff !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+
+/* Prvek jen pro tisk (na obrazovce skrytý) */
+.print-only {
+  display: none;
+}

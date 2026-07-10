@@ -1,6 +1,6 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
-import { requiredDownPayment, monthlyMortgagePayment } from '../../../engine/mortgage';
+import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction } from '../../../engine/mortgage';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
 import StepNavigation from '../StepNavigation';
@@ -10,10 +10,12 @@ export default function Step6Property() {
   const price = state.property.targetPrice;
   const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
   const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-  const reqDp = requiredDownPayment(price);
+  const dpFraction = downPaymentFraction(state);
+  const reqDpPct = Math.round(dpFraction * 100);
+  const reqDp = requiredDownPayment(price, dpFraction);
   const totalSavings = state.savings.totalSavings;
 
-  // Default down payment: 20% of price or all savings (whichever is less)
+  // Default down payment: required fraction of price or all savings (whichever is less)
   const dpValue = state.savings.downPaymentFromSavings ?? Math.min(totalSavings, reqDp);
   const reserve = totalSavings - dpValue;
   const loanAmount = Math.max(0, price - dpValue);
@@ -44,6 +46,22 @@ export default function Step6Property() {
         error={price > 0 && price < 500000 ? 'Zkontrolujte zadanou cenu (min. 500 000 Kč)' : undefined}
       />
 
+      {/* ČNB: žadatelé do 36 let → LTV až 90 %, tedy nižší akontace */}
+      <label className="flex items-start gap-2 mb-6 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={!!state.applicantUnder36}
+          onChange={(e) => dispatch({ type: 'SET_UNDER36', value: e.target.checked })}
+          className="mt-0.5 w-4 h-4 rounded border-gray-300"
+        />
+        <span className="text-sm text-gray-700 dark:text-gray-300">
+          Nejmladšímu žadateli je méně než 36 let
+          <span className="block text-xs text-gray-500 dark:text-gray-400">
+            ČNB u mladších žadatelů umožňuje hypotéku až na 90 % ceny (LTV), takže z vlastního stačí {reqDpPct} % místo 20 %.
+          </span>
+        </span>
+      </label>
+
       {/* Down payment allocation section */}
       {totalSavings > 0 && (
         <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
@@ -55,7 +73,7 @@ export default function Step6Property() {
           <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
             Akontace: <span className="font-semibold">{dpValue.toLocaleString('cs-CZ')} Kč</span>
             {' '}
-            <span className={`text-xs ${Number(dpPercent) >= 20 ? 'text-green-600' : 'text-amber-600'}`}>
+            <span className={`text-xs ${Number(dpPercent) >= reqDpPct ? 'text-green-600' : 'text-amber-600'}`}>
               ({dpPercent} % z ceny nemovitosti)
             </span>
           </label>
@@ -136,7 +154,7 @@ export default function Step6Property() {
 
       <div className="mt-4 space-y-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-300">Doporučená akontace (20 %):</span>
+          <span className="text-gray-600 dark:text-gray-300">Doporučená akontace ({reqDpPct} %):</span>
           <span className="font-semibold text-gray-900 dark:text-white">{reqDp.toLocaleString('cs-CZ')} Kč</span>
         </div>
         <div className="flex justify-between">

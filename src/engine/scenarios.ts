@@ -40,7 +40,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       icon: '\uD83C\uDFE6',
       title: 'Banka by hypotéku pravděpodobně neschválila',
       description:
-        'Splátka hypotéky by tvořila více než 45 % vašeho příjmu, což je hranice, kterou ČNB stanovila jako maximum pro nové hypotéky. Většina bank se tímto limitem řídí a žádost by zamítla nebo nabídla výrazně horší podmínky.',
+        'Splátka hypotéky by tvořila více než 45 % vašeho příjmu (ukazatel DSTI). Závazný horní limit DSTI sice ČNB od roku 2023 nevyžaduje, ale většina bank tuto hranici i tak posuzuje a žádost by zamítla nebo nabídla výrazně horší podmínky.',
       tips: [
         'Zkuste v průvodci snížit cenu nemovitosti. I rozdíl 500 000 Kč může DSTI dostat pod limit.',
         'Prodloužení doby splácení (např. z 25 na 30 let) sníží měsíční splátku a tím i DSTI.',
@@ -88,7 +88,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       icon: '\u2705',
       title: 'Jste finančně připraveni na koupi',
       description:
-        'Máte dostatek úspor na akontaci, splátka hypotéky je v bezpečném poměru k vašemu příjmu a splňujete limity ČNB. Pokud jste si jisti s výběrem nemovitosti, finanční stránka vám nemusí bránit.',
+        'Máte dostatek úspor na akontaci, splátka hypotéky je v bezpečném poměru k vašemu příjmu a vejdete se do běžných bankovních limitů. Pokud jste si jisti s výběrem nemovitosti, finanční stránka vám nemusí bránit.',
       tips: [
         'Před podpisem nechte nemovitost zkontrolovat. Právní čistota (výpis z katastru, věcná břemena) a technický stav (vlhkost, elektrika, střecha) mohou výrazně ovlivnit skutečné náklady.',
         'Porovnejte nabídky alespoň 3 bank nebo využijte hypotečního poradce. Rozdíl 0,3 % na sazbě znamená na 30 letech desítky tisíc korun.',

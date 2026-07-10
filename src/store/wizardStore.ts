@@ -50,6 +50,7 @@ export type WizardAction =
   | { type: 'SET_GOALS'; goals: FinancialGoal[] }
   | { type: 'UPDATE_PROPERTY'; field: string; value: number }
   | { type: 'SET_NUMBER_OF_CHILDREN'; count: number }
+  | { type: 'SET_UNDER36'; value: boolean }
   | { type: 'UPDATE_CUSTOM_GOALS'; goals: WizardState['customGoals'] }
   | { type: 'LOAD_STATE'; state: WizardState }
   | { type: 'RESET' };
@@ -99,6 +100,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     }
     case 'SET_NUMBER_OF_CHILDREN':
       return { ...state, numberOfChildren: action.count };
+    case 'SET_UNDER36':
+      return { ...state, applicantUnder36: action.value };
     case 'UPDATE_INCOME':
       return { ...state, income: { ...state.income, [action.field]: action.value } };
     case 'UPDATE_EXPENSES':

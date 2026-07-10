@@ -11,6 +11,10 @@ export interface WizardState {
   mode: UserMode;
   numberOfChildren?: number;
 
+  // Nejmladšímu žadateli je méně než 36 let → dle ČNB vyšší limit LTV (90 %),
+  // tedy nižší povinná akontace (10 % místo 20 %).
+  applicantUnder36?: boolean;
+
   // Step 2 — Income
   income: {
     person1NetMonthly: number;

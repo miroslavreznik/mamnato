@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, monthsToSaveDownPayment, dti, dsti } from '../../src/engine/mortgage';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, downPaymentFraction, monthsToSaveDownPayment, dti, dsti } from '../../src/engine/mortgage';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -38,8 +38,27 @@ describe('monthlyMortgagePayment', () => {
 });
 
 describe('requiredDownPayment', () => {
-  it('is 20% of property price', () => {
+  it('is 20% of property price by default', () => {
     expect(requiredDownPayment(5500000)).toBe(1100000);
+  });
+
+  it('applies a custom fraction (e.g. 10% for under-36 LTV 90%)', () => {
+    expect(requiredDownPayment(5500000, 0.10)).toBe(550000);
+  });
+});
+
+describe('downPaymentFraction', () => {
+  it('is 20% by default and 10% for applicants under 36', () => {
+    expect(downPaymentFraction(makeState())).toBe(0.20);
+    expect(downPaymentFraction(makeState({ applicantUnder36: true }))).toBe(0.10);
+  });
+
+  it('under-36 halves the required down payment and shrinks the gap', () => {
+    const base = makeState({ savings: { totalSavings: 500000 } });
+    const younger = makeState({ savings: { totalSavings: 500000 }, applicantUnder36: true });
+    // required: 1,100,000 vs 550,000 → gap 600,000 vs 50,000
+    expect(downPaymentGap(base)).toBe(600000);
+    expect(downPaymentGap(younger)).toBe(50000);
   });
 });
 

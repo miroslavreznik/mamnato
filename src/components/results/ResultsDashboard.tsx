@@ -64,14 +64,40 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     setAllocations((prev) => ({ ...prev, custom: goals.map((_, i) => prev.custom[i] ?? 0) }));
   };
 
+  // Tisk / uložení do PDF — dark mód se pro tisk dočasně vypne kvůli čitelnosti.
+  const handlePrint = () => {
+    const root = document.documentElement;
+    const wasDark = root.classList.contains('dark');
+    if (wasDark) {
+      root.classList.remove('dark');
+      const restore = () => {
+        root.classList.add('dark');
+        window.removeEventListener('afterprint', restore);
+      };
+      window.addEventListener('afterprint', restore);
+    }
+    window.print();
+  };
+
   return (
     <div>
+      <div className="print-only mb-4">
+        <h1 className="text-lg font-bold text-gray-900">MámNaTo? — finanční přehled</h1>
+        <p className="text-xs text-gray-500">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
+      </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Váš finanční přehled</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Režim: {modeLabels[state.mode]}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="no-print flex flex-wrap gap-2">
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" /></svg>
+            Vytisknout / PDF
+          </button>
           <button
             onClick={onEdit}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"

@@ -1,6 +1,14 @@
 // Zdroj: ČSÚ, ČNB — datum platnosti níže
 export const DEFAULTS_DATE = '2025-01';
 
+// Stav regulace ČNB (borrower-based measures):
+//  - Závazný je jen limit LTV: max 80 %, u žadatelů do 36 let 90 %
+//    → povinná akontace 20 %, resp. 10 %.
+//  - Horní limit DSTI ČNB deaktivovala (od 7/2023), DTI (od 1/2024) — banky
+//    je ale i tak běžně posuzují jako interní obezřetnostní vodítko.
+// Hodnoty DTI/DSTI níže proto berte jako orientační bankovní vodítko, ne
+// jako závazný limit ČNB.
+
 export const DEFAULTS = {
   income: {
     person1NetMonthly: 36000,
@@ -22,9 +30,10 @@ export const DEFAULTS = {
     loanTermYears: 30,
     ownershipCosts: 5500,
   },
-  ltvRequired: 0.20,
-  dtiLimit: 8.5,
-  dstiLimit: 0.45,
+  ltvRequired: 0.20, // povinná akontace při LTV 80 %
+  ltvRequiredUnder36: 0.10, // do 36 let LTV až 90 % → akontace jen 10 %
+  dtiLimit: 8.5, // orientační bankovní vodítko (ČNB závazně nevyžaduje)
+  dstiLimit: 0.45, // orientační bankovní vodítko (ČNB závazně nevyžaduje)
   // Průměrná roční inflace ČR (dlouhodobý průměr ČNB)
   averageCzInflation: 0.03,
 } as const;

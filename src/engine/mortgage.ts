@@ -17,12 +17,21 @@ export function effectiveDownPayment(state: WizardState): number {
   return state.savings.downPaymentFromSavings ?? state.savings.totalSavings;
 }
 
-export function requiredDownPayment(propertyPrice: number): number {
-  return propertyPrice * DEFAULTS.ltvRequired;
+// Povinná akontace jako podíl ceny: 20 %, u žadatelů do 36 let jen 10 %
+// (ČNB umožňuje LTV až 90 %).
+export function downPaymentFraction(state: WizardState): number {
+  return state.applicantUnder36 ? DEFAULTS.ltvRequiredUnder36 : DEFAULTS.ltvRequired;
+}
+
+export function requiredDownPayment(
+  propertyPrice: number,
+  fraction: number = DEFAULTS.ltvRequired
+): number {
+  return propertyPrice * fraction;
 }
 
 export function downPaymentGap(state: WizardState): number {
-  const required = requiredDownPayment(state.property.targetPrice);
+  const required = requiredDownPayment(state.property.targetPrice, downPaymentFraction(state));
   return Math.max(0, required - effectiveDownPayment(state));
 }
 

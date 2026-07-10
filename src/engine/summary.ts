@@ -52,7 +52,7 @@ function propertyReadiness(state: WizardState): GoalReadiness {
   const dstiPart = isFinite(dstiPct) ? ` · DSTI ${dstiPct} %` : '';
   const headline =
     scenario.id === 'cannot_afford_dsti'
-      ? `Splátka nad limit ČNB${dstiPart}`
+      ? `Splátka nad obvyklý limit bank${dstiPart}`
       : `Na akontaci ${fmtMonths(months)}${dstiPart}`;
   return { key: 'property', label: 'Nemovitost', status, headline };
 }
