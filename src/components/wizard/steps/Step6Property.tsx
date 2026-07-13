@@ -1,6 +1,6 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
-import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction } from '../../../engine/mortgage';
+import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge } from '../../../engine/mortgage';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
 import StepNavigation from '../StepNavigation';
@@ -25,6 +25,11 @@ export default function Step6Property() {
   const lowReserve = reserve < recommendedReserve && reserve < totalSavings;
 
   const hasOther = state.goals.includes('other');
+  const youngest = youngestApplicantAge(state);
+  const oldest = oldestApplicantAge(state);
+  // Splatnost hypotéky nad obvyklou hranici (banka chce doplacení do ~70 let)
+  const ageAtPayoff = oldest !== undefined ? oldest + term : undefined;
+  const termTooLongForAge = ageAtPayoff !== undefined && ageAtPayoff > DEFAULTS.mortgageMaxAge;
 
   const setDownPayment = (v: number) => {
     const clamped = Math.max(0, Math.min(v, totalSavings));
@@ -46,21 +51,18 @@ export default function Step6Property() {
         error={price > 0 && price < 500000 ? 'Zkontrolujte zadanou cenu (min. 500 000 Kč)' : undefined}
       />
 
-      {/* ČNB: žadatelé do 36 let → LTV až 90 %, tedy nižší akontace */}
-      <label className="flex items-start gap-2 mb-6 cursor-pointer">
-        <input
-          type="checkbox"
-          checked={!!state.applicantUnder36}
-          onChange={(e) => dispatch({ type: 'SET_UNDER36', value: e.target.checked })}
-          className="mt-0.5 w-4 h-4 rounded border-gray-300"
-        />
-        <span className="text-sm text-gray-700 dark:text-gray-300">
-          Nejmladšímu žadateli je méně než 36 let
-          <span className="block text-xs text-gray-500 dark:text-gray-400">
-            ČNB u mladších žadatelů umožňuje hypotéku až na 90 % ceny (LTV), takže z vlastního stačí {reqDpPct} % místo 20 %.
-          </span>
-        </span>
-      </label>
+      {/* Akontace dle věku (ČNB: žadatelé do 36 let → LTV až 90 %) */}
+      {youngest !== undefined ? (
+        <div className="mb-6 text-xs text-gray-500 dark:text-gray-400">
+          {youngest < 36
+            ? `Nejmladšímu žadateli je ${youngest} let — díky vyššímu LTV (do 36 let) stačí akontace ${reqDpPct} % místo 20 %.`
+            : `Nejmladšímu žadateli je ${youngest} let — povinná akontace je ${reqDpPct} % (LTV 80 %).`}
+        </div>
+      ) : (
+        <div className="mb-6 text-xs text-gray-500 dark:text-gray-400">
+          Tip: zadejte věk v kroku <span className="font-medium">Příjmy</span> — žadatelům do 36 let stačí díky vyššímu LTV akontace jen 10 %.
+        </div>
+      )}
 
       {/* Down payment allocation section */}
       {totalSavings > 0 && (
@@ -136,6 +138,11 @@ export default function Step6Property() {
             <option key={y} value={y}>{y} let</option>
           ))}
         </select>
+        {termTooLongForAge && (
+          <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+            Při délce {term} let by hypotéka byla doplacena ve věku {ageAtPayoff} let. Banky obvykle chtějí splacení do {DEFAULTS.mortgageMaxAge} let — počítejte s kratší dobou splácení (a vyšší splátkou), nebo mladším spolužadatelem.
+          </p>
+        )}
       </div>
 
       <div className="mb-4">

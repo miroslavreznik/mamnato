@@ -1,7 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, allocateGoals, fourPercentTarget, yearOfReachingTarget } from '../../src/engine/savings';
+import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, allocateGoals, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
 import type { CustomGoal } from '../../src/types';
 import type { WizardState } from '../../src/types';
+
+describe('yearsUntilRetirement', () => {
+  it('is 65 minus age, at least 1', () => {
+    expect(yearsUntilRetirement(35)).toBe(30);
+    expect(yearsUntilRetirement(64)).toBe(1);
+    expect(yearsUntilRetirement(70)).toBe(1); // never below 1
+  });
+  it('falls back to 30 when age is unknown', () => {
+    expect(yearsUntilRetirement(undefined)).toBe(30);
+    expect(yearsUntilRetirement(0)).toBe(30);
+  });
+});
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
   return {

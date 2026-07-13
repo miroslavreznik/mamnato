@@ -50,7 +50,7 @@ export type WizardAction =
   | { type: 'SET_GOALS'; goals: FinancialGoal[] }
   | { type: 'UPDATE_PROPERTY'; field: string; value: number }
   | { type: 'SET_NUMBER_OF_CHILDREN'; count: number }
-  | { type: 'SET_UNDER36'; value: boolean }
+  | { type: 'SET_PERSON_AGE'; person: 1 | 2; value: number }
   | { type: 'UPDATE_CUSTOM_GOALS'; goals: WizardState['customGoals'] }
   | { type: 'LOAD_STATE'; state: WizardState }
   | { type: 'RESET' };
@@ -77,6 +77,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         updates.income = { person1NetMonthly: state.income.person1NetMonthly };
         updates.expenses = { ...state.expenses, children: 0 };
         updates.numberOfChildren = undefined;
+        updates.person2Age = undefined; // druhá osoba u jednotlivce nedává smysl
       } else if (action.mode === 'couple') {
         updates.income = {
           person1NetMonthly: state.income.person1NetMonthly,
@@ -100,8 +101,10 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     }
     case 'SET_NUMBER_OF_CHILDREN':
       return { ...state, numberOfChildren: action.count };
-    case 'SET_UNDER36':
-      return { ...state, applicantUnder36: action.value };
+    case 'SET_PERSON_AGE':
+      return action.person === 1
+        ? { ...state, person1Age: action.value }
+        : { ...state, person2Age: action.value };
     case 'UPDATE_INCOME':
       return { ...state, income: { ...state.income, [action.field]: action.value } };
     case 'UPDATE_EXPENSES':

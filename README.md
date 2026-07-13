@@ -29,11 +29,11 @@ Celá aplikace běží v prohlížeči — **žádný backend, žádné přihlá
 Krok za krokem se zeptá na vše potřebné. Kroky se přizpůsobují podle režimu a zvolených cílů:
 
 1. **Režim** — jednotlivec / pár / rodina s dětmi
-2. **Příjmy** — čisté měsíční příjmy domácnosti (u páru/rodiny i druhá osoba, rodičovský příspěvek)
+2. **Příjmy** — čisté měsíční příjmy domácnosti (u páru/rodiny i druhá osoba, rodičovský příspěvek) a nepovinný **věk** žadatelů (ovlivní akontaci, horizont spoření na důchod i splatnost hypotéky)
 3. **Výdaje** — po kategoriích, předvyplněné průměrem ČR. Zbytné výdaje lze volitelně **rozepsat do skupin** (zábava, předplatné, dovolená, nákupy) — pomůže uvědomit si, za co se vlastně platí
 4. **Úspory** — celková částka, volitelně rozdělená na běžný/spořicí účet a investice (upozorní na peníze ležící ladem)
 5. **Cíle** — nemovitost, dítě/rodina, důchod, jiné (lze vybrat víc)
-6. **Nemovitost** *(jen při cíli nemovitost)* — cena, sazba, fixace, rozdělení úspor na akontaci; přepínač **„žadatel do 36 let"** (vyšší LTV → nižší akontace)
+6. **Nemovitost** *(jen při cíli nemovitost)* — cena, sazba, fixace, rozdělení úspor na akontaci. Výše akontace se řídí věkem žadatele (do 36 let 10 %, jinak 20 %) a upozorní, pokud by hypotéka byla splacena až po ~70 letech věku
 7. **Vlastní cíle** *(jen při cíli „jiné")* — co chci, kolik potřebuji a za jak dlouho
 
 ### Výsledky (dashboard)
@@ -83,6 +83,7 @@ Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum 
 
 **Další výpočty:**
 - **Hypotéka** — standardní anuitní splátka.
+- **Věk žadatele** — nejmladší do 36 let → nižší akontace (10 %); horizont spoření na důchod se počítá do 65 let; upozornění, pokud by hypotéka byla splacena až po ~70 letech.
 - **Důchod / investice** — složené úročení; reálný výnos přes Fisherovu rovnici (očištění o inflaci), pravidlo bezpečného výběru 4 %.
 - **Cíle** — prioritní alokace disponibilní částky; u nesplnitelných cílů návrhy (prodloužit horizont, snížit částku, přesunout prioritu).
 

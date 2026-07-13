@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, downPaymentFraction, monthsToSaveDownPayment, dti, dsti } from '../../src/engine/mortgage';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, isUnder36, monthsToSaveDownPayment, dti, dsti } from '../../src/engine/mortgage';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -47,10 +47,35 @@ describe('requiredDownPayment', () => {
   });
 });
 
+describe('applicant ages', () => {
+  it('youngest/oldest ignore unset and non-positive values', () => {
+    expect(youngestApplicantAge(makeState())).toBeUndefined();
+    expect(youngestApplicantAge(makeState({ person1Age: 40, person2Age: 33 }))).toBe(33);
+    expect(oldestApplicantAge(makeState({ person1Age: 40, person2Age: 33 }))).toBe(40);
+    // age 0 means "unset"
+    expect(youngestApplicantAge(makeState({ person1Age: 0, person2Age: 41 }))).toBe(41);
+  });
+
+  it('isUnder36 uses the youngest applicant, falling back to the legacy flag', () => {
+    expect(isUnder36(makeState({ person1Age: 40, person2Age: 34 }))).toBe(true); // youngest 34
+    expect(isUnder36(makeState({ person1Age: 40 }))).toBe(false);
+    expect(isUnder36(makeState({ person1Age: 36 }))).toBe(false); // exactly 36 is not "under"
+    // no ages → legacy boolean still honoured (old saved states)
+    expect(isUnder36(makeState({ applicantUnder36: true }))).toBe(true);
+    expect(isUnder36(makeState())).toBe(false);
+  });
+});
+
 describe('downPaymentFraction', () => {
   it('is 20% by default and 10% for applicants under 36', () => {
     expect(downPaymentFraction(makeState())).toBe(0.20);
     expect(downPaymentFraction(makeState({ applicantUnder36: true }))).toBe(0.10);
+  });
+
+  it('derives from real ages when provided', () => {
+    expect(downPaymentFraction(makeState({ person1Age: 30 }))).toBe(0.10);
+    expect(downPaymentFraction(makeState({ person1Age: 45, person2Age: 33 }))).toBe(0.10); // youngest 33
+    expect(downPaymentFraction(makeState({ person1Age: 45 }))).toBe(0.20);
   });
 
   it('under-36 halves the required down payment and shrinks the gap', () => {

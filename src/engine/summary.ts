@@ -2,7 +2,7 @@ import type { WizardState } from '../types';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from './cashflow';
 import { dsti, monthsToSaveDownPayment } from './mortgage';
 import { evaluateScenario } from './scenarios';
-import { retirementProjection, allocateGoals } from './savings';
+import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
 import type { GoalAllocations } from './allocation';
 
 export type OverallStatusKey = 'good' | 'tight' | 'not_yet' | 'fix_budget';
@@ -57,12 +57,12 @@ function propertyReadiness(state: WizardState): GoalReadiness {
   return { key: 'property', label: 'Nemovitost', status, headline };
 }
 
-function retirementReadiness(allocations: GoalAllocations): GoalReadiness {
+function retirementReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const monthly = allocations.retirement;
   if (monthly <= 0) {
     return { key: 'retirement', label: 'Důchod', status: 'warning', headline: 'Zatím na důchod nespoříte' };
   }
-  const years = 30;
+  const years = yearsUntilRetirement(state.person1Age);
   const projection = retirementProjection(monthly, years, 0.07);
   const finalValue = projection[projection.length - 1]?.portfolioValue ?? 0;
   const monthlyRent = finalValue * 0.04 / 12;
@@ -117,7 +117,7 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
 
   const goals: GoalReadiness[] = [];
   if (state.goals.includes('property')) goals.push(propertyReadiness(state));
-  if (state.goals.includes('retirement')) goals.push(retirementReadiness(allocations));
+  if (state.goals.includes('retirement')) goals.push(retirementReadiness(state, allocations));
   if (state.goals.includes('child')) goals.push(childReadiness(allocations));
   if (state.goals.includes('other')) goals.push(customReadiness(state, allocations));
 

@@ -172,6 +172,13 @@ export function investmentComparison(
   return result;
 }
 
+// Počet let do důchodu z věku žadatele (min. 1 rok). Když věk není znám,
+// vrací výchozích 30 let.
+export function yearsUntilRetirement(age: number | undefined): number {
+  if (age === undefined || age <= 0) return 30;
+  return Math.max(1, Math.round(DEFAULTS.retirementAge - age));
+}
+
 // Cílová hodnota portfolia pro požadovanou měsíční rentu dle pravidla bezpečného výběru.
 // Při 4 % ročně: portfolio × 0,04 = roční renta → portfolio = měsíční renta × 12 / 0,04 (= × 300).
 export function fourPercentTarget(monthlyIncome: number, withdrawalRate: number = 0.04): number {

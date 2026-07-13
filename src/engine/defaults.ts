@@ -32,6 +32,8 @@ export const DEFAULTS = {
   },
   ltvRequired: 0.20, // povinná akontace při LTV 80 %
   ltvRequiredUnder36: 0.10, // do 36 let LTV až 90 % → akontace jen 10 %
+  retirementAge: 65, // orientační věk odchodu do důchodu (horizont spoření na stáří)
+  mortgageMaxAge: 70, // banka obvykle vyžaduje doplacení hypotéky do ~70 let
   dtiLimit: 8.5, // orientační bankovní vodítko (ČNB závazně nevyžaduje)
   dstiLimit: 0.45, // orientační bankovní vodítko (ČNB závazně nevyžaduje)
   // Průměrná roční inflace ČR (dlouhodobý průměr ČNB)

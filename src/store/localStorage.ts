@@ -54,6 +54,8 @@ export function normalizeState(raw: unknown): WizardState | null {
     mode,
     numberOfChildren: typeof raw.numberOfChildren === 'number' ? raw.numberOfChildren : base.numberOfChildren,
     applicantUnder36: typeof raw.applicantUnder36 === 'boolean' ? raw.applicantUnder36 : undefined,
+    person1Age: typeof raw.person1Age === 'number' ? raw.person1Age : undefined,
+    person2Age: typeof raw.person2Age === 'number' ? raw.person2Age : undefined,
     income: {
       person1NetMonthly: num(rIncome.person1NetMonthly, base.income.person1NetMonthly),
       person2NetMonthly: rIncome.person2NetMonthly != null ? num(rIncome.person2NetMonthly, 0) : undefined,

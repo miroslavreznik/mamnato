@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { WizardState } from '../../types';
 import { monthlyDisposable } from '../../engine/cashflow';
-import { retirementProjection, fourPercentTarget, yearOfReachingTarget } from '../../engine/savings';
+import { retirementProjection, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../engine/savings';
 import { DEFAULTS } from '../../engine/defaults';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
@@ -27,7 +27,7 @@ export default function RetirementPlanner({ state }: Props) {
   const instruments = instrumentDefs.map((i) => ({ ...i, color: colors[i.colorRole] }));
   const disposable = monthlyDisposable(state);
   const [monthlyAmount, setMonthlyAmount] = useState(Math.max(0, Math.round(disposable * 0.3)));
-  const [yearsToRetirement, setYearsToRetirement] = useState(30);
+  const [yearsToRetirement, setYearsToRetirement] = useState(() => yearsUntilRetirement(state.person1Age));
   const [monthlyRent, setMonthlyRent] = useState(30000);
   const [rates, setRates] = useState(() =>
     Object.fromEntries(instruments.map((i) => [i.key, i.rate]))
