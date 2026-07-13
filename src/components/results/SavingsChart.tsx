@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import type { WizardState } from '../../types';
 import { savingsProjection } from '../../engine/savings';
-import { requiredDownPayment, downPaymentGap, effectiveDownPayment } from '../../engine/mortgage';
+import { requiredDownPayment, downPaymentGap, downPaymentFraction } from '../../engine/mortgage';
 import { monthlyDisposable } from '../../engine/cashflow';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import Alert from '../ui/Alert';
@@ -13,9 +12,15 @@ interface Props {
 
 export default function SavingsChart({ state }: Props) {
   const colors = useChartColors();
-  const disposable = monthlyDisposable(state);
   const gap = downPaymentGap(state);
-  const [showChart, setShowChart] = useState(gap > 0);
+
+  // Akontaci už máte našetřenou → graf „za jak dlouho na ni dosáhnu" nedává
+  // smysl, kartu proto vůbec nezobrazujeme (pokrytí akontace řeší kalkulačka
+  // nemovitosti).
+  if (gap <= 0) return null;
+
+  const disposable = monthlyDisposable(state);
+  const downPayment = requiredDownPayment(state.property.targetPrice, downPaymentFraction(state));
 
   if (disposable <= 0) {
     return (
@@ -26,33 +31,6 @@ export default function SavingsChart({ state }: Props) {
     );
   }
 
-  const downPayment = requiredDownPayment(state.property.targetPrice);
-  const savings = effectiveDownPayment(state);
-  const reserve = savings - downPayment;
-
-  // Down payment already covered — show confirmation
-  if (gap <= 0 && !showChart) {
-    return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Vývoj úspor v čase</h3>
-        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-          <p className="text-green-700 dark:text-green-400">
-            Na akontaci již máte dost. Vaše úspory ({savings.toLocaleString('cs-CZ')} Kč)
-            pokrývají potřebnou akontaci ({downPayment.toLocaleString('cs-CZ')} Kč)
-            s rezervou {reserve.toLocaleString('cs-CZ')} Kč.
-          </p>
-        </div>
-        <button
-          onClick={() => setShowChart(true)}
-          className="mt-3 text-sm text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          Zobrazit graf vývoje úspor
-        </button>
-      </div>
-    );
-  }
-
-  // Show chart
   const projection = savingsProjection(state, 120);
   const intersectMonth = projection.find((p) => p.savings >= downPayment)?.month;
 
@@ -69,11 +47,6 @@ export default function SavingsChart({ state }: Props) {
       {intersectMonth !== undefined && intersectMonth > 0 && (
         <p className="text-sm text-green-600 mb-4">
           Na akontaci dosáhnete za {Math.floor(intersectMonth / 12)} let a {intersectMonth % 12} měsíců.
-        </p>
-      )}
-      {intersectMonth !== undefined && intersectMonth === 0 && (
-        <p className="text-sm text-green-600 mb-4">
-          Na akontaci již máte dostatek úspor.
         </p>
       )}
       {intersectMonth === undefined && (
@@ -107,15 +80,6 @@ export default function SavingsChart({ state }: Props) {
           <Area type="monotone" dataKey="savings" stroke={colors.primary} strokeWidth={2} fill="url(#savings-grad)" dot={false} />
         </AreaChart>
       </ResponsiveContainer>
-
-      {gap <= 0 && (
-        <button
-          onClick={() => setShowChart(false)}
-          className="mt-3 text-sm text-gray-500 dark:text-gray-400 hover:underline"
-        >
-          Skrýt graf
-        </button>
-      )}
     </div>
   );
 }
