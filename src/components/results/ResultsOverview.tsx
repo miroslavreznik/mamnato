@@ -4,6 +4,7 @@ import { evaluateOverall } from '../../engine/summary';
 import type { GoalStatus, OverallStatusKey } from '../../engine/summary';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
 import { postPurchaseRunwayMonths } from '../../engine/mortgage';
+import Tooltip from '../ui/Tooltip';
 
 interface Props {
   state: WizardState;
@@ -51,19 +52,30 @@ export default function ResultsOverview({ state, allocations }: Props) {
       {/* KPI dlaždice */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Disponibilní částka</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+            Disponibilní částka
+            <Tooltip text="Kolik vám měsíčně zbyde po odečtení všech výdajů od čistých příjmů (příjmy − výdaje). Z této částky spoříte na cíle a tvoříte rezervu." />
+          </span>
           <p className={`text-xl font-bold ${disposable >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
             {disposable >= 0 ? '+' : ''}{fmt(disposable)} <span className="text-sm font-normal text-gray-400">Kč/měs</span>
           </p>
         </div>
         <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Míra úspor</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+            Míra úspor
+            <Tooltip text="Jaký podíl čistého příjmu vám po výdajích zbývá (disponibilní částka ÷ příjem). Zdravé bývá aspoň 10–20 %." />
+          </span>
           <p className="text-xl font-bold text-gray-900 dark:text-white">
             {(rate * 100).toFixed(1)} <span className="text-sm font-normal text-gray-400">%</span>
           </p>
         </div>
         <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400">{hasProperty ? 'Rezerva po koupi vydrží' : 'Rezerva vydrží'}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+            {hasProperty ? 'Rezerva po koupi vydrží' : 'Rezerva vydrží'}
+            <Tooltip text={hasProperty
+              ? 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu — počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.'
+              : 'Kolik měsíců by vaše úspory pokryly nezbytné výdaje při výpadku příjmu (úspory ÷ nezbytné výdaje). Ideál je 3–6 měsíců.'} />
+          </span>
           <p className={`text-xl font-bold ${runway >= 6 ? 'text-emerald-600 dark:text-emerald-400' : runway >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
             {runwayLabel}
           </p>

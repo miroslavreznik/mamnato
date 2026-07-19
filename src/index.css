@@ -35,9 +35,9 @@ input[type="number"] {
   .no-print {
     display: none !important;
   }
-  /* Karty výsledků nerozdělovat přes stránky */
-  main > div > div {
-    break-inside: avoid;
+  /* Obsah se přirozeně stránkuje; nadpis sekce nenechávat samotný na konci stránky */
+  section > button {
+    break-after: avoid;
   }
   main {
     max-width: none !important;
