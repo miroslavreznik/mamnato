@@ -101,6 +101,29 @@ test('výsledky jsou v sekcích — „Bydlení" je sbalené a otevře se z navi
   await expect(page.getByRole('heading', { name: 'Kalkulačka nemovitosti' })).toBeVisible()
 })
 
+test('odškrtnutí výdaje v grafu přepočítá celý souhrn (dynamické výsledky)', async ({ page }) => {
+  await goToGoals(page)
+  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  // výchozí jednotlivec: příjem 36 000, výdaje 29 000 → disponibilní +7 000
+  await expect(page.getByText(/\+7.000/).first()).toBeVisible()
+  // odškrtnout zbytné výdaje (3 000) v grafu rozpočtu → disponibilní +10 000
+  await page.getByRole('button', { name: /Zbytné/ }).first().click()
+  await expect(page.getByText(/\+10.000/).first()).toBeVisible()
+})
+
+test('částka na důchod je sdílená mezi rozpočtem a kalkulačkou důchodu', async ({ page }) => {
+  await goToGoals(page)
+  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  const budgetInput = page.getByLabel('Spoření na důchod')
+  await budgetInput.click()
+  await page.keyboard.press('Control+a')
+  await budgetInput.pressSequentially('5000')
+  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await expect(page.getByLabel('Měsíční částka k investování')).toHaveValue(/5.000/)
+})
+
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {
   const ctx1 = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] })
   const page = await ctx1.newPage()

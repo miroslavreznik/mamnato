@@ -62,6 +62,22 @@ export function expenseCategories(
   return cats.filter((c) => c.amount > 0);
 }
 
+// Vrátí stav s vynulovanými odškrtnutými výdajovými kategoriemi. Slouží k tomu,
+// aby odškrtnutí položky v grafu rozpočtu přepočítalo CELOU výsledkovou stránku
+// (verdikt, cash flow, rezervu…), ne jen samotný graf.
+export function withExcludedExpenses(state: WizardState, excluded: Set<string>): WizardState {
+  if (excluded.size === 0) return state;
+  const e = { ...state.expenses };
+  if (excluded.has('housing')) { e.rent = 0; e.utilities = 0; }
+  if (excluded.has('food')) e.food = 0;
+  if (excluded.has('transport')) e.transport = 0;
+  if (excluded.has('insurance')) e.insurance = 0;
+  if (excluded.has('existingLoans')) e.existingLoans = 0;
+  if (excluded.has('children')) e.children = 0;
+  if (excluded.has('other')) { e.other = 0; e.discretionaryBreakdown = undefined; }
+  return { ...state, expenses: e };
+}
+
 // Přebytek příjmu po odečtení zapnutých kategorií (odškrtnuté klíče se ignorují).
 export function breakdownSurplus(
   state: WizardState,

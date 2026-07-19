@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import ResultsOverview from './ResultsOverview';
 import ExpenseBreakdownChart from './ExpenseBreakdownChart';
@@ -19,6 +19,7 @@ import ResultsSection from './ResultsSection';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
+import { withExcludedExpenses } from '../../engine/expenseBreakdown';
 import { parentalLeaveApplicable } from '../../engine/parentalLeave';
 import type { CustomGoal, ParentalLeave } from '../../types';
 import { saveState } from '../../store/localStorage';
@@ -67,6 +68,15 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     setOpenSections((prev) => new Set(prev).add(id));
     requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
+
+  // Odškrtnuté výdajové kategorie z grafu rozpočtu — platí pro celou stránku.
+  const [excludedExpenses, setExcludedExpenses] = useState<Set<string>>(() => new Set());
+  // „Živý" stav, ze kterého počítají všechny karty (kromě grafu rozpočtu, který
+  // potřebuje původní výdaje, aby šlo kategorie zase zapnout).
+  const activeState = useMemo(
+    () => withExcludedExpenses(state, excludedExpenses),
+    [state, excludedExpenses]
+  );
 
   const [allocations, setAllocations] = useState<GoalAllocations>(() =>
     calculateDefaultAllocations(state)
@@ -200,11 +210,13 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
       <div className="space-y-4">
         {/* Souhrn — hlavní odpověď „vyjde mi to?" */}
         <ResultsSection id="souhrn" title="Souhrn" subtitle="Verdikt, rozpočet a připravenost cílů" open={isOpen('souhrn')} onToggle={() => toggleSection('souhrn')}>
-          <ResultsOverview state={state} allocations={allocations} />
+          <ResultsOverview state={activeState} allocations={allocations} />
           <ExpenseBreakdownChart
             state={state}
             allocations={allocations}
             onChangeAllocation={handleChangeAllocation}
+            excluded={excludedExpenses}
+            setExcluded={setExcludedExpenses}
           />
           {hasNoGoals && (
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
@@ -216,30 +228,36 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         {/* Bydlení a hypotéka */}
         {hasProperty && (
           <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
-            <SavingsChart state={state} />
-            <PropertyAffordability state={state} />
-            <DtiDstiIndicator state={state} />
-            <MortgageVsRent state={state} />
-            <CashFlowAfterChart state={state} />
-            <InvestmentComparisonChart state={state} />
+            <SavingsChart state={activeState} />
+            <PropertyAffordability state={activeState} />
+            <DtiDstiIndicator state={activeState} />
+            <MortgageVsRent state={activeState} />
+            <CashFlowAfterChart state={activeState} />
+            <InvestmentComparisonChart state={activeState} />
           </ResultsSection>
         )}
 
         {/* Cíle */}
         {hasGoalPlanners && (
           <ResultsSection id="cile" title="Cíle" subtitle="Důchod, dítě, rodičovská a vlastní cíle" open={isOpen('cile')} onToggle={() => toggleSection('cile')}>
-            {hasRetirement && <RetirementPlanner state={state} plannedMonthly={allocations.retirement} />}
-            {hasChild && <ChildCostPlanner state={state} />}
-            {hasLeave && <ParentalLeavePlanner state={state} onChange={handleChangeParentalLeave} />}
-            {hasOther && <CustomGoalPlanner state={state} onChangeGoals={handleChangeCustomGoals} />}
+            {hasRetirement && (
+              <RetirementPlanner
+                state={activeState}
+                monthlyContribution={allocations.retirement}
+                onChangeContribution={(v) => handleChangeAllocation('retirement', null, v)}
+              />
+            )}
+            {hasChild && <ChildCostPlanner state={activeState} />}
+            {hasLeave && <ParentalLeavePlanner state={activeState} onChange={handleChangeParentalLeave} />}
+            {hasOther && <CustomGoalPlanner state={activeState} onChangeGoals={handleChangeCustomGoals} />}
           </ResultsSection>
         )}
 
         {/* Podrobný rozpočet */}
         <ResultsSection id="rozpocet" title="Podrobný rozpočet" subtitle="Příjmy, výdaje a disponibilní částka" open={isOpen('rozpocet')} onToggle={() => toggleSection('rozpocet')}>
-          <CashFlowSummary state={state} />
-          {hasDiscretionaryBreakdown(state.expenses.discretionaryBreakdown) && (
-            <DiscretionaryBreakdownChart state={state} />
+          <CashFlowSummary state={activeState} />
+          {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
+            <DiscretionaryBreakdownChart state={activeState} />
           )}
         </ResultsSection>
 

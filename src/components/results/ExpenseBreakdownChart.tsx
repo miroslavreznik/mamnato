@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, type Dispatch, type SetStateAction } from 'react';
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
 import { incomeFlow } from '../../engine/expenseBreakdown';
@@ -11,6 +11,9 @@ interface Props {
   state: WizardState;
   allocations: GoalAllocations;
   onChangeAllocation: (goal: string, index: number | null, value: number) => void;
+  // Odškrtnuté výdajové kategorie drží dashboard, aby přepočet platil pro celou stránku.
+  excluded: Set<string>;
+  setExcluded: Dispatch<SetStateAction<Set<string>>>;
 }
 
 interface Row {
@@ -50,9 +53,8 @@ function GoalInput({ label, value, onChange }: { label: string; value: number; o
   );
 }
 
-export default function ExpenseBreakdownChart({ state, allocations, onChangeAllocation }: Props) {
+export default function ExpenseBreakdownChart({ state, allocations, onChangeAllocation, excluded, setExcluded }: Props) {
   const colors = useChartColors();
-  const [excluded, setExcluded] = useState<Set<string>>(new Set());
 
   const hasProperty = state.goals.includes('property');
 

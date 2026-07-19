@@ -20,18 +20,18 @@ const instrumentDefs = [
 
 interface Props {
   state: WizardState;
-  // Kolik na důchod plánujete měsíčně dávat (z rozpočtu) — přednastaví kalkulačku,
-  // aby neukazovala jiné číslo než souhrn a graf rozpočtu.
-  plannedMonthly?: number;
+  // Kolik na důchod plánujete měsíčně dávat — sdílené s rozpočtem, takže změna
+  // se projeví i v grafu rozpočtu a ve verdiktu (a naopak).
+  monthlyContribution: number;
+  onChangeContribution: (value: number) => void;
 }
 
-export default function RetirementPlanner({ state, plannedMonthly }: Props) {
+export default function RetirementPlanner({ state, monthlyContribution, onChangeContribution }: Props) {
   const colors = useChartColors();
   const instruments = instrumentDefs.map((i) => ({ ...i, color: colors[i.colorRole] }));
   const disposable = monthlyDisposable(state);
-  const [monthlyAmount, setMonthlyAmount] = useState(
-    plannedMonthly && plannedMonthly > 0 ? plannedMonthly : Math.max(0, Math.round(disposable * 0.3))
-  );
+  const monthlyAmount = monthlyContribution;
+  const setMonthlyAmount = onChangeContribution;
   const [yearsToRetirement, setYearsToRetirement] = useState(() => yearsUntilRetirement(state.person1Age));
   const [monthlyRent, setMonthlyRent] = useState(30000);
   const [rates, setRates] = useState(() =>
