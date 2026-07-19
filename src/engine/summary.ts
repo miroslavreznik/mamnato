@@ -67,11 +67,32 @@ function retirementReadiness(state: WizardState, allocations: GoalAllocations): 
   const projection = retirementProjection(monthly, years, 0.07);
   const finalValue = projection[projection.length - 1]?.portfolioValue ?? 0;
   const monthlyRent = finalValue * 0.04 / 12;
+  // Renta pod ~8 000 Kč/měs je spíš doplněk k důchodu než plnohodnotný příjem.
+  const modest = monthlyRent < 8000;
   return {
     key: 'retirement',
     label: 'Důchod',
-    status: 'good',
-    headline: `${monthly.toLocaleString('cs-CZ')} Kč/měs → ~${Math.round(monthlyRent).toLocaleString('cs-CZ')} Kč renty`,
+    status: modest ? 'caution' : 'good',
+    headline: `${monthly.toLocaleString('cs-CZ')} Kč/měs → ~${Math.round(monthlyRent).toLocaleString('cs-CZ')} Kč renty${modest ? ' (zatím spíš doplněk)' : ''}`,
+  };
+}
+
+// Připravenost na výpadek příjmu během rodičovské (jen když je scénář zapnutý).
+function leaveReadiness(state: WizardState): GoalReadiness | null {
+  const leave = evaluateParentalLeave(state);
+  if (!leave) return null;
+  const relevant = leave.disposableDuringLeaveAfterPurchase !== null
+    ? leave.disposableDuringLeaveAfterPurchase
+    : leave.disposableDuringLeave;
+  const fmt = (n: number) => Math.round(Math.abs(n)).toLocaleString('cs-CZ');
+  if (relevant < 0) {
+    return { key: 'leave', label: 'Rodičovská', status: 'warning', headline: `Během volna −${fmt(relevant)} Kč/měs (schodek)` };
+  }
+  return {
+    key: 'leave',
+    label: 'Rodičovská',
+    status: relevant < 3000 ? 'caution' : 'good',
+    headline: `Během volna ${fmt(relevant)} Kč/měs volných`,
   };
 }
 
@@ -121,6 +142,8 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   if (state.goals.includes('retirement')) goals.push(retirementReadiness(state, allocations));
   if (state.goals.includes('child')) goals.push(childReadiness(allocations));
   if (state.goals.includes('other')) goals.push(customReadiness(state, allocations));
+  const leaveRow = leaveReadiness(state);
+  if (leaveRow) goals.push(leaveRow); // schodek během volna → status se sám sníží (warning)
 
   // Rozpočtový souhrn počítá jen skutečné měsíční spoření na cíle (důchod/dítě/vlastní).
   // Hypotéka NENÍ „spoření" — je to budoucí výdaj na bydlení, který nahradí nájem;
@@ -162,12 +185,24 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
     if (hasWarning || worstProperty) {
       status = 'not_yet';
       description = 'Rozpočet zvládáte, ale některý z cílů zatím naráží na limity. Podívejte se na jeho detail níže — často pomůže upravit parametry nebo horizont.';
+      tips = [
+        'Podívejte se na detail cíle, který naráží na limity, a upravte jeho částku nebo horizont.',
+        'Prioritizujte — některé cíle mohou počkat, jiné jsou teď důležitější.',
+      ];
     } else if (hasCaution || runway < 3 || rate < 0.1) {
       status = 'tight';
       description = 'Vaše cíle jsou dosažitelné, ale rezerva je napjatá. Před velkými kroky je dobré mít nouzový fond na 3–6 měsíců výdajů a nechat si v rozpočtu prostor.';
+      tips = [
+        'Vytvořte si nouzový fond na 3–6 měsíců výdajů — dá rozpočtu odolnost.',
+        'Projděte zbytné výdaje; i menší úspora zvětší rezervu.',
+      ];
     } else {
       status = 'good';
       description = 'Rozpočet máte v plusu, cíle se do disponibilní částky vejdou a máte i rezervu. Můžete pokračovat a jednotlivé cíle si doladit níže.';
+      tips = [
+        'Máte prostor — zvažte navýšení spoření nebo investování volné rezervy pro rychlejší růst.',
+        'Držte si nouzový fond 3–6 měsíců výdajů pro nečekané situace.',
+      ];
     }
   }
 
