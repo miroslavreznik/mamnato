@@ -41,6 +41,7 @@ export default function Step6Property() {
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Cílová nemovitost</h2>
       <p className="text-gray-500 dark:text-gray-400 mb-6">Zadejte parametry nemovitosti, kterou chcete koupit.</p>
 
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Nemovitost a úspory</h3>
       <NumberInput
         label="Cílová cena nemovitosti"
         value={price}
@@ -116,6 +117,7 @@ export default function Step6Property() {
         step={500}
       />
 
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">Parametry hypotéky</h3>
       <NumberInput
         label="Úroková sazba hypotéky"
         value={Math.round(rate * 1000) / 10}

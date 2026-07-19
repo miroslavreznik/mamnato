@@ -57,6 +57,7 @@ export default function Step3Expenses() {
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vaše výdaje</h2>
       <p className="text-gray-500 dark:text-gray-400 mb-6">Zadejte měsíční výdaje po kategoriích. Hodnoty jsou předvyplněny průměrem ČR.</p>
 
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Nezbytné výdaje</h3>
       {visibleCategories.map((cat) => (
         <NumberInput
           key={cat.field}
@@ -69,6 +70,7 @@ export default function Step3Expenses() {
       ))}
 
       {/* Zbytné výdaje — buď jedním polem, nebo podrobným rozpisem do skupin */}
+      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">Zbytné výdaje</h3>
       <NumberInput
         label="Zbytné výdaje (zábava, dovolená, koníčky, předplatné)"
         value={state.expenses.other}
@@ -131,12 +133,17 @@ export default function Step3Expenses() {
         </div>
       )}
 
-      <div className="mt-4">
+      {/* Zbývající dluhy — zůstatek (ne měsíční výdaj), pro výpočet DTI */}
+      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Zbývající dluhy (nepovinné)</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          Tohle není měsíční splátka, ale celkový <span className="font-medium">zůstatek</span> k doplacení. Slouží k výpočtu ukazatele DTI (poměr dluhu k příjmu).
+        </p>
         <NumberInput
-          label="Zůstatek stávajících úvěrů (nepovinné)"
+          label="Kolik ještě zbývá doplatit na úvěrech"
           value={state.existingDebtPrincipal ?? 0}
           onChange={(v) => dispatch({ type: 'UPDATE_DEBT_PRINCIPAL', value: v })}
-          tooltip="Zbývající jistina k doplacení u stávajících úvěrů (spotřebitelské úvěry, leasingy). Nezadávejte splátku, ale celkový zůstatek dluhu. Slouží k výpočtu ukazatele DTI dle ČNB, který se počítá z celkového dluhu."
+          tooltip="Zbývající jistina u stávajících úvěrů (spotřebitelské úvěry, leasingy). Zadejte celkový zůstatek dluhu, ne splátku. Nová hypotéka se přičítá zvlášť."
           step={50000}
         />
       </div>

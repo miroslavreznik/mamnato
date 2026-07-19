@@ -78,10 +78,10 @@ export default function Step2Income() {
 
       {isFamily && (
         <NumberInput
-          label="Rodičovský příspěvek / ostatní příjmy"
+          label="Rodičovský příspěvek / ostatní příjmy (nyní)"
           value={state.income.parentalAllowance ?? 0}
           onChange={(v) => dispatch({ type: 'UPDATE_INCOME', field: 'parentalAllowance', value: v })}
-          tooltip="Zahrnuje rodičovský příspěvek, přídavky na děti a jiné pravidelné příjmy."
+          tooltip="Jen příjmy, které máte teď — rodičovský příspěvek, přídavky na děti, jiné pravidelné příjmy. Budoucí výpadek příjmu na rodičovské se počítá zvlášť ve výsledcích (karta Rodičovská)."
           step={1000}
         />
       )}

@@ -75,7 +75,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         </button>
       </div>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        Po dobu volna nahradí mzdu pečujícího rodiče dávky. Parametry si upravte podle sebe.
+        Budoucí scénář: po dobu volna nahradí mzdu pečujícího rodiče dávky. Parametry si upravte podle sebe.
       </p>
 
       {/* Ovládání scénáře */}
