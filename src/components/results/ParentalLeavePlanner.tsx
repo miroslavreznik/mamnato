@@ -32,6 +32,14 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
     if (pl) onChange({ ...pl, ...patch });
   };
 
+  // Rodičovský příspěvek je fixní balík — kratší volno = vyšší měsíční dávka.
+  // Při změně délky proto dopočítáme dávku, pokud si ji uživatel ručně neupravil.
+  const changeDuration = (durationMonths: number) => {
+    if (!pl) return;
+    const wasDefault = pl.monthlyBenefit === defaultMonthlyBenefit(pl.durationMonths);
+    update(wasDefault ? { durationMonths, monthlyBenefit: defaultMonthlyBenefit(durationMonths) } : { durationMonths });
+  };
+
   if (!enabled || !impact) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -103,7 +111,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Délka volna (měsíce)</label>
           <NumField
             value={impact.durationMonths}
-            onChange={(v) => update({ durationMonths: v })}
+            onChange={changeDuration}
             min={1}
             max={48}
             ariaLabel="Délka volna v měsících"
@@ -119,7 +127,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             ariaLabel="Měsíční příjem během volna"
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
           />
-          <p className="mt-1 text-[10px] text-gray-400">≈ rodičovská 350 000 Kč / {impact.durationMonths} měs. Mateřská bývá zpočátku vyšší.</p>
+          <p className="mt-1 text-[10px] text-gray-400">Rodičovská 350 000 Kč se rozloží podle délky (kratší volno = vyšší dávka). Mateřská bývá zpočátku vyšší — částku můžete upravit.</p>
         </div>
       </div>
 

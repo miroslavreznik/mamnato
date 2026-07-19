@@ -81,6 +81,12 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await expect(page.getByText('Rodičovská: co udělá s rozpočtem')).toBeVisible()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await expect(page.getByText('Příjem během volna', { exact: true })).toBeVisible()
+  // Fixní balík rodičovské: kratší volno → vyšší měsíční dávka (350 000 / 18 ≈ 19 444)
+  const duration = page.getByLabel('Délka volna v měsících')
+  await duration.click()
+  await page.keyboard.press('Control+a')
+  await duration.pressSequentially('18')
+  await expect(page.getByLabel('Měsíční příjem během volna')).toHaveValue(/19.444/)
 })
 
 test('výsledky jsou v sekcích — „Bydlení" je sbalené a otevře se z navigace', async ({ page }) => {
