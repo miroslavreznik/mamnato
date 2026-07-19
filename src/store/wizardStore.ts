@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { WizardState, UserMode, FinancialGoal, SavingsBreakdown } from '../types';
+import type { WizardState, UserMode, FinancialGoal, SavingsBreakdown, ParentalLeave } from '../types';
 import { DEFAULTS } from '../engine/defaults';
 
 export function createInitialState(): WizardState {
@@ -52,6 +52,7 @@ export type WizardAction =
   | { type: 'SET_NUMBER_OF_CHILDREN'; count: number }
   | { type: 'SET_PERSON_AGE'; person: 1 | 2; value: number }
   | { type: 'UPDATE_CUSTOM_GOALS'; goals: WizardState['customGoals'] }
+  | { type: 'SET_PARENTAL_LEAVE'; value: ParentalLeave | undefined }
   | { type: 'LOAD_STATE'; state: WizardState }
   | { type: 'RESET' };
 
@@ -139,6 +140,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       return { ...state, property: { ...state.property, [action.field]: action.value } };
     case 'UPDATE_CUSTOM_GOALS':
       return { ...state, customGoals: action.goals };
+    case 'SET_PARENTAL_LEAVE':
+      return { ...state, parentalLeave: action.value };
     case 'LOAD_STATE':
       return action.state;
     case 'RESET':

@@ -13,11 +13,13 @@ import InvestmentComparisonChart from './InvestmentComparisonChart';
 import RetirementPlanner from './RetirementPlanner';
 import CustomGoalPlanner from './CustomGoalPlanner';
 import ChildCostPlanner from './ChildCostPlanner';
+import ParentalLeavePlanner from './ParentalLeavePlanner';
 import EducationalGlossary from './EducationalGlossary';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
-import type { CustomGoal } from '../../types';
+import { parentalLeaveApplicable } from '../../engine/parentalLeave';
+import type { CustomGoal, ParentalLeave } from '../../types';
 import { saveState } from '../../store/localStorage';
 import { buildShareUrl } from '../../store/shareLink';
 import Disclaimer from '../ui/Disclaimer';
@@ -63,6 +65,12 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     setState(next);
     saveState(next);
     setAllocations((prev) => ({ ...prev, custom: goals.map((_, i) => prev.custom[i] ?? 0) }));
+  };
+
+  const handleChangeParentalLeave = (value: ParentalLeave | undefined) => {
+    const next = { ...state, parentalLeave: value };
+    setState(next);
+    saveState(next);
   };
 
   // Sdílení přehledu odkazem — stav se zakóduje do URL, nic se neposílá na server.
@@ -191,6 +199,11 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         {/* Child goal — cost planner */}
         {hasChild && (
           <ChildCostPlanner state={state} />
+        )}
+
+        {/* Rodičovská / výpadek příjmu (pár/rodina + cíl dítě) */}
+        {parentalLeaveApplicable(state) && (
+          <ParentalLeavePlanner state={state} onChange={handleChangeParentalLeave} />
         )}
 
         {/* Custom goals section */}

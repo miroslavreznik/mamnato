@@ -102,6 +102,14 @@ export function normalizeState(raw: unknown): WizardState | null {
           targetMonths: Math.max(1, num(g.targetMonths, 1)),
         }))
       : undefined,
+    parentalLeave: isRecord(raw.parentalLeave)
+      ? {
+          enabled: raw.parentalLeave.enabled === true,
+          parent: raw.parentalLeave.parent === 2 ? 2 : 1,
+          durationMonths: Math.max(1, num(raw.parentalLeave.durationMonths, 36)),
+          monthlyBenefit: Math.max(0, num(raw.parentalLeave.monthlyBenefit, 0)),
+        }
+      : undefined,
   };
 }
 

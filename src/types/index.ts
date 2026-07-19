@@ -66,6 +66,16 @@ export interface WizardState {
 
   // Custom goals (for 'other')
   customGoals?: CustomGoal[];
+
+  // Rodičovská / výpadek příjmu (pro cíl „dítě" u páru/rodiny)
+  parentalLeave?: ParentalLeave;
+}
+
+export interface ParentalLeave {
+  enabled: boolean;
+  parent: 1 | 2; // který rodič zůstane doma
+  durationMonths: number; // délka volna (mateřská + rodičovská)
+  monthlyBenefit: number; // průměrný měsíční příjem během volna (dávky)
 }
 
 export interface CustomGoal {

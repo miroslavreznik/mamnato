@@ -3,6 +3,7 @@ import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from './cashflo
 import { dsti, monthsToSaveDownPayment } from './mortgage';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
+import { evaluateParentalLeave } from './parentalLeave';
 import type { GoalAllocations } from './allocation';
 
 export type OverallStatusKey = 'good' | 'tight' | 'not_yet' | 'fix_budget';
@@ -173,6 +174,22 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   // Pokud je cíl nemovitost, převezmeme konkrétní tipy ze scénáře.
   if (state.goals.includes('property') && status !== 'fix_budget') {
     tips = evaluateScenario(state).tips;
+  }
+
+  // Rodičovská: upozornit, když v období volna klesne příjem do mínusu
+  // (po zaplacení splátky, resp. výdajů).
+  const leave = evaluateParentalLeave(state);
+  if (leave) {
+    const problem =
+      leave.disposableDuringLeaveAfterPurchase !== null
+        ? leave.disposableDuringLeaveAfterPurchase < 0
+        : leave.disposableDuringLeave < 0;
+    if (problem) {
+      tips = [
+        ...tips,
+        'Během rodičovské klesne příjem a rozpočet by se v tomto období dostal do mínusu. Počítejte s rezervou na dobu volna, levnější nemovitostí nebo kratší rodičovskou.',
+      ];
+    }
   }
 
   const meta = OVERALL[status];
