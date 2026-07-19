@@ -37,6 +37,8 @@ Krok za krokem se zeptá na vše potřebné. Kroky se přizpůsobují podle rež
 7. **Vlastní cíle** *(jen při cíli „jiné")* — co chci, kolik potřebuji a za jak dlouho
 
 ### Výsledky (dashboard)
+Přehled je uspořádaný do **sbalitelných tematických sekcí** (Souhrn, Bydlení a hypotéka, Cíle, Podrobný rozpočet, Slovníček) se sticky navigací „Přejít na". Souhrn s verdiktem je otevřený, zbytek je detail na kliknutí.
+
 - **Verdikt na základě cílů** — srozumitelné shrnutí („v dosahu" / „napjaté" / „zatím ne" / „nejdřív vyrovnat rozpočet") s konkrétními tipy
 - **Rozpočet: kam jde váš příjem** — jeden graf rozdělí příjem na výdaje, spoření na jednotlivé cíle a volnou rezervu; částky na cíle jdou upravovat živě
 - **Zbytné výdaje: za co utrácíte** — rozpad podrobného rozpisu po skupinách *(když je vyplněn)*
