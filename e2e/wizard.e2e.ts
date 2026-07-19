@@ -76,9 +76,23 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await page.getByRole('button', { name: /Nemovitost/ }).first().click()
   await next(page) // → krok Nemovitost
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  // sekce „Cíle" je ve výchozím stavu sbalená → otevřít přes horní navigaci
+  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
   await expect(page.getByText('Rodičovská: co udělá s rozpočtem')).toBeVisible()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await expect(page.getByText('Příjem během volna', { exact: true })).toBeVisible()
+})
+
+test('výsledky jsou v sekcích — „Bydlení" je sbalené a otevře se z navigace', async ({ page }) => {
+  await goToGoals(page)
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // krok Nemovitost
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  await expect(page.getByText('Váš finanční přehled')).toBeVisible()
+  // Souhrn je otevřený, detail bydlení sbalený
+  await expect(page.getByRole('heading', { name: 'Kalkulačka nemovitosti' })).toBeHidden()
+  await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Kalkulačka nemovitosti' })).toBeVisible()
 })
 
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {

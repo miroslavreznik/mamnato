@@ -15,6 +15,7 @@ import CustomGoalPlanner from './CustomGoalPlanner';
 import ChildCostPlanner from './ChildCostPlanner';
 import ParentalLeavePlanner from './ParentalLeavePlanner';
 import EducationalGlossary from './EducationalGlossary';
+import ResultsSection from './ResultsSection';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
@@ -43,6 +44,29 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   const hasOther = state.goals.includes('other');
   const hasChild = state.goals.includes('child');
   const hasNoGoals = state.goals.length === 0;
+  const hasLeave = parentalLeaveApplicable(state);
+  const hasGoalPlanners = hasRetirement || hasChild || hasLeave || hasOther;
+
+  // Tematické sekce výsledků — jen ty, které dávají smysl podle cílů.
+  const sectionDefs = [
+    { id: 'souhrn', label: 'Souhrn' },
+    ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
+    ...(hasGoalPlanners ? [{ id: 'cile', label: 'Cíle' }] : []),
+    { id: 'rozpocet', label: 'Rozpočet' },
+    { id: 'slovnicek', label: 'Slovníček' },
+  ];
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(['souhrn']));
+  const isOpen = (id: string) => openSections.has(id);
+  const toggleSection = (id: string) =>
+    setOpenSections((prev) => {
+      const nextSet = new Set(prev);
+      if (nextSet.has(id)) nextSet.delete(id); else nextSet.add(id);
+      return nextSet;
+    });
+  const openAndScroll = (id: string) => {
+    setOpenSections((prev) => new Set(prev).add(id));
+    requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  };
 
   const [allocations, setAllocations] = useState<GoalAllocations>(() =>
     calculateDefaultAllocations(state)
@@ -87,19 +111,22 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     }
   };
 
-  // Tisk / uložení do PDF — dark mód se pro tisk dočasně vypne kvůli čitelnosti.
+  // Tisk / uložení do PDF — rozbalí všechny sekce (aby se vykreslily i grafy),
+  // vypne dark mód a po tisku vše vrátí zpět.
   const handlePrint = () => {
+    const prevOpen = openSections;
+    setOpenSections(new Set(sectionDefs.map((s) => s.id)));
     const root = document.documentElement;
     const wasDark = root.classList.contains('dark');
-    if (wasDark) {
-      root.classList.remove('dark');
-      const restore = () => {
-        root.classList.add('dark');
-        window.removeEventListener('afterprint', restore);
-      };
-      window.addEventListener('afterprint', restore);
-    }
-    window.print();
+    if (wasDark) root.classList.remove('dark');
+    const restore = () => {
+      if (wasDark) root.classList.add('dark');
+      setOpenSections(prevOpen);
+      window.removeEventListener('afterprint', restore);
+    };
+    window.addEventListener('afterprint', restore);
+    // Dát Rechartu čas na vykreslení po rozbalení sekcí.
+    window.setTimeout(() => window.print(), 300);
   };
 
   return (
@@ -154,65 +181,72 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         </div>
       </div>
 
-      <div className="space-y-6">
-        {/* 1) Souhrn / verdikt na základě cílů */}
-        <ResultsOverview state={state} allocations={allocations} />
+      {/* Rychlá navigace mezi sekcemi */}
+      {sectionDefs.length > 2 && (
+        <nav className="no-print sticky top-16 z-30 mb-5 -mx-4 sm:mx-0 px-4 sm:px-3 py-2 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-y sm:border sm:rounded-xl border-gray-200/80 dark:border-gray-800/80 flex flex-wrap gap-1.5">
+          <span className="text-xs text-gray-400 self-center mr-1 hidden sm:inline">Přejít na:</span>
+          {sectionDefs.map((s) => (
+            <button
+              key={s.id}
+              onClick={() => openAndScroll(s.id)}
+              className="px-3 py-1.5 text-sm rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              {s.label}
+            </button>
+          ))}
+        </nav>
+      )}
 
-        {/* 2) Souhrnný graf: kam jde příjem (výdaje + cíle + volné) + ovládání cílů */}
-        <ExpenseBreakdownChart
-          state={state}
-          allocations={allocations}
-          onChangeAllocation={handleChangeAllocation}
-        />
+      <div className="space-y-4">
+        {/* Souhrn — hlavní odpověď „vyjde mi to?" */}
+        <ResultsSection id="souhrn" title="Souhrn" subtitle="Verdikt, rozpočet a připravenost cílů" open={isOpen('souhrn')} onToggle={() => toggleSection('souhrn')}>
+          <ResultsOverview state={state} allocations={allocations} />
+          <ExpenseBreakdownChart
+            state={state}
+            allocations={allocations}
+            onChangeAllocation={handleChangeAllocation}
+          />
+          {hasNoGoals && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
+              <p className="text-amber-800 dark:text-amber-300">Vraťte se a vyberte své finanční cíle pro podrobnější analýzu.</p>
+            </div>
+          )}
+        </ResultsSection>
 
-        {/* 2b) Rozpad zbytných výdajů — jen když je vyplněn podrobný rozpis */}
-        {hasDiscretionaryBreakdown(state.expenses.discretionaryBreakdown) && (
-          <DiscretionaryBreakdownChart state={state} />
-        )}
-
-        {/* 3) Detailní cash flow */}
-        <CashFlowSummary state={state} />
-
-        {hasNoGoals && (
-          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
-            <p className="text-amber-800 dark:text-amber-300">Vraťte se a vyberte své finanční cíle pro podrobnější analýzu.</p>
-          </div>
-        )}
-
-        {/* Property goal sections */}
+        {/* Bydlení a hypotéka */}
         {hasProperty && (
-          <>
+          <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
             <SavingsChart state={state} />
             <PropertyAffordability state={state} />
             <DtiDstiIndicator state={state} />
             <MortgageVsRent state={state} />
             <CashFlowAfterChart state={state} />
             <InvestmentComparisonChart state={state} />
-          </>
+          </ResultsSection>
         )}
 
-        {/* Retirement goal section */}
-        {hasRetirement && (
-          <RetirementPlanner state={state} plannedMonthly={allocations.retirement} />
+        {/* Cíle */}
+        {hasGoalPlanners && (
+          <ResultsSection id="cile" title="Cíle" subtitle="Důchod, dítě, rodičovská a vlastní cíle" open={isOpen('cile')} onToggle={() => toggleSection('cile')}>
+            {hasRetirement && <RetirementPlanner state={state} plannedMonthly={allocations.retirement} />}
+            {hasChild && <ChildCostPlanner state={state} />}
+            {hasLeave && <ParentalLeavePlanner state={state} onChange={handleChangeParentalLeave} />}
+            {hasOther && <CustomGoalPlanner state={state} onChangeGoals={handleChangeCustomGoals} />}
+          </ResultsSection>
         )}
 
-        {/* Child goal — cost planner */}
-        {hasChild && (
-          <ChildCostPlanner state={state} />
-        )}
+        {/* Podrobný rozpočet */}
+        <ResultsSection id="rozpocet" title="Podrobný rozpočet" subtitle="Příjmy, výdaje a disponibilní částka" open={isOpen('rozpocet')} onToggle={() => toggleSection('rozpocet')}>
+          <CashFlowSummary state={state} />
+          {hasDiscretionaryBreakdown(state.expenses.discretionaryBreakdown) && (
+            <DiscretionaryBreakdownChart state={state} />
+          )}
+        </ResultsSection>
 
-        {/* Rodičovská / výpadek příjmu (pár/rodina + cíl dítě) */}
-        {parentalLeaveApplicable(state) && (
-          <ParentalLeavePlanner state={state} onChange={handleChangeParentalLeave} />
-        )}
-
-        {/* Custom goals section */}
-        {hasOther && (
-          <CustomGoalPlanner state={state} onChangeGoals={handleChangeCustomGoals} />
-        )}
-
-        {/* Educational glossary — always shown */}
-        <EducationalGlossary />
+        {/* Slovníček */}
+        <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Finanční pojmy jednoduše" open={isOpen('slovnicek')} onToggle={() => toggleSection('slovnicek')}>
+          <EducationalGlossary />
+        </ResultsSection>
       </div>
 
       <Disclaimer />
