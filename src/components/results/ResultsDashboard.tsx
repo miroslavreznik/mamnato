@@ -193,7 +193,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
 
         {/* Retirement goal section */}
         {hasRetirement && (
-          <RetirementPlanner state={state} />
+          <RetirementPlanner state={state} plannedMonthly={allocations.retirement} />
         )}
 
         {/* Child goal — cost planner */}

@@ -47,10 +47,12 @@ Krok za krokem se zeptá na vše potřebné. Kroky se přizpůsobují podle rež
 - **Koupě vs. nájem** — vývoj čistého jmění při koupi vs. investování rozdílu
 - **Důchodový plánovač** — projekce portfolia, pravidlo 4 %, porovnání výnosů
 - **Kalkulačka nákladů na dítě** a **plánovač vlastních cílů** (priority, odklad, doporučené nástroje)
+- **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)* — po dobu volna nahradí mzdu pečujícího rodiče dávky; ukáže příjem a volnou rezervu během volna, jestli během něj vyjde i splátka hypotéky, a celkový výpadek příjmu
 - **Slovníček pojmů** — LTV, akontace, DTI/DSTI, fixace…
 
 ### Napříč aplikací
 - 🌗 **Tmavý / světlý režim**
+- 🔗 **Sdílet přehled odkazem** — celý scénář se zakóduje do adresy (nic na server); příjemce si otevře stejná čísla a může si je upravit
 - 🖨️ **Vytisknout / uložit do PDF** — přehled bez aplikačního rámu, s hlavičkou a datem
 - 💾 **Automatické ukládání** do prohlížeče (lze se vrátit a pokračovat)
 - 📱 Responzivní design pro mobil i desktop
@@ -84,6 +86,7 @@ Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum 
 **Další výpočty:**
 - **Hypotéka** — standardní anuitní splátka.
 - **Věk žadatele** — nejmladší do 36 let → nižší akontace (10 %); horizont spoření na důchod se počítá do 65 let; upozornění, pokud by hypotéka byla splacena až po ~70 letech.
+- **Rodičovská** — po dobu volna se mzda pečujícího rodiče nahradí dávkami (výchozí odhad = rodičovský příspěvek 350 000 Kč / doba čerpání, nastavitelné); počítá příjem a rezervu během volna i to, jestli vyjde splátka hypotéky.
 - **Důchod / investice** — složené úročení; reálný výnos přes Fisherovu rovnici (očištění o inflaci), pravidlo bezpečného výběru 4 %.
 - **Cíle** — prioritní alokace disponibilní částky; u nesplnitelných cílů návrhy (prodloužit horizont, snížit částku, přesunout prioritu).
 
