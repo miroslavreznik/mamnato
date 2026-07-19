@@ -19,6 +19,7 @@ import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
 import type { CustomGoal } from '../../types';
 import { saveState } from '../../store/localStorage';
+import { buildShareUrl } from '../../store/shareLink';
 import Disclaimer from '../ui/Disclaimer';
 
 interface ResultsDashboardProps {
@@ -64,6 +65,20 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     setAllocations((prev) => ({ ...prev, custom: goals.map((_, i) => prev.custom[i] ?? 0) }));
   };
 
+  // Sdílení přehledu odkazem — stav se zakóduje do URL, nic se neposílá na server.
+  const [shareCopied, setShareCopied] = useState(false);
+  const handleShare = async () => {
+    const url = buildShareUrl(state);
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareCopied(true);
+      window.setTimeout(() => setShareCopied(false), 2500);
+    } catch {
+      // Kdyby clipboard nebyl dostupný, ukaž odkaz k ručnímu zkopírování.
+      window.prompt('Zkopírujte odkaz na přehled:', url);
+    }
+  };
+
   // Tisk / uložení do PDF — dark mód se pro tisk dočasně vypne kvůli čitelnosti.
   const handlePrint = () => {
     const root = document.documentElement;
@@ -91,6 +106,23 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
           <p className="text-sm text-gray-500 dark:text-gray-400">Režim: {modeLabels[state.mode]}</p>
         </div>
         <div className="no-print flex flex-wrap gap-2">
+          <button
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"
+            title="Zkopíruje odkaz, který obsahuje vaše zadaná data (v adrese). Nic se neukládá na server."
+          >
+            {shareCopied ? (
+              <>
+                <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                Odkaz zkopírován
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" /></svg>
+                Sdílet přehled
+              </>
+            )}
+          </button>
           <button
             onClick={handlePrint}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"

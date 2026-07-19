@@ -5,11 +5,13 @@ import WelcomeScreen from './components/WelcomeScreen';
 import ThemeToggle from './components/ui/ThemeToggle';
 import BrandMark from './components/ui/BrandMark';
 import { loadState, clearState } from './store/localStorage';
+import { loadedFromShare } from './store/shareLink';
 
 type View = 'welcome' | 'wizard' | 'results';
 
 function App() {
-  const [view, setView] = useState<View>('welcome');
+  // Sdílený přehled z odkazu už bootstrap uložil (viz main.tsx) → rovnou výsledky.
+  const [view, setView] = useState<View>(() => (loadedFromShare() ? 'results' : 'welcome'));
   const [returnToStep, setReturnToStep] = useState<number | null>(null);
 
   const handleComplete = useCallback(() => {
