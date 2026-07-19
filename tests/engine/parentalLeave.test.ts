@@ -61,6 +61,31 @@ describe('evaluateParentalLeave', () => {
     expect(r.disposableDuringLeaveAfterPurchase).toBeNull();
   });
 
+  it('reports reserve coverage of the leave shortfall', () => {
+    const state = makeState({
+      goals: ['child', 'property'],
+      savings: { totalSavings: 1200000, downPaymentFromSavings: 1000000 }, // rezerva 200k
+      parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
+    });
+    const r = evaluateParentalLeave(state)!;
+    expect(r.reserveAfter).toBe(200000);
+    if (r.shortfallPerMonth > 0) {
+      expect(r.monthsCovered).toBe(Math.floor(200000 / r.shortfallPerMonth));
+      expect(r.shortfallTotal).toBe(r.shortfallPerMonth * 36);
+    }
+  });
+
+  it('monthsCovered is null when there is no shortfall', () => {
+    const state = makeState({
+      goals: ['child'],
+      income: { person1NetMonthly: 90000, person2NetMonthly: 60000 },
+      parentalLeave: { enabled: true, parent: 2, durationMonths: 24, monthlyBenefit: 15000 },
+    });
+    const r = evaluateParentalLeave(state)!;
+    expect(r.shortfallPerMonth).toBe(0);
+    expect(r.monthsCovered).toBeNull();
+  });
+
   it('computes the post-purchase during-leave disposable when buying', () => {
     const state = makeState({
       goals: ['child', 'property'],

@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import ResultsOverview from './ResultsOverview';
 import ExpenseBreakdownChart from './ExpenseBreakdownChart';
+import WealthTimelineChart from './WealthTimelineChart';
 import DiscretionaryBreakdownChart from './DiscretionaryBreakdownChart';
 import CashFlowSummary from './CashFlowSummary';
 import SavingsChart from './SavingsChart';
@@ -218,6 +219,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
             excluded={excludedExpenses}
             setExcluded={setExcludedExpenses}
           />
+          <WealthTimelineChart state={activeState} />
           {hasNoGoals && (
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
               <p className="text-amber-800 dark:text-amber-300">Vraťte se a vyberte své finanční cíle pro podrobnější analýzu.</p>

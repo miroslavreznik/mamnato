@@ -6,6 +6,7 @@ import {
   parentSalary,
 } from '../../engine/parentalLeave';
 import NumField from '../ui/NumField';
+import Tooltip from '../ui/Tooltip';
 
 interface Props {
   state: WizardState;
@@ -62,11 +63,14 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
   const afterPurchase = impact.disposableDuringLeaveAfterPurchase;
   const afterNeg = afterPurchase !== null && afterPurchase < 0;
 
-  const tile = (label: string, value: number, opts?: { negativeBad?: boolean }) => {
+  const tile = (label: string, value: number, opts?: { negativeBad?: boolean; tooltip?: string }) => {
     const bad = opts?.negativeBad && value < 0;
     return (
       <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-        <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+          {label}
+          {opts?.tooltip && <Tooltip text={opts.tooltip} />}
+        </span>
         <p className={`text-xl font-bold ${bad ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
           {value >= 0 ? '' : '−'}{fmt(Math.abs(value))} <span className="text-sm font-normal text-gray-400">Kč/měs</span>
         </p>
@@ -133,16 +137,25 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
 
       {/* Dopad */}
       <div className="grid grid-cols-2 gap-3 mb-3">
-        {tile('Příjem nyní', impact.incomeNow)}
-        {tile('Příjem během volna', impact.incomeDuringLeave)}
-        {tile('Volná rezerva nyní', impact.disposableNow, { negativeBad: true })}
-        {tile('Volná rezerva během volna', impact.disposableDuringLeave, { negativeBad: true })}
+        {tile('Příjem nyní', impact.incomeNow, { tooltip: 'Součet současných čistých měsíčních příjmů domácnosti.' })}
+        {tile('Příjem během volna', impact.incomeDuringLeave, { tooltip: 'Příjem domácnosti, kde mzdu pečujícího rodiče nahradí dávky (mateřská/rodičovská).' })}
+        {tile('Volná rezerva nyní', impact.disposableNow, { negativeBad: true, tooltip: 'Co měsíčně zbyde po zaplacení všech výdajů (příjem − výdaje) při současných příjmech.' })}
+        {tile('Volná rezerva během volna', impact.disposableDuringLeave, { negativeBad: true, tooltip: 'Co měsíčně zbyde po výdajích v období rodičovské — se sníženým příjmem, ještě před případnou splátkou hypotéky.' })}
       </div>
 
       {hasProperty && afterPurchase !== null && (
         <div className={`p-3 rounded-lg mb-3 text-sm ${afterNeg ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300'}`}>
           {afterNeg ? (
-            <>Po koupi byste během rodičovské byli <strong>−{fmt(Math.abs(afterPurchase))} Kč/měs v mínusu</strong> — splátku hypotéky a nezbytné výdaje byste z běžného příjmu neutáhli. Počítejte s rezervou na toto období, levnější nemovitostí nebo kratším volnem.</>
+            <>
+              Po koupi byste během rodičovské byli <strong>−{fmt(Math.abs(afterPurchase))} Kč/měs v mínusu</strong> — splátku hypotéky a nezbytné výdaje byste z běžného příjmu neutáhli.{' '}
+              {impact.reserveAfter <= 0 ? (
+                <>Po zaplacení akontace vám přitom <strong>nezbude žádná rezerva</strong>, ze které byste schodek kryli — počítejte s došetřením, levnější nemovitostí nebo kratším volnem.</>
+              ) : impact.monthsCovered !== null && impact.monthsCovered >= impact.durationMonths ? (
+                <>Rezerva, která vám po akontaci zbyde (~<strong>{fmt(impact.reserveAfter)} Kč</strong>), schodek za celé volno ({fmt(impact.shortfallTotal)} Kč) <strong>pokryje</strong> — ale z velké části na něj padne.</>
+              ) : (
+                <>Rezerva po akontaci (~<strong>{fmt(impact.reserveAfter)} Kč</strong>) pokryje jen asi <strong>{impact.monthsCovered} z {impact.durationMonths} měsíců</strong> volna — na zbytek schodku ({fmt(Math.max(0, impact.shortfallTotal - impact.reserveAfter))} Kč) je potřeba došetřit, zlevnit nemovitost nebo volno zkrátit.</>
+              )}
+            </>
           ) : (
             <>I po koupi byste během rodičovské měli <strong>+{fmt(afterPurchase)} Kč/měs</strong> po zaplacení splátky a nezbytných výdajů. Rozpočet volno ustojí.</>
           )}
@@ -151,7 +164,16 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
 
       {leaveNeg && !hasProperty && (
         <div className="p-3 rounded-lg mb-3 text-sm bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
-          Během rodičovské by výdaje převýšily příjem o <strong>{fmt(Math.abs(impact.disposableDuringLeave))} Kč/měs</strong>. Budete potřebovat rezervu na toto období.
+          Během rodičovské by výdaje převýšily příjem o <strong>{fmt(Math.abs(impact.disposableDuringLeave))} Kč/měs</strong>.{' '}
+          {impact.reserveAfter > 0 && impact.monthsCovered !== null ? (
+            impact.monthsCovered >= impact.durationMonths ? (
+              <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) schodek za celé volno ({fmt(impact.shortfallTotal)} Kč) pokryjí.</>
+            ) : (
+              <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) pokryjí jen asi {impact.monthsCovered} z {impact.durationMonths} měsíců volna.</>
+            )
+          ) : (
+            <>Nemáte rezervu, ze které byste schodek kryli — budete ji potřebovat vytvořit.</>
+          )}
         </div>
       )}
 

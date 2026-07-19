@@ -6,6 +6,7 @@ import type { ExpenseCategory } from '../../engine/expenseBreakdown';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
 import NumField from '../ui/NumField';
+import HelpTip from '../ui/Tooltip';
 
 interface Props {
   state: WizardState;
@@ -152,14 +153,20 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
       {/* Stat tiles: volná rezerva */}
       <div className={`grid gap-3 mb-5 ${flowAfter ? 'grid-cols-2' : 'grid-cols-1'}`}>
         <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Volná rezerva nyní</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+            Volná rezerva nyní
+            <HelpTip text="Co z příjmu zbyde po zaplacení výdajů a spoření na cíle (příjem − výdaje − spoření). Volné peníze na nečekané situace." />
+          </span>
           <p className={`text-2xl font-bold ${freeColor(flowNow.free)}`}>
             {flowNow.free >= 0 ? '' : '−'}{fmtKc(Math.abs(flowNow.free))}<span className="text-sm font-normal text-gray-400">/měs</span>
           </p>
         </div>
         {flowAfter && (
           <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-            <span className="text-xs text-gray-500 dark:text-gray-400">Volná rezerva po koupi</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+              Volná rezerva po koupi
+              <HelpTip text="Totéž po koupi nemovitosti: místo nájmu a energií platíte splátku hypotéky a náklady vlastnictví. Záporné číslo = rozpočet po koupi nevyjde." />
+            </span>
             <p className={`text-2xl font-bold ${freeColor(flowAfter.free)}`}>
               {flowAfter.free >= 0 ? '' : '−'}{fmtKc(Math.abs(flowAfter.free))}<span className="text-sm font-normal text-gray-400">/měs</span>
             </p>

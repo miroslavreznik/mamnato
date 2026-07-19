@@ -41,6 +41,7 @@ Přehled je uspořádaný do **sbalitelných tematických sekcí** (Souhrn, Bydl
 
 - **Verdikt na základě cílů** — srozumitelné shrnutí („v dosahu" / „napjaté" / „zatím ne" / „nejdřív vyrovnat rozpočet") s konkrétními tipy
 - **Rozpočet: kam jde váš příjem** — jeden graf rozdělí příjem na výdaje, spoření na jednotlivé cíle a volnou rezervu; částky na cíle jdou upravovat živě
+- **Vývoj jmění v čase** — časová osa úspor přes plánované události: spoření na akontaci, koupě (pokles o akontaci, nájem → hypotéka), narození dítěte (náklady dle věku) a rodičovská (výpadek příjmu); zvýrazní, kdyby úspory klesly pod nulu
 - **Zbytné výdaje: za co utrácíte** — rozpad podrobného rozpisu po skupinách *(když je vyplněn)*
 - **Cash flow přehled** — příjmy, výdaje (nezbytné/zbytné), disponibilní částka
 - **Kalkulačka nemovitosti** — akontace (dynamicky 10 % / 20 % dle věku), výše hypotéky, měsíční splátka, čas na naspoření, připomínka refixace

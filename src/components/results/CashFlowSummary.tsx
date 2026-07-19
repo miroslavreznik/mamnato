@@ -74,7 +74,10 @@ export default function CashFlowSummary({ state }: Props) {
 
         <div className="border-t dark:border-gray-600 pt-3">
           <div className="flex justify-between items-center">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Disponibilní částka</span>
+            <span className="font-medium text-gray-700 dark:text-gray-300 inline-flex items-center">
+              Disponibilní částka
+              <Tooltip text="Příjmy minus výdaje — kolik měsíčně zbývá na spoření, cíle a rezervu." />
+            </span>
             <span className={`text-xl font-bold ${disposable >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {disposable >= 0 ? '+' : ''}{fmt(disposable)} Kč/měs.
             </span>

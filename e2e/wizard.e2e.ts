@@ -80,7 +80,7 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
   await expect(page.getByText('Rodičovská: co udělá s rozpočtem')).toBeVisible()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
-  await expect(page.getByText('Příjem během volna', { exact: true })).toBeVisible()
+  await expect(page.getByText('Volná rezerva během volna')).toBeVisible()
   // Fixní balík rodičovské: kratší volno → vyšší měsíční dávka (350 000 / 18 ≈ 19 444)
   const duration = page.getByLabel('Délka volna v měsících')
   await duration.click()
