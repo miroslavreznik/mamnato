@@ -18,7 +18,13 @@ export default function MortgageVsRent({ state }: Props) {
   const ownershipCosts = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
   const totalOwnership = payment + ownershipCosts;
 
+  // Část první splátky jde na úrok, část na jistinu (= spoření do vlastního majetku).
+  const firstInterest = loanAmount * (rate / 12);
+  const firstPrincipal = Math.max(0, payment - firstInterest);
+
   const diff = Math.round(totalOwnership - totalRent);
+  // „Reálný" náklad navíc po odečtení jistiny (ta se vám vrací do majetku).
+  const effectiveDiff = Math.round(totalOwnership - firstPrincipal - totalRent);
   const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
   return (
@@ -51,6 +57,10 @@ export default function MortgageVsRent({ state }: Props) {
               <span>Splátka hypotéky:</span>
               <span>{fmt(payment)} Kč</span>
             </div>
+            <div className="flex justify-between text-xs text-gray-400 dark:text-gray-500">
+              <span>z toho jistina (spoření do svého):</span>
+              <span>~{fmt(firstPrincipal)} Kč</span>
+            </div>
             <div className="flex justify-between">
               <span>Náklady na bydlení:</span>
               <span>{fmt(ownershipCosts)} Kč</span>
@@ -65,9 +75,14 @@ export default function MortgageVsRent({ state }: Props) {
 
       <div className={`text-center p-3 rounded-lg ${diff > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'}`}>
         <span className="font-semibold">
-          Vlastnictví je o {fmt(Math.abs(diff))} Kč {diff > 0 ? 'dražší' : 'levnější'} než nájem.
+          Vlastnictví odčerpá z rozpočtu o {fmt(Math.abs(diff))} Kč {diff > 0 ? 'víc' : 'míň'} než nájem.
         </span>
       </div>
+
+      <p className="mt-3 text-xs text-gray-500 dark:text-gray-400 text-center">
+        Zpočátku ale ~{fmt(firstPrincipal)} Kč ze splátky spoříte do vlastní nemovitosti (jistina), takže „čistý náklad navíc" oproti nájmu je jen zhruba{' '}
+        <span className="font-medium text-gray-700 dark:text-gray-300">{effectiveDiff > 0 ? `${fmt(effectiveDiff)} Kč` : '0 Kč (vlastnictví vychází levněji)'}</span>. Celkový dopad na majetek ukazuje graf níže.
+      </p>
     </div>
   );
 }

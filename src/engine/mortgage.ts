@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import { DEFAULTS } from './defaults';
-import { totalMonthlyIncome, monthlyDisposable } from './cashflow';
+import { totalMonthlyIncome, monthlyDisposable, necessaryMonthlyExpenses } from './cashflow';
 
 export function monthlyMortgagePayment(
   loanAmount: number,
@@ -66,6 +66,21 @@ export function monthsToSaveDownPayment(state: WizardState): number {
   const disposable = monthlyDisposable(state);
   if (disposable <= 0) return Infinity;
   return Math.ceil(gap / disposable);
+}
+
+// Kolik měsíců vydrží rezerva PO koupi: po zaplacení akontace zbyde méně úspor
+// a místo nájmu se platí (obvykle vyšší) hypotéka + náklady na vlastnictví.
+export function postPurchaseRunwayMonths(state: WizardState): number {
+  const reserveAfter = Math.max(0, state.savings.totalSavings - effectiveDownPayment(state));
+  const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
+  const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
+  const loan = Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
+  const mortgage = monthlyMortgagePayment(loan, rate, term);
+  const ownership = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
+  const necessaryAfter =
+    necessaryMonthlyExpenses(state) - state.expenses.rent - state.expenses.utilities + mortgage + ownership;
+  if (necessaryAfter <= 0) return Infinity;
+  return reserveAfter / necessaryAfter;
 }
 
 export function dti(state: WizardState): number {

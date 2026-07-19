@@ -3,6 +3,7 @@ import type { GoalAllocations } from '../../engine/allocation';
 import { evaluateOverall } from '../../engine/summary';
 import type { GoalStatus, OverallStatusKey } from '../../engine/summary';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
+import { postPurchaseRunwayMonths } from '../../engine/mortgage';
 
 interface Props {
   state: WizardState;
@@ -26,7 +27,10 @@ export default function ResultsOverview({ state, allocations }: Props) {
   const summary = evaluateOverall(state, allocations);
   const disposable = monthlyDisposable(state);
   const rate = savingsRate(state);
-  const runway = emergencyRunwayMonths(state);
+  // U kupujících je relevantní rezerva PO zaplacení akontace (úspory se z velké
+  // části utratí a místo nájmu se platí hypotéka).
+  const hasProperty = state.goals.includes('property');
+  const runway = hasProperty ? postPurchaseRunwayMonths(state) : emergencyRunwayMonths(state);
 
   const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
   const runwayLabel = runway === Infinity ? '∞' : `${runway.toFixed(1)} měs.`;
@@ -59,7 +63,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
           </p>
         </div>
         <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400">Rezerva vydrží</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400">{hasProperty ? 'Rezerva po koupi vydrží' : 'Rezerva vydrží'}</span>
           <p className={`text-xl font-bold ${runway >= 6 ? 'text-emerald-600 dark:text-emerald-400' : runway >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
             {runwayLabel}
           </p>

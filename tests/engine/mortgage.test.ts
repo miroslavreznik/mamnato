@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, isUnder36, monthsToSaveDownPayment, dti, dsti } from '../../src/engine/mortgage';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, isUnder36, monthsToSaveDownPayment, postPurchaseRunwayMonths, dti, dsti } from '../../src/engine/mortgage';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -115,6 +115,20 @@ describe('monthsToSaveDownPayment', () => {
   it('returns 0 when no gap', () => {
     const state = makeState({ savings: { totalSavings: 2000000 } });
     expect(monthsToSaveDownPayment(state)).toBe(0);
+  });
+});
+
+describe('postPurchaseRunwayMonths', () => {
+  it('is 0 when all savings are spent on the down payment', () => {
+    const state = makeState({ savings: { totalSavings: 1100000 } }); // vše na akontaci → žádná rezerva
+    expect(postPurchaseRunwayMonths(state)).toBe(0);
+  });
+
+  it('is finite and positive when a reserve is kept back', () => {
+    const state = makeState({ savings: { totalSavings: 1500000, downPaymentFromSavings: 1100000 } });
+    const r = postPurchaseRunwayMonths(state);
+    expect(r).toBeGreaterThan(0);
+    expect(Number.isFinite(r)).toBe(true);
   });
 });
 
