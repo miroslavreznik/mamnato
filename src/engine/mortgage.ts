@@ -14,7 +14,13 @@ export function monthlyMortgagePayment(
 }
 
 export function effectiveDownPayment(state: WizardState): number {
-  return state.savings.downPaymentFromSavings ?? state.savings.totalSavings;
+  if (state.savings.downPaymentFromSavings != null) return state.savings.downPaymentFromSavings;
+  // Výchozí: povinné minimum dle LTV (zbytek úspor zůstává jako rezerva),
+  // omezené tím, co skutečně máte naspořeno.
+  return Math.min(
+    state.savings.totalSavings,
+    requiredDownPayment(state.property.targetPrice, downPaymentFraction(state))
+  );
 }
 
 // Věk žadatelů (kladné hodnoty), seřazeno není potřeba.

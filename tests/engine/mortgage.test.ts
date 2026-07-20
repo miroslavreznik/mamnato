@@ -66,6 +66,29 @@ describe('applicant ages', () => {
   });
 });
 
+describe('effectiveDownPayment default', () => {
+  it('defaults to the required minimum, keeping the rest as reserve', () => {
+    // savings 1.5M, required 1.1M (20 % z 5.5M) → do akontace jde jen 1.1M
+    const state = makeState({ savings: { totalSavings: 1500000 } });
+    expect(downPaymentGap(state)).toBe(0);
+    // dsti počítá s úvěrem 5.5M − 1.1M = 4.4M (ne 4M)
+    const payment = monthlyMortgagePayment(4400000, 0.052, 30);
+    expect(dsti(state)).toBeCloseTo(payment / 36000, 3);
+  });
+
+  it('is capped by actual savings when below the required minimum', () => {
+    const state = makeState({ savings: { totalSavings: 500000 } });
+    expect(downPaymentGap(state)).toBe(600000); // 1.1M − 0.5M
+  });
+
+  it('an explicit choice always wins over the default', () => {
+    const state = makeState({ savings: { totalSavings: 1500000, downPaymentFromSavings: 1400000 } });
+    // loan = 5.5M − 1.4M = 4.1M
+    const payment = monthlyMortgagePayment(4100000, 0.052, 30);
+    expect(dsti(state)).toBeCloseTo(payment / 36000, 3);
+  });
+});
+
 describe('downPaymentFraction', () => {
   it('is 20% by default and 10% for applicants under 36', () => {
     expect(downPaymentFraction(makeState())).toBe(0.20);
