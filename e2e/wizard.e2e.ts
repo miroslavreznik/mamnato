@@ -110,6 +110,9 @@ test('odškrtnutí výdaje v grafu přepočítá celý souhrn (dynamické výsle
   // odškrtnout zbytné výdaje (3 000) v grafu rozpočtu → disponibilní +10 000
   await page.getByRole('button', { name: /Zbytné/ }).first().click()
   await expect(page.getByText(/\+10.000/).first()).toBeVisible()
+  // tabulková podoba rozpočtu (nahrazuje bývalou sekci „Podrobný rozpočet")
+  await page.getByRole('button', { name: 'Zobrazit čísla v tabulce' }).click()
+  await expect(page.getByText('= Volná rezerva')).toBeVisible()
 })
 
 test('částka na důchod je sdílená mezi rozpočtem a kalkulačkou důchodu', async ({ page }) => {

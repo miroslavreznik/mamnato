@@ -1,4 +1,4 @@
-import { useMemo, type Dispatch, type SetStateAction } from 'react';
+import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
 import { incomeFlow } from '../../engine/expenseBreakdown';
@@ -56,6 +56,7 @@ function GoalInput({ label, value, onChange }: { label: string; value: number; o
 
 export default function ExpenseBreakdownChart({ state, allocations, onChangeAllocation, excluded, setExcluded }: Props) {
   const colors = useChartColors();
+  const [showTable, setShowTable] = useState(false);
 
   const hasProperty = state.goals.includes('property');
 
@@ -242,6 +243,59 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
           >
             Zobrazit vše
           </button>
+        )}
+      </div>
+
+      {/* Stejná čísla jako tabulka — pro ty, kdo chtějí přesné částky pod sebou */}
+      <div className="mt-3">
+        <button
+          onClick={() => setShowTable((v) => !v)}
+          className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+        >
+          {showTable ? 'Skrýt tabulku' : 'Zobrazit čísla v tabulce'}
+        </button>
+        {showTable && (
+          <div className="mt-2 overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+                  <th className="text-left py-1.5 font-normal">Položka</th>
+                  <th className="text-right py-1.5 font-normal">Nyní</th>
+                  {flowAfter && <th className="text-right py-1.5 font-normal">Po koupi</th>}
+                </tr>
+              </thead>
+              <tbody className="text-gray-700 dark:text-gray-300">
+                <tr className="border-b border-gray-100 dark:border-gray-700/50 font-medium text-gray-900 dark:text-white">
+                  <td className="py-1.5">Příjem</td>
+                  <td className="text-right py-1.5">{fmtKc(income)}</td>
+                  {flowAfter && <td className="text-right py-1.5">{fmtKc(flowAfter.income)}</td>}
+                </tr>
+                {orderedKeys.map((key) => {
+                  const now = excluded.has(key) ? 0 : flowNow.expenses.find((c) => c.key === key)?.amount ?? 0;
+                  const after = flowAfter ? (excluded.has(key) ? 0 : flowAfter.expenses.find((c) => c.key === key)?.amount ?? 0) : null;
+                  return (
+                    <tr key={key} className={`border-b border-gray-100 dark:border-gray-700/50 ${excluded.has(key) ? 'opacity-50 line-through' : ''}`}>
+                      <td className="py-1.5">−&nbsp;{labelMap[key]}{!necessaryMap[key] && <span className="ml-1 text-[10px] text-amber-600 dark:text-amber-400 no-underline">zbytné</span>}</td>
+                      <td className="text-right py-1.5">{fmtKc(now)}</td>
+                      {after !== null && <td className="text-right py-1.5">{fmtKc(after)}</td>}
+                    </tr>
+                  );
+                })}
+                {goalSegments.map((s) => (
+                  <tr key={s.key} className="border-b border-gray-100 dark:border-gray-700/50">
+                    <td className="py-1.5">−&nbsp;{s.label} <span className="text-[10px] text-gray-400">(spoření)</span></td>
+                    <td className="text-right py-1.5">{fmtKc(s.amount)}</td>
+                    {flowAfter && <td className="text-right py-1.5">{fmtKc(s.amount)}</td>}
+                  </tr>
+                ))}
+                <tr className="font-semibold">
+                  <td className="py-1.5 text-gray-900 dark:text-white">= Volná rezerva</td>
+                  <td className={`text-right py-1.5 ${freeColor(flowNow.free)}`}>{fmtKc(flowNow.free)}</td>
+                  {flowAfter && <td className={`text-right py-1.5 ${freeColor(flowAfter.free)}`}>{fmtKc(flowAfter.free)}</td>}
+                </tr>
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

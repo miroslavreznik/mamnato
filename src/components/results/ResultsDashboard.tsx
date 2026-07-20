@@ -4,7 +4,6 @@ import ResultsOverview from './ResultsOverview';
 import ExpenseBreakdownChart from './ExpenseBreakdownChart';
 import WealthTimelineChart from './WealthTimelineChart';
 import DiscretionaryBreakdownChart from './DiscretionaryBreakdownChart';
-import CashFlowSummary from './CashFlowSummary';
 import SavingsChart from './SavingsChart';
 import PropertyAffordability from './PropertyAffordability';
 import DtiDstiIndicator from './DtiDstiIndicator';
@@ -54,7 +53,6 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     { id: 'souhrn', label: 'Souhrn' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
     ...(hasGoalPlanners ? [{ id: 'cile', label: 'Cíle' }] : []),
-    { id: 'rozpocet', label: 'Rozpočet' },
     { id: 'slovnicek', label: 'Slovníček' },
   ];
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(['souhrn']));
@@ -219,6 +217,9 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
             excluded={excludedExpenses}
             setExcluded={setExcludedExpenses}
           />
+          {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
+            <DiscretionaryBreakdownChart state={activeState} />
+          )}
           <WealthTimelineChart state={activeState} />
           {hasNoGoals && (
             <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
@@ -254,14 +255,6 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
             {hasOther && <CustomGoalPlanner state={activeState} onChangeGoals={handleChangeCustomGoals} />}
           </ResultsSection>
         )}
-
-        {/* Podrobný rozpočet */}
-        <ResultsSection id="rozpocet" title="Podrobný rozpočet" subtitle="Příjmy, výdaje a disponibilní částka" open={isOpen('rozpocet')} onToggle={() => toggleSection('rozpocet')}>
-          <CashFlowSummary state={activeState} />
-          {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
-            <DiscretionaryBreakdownChart state={activeState} />
-          )}
-        </ResultsSection>
 
         {/* Slovníček */}
         <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Finanční pojmy jednoduše" open={isOpen('slovnicek')} onToggle={() => toggleSection('slovnicek')}>
