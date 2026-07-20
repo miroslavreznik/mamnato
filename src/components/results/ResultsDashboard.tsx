@@ -106,6 +106,14 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     saveState(next);
   };
 
+  // Akontace jde upravit přímo ve výsledcích — změna se uloží a přepočítá vše.
+  const handleChangeDownPayment = (value: number) => {
+    const clamped = Math.max(0, Math.min(value, state.savings.totalSavings));
+    const next = { ...state, savings: { ...state.savings, downPaymentFromSavings: clamped } };
+    setState(next);
+    saveState(next);
+  };
+
   // Sdílení přehledu odkazem — stav se zakóduje do URL, nic se neposílá na server.
   const [shareCopied, setShareCopied] = useState(false);
   const handleShare = async () => {
@@ -232,7 +240,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         {hasProperty && (
           <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
             <SavingsChart state={activeState} />
-            <PropertyAffordability state={activeState} />
+            <PropertyAffordability state={activeState} onChangeDownPayment={handleChangeDownPayment} />
             <DtiDstiIndicator state={activeState} />
             <MortgageVsRent state={activeState} />
             <CashFlowAfterChart state={activeState} />

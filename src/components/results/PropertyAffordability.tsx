@@ -12,9 +12,12 @@ import Tooltip from '../ui/Tooltip';
 
 interface Props {
   state: WizardState;
+  // Když je předáno, jde akontací hýbat přímo tady — změna se přes sdílený
+  // stav promítne do celé stránky (splátka, DTI/DSTI, rezerva, časová osa…).
+  onChangeDownPayment?: (value: number) => void;
 }
 
-export default function PropertyAffordability({ state }: Props) {
+export default function PropertyAffordability({ state, onChangeDownPayment }: Props) {
   const price = state.property.targetPrice;
   const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
   const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
@@ -23,9 +26,13 @@ export default function PropertyAffordability({ state }: Props) {
   const dpPct = Math.round(dpFraction * 100);
   const dp = requiredDownPayment(price, dpFraction);
   const gap = downPaymentGap(state);
-  const loanAmount = Math.max(0, price - effectiveDownPayment(state));
+  const dpValue = effectiveDownPayment(state);
+  const loanAmount = Math.max(0, price - dpValue);
   const payment = monthlyMortgagePayment(loanAmount, rate, term);
   const months = monthsToSaveDownPayment(state);
+  const totalSavings = state.savings.totalSavings;
+  const reserve = totalSavings - dpValue;
+  const dpOfPrice = price > 0 ? ((dpValue / price) * 100).toFixed(1) : '0';
 
   const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
@@ -46,8 +53,8 @@ export default function PropertyAffordability({ state }: Props) {
         />
         <Row
           label="Pokryto z vlastních úspor"
-          value={`${fmt(effectiveDownPayment(state))} Kč`}
-          tooltip="Kolik z vašich naspořených peněz vložíte do akontace. Nastavuje se v kroku Nemovitost posuvníkem „Jak rozdělíte své úspory“."
+          value={`${fmt(dpValue)} Kč`}
+          tooltip="Kolik z vašich naspořených peněz vložíte do akontace. Můžete upravit posuvníkem níže — vše se hned přepočítá."
         />
         <Row
           label="Chybějící akontace"
@@ -55,6 +62,39 @@ export default function PropertyAffordability({ state }: Props) {
           highlight={gap > 0 ? 'red' : 'green'}
           tooltip="Rozdíl mezi potřebnou akontací a tím, co pokryjete z úspor. Tuto částku je potřeba ještě naspořit, než se dá o hypotéku požádat."
         />
+
+        {/* Posuvník akontace — hýbe celou stránkou přes sdílený stav */}
+        {onChangeDownPayment && totalSavings > 0 && (
+          <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Kolik dát z úspor na akontaci</span>
+              <span className={`text-xs ${Number(dpOfPrice) >= dpPct ? 'text-green-600' : 'text-amber-600'}`}>
+                {dpOfPrice} % z ceny
+              </span>
+            </div>
+            <input
+              type="range"
+              min={0}
+              max={totalSavings}
+              step={10000}
+              value={dpValue}
+              onChange={(e) => onChangeDownPayment(Number(e.target.value))}
+              aria-label="Akontace z úspor"
+              className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            />
+            <div className="flex justify-between text-xs text-gray-400 mt-1">
+              <span>0 Kč</span>
+              <span>{fmt(totalSavings)} Kč</span>
+            </div>
+            <div className="flex justify-between text-sm mt-1.5">
+              <span className="text-gray-600 dark:text-gray-400">Zbývající rezerva po akontaci:</span>
+              <span className={`font-semibold ${reserve <= 0 ? 'text-red-600' : 'text-gray-900 dark:text-white'}`}>{fmt(reserve)} Kč</span>
+            </div>
+            <p className="mt-1.5 text-xs text-gray-400 dark:text-gray-500">
+              Vyšší akontace = nižší splátka a DSTI, ale menší rezerva. Sledujte, jak se mění splátka níže, dlaždice v Souhrnu i časová osa jmění.
+            </p>
+          </div>
+        )}
 
         <div className="border-t dark:border-gray-600 pt-3" />
 

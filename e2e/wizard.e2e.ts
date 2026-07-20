@@ -127,6 +127,25 @@ test('částka na důchod je sdílená mezi rozpočtem a kalkulačkou důchodu',
   await expect(page.getByLabel('Měsíční částka k investování')).toHaveValue(/5.000/)
 })
 
+test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  const savings = page.locator('input[inputmode="decimal"]').first()
+  await savings.click()
+  await page.keyboard.press('Control+a')
+  await savings.pressSequentially('1000000')
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
+  // posuvník akontace ve výsledcích → hypotéka = 5 500 000 − 200 000
+  await page.getByLabel('Akontace z úspor').fill('200000')
+  await expect(page.getByText(/5\s?300\s?000 Kč/).first()).toBeVisible()
+})
+
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {
   const ctx1 = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] })
   const page = await ctx1.newPage()
