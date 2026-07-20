@@ -74,6 +74,12 @@ export function monthsToSaveDownPayment(state: WizardState): number {
   return Math.ceil(gap / disposable);
 }
 
+// Celkové zaplacené úroky za dobu splácení (anuita): splátky − jistina.
+export function totalLoanInterest(loanAmount: number, annualRate: number, termYears: number): number {
+  if (loanAmount <= 0) return 0;
+  return monthlyMortgagePayment(loanAmount, annualRate, termYears) * termYears * 12 - loanAmount;
+}
+
 // Kolik měsíců vydrží rezerva PO koupi: po zaplacení akontace zbyde méně úspor
 // a místo nájmu se platí (obvykle vyšší) hypotéka + náklady na vlastnictví.
 export function postPurchaseRunwayMonths(state: WizardState): number {

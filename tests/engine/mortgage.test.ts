@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, isUnder36, monthsToSaveDownPayment, postPurchaseRunwayMonths, dti, dsti } from '../../src/engine/mortgage';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentGap, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, isUnder36, monthsToSaveDownPayment, postPurchaseRunwayMonths, totalLoanInterest, dti, dsti } from '../../src/engine/mortgage';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -63,6 +63,19 @@ describe('applicant ages', () => {
     // no ages → legacy boolean still honoured (old saved states)
     expect(isUnder36(makeState({ applicantUnder36: true }))).toBe(true);
     expect(isUnder36(makeState())).toBe(false);
+  });
+});
+
+describe('totalLoanInterest', () => {
+  it('is zero for zero loan and zero rate', () => {
+    expect(totalLoanInterest(0, 0.052, 30)).toBe(0);
+    expect(totalLoanInterest(3600000, 0, 30)).toBeCloseTo(0, 6);
+  });
+
+  it('equals total payments minus principal and grows with the loan', () => {
+    const interest = totalLoanInterest(5000000, 0.052, 30);
+    expect(interest).toBeCloseTo(monthlyMortgagePayment(5000000, 0.052, 30) * 360 - 5000000, 4);
+    expect(interest).toBeGreaterThan(totalLoanInterest(4000000, 0.052, 30));
   });
 });
 

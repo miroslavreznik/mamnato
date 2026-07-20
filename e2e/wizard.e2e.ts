@@ -144,6 +144,10 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   // posuvník akontace ve výsledcích → hypotéka = 5 500 000 − 200 000
   await page.getByLabel('Akontace z úspor').fill('200000')
   await expect(page.getByText(/5\s?300\s?000 Kč/).first()).toBeVisible()
+  // rozhodovací nápovědy u posuvníku
+  await expect(page.getByText(/Každých \+100 000 Kč akontace/)).toBeVisible()
+  await expect(page.getByText(/Alternativa:/)).toBeVisible()
+  await expect(page.getByText(/Bezpečné maximum|za bezpečnou hranicí|6měsíční rezervu/).first()).toBeVisible()
 })
 
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {
