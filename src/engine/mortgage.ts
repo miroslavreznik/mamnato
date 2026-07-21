@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import { DEFAULTS } from './defaults';
-import { totalMonthlyIncome, monthlyDisposable, necessaryMonthlyExpenses } from './cashflow';
+import { totalMonthlyIncome, monthlyDisposable, necessaryMonthlyExpenses, totalMonthlyExpenses } from './cashflow';
 
 export function monthlyMortgagePayment(
   loanAmount: number,
@@ -21,6 +21,38 @@ export function effectiveDownPayment(state: WizardState): number {
     state.savings.totalSavings,
     requiredDownPayment(state.property.targetPrice, downPaymentFraction(state))
   );
+}
+
+// Sdílené parametry hypotéky se zálohou na výchozí hodnoty — jediný zdroj pravdy
+// pro všechny výpočty (splátka, DSTI, cash flow po koupi, časová osa jmění…).
+export function mortgageRate(state: WizardState): number {
+  return state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
+}
+
+export function loanTermYears(state: WizardState): number {
+  return state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
+}
+
+export function ownershipCosts(state: WizardState): number {
+  return state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
+}
+
+// Výše hypotéky = cena nemovitosti minus akontace (nikdy záporná).
+export function loanAmount(state: WizardState): number {
+  return Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
+}
+
+// Odhadovaná měsíční splátka hypotéky pro zvolenou akontaci a parametry úvěru.
+export function mortgagePayment(state: WizardState): number {
+  return monthlyMortgagePayment(loanAmount(state), mortgageRate(state), loanTermYears(state));
+}
+
+// Měsíční výdaje PO koupi: místo nájmu + energií se platí splátka hypotéky
+// a náklady na vlastnictví.
+export function expensesAfterPurchase(state: WizardState): number {
+  return totalMonthlyExpenses(state)
+    - state.expenses.rent - state.expenses.utilities
+    + mortgagePayment(state) + ownershipCosts(state);
 }
 
 // Věk žadatelů (kladné hodnoty), seřazeno není potřeba.
@@ -84,13 +116,9 @@ export function totalLoanInterest(loanAmount: number, annualRate: number, termYe
 // a místo nájmu se platí (obvykle vyšší) hypotéka + náklady na vlastnictví.
 export function postPurchaseRunwayMonths(state: WizardState): number {
   const reserveAfter = Math.max(0, state.savings.totalSavings - effectiveDownPayment(state));
-  const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-  const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-  const loan = Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
-  const mortgage = monthlyMortgagePayment(loan, rate, term);
-  const ownership = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
   const necessaryAfter =
-    necessaryMonthlyExpenses(state) - state.expenses.rent - state.expenses.utilities + mortgage + ownership;
+    necessaryMonthlyExpenses(state) - state.expenses.rent - state.expenses.utilities
+    + mortgagePayment(state) + ownershipCosts(state);
   if (necessaryAfter <= 0) return Infinity;
   return reserveAfter / necessaryAfter;
 }
@@ -104,12 +132,7 @@ export function dti(state: WizardState): number {
 }
 
 export function dsti(state: WizardState): number {
-  const mortgage = monthlyMortgagePayment(
-    state.property.targetPrice - effectiveDownPayment(state),
-    state.property.mortgageRate ?? DEFAULTS.property.mortgageRate,
-    state.property.loanTermYears ?? DEFAULTS.property.loanTermYears
-  );
-  const totalPayments = mortgage + state.expenses.existingLoans;
+  const totalPayments = mortgagePayment(state) + state.expenses.existingLoans;
   const income = totalMonthlyIncome(state);
   return income > 0 ? totalPayments / income : Infinity;
 }

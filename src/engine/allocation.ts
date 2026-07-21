@@ -1,7 +1,7 @@
 import type { WizardState } from '../types';
 import { monthlyDisposable } from './cashflow';
-import { monthlyMortgagePayment, effectiveDownPayment } from './mortgage';
-import { DEFAULTS, CHILD_COSTS_CZ } from './defaults';
+import { mortgagePayment } from './mortgage';
+import { CHILD_COSTS_CZ } from './defaults';
 
 export interface GoalAllocations {
   mortgage: number;
@@ -16,11 +16,7 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
 
   // Mortgage — fixed payment
   if (state.goals.includes('property')) {
-    const dp = effectiveDownPayment(state);
-    const loanAmount = Math.max(0, state.property.targetPrice - dp);
-    const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-    const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-    allocs.mortgage = Math.round(monthlyMortgagePayment(loanAmount, rate, term));
+    allocs.mortgage = Math.round(mortgagePayment(state));
   }
 
   // Child — weighted average monthly cost for first 18 years

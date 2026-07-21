@@ -1,7 +1,6 @@
 import type { WizardState } from '../types';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
-import { monthlyMortgagePayment, effectiveDownPayment } from './mortgage';
-import { DEFAULTS } from './defaults';
+import { effectiveDownPayment, expensesAfterPurchase } from './mortgage';
 
 // Rodičovský příspěvek na jedno dítě (od 2024). Rozpočítaný na dobu čerpání
 // dává orientační měsíční dávku; mateřská (PPM) na začátku bývá vyšší, proto
@@ -62,14 +61,8 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
 
   let disposableDuringLeaveAfterPurchase: number | null = null;
   if (state.goals.includes('property')) {
-    const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-    const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-    const loan = Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
-    const mortgage = monthlyMortgagePayment(loan, rate, term);
-    const ownership = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
     // Po koupi mizí nájem + energie, přibývá splátka + náklady na vlastnictví.
-    const expensesAfter = expenses - state.expenses.rent - state.expenses.utilities + mortgage + ownership;
-    disposableDuringLeaveAfterPurchase = incomeDuringLeave - expensesAfter;
+    disposableDuringLeaveAfterPurchase = incomeDuringLeave - expensesAfterPurchase(state);
   }
 
   const savingsLostTotal = Math.max(0, disposableNow - disposableDuringLeave) * pl.durationMonths;

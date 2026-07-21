@@ -1,6 +1,6 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
-import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge } from '../../../engine/mortgage';
+import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears } from '../../../engine/mortgage';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
 import StepNavigation from '../StepNavigation';
@@ -8,8 +8,8 @@ import StepNavigation from '../StepNavigation';
 export default function Step6Property() {
   const { state, dispatch } = useWizard();
   const price = state.property.targetPrice;
-  const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-  const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
+  const rate = mortgageRate(state);
+  const term = loanTermYears(state);
   const dpFraction = downPaymentFraction(state);
   const reqDpPct = Math.round(dpFraction * 100);
   const reqDp = requiredDownPayment(price, dpFraction);

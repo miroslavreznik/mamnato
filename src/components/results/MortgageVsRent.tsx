@@ -1,6 +1,5 @@
 import type { WizardState } from '../../types';
-import { DEFAULTS } from '../../engine/defaults';
-import { monthlyMortgagePayment, effectiveDownPayment } from '../../engine/mortgage';
+import { mortgageRate, loanAmount as loanAmountOf, mortgagePayment, ownershipCosts as ownershipCostsOf } from '../../engine/mortgage';
 
 interface Props {
   state: WizardState;
@@ -11,11 +10,10 @@ export default function MortgageVsRent({ state }: Props) {
   const utilities = state.expenses.utilities;
   const totalRent = rent + utilities;
 
-  const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-  const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-  const loanAmount = Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
-  const payment = monthlyMortgagePayment(loanAmount, rate, term);
-  const ownershipCosts = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
+  const rate = mortgageRate(state);
+  const loanAmount = loanAmountOf(state);
+  const payment = mortgagePayment(state);
+  const ownershipCosts = ownershipCostsOf(state);
   const totalOwnership = payment + ownershipCosts;
 
   // Část první splátky jde na úrok, část na jistinu (= spoření do vlastního majetku).

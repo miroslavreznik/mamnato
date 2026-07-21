@@ -8,6 +8,11 @@ import {
   monthsToSaveDownPayment,
   effectiveDownPayment,
   totalLoanInterest,
+  mortgageRate,
+  loanTermYears,
+  loanAmount as loanAmountOf,
+  mortgagePayment,
+  ownershipCosts as ownershipCostsOf,
 } from '../../engine/mortgage';
 import { necessaryMonthlyExpenses } from '../../engine/cashflow';
 import Tooltip from '../ui/Tooltip';
@@ -24,16 +29,16 @@ interface Props {
 
 export default function PropertyAffordability({ state, onChangeDownPayment }: Props) {
   const price = state.property.targetPrice;
-  const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-  const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
+  const rate = mortgageRate(state);
+  const term = loanTermYears(state);
   const fixationYears = state.property.fixationYears ?? DEFAULTS.property.fixationYears;
   const dpFraction = downPaymentFraction(state);
   const dpPct = Math.round(dpFraction * 100);
   const dp = requiredDownPayment(price, dpFraction);
   const gap = downPaymentGap(state);
   const dpValue = effectiveDownPayment(state);
-  const loanAmount = Math.max(0, price - dpValue);
-  const payment = monthlyMortgagePayment(loanAmount, rate, term);
+  const loanAmount = loanAmountOf(state);
+  const payment = mortgagePayment(state);
   const months = monthsToSaveDownPayment(state);
   const totalSavings = state.savings.totalSavings;
   const reserve = totalSavings - dpValue;
@@ -49,7 +54,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment }: Pr
 
   // (2) Bezpečné maximum akontace: po koupi musí zbýt rezerva na 6 měsíců
   // nezbytných výdajů (s hypotékou místo nájmu).
-  const ownershipCosts = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
+  const ownershipCosts = ownershipCostsOf(state);
   const monthlyNeedAfter = Math.max(
     1,
     necessaryMonthlyExpenses(state) - state.expenses.rent - state.expenses.utilities + payment + ownershipCosts

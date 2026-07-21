@@ -1,7 +1,14 @@
 import type { WizardState, CustomGoal } from '../types';
 import { DEFAULTS } from './defaults';
-import { monthlyDisposable, totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
-import { monthlyMortgagePayment, effectiveDownPayment } from './mortgage';
+import { monthlyDisposable, totalMonthlyIncome } from './cashflow';
+import {
+  effectiveDownPayment,
+  mortgageRate,
+  loanTermYears,
+  loanAmount,
+  mortgagePayment,
+  expensesAfterPurchase,
+} from './mortgage';
 
 export interface GoalAllocation {
   monthlyAllocation: number;
@@ -86,16 +93,8 @@ export function cashFlowAfterPurchase(
   months: number = 120
 ): Array<{ month: number; currentCashFlow: number; afterPurchaseCashFlow: number }> {
   const currentDisposable = monthlyDisposable(state);
-  const mortgage = monthlyMortgagePayment(
-    state.property.targetPrice - effectiveDownPayment(state),
-    state.property.mortgageRate ?? DEFAULTS.property.mortgageRate,
-    state.property.loanTermYears ?? DEFAULTS.property.loanTermYears
-  );
-  const ownershipCosts = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
   // After purchase: remove rent + utilities, add mortgage + ownership costs
-  const expensesAfter = totalMonthlyExpenses(state)
-    - state.expenses.rent - state.expenses.utilities + mortgage + ownershipCosts;
-  const disposableAfter = totalMonthlyIncome(state) - expensesAfter;
+  const disposableAfter = totalMonthlyIncome(state) - expensesAfterPurchase(state);
 
   // Obě řady vycházejí ze srovnatelné základny — dnešní výše úspor.
   // Když nekoupím, úspory dál rostou disponibilní částkou.
@@ -119,10 +118,10 @@ export function investmentComparison(
 ): InvestmentProjectionPoint[] {
   const downPayment = effectiveDownPayment(state);
   const price = state.property.targetPrice;
-  const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-  const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-  const loanAmount = Math.max(0, price - downPayment);
-  const mortgagePayment = monthlyMortgagePayment(loanAmount, rate, term);
+  const rate = mortgageRate(state);
+  const term = loanTermYears(state);
+  const loan = loanAmount(state);
+  const payment = mortgagePayment(state);
   const monthlyRent = state.expenses.rent + state.expenses.utilities;
   const monthlyR = rate / 12;
   const totalMonths = term * 12;
@@ -132,7 +131,7 @@ export function investmentComparison(
 
   let sp500Portfolio = downPayment;
   let cumulativeRent = 0;
-  let remainingLoan = loanAmount;
+  let remainingLoan = loan;
 
   for (let year = 0; year <= years; year++) {
     const propertyValue = price * Math.pow(1 + propertyAppreciation, year);
@@ -154,7 +153,7 @@ export function investmentComparison(
       const currentRent = monthlyRent * Math.pow(1 + rentGrowth, year);
 
       // SP500: invest the difference (mortgage - rent) if positive, else deduct
-      const monthlyDiff = mortgagePayment - currentRent;
+      const monthlyDiff = payment - currentRent;
       sp500Portfolio = sp500Portfolio * (1 + monthlySpReturn) + monthlyDiff;
 
       // Cumulative rent
@@ -163,7 +162,7 @@ export function investmentComparison(
       // Amortize loan
       if (remainingLoan > 0 && monthIndex < totalMonths) {
         const interest = remainingLoan * monthlyR;
-        const principal = mortgagePayment - interest;
+        const principal = payment - interest;
         remainingLoan = Math.max(0, remainingLoan - principal);
       }
     }

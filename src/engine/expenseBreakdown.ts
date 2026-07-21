@@ -1,7 +1,6 @@
 import type { WizardState } from '../types';
-import { DEFAULTS } from './defaults';
 import { totalMonthlyIncome } from './cashflow';
-import { monthlyMortgagePayment, effectiveDownPayment } from './mortgage';
+import { mortgagePayment, ownershipCosts } from './mortgage';
 import type { GoalAllocations } from './allocation';
 
 export interface ExpenseCategory {
@@ -37,12 +36,7 @@ export function expenseCategories(
   let housing: number;
   let housingLabel: string;
   if (afterPurchase) {
-    const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-    const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-    const loan = Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
-    const mortgage = monthlyMortgagePayment(loan, rate, term);
-    const ownership = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
-    housing = Math.round(mortgage) + ownership;
+    housing = Math.round(mortgagePayment(state)) + ownershipCosts(state);
     housingLabel = 'Hypotéka + vlastnictví';
   } else {
     housing = e.rent + e.utilities;

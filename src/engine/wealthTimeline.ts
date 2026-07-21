@@ -1,7 +1,7 @@
 import type { WizardState } from '../types';
-import { DEFAULTS, CHILD_COSTS_CZ } from './defaults';
+import { CHILD_COSTS_CZ } from './defaults';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction } from './mortgage';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts } from './mortgage';
 import { parentSalary } from './parentalLeave';
 
 // Časová osa jmění: měsíc po měsíci simuluje vývoj úspor domácnosti přes
@@ -51,9 +51,9 @@ export function wealthTimeline(
   const required = requiredDownPayment(price, downPaymentFraction(state));
   const chosen = state.savings.downPaymentFromSavings;
   const targetDownPayment = chosen != null ? Math.max(required, chosen) : required;
-  const rate = state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
-  const term = state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
-  const ownership = state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
+  const rate = mortgageRate(state);
+  const term = loanTermYears(state);
+  const ownership = ownershipCosts(state);
   const mortgage = monthlyMortgagePayment(Math.max(0, price - targetDownPayment), rate, term);
 
   const childMonth = hasChild ? Math.max(0, Math.round(opts.childOffsetMonths ?? 12)) : null;
