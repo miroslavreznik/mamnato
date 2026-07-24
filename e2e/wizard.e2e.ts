@@ -221,6 +221,23 @@ test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async
   await ctx.close()
 })
 
+test('výsledky obsahují právní upozornění včetně rozbalitelných podmínek', async ({ page }) => {
+  await goToGoals(page)
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  // Jádro upozornění musí být vidět bez rozklikávání
+  await expect(page.getByText(/orientační modelové výpočty/)).toBeVisible()
+  await expect(page.getByText(/Nejde o finanční, investiční, úvěrové ani daňové poradenství/)).toBeVisible()
+
+  // Podrobnosti se rozbalí a pokrývají oba klíčové zákony i varování u sdílení
+  await page.getByRole('button', { name: 'Zobrazit podrobné podmínky' }).click()
+  await expect(page.getByText(/256\/2004 Sb\./)).toBeVisible()
+  await expect(page.getByText(/257\/2016 Sb\./)).toBeVisible()
+  await expect(page.getByText(/uvidí vaše příjmy, výdaje i úspory/)).toBeVisible()
+})
+
 test('při neočekávané chybě se ukáže záchranná obrazovka, ne bílá stránka', async ({ page }) => {
   // Simulace skutečné runtime chyby: formátování čísel se v renderu používá
   // napříč komponentami, takže výjimka v něm spolehlivě shodí strom.
