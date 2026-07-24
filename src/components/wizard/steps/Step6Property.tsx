@@ -122,7 +122,7 @@ export default function Step6Property() {
         label="Úroková sazba hypotéky"
         value={Math.round(rate * 1000) / 10}
         onChange={(v) => dispatch({ type: 'UPDATE_PROPERTY', field: 'mortgageRate', value: v / 100 })}
-        tooltip={`Průměrná sazba dle ČNB (${DEFAULTS_DATE}). Můžete upravit dle vaší nabídky.`}
+        tooltip={`Výchozí hodnota vychází z průměrné sazby nových hypoték dle ČBA (${DEFAULTS_DATE}). Vaše nabídka se může lišit podle banky i LTV — klidně ji přepište.`}
         suffix="%"
         min={0.1}
         max={20}

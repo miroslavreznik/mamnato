@@ -113,11 +113,11 @@ test('odškrtnutí výdaje v grafu přepočítá celý souhrn (dynamické výsle
   await goToGoals(page)
   await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
-  // výchozí jednotlivec: příjem 36 000, výdaje 29 000 → disponibilní +7 000
-  await expect(page.getByText(/\+7.000/).first()).toBeVisible()
-  // odškrtnout zbytné výdaje (3 000) v grafu rozpočtu → disponibilní +10 000
+  // výchozí jednotlivec: příjem 39 500, výdaje 29 000 → disponibilní +10 500
+  await expect(page.getByText(/\+10.500/).first()).toBeVisible()
+  // odškrtnout zbytné výdaje (3 000) v grafu rozpočtu → disponibilní +13 500
   await page.getByRole('button', { name: /Zbytné/ }).first().click()
-  await expect(page.getByText(/\+10.000/).first()).toBeVisible()
+  await expect(page.getByText(/\+13.500/).first()).toBeVisible()
   // tabulková podoba rozpočtu (nahrazuje bývalou sekci „Podrobný rozpočet")
   await page.getByRole('button', { name: 'Zobrazit čísla v tabulce' }).click()
   await expect(page.getByText('= Volná rezerva')).toBeVisible()
@@ -219,6 +219,24 @@ test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async
   await help.tap()
   await expect(page.getByRole('tooltip')).toHaveCount(0)
   await ctx.close()
+})
+
+test('při neočekávané chybě se ukáže záchranná obrazovka, ne bílá stránka', async ({ page }) => {
+  // Simulace skutečné runtime chyby: formátování čísel se v renderu používá
+  // napříč komponentami, takže výjimka v něm spolehlivě shodí strom.
+  await page.addInitScript(() => {
+    Number.prototype.toLocaleString = function () {
+      throw new Error('simulovaná chyba pro test')
+    }
+  })
+  await start(page)
+  await next(page) // → Příjmy (první krok, kde se formátují čísla)
+
+  await expect(page.getByText('Něco se pokazilo')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Zkusit znovu' })).toBeVisible()
+  await expect(page.getByRole('button', { name: /Smazat data a začít znovu/ })).toBeVisible()
+  // Uživatel musí vidět, že o data nepřišel
+  await expect(page.getByText(/nikam se neodeslala/)).toBeVisible()
 })
 
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {

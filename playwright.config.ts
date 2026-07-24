@@ -20,13 +20,27 @@ export default defineConfig({
   use: {
     baseURL,
     trace: 'on-first-retry',
-    launchOptions: {
-      // Testy běží proti localhostu, žádná proxy není potřeba.
-      args: ['--no-proxy-server'],
-      ...(executablePath ? { executablePath } : {}),
-    },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // WebKit = jádro Safari. V Česku má iPhone u spotřebitelských appek velký
+  // podíl a WebKit se liší hlavně u Intl formátování, dat a flexboxu, takže
+  // testovat jen Chromium by nechalo půlku publika neověřenou.
+  // Lokálně se dá omezit na jeden prohlížeč: `npx playwright test --project=chromium`
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          // Testy běží proti localhostu, žádná proxy není potřeba.
+          args: ['--no-proxy-server'],
+          // Předinstalovaný Chromium se týká jen tohohle projektu — WebKit
+          // by se s cestou na chromium spustit nedal.
+          ...(executablePath ? { executablePath } : {}),
+        },
+      },
+    },
+    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+  ],
   webServer: {
     command: `npm run dev -- --port ${PORT} --strictPort`,
     url: baseURL,
