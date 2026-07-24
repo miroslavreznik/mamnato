@@ -93,3 +93,54 @@ describe('evaluateOverall', () => {
     expect(s.status).not.toBe('good');
   });
 });
+
+describe('verdikt „Mám na to?"', () => {
+  it('u nevyrovnaného rozpočtu odpoví jasným ne, bez „ale"', () => {
+    const state = makeState({ income: { person1NetMonthly: 20000 } });
+    const v = evaluateOverall(state, allocs()).verdict;
+    expect(v.answer).toBe('no');
+    expect(v.headline).toBe('Zatím na to nemáte');
+    expect(v.qualifier).toBe('');
+  });
+
+  it('když se cíle nevejdou, odpoví ne, ale s cestou ven', () => {
+    // cíle spolknou víc, než je disponibilní částka
+    const state = makeState({ goals: ['retirement'] });
+    const v = evaluateOverall(state, allocs({ retirement: 999000 })).verdict;
+    expect(v.answer).toBe('no_but');
+    expect(v.qualifier).not.toBe('');
+  });
+
+  it('u komfortní situace odpoví ano bez výhrad', () => {
+    const state = makeState({
+      goals: ['retirement'],
+      income: { person1NetMonthly: 120000 },
+      savings: { totalSavings: 2000000 },
+    });
+    const v = evaluateOverall(state, allocs({ retirement: 20000 })).verdict;
+    expect(v.answer).toBe('yes');
+    expect(v.headline).toBe('Máte na to');
+    expect(v.qualifier).toBe('');
+  });
+
+  it('bez zvolených cílů odpoví na rozpočet, ne na cíl', () => {
+    const state = makeState({ goals: [] });
+    const v = evaluateOverall(state, allocs()).verdict;
+    expect(v.headline).toMatch(/Rozpočet/);
+    expect(v.reason).toMatch(/cíl/i);
+  });
+
+  it('varianta s „ale" má vždy doplněk, jasná odpověď nikdy', () => {
+    const cases: WizardState[] = [
+      makeState({ income: { person1NetMonthly: 20000 } }),
+      makeState({ goals: ['retirement'] }),
+      makeState({ goals: ['retirement'], income: { person1NetMonthly: 120000 } }),
+    ];
+    for (const state of cases) {
+      const v = evaluateOverall(state, allocs({ retirement: 3000 })).verdict;
+      const hasBut = v.answer === 'yes_but' || v.answer === 'no_but';
+      expect(hasBut ? v.qualifier.length > 0 : v.qualifier === '').toBe(true);
+      expect(v.reason.length).toBeGreaterThan(10);
+    }
+  });
+});

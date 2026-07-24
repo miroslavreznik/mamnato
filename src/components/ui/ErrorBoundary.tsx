@@ -77,7 +77,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           </div>
           <p className="mt-4 text-xs text-gray-400">
             Když chyba přetrvává, pomůže obvykle druhá možnost. Nejčastěji za to může
-            rozbitým rozpracovaným přehledem uloženým v prohlížeči.
+            rozbitý rozpracovaný přehled uložený v prohlížeči.
           </p>
         </div>
       </div>

@@ -65,9 +65,7 @@ test('číselné pole jde smazat a napsat bez nuly vepředu', async ({ page }) =
   await next(page) // → Výdaje
   await page.getByRole('button', { name: /Rozepsat zbytné výdaje/ }).click()
   const field = page.getByLabel('Kultura (kino, divadlo, knihy)')
-  await field.click()
-  await page.keyboard.press('Control+a')
-  await page.keyboard.press('Backspace')
+  await field.fill('')
   await expect(field).toHaveValue('')
   await field.pressSequentially('500')
   await expect(field).toHaveValue('500')
@@ -91,9 +89,7 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await expect(page.getByText('Volná rezerva během volna')).toBeVisible()
   // Fixní balík rodičovské: kratší volno → vyšší měsíční dávka (350 000 / 18 ≈ 19 444)
   const duration = page.getByRole('textbox', { name: 'Délka volna v měsících', exact: true })
-  await duration.click()
-  await page.keyboard.press('Control+a')
-  await duration.pressSequentially('18')
+  await duration.fill('18')
   await expect(page.getByRole('textbox', { name: 'Měsíční příjem během volna', exact: true })).toHaveValue(/19.444/)
 })
 
@@ -128,9 +124,7 @@ test('částka na důchod je sdílená mezi rozpočtem a kalkulačkou důchodu',
   await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   const budgetInput = page.getByRole('textbox', { name: 'Spoření na důchod', exact: true })
-  await budgetInput.click()
-  await page.keyboard.press('Control+a')
-  await budgetInput.pressSequentially('5000')
+  await budgetInput.fill('5000')
   await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
   await expect(page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true })).toHaveValue(/5.000/)
 })
@@ -141,9 +135,7 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   await next(page) // → Výdaje
   await next(page) // → Úspory
   const savings = page.locator('input[inputmode="decimal"]').first()
-  await savings.click()
-  await page.keyboard.press('Control+a')
-  await savings.pressSequentially('1000000')
+  await savings.fill('1000000')
   await next(page) // → Cíle
   await page.getByRole('button', { name: /Nemovitost/ }).first().click()
   await next(page) // → krok Nemovitost
@@ -164,9 +156,7 @@ test('sazbou jde hýbat ve výsledcích a radí podle LTV', async ({ page }) => 
   await next(page) // → Výdaje
   await next(page) // → Úspory
   const savings = page.locator('input[inputmode="decimal"]').first()
-  await savings.click()
-  await page.keyboard.press('Control+a')
-  await savings.pressSequentially('1500000')
+  await savings.fill('1500000')
   await next(page) // → Cíle
   await page.getByRole('button', { name: /Nemovitost/ }).first().click()
   await next(page) // → krok Nemovitost
@@ -221,6 +211,19 @@ test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async
   await ctx.close()
 })
 
+test('výsledky začínají přímou odpovědí Máte na to', async ({ page }) => {
+  await goToGoals(page)
+  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  // Odpověď musí být první a nejvýraznější věc v souhrnu
+  const verdict = page.getByText(/^(Máte na to|Zatím na to nemáte|Rozpočet)/).first()
+  await expect(verdict).toBeVisible()
+
+  // Až za odpovědí následuje rozbor
+  await expect(page.getByText(/Disponibilní částka/)).toBeVisible()
+})
+
 test('výsledky obsahují právní upozornění včetně rozbalitelných podmínek', async ({ page }) => {
   await goToGoals(page)
   await page.getByRole('button', { name: /Nemovitost/ }).first().click()
@@ -257,14 +260,24 @@ test('při neočekávané chybě se ukáže záchranná obrazovka, ne bílá str
 })
 
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {
-  const ctx1 = await browser.newContext({ permissions: ['clipboard-read', 'clipboard-write'] })
+  const ctx1 = await browser.newContext()
   const page = await ctx1.newPage()
+  // WebKit nezná oprávnění clipboard-*, tak schránku nahradíme vlastní
+  // implementací. Testuje se tím pořád stejná logika sdílení.
+  await page.addInitScript(() => {
+    const store = { text: '' }
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (t: string) => { store.text = t },
+        readText: async () => store.text,
+      },
+    })
+  })
   await start(page)
   await next(page) // → Příjmy
   const income = page.locator('input[inputmode="decimal"]').first()
-  await income.click()
-  await page.keyboard.press('Control+a')
-  await income.pressSequentially('54321')
+  await income.fill('54321')
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle

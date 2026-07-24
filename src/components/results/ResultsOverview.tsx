@@ -1,7 +1,7 @@
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
 import { evaluateOverall } from '../../engine/summary';
-import type { GoalStatus, OverallStatusKey } from '../../engine/summary';
+import type { GoalStatus, OverallStatusKey, VerdictAnswer } from '../../engine/summary';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
 import { postPurchaseRunwayMonths } from '../../engine/mortgage';
 import Tooltip from '../ui/Tooltip';
@@ -16,6 +16,27 @@ const statusStyles: Record<OverallStatusKey, string> = {
   tight: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
   not_yet: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
   fix_budget: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+};
+
+// Odpověď „Mám na to?": zelená ano, jantarová ano s výhradou, oranžová zatím ne
+// s cestou ven, červená jasné ne.
+const verdictStyles: Record<VerdictAnswer, { box: string; text: string }> = {
+  yes: {
+    box: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800',
+    text: 'text-emerald-700 dark:text-emerald-400',
+  },
+  yes_but: {
+    box: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
+    text: 'text-amber-700 dark:text-amber-400',
+  },
+  no_but: {
+    box: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
+    text: 'text-orange-700 dark:text-orange-400',
+  },
+  no: {
+    box: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
+    text: 'text-red-700 dark:text-red-400',
+  },
 };
 
 const goalDot: Record<GoalStatus, string> = {
@@ -38,7 +59,26 @@ export default function ResultsOverview({ state, allocations }: Props) {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      {/* Verdikt */}
+      {/* Odpověď na otázku z názvu appky. Záměrně první a největší věc na stránce. */}
+      <div className={`rounded-xl border p-5 sm:p-6 mb-4 text-center ${verdictStyles[summary.verdict.answer].box}`}>
+        <p className="text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight">
+          <span className={verdictStyles[summary.verdict.answer].text}>{summary.verdict.headline}</span>
+          {summary.verdict.qualifier && (
+            <>
+              <span className={verdictStyles[summary.verdict.answer].text}>,</span>{' '}
+              <span className="text-gray-500 dark:text-gray-400 font-bold">{summary.verdict.qualifier}</span>
+            </>
+          )}
+          <span className={verdictStyles[summary.verdict.answer].text}>
+            {summary.verdict.answer === 'yes' ? '.' : summary.verdict.answer === 'no' ? '.' : '…'}
+          </span>
+        </p>
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 max-w-xl mx-auto leading-relaxed">
+          {summary.verdict.reason}
+        </p>
+      </div>
+
+      {/* Rozbor verdiktu */}
       <div className={`rounded-xl border p-5 mb-5 ${statusStyles[summary.status]}`}>
         <div className="flex items-start gap-3">
           <span className="text-3xl leading-none">{summary.icon}</span>
