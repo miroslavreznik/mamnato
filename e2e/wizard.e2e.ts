@@ -11,6 +11,14 @@ async function start(page: Page) {
   await page.getByRole('button', { name: /Spustit přehled/ }).click()
 }
 
+// Odhadovaná měsíční splátka z karty nemovitosti jako číslo.
+async function monthlyPayment(page: Page): Promise<number> {
+  const row = page.getByText('Odhadovaná měsíční splátka').locator('xpath=..')
+  const text = (await row.textContent()) ?? ''
+  const match = text.match(/([\d\s\u00a0\u202f]+)\s*Kč\/měs/)
+  return Number((match?.[1] ?? '').replace(/[\s\u00a0\u202f]/g, ''))
+}
+
 // Kroky: 1 Režim → 2 Příjmy → 3 Výdaje → 4 Úspory → 5 Cíle.
 // Z uvítání až na krok Cíle (4× další).
 async function goToGoals(page: Page) {
@@ -148,6 +156,35 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   await expect(page.getByText(/Každých \+100 000 Kč akontace/)).toBeVisible()
   await expect(page.getByText(/Alternativa:/)).toBeVisible()
   await expect(page.getByText(/Bezpečné maximum|za bezpečnou hranicí|6měsíční rezervu/).first()).toBeVisible()
+})
+
+test('sazbou jde hýbat ve výsledcích a radí podle LTV', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  const savings = page.locator('input[inputmode="decimal"]').first()
+  await savings.click()
+  await page.keyboard.press('Control+a')
+  await savings.pressSequentially('1500000')
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
+
+  // Výchozí akontace = povinné minimum 1,1 M z 5,5 M → LTV přesně 80 %
+  await expect(page.getByText(/Vaše LTV je 80 %/)).toBeVisible()
+  // Vyšší sazba → vyšší splátka (5,2 % → 7 % na úvěru 4,4 M)
+  const before = await monthlyPayment(page)
+  await page.getByLabel('Úroková sazba').fill('7')
+  await expect(page.getByText(/7,0 % ročně/).first()).toBeVisible()
+  expect(await monthlyPayment(page)).toBeGreaterThan(before)
+  // Nižší akontace → horší pásmo LTV a tip, kolik doplatit
+  await page.getByLabel('Akontace z úspor').fill('600000')
+  await expect(page.getByText(/Vaše LTV je 89 %/)).toBeVisible()
+  await expect(page.getByText(/dostanete se pod 80 % LTV/)).toBeVisible()
+  await expect(page.getByText(/Riziko refixace/)).toBeVisible()
 })
 
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {

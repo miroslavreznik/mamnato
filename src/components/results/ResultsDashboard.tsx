@@ -114,6 +114,14 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     saveState(next);
   };
 
+  // Úroková sazba jde stejně jako akontace ladit přímo ve výsledcích.
+  const handleChangeRate = (value: number) => {
+    const clamped = Math.max(0.001, Math.min(value, 0.20));
+    const next = { ...state, property: { ...state.property, mortgageRate: clamped } };
+    setState(next);
+    saveState(next);
+  };
+
   // Sdílení přehledu odkazem — stav se zakóduje do URL, nic se neposílá na server.
   const [shareCopied, setShareCopied] = useState(false);
   const handleShare = async () => {
@@ -240,7 +248,11 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         {hasProperty && (
           <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
             <SavingsChart state={activeState} />
-            <PropertyAffordability state={activeState} onChangeDownPayment={handleChangeDownPayment} />
+            <PropertyAffordability
+              state={activeState}
+              onChangeDownPayment={handleChangeDownPayment}
+              onChangeRate={handleChangeRate}
+            />
             <DtiDstiIndicator state={activeState} />
             <MortgageVsRent state={activeState} />
             <CashFlowAfterChart state={activeState} />
