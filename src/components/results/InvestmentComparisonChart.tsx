@@ -75,7 +75,9 @@ export default function InvestmentComparisonChart({ state }: Props) {
             onChange={setPropertyRate}
             min={0} max={15}
             ariaLabel="Zhodnocení nemovitosti (% ročně)"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+            step={0.5}
+            suffix="%"
+            className="w-full px-3 py-2.5 pr-8 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
         <div>
@@ -85,7 +87,9 @@ export default function InvestmentComparisonChart({ state }: Props) {
             onChange={setSp500Rate}
             min={0} max={20}
             ariaLabel="Výnos SP500 (% ročně)"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+            step={0.5}
+            suffix="%"
+            className="w-full px-3 py-2.5 pr-8 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
         <div>
@@ -95,7 +99,9 @@ export default function InvestmentComparisonChart({ state }: Props) {
             onChange={setRentGrowth}
             min={0} max={15}
             ariaLabel="Růst nájmu (% ročně)"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+            step={0.5}
+            suffix="%"
+            className="w-full px-3 py-2.5 pr-8 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
       </div>

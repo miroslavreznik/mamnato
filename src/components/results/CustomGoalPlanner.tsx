@@ -224,7 +224,8 @@ export default function CustomGoalPlanner({ state, onChangeGoals }: Props) {
                     value={goal.targetAmount}
                     onChange={(v) => updateGoal(goal.id, 'targetAmount', v)}
                     ariaLabel="Cílová částka"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                    step={10000}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
                   />
                 </div>
                 <div>
@@ -236,7 +237,8 @@ export default function CustomGoalPlanner({ state, onChangeGoals }: Props) {
                     onChange={(v) => updateGoal(goal.id, 'targetMonths', v)}
                     min={1}
                     ariaLabel="Za kolik měsíců/let"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                    step={1}
+                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
                   />
                 </div>
               </div>

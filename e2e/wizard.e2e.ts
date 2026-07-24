@@ -90,11 +90,11 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await expect(page.getByText('Volná rezerva během volna')).toBeVisible()
   // Fixní balík rodičovské: kratší volno → vyšší měsíční dávka (350 000 / 18 ≈ 19 444)
-  const duration = page.getByLabel('Délka volna v měsících')
+  const duration = page.getByRole('textbox', { name: 'Délka volna v měsících', exact: true })
   await duration.click()
   await page.keyboard.press('Control+a')
   await duration.pressSequentially('18')
-  await expect(page.getByLabel('Měsíční příjem během volna')).toHaveValue(/19.444/)
+  await expect(page.getByRole('textbox', { name: 'Měsíční příjem během volna', exact: true })).toHaveValue(/19.444/)
 })
 
 test('výsledky jsou v sekcích — „Bydlení" je sbalené a otevře se z navigace', async ({ page }) => {
@@ -127,12 +127,12 @@ test('částka na důchod je sdílená mezi rozpočtem a kalkulačkou důchodu',
   await goToGoals(page)
   await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
-  const budgetInput = page.getByLabel('Spoření na důchod')
+  const budgetInput = page.getByRole('textbox', { name: 'Spoření na důchod', exact: true })
   await budgetInput.click()
   await page.keyboard.press('Control+a')
   await budgetInput.pressSequentially('5000')
   await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
-  await expect(page.getByLabel('Měsíční částka k investování')).toHaveValue(/5.000/)
+  await expect(page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true })).toHaveValue(/5.000/)
 })
 
 test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ page }) => {
@@ -150,7 +150,7 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
   // posuvník akontace ve výsledcích → hypotéka = 5 500 000 − 200 000
-  await page.getByLabel('Akontace z úspor').fill('200000')
+  await page.getByRole('slider', { name: 'Akontace z úspor' }).fill('200000')
   await expect(page.getByText(/5\s?300\s?000 Kč/).first()).toBeVisible()
   // rozhodovací nápovědy u posuvníku
   await expect(page.getByText(/Každých \+100 000 Kč akontace/)).toBeVisible()
@@ -177,14 +177,48 @@ test('sazbou jde hýbat ve výsledcích a radí podle LTV', async ({ page }) => 
   await expect(page.getByText(/Vaše LTV je 80 %/)).toBeVisible()
   // Vyšší sazba → vyšší splátka (5,2 % → 7 % na úvěru 4,4 M)
   const before = await monthlyPayment(page)
-  await page.getByLabel('Úroková sazba').fill('7')
+  await page.getByRole('slider', { name: 'Úroková sazba' }).fill('7')
   await expect(page.getByText(/7,0 % ročně/).first()).toBeVisible()
   expect(await monthlyPayment(page)).toBeGreaterThan(before)
   // Nižší akontace → horší pásmo LTV a tip, kolik doplatit
-  await page.getByLabel('Akontace z úspor').fill('600000')
+  await page.getByRole('slider', { name: 'Akontace z úspor' }).fill('600000')
   await expect(page.getByText(/Vaše LTV je 89 %/)).toBeVisible()
   await expect(page.getByText(/dostanete se pod 80 % LTV/)).toBeVisible()
   await expect(page.getByText(/Riziko refixace/)).toBeVisible()
+})
+
+test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async ({ browser }) => {
+  const ctx = await browser.newContext({ viewport: { width: 375, height: 812 }, hasTouch: true })
+  const page = await ctx.newPage()
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  // Krokování částky na cíl v grafu rozpočtu (krok 500 Kč)
+  const budget = page.getByRole('textbox', { name: 'Spoření na důchod', exact: true })
+  await budget.scrollIntoViewIfNeeded()
+  const before = Number((await budget.inputValue()).replace(/[\s\u00a0\u202f]/g, ''))
+  await page.getByRole('button', { name: 'Zvýšit: Spoření na důchod' }).click()
+  await expect(budget).toHaveValue(String(before + 500).replace(/\B(?=(\d{3})+(?!\d))/g, ' '))
+  await page.getByRole('button', { name: 'Snížit: Spoření na důchod' }).click()
+  await expect(budget).toHaveValue(String(before).replace(/\B(?=(\d{3})+(?!\d))/g, ' '))
+
+  // Stránka se na mobilu nesmí rolovat do šířky
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+
+  // Nápověda musí jít otevřít klepnutím (na dotyku není hover) a zase zavřít
+  const help = page.getByRole('button', { name: 'Nápověda' }).first()
+  await help.scrollIntoViewIfNeeded()
+  await help.tap()
+  await expect(page.getByRole('tooltip').first()).toBeVisible()
+  await help.tap()
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+  await ctx.close()
 })
 
 test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ browser }) => {

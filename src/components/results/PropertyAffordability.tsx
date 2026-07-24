@@ -123,25 +123,41 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
                 {dpOfPrice.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} % z ceny
               </span>
             </div>
-            <input
-              type="range"
-              min={0}
-              max={totalSavings}
-              step={10000}
-              value={dpValue}
-              onChange={(e) => onChangeDownPayment(Number(e.target.value))}
-              aria-label="Akontace z úspor"
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-blue-600"
-              style={{
-                background: `linear-gradient(to right, rgba(16,185,129,0.45) 0%, rgba(16,185,129,0.45) ${safePct}%, rgba(245,158,11,0.5) ${safePct}%, rgba(245,158,11,0.5) 100%)`,
-              }}
-            />
+            <div className="flex items-center gap-2">
+              <StepButton
+                onClick={() => onChangeDownPayment(Math.max(0, dpValue - 10000))}
+                disabled={dpValue <= 0}
+                label="Snížit akontaci"
+              >
+                −
+              </StepButton>
+              <input
+                type="range"
+                min={0}
+                max={totalSavings}
+                step={10000}
+                value={dpValue}
+                onChange={(e) => onChangeDownPayment(Number(e.target.value))}
+                aria-label="Akontace z úspor"
+                className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                style={{
+                  background: `linear-gradient(to right, rgba(16,185,129,0.45) 0%, rgba(16,185,129,0.45) ${safePct}%, rgba(245,158,11,0.5) ${safePct}%, rgba(245,158,11,0.5) 100%)`,
+                }}
+              />
+              <StepButton
+                onClick={() => onChangeDownPayment(Math.min(totalSavings, dpValue + 10000))}
+                disabled={dpValue >= totalSavings}
+                label="Zvýšit akontaci"
+              >
+                +
+              </StepButton>
+            </div>
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>0 Kč</span>
               <span>{fmt(totalSavings)} Kč</span>
             </div>
 
-            <div className="flex justify-between text-sm mt-1.5">
+            <div className="flex flex-wrap justify-between gap-x-2 text-sm mt-1.5">
               <span className="text-gray-600 dark:text-gray-400">Zbývající rezerva po akontaci:</span>
               <span className={`font-semibold ${reserve <= 0 ? 'text-red-600' : reserveMonths < 6 ? 'text-amber-600' : 'text-gray-900 dark:text-white'}`}>
                 {fmt(reserve)} Kč{reserve > 0 && isFinite(reserveMonths) ? ` (~${reserveMonths.toFixed(1)} měs. výdajů)` : ''}
@@ -191,16 +207,32 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
               </span>
               <span className="text-sm font-semibold text-gray-900 dark:text-white">{fmtRate(rate)} % ročně</span>
             </div>
-            <input
-              type="range"
-              min={RATE_MIN * 100}
-              max={RATE_MAX * 100}
-              step={0.1}
-              value={Number((rate * 100).toFixed(2))}
-              onChange={(e) => onChangeRate(Number((Number(e.target.value) / 100).toFixed(4)))}
-              aria-label="Úroková sazba"
-              className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-blue-600 bg-gradient-to-r from-green-400/50 to-red-400/50"
-            />
+            <div className="flex items-center gap-2">
+              <StepButton
+                onClick={() => onChangeRate(Number(Math.max(RATE_MIN, rate - 0.001).toFixed(4)))}
+                disabled={rate <= RATE_MIN}
+                label="Snížit úrokovou sazbu"
+              >
+                −
+              </StepButton>
+              <input
+                type="range"
+                min={RATE_MIN * 100}
+                max={RATE_MAX * 100}
+                step={0.1}
+                value={Number((rate * 100).toFixed(2))}
+                onChange={(e) => onChangeRate(Number((Number(e.target.value) / 100).toFixed(4)))}
+                aria-label="Úroková sazba"
+                className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-blue-600 bg-gradient-to-r from-green-400/50 to-red-400/50"
+              />
+              <StepButton
+                onClick={() => onChangeRate(Number(Math.min(RATE_MAX, rate + 0.001).toFixed(4)))}
+                disabled={rate >= RATE_MAX}
+                label="Zvýšit úrokovou sazbu"
+              >
+                +
+              </StepButton>
+            </div>
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>{fmtRate(RATE_MIN)} %</span>
               <span>{fmtRate(RATE_MAX)} %</span>
@@ -284,6 +316,27 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
   );
 }
 
+// Krokovací tlačítko k posuvníku — na mobilu se posuvníkem těžko trefuje
+// přesná hodnota, tlačítka dávají spolehlivý krok.
+function StepButton({ onClick, disabled, label, children }: {
+  onClick: () => void;
+  disabled: boolean;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+    >
+      {children}
+    </button>
+  );
+}
+
 function Row({ label, value, highlight, bold, tooltip }: {
   label: string;
   value: string;
@@ -293,12 +346,15 @@ function Row({ label, value, highlight, bold, tooltip }: {
 }) {
   const valueColor = highlight === 'red' ? 'text-red-600' : highlight === 'green' ? 'text-green-600' : 'text-gray-900 dark:text-white';
   return (
-    <div className="flex justify-between items-center">
-      <span className="text-gray-600 dark:text-gray-300 flex items-center">
+    <div className="flex justify-between items-center gap-3">
+      <span className="text-gray-600 dark:text-gray-300 flex items-center min-w-0">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </span>
-      <span className={`${bold ? 'text-lg font-bold' : 'font-semibold'} ${valueColor}`}>{value}</span>
+      {/* Částka se nikdy nesmí zalomit doprostřed — na mobilu by se rozpadla přes dva řádky. */}
+      <span className={`shrink-0 whitespace-nowrap ${bold ? 'text-base sm:text-lg font-bold' : 'font-semibold'} ${valueColor}`}>
+        {value}
+      </span>
     </div>
   );
 }

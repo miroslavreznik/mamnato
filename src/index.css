@@ -30,6 +30,50 @@ input[type="number"] {
   appearance: textfield;
 }
 
+/* Mobil: pole musí mít aspoň 16px, jinak iOS Safari při kliknutí zoomne
+   celou stránku (a uživatel pak nevidí zbytek formuláře). */
+@media (max-width: 640px) {
+  input[type="text"],
+  input[type="number"],
+  input[type="email"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Posuvníky: na dotyk potřebují výrazně větší úchyt než výchozích ~12 px. */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  touch-action: pan-y;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 9999px;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  border-color: #fff;
+}
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
 /* Tisk / uložení do PDF: schová interaktivní prvky a vynutí světlý, čitelný přehled */
 @media print {
   .no-print {

@@ -94,6 +94,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
               value={monthlyAmount}
               onChange={setMonthlyAmount}
               ariaLabel="Měsíční částka k investování"
+              step={500}
               className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kč</span>
@@ -109,6 +110,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             onChange={setYearsToRetirement}
             min={1} max={50}
             ariaLabel="Počet let do důchodu"
+            step={1}
             className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
@@ -131,6 +133,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                 value={monthlyRent}
                 onChange={setMonthlyRent}
                 ariaLabel="Požadovaná měsíční renta"
+                step={1000}
                 className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
               />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kč</span>
@@ -138,7 +141,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           </div>
           <div className="flex-1 sm:text-right">
             <p className="text-sm text-gray-500 dark:text-gray-400">Potřebná hodnota portfolia</p>
-            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
+            <p className="text-xl sm:text-2xl font-bold whitespace-nowrap text-emerald-700 dark:text-emerald-400">
               {targetPortfolio === Infinity ? '—' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}
             </p>
           </div>
@@ -287,7 +290,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                         value={rates[p.key]}
                         onChange={(v) => setRates({ ...rates, [p.key]: v })}
                         ariaLabel={`Výnos ${p.label}`}
-                        className="w-16 text-right px-1 py-0.5 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
+                        className="w-20 text-right px-2 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
                       />
                       <span className="ml-1">%</span>
                     </td>

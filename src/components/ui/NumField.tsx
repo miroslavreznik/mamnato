@@ -8,6 +8,10 @@ interface NumFieldProps {
   className?: string;
   placeholder?: string;
   ariaLabel?: string;
+  // Když je zadán krok, přibydou tlačítka − a + (stejně jako v průvodci).
+  step?: number;
+  // Jednotka zobrazená uvnitř pole (Kč, %).
+  suffix?: string;
 }
 
 /**
@@ -25,6 +29,8 @@ export default function NumField({
   className,
   placeholder = '0',
   ariaLabel,
+  step,
+  suffix,
 }: NumFieldProps) {
   const [focused, setFocused] = useState(false);
   const [draft, setDraft] = useState('');
@@ -34,7 +40,7 @@ export default function NumField({
   // (např. „300 000", „7,5"), konzistentně s hlavním NumberInput.
   const shown = focused ? draft : value ? value.toLocaleString('cs-CZ') : '';
 
-  return (
+  const input = (
     <input
       type="text"
       inputMode="decimal"
@@ -60,5 +66,56 @@ export default function NumField({
       }}
       onBlur={() => setFocused(false)}
     />
+  );
+
+  if (step == null && !suffix) return input;
+
+  // Pole (případně s jednotkou uvnitř) roste do zbylého místa vedle tlačítek.
+  const field = suffix ? (
+    <div className="relative flex-1 min-w-0">
+      {input}
+      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">
+        {suffix}
+      </span>
+    </div>
+  ) : (
+    <div className="flex-1 min-w-0">{input}</div>
+  );
+
+  if (step == null) return field;
+
+  // Krok zaokrouhlujeme, aby desetinné kroky (0,5 %) nenasbíraly chyby floatu.
+  const bump = (direction: 1 | -1) => {
+    const next = Math.round((value + direction * step) * 1e6) / 1e6;
+    onChange(clamp(next));
+  };
+
+  const btn =
+    'flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 ' +
+    'dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-lg font-bold ' +
+    'hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed';
+
+  return (
+    <div className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => bump(-1)}
+        disabled={value <= min}
+        aria-label={ariaLabel ? `Snížit: ${ariaLabel}` : 'Snížit'}
+        className={btn}
+      >
+        −
+      </button>
+      {field}
+      <button
+        type="button"
+        onClick={() => bump(1)}
+        disabled={value >= max}
+        aria-label={ariaLabel ? `Zvýšit: ${ariaLabel}` : 'Zvýšit'}
+        className={btn}
+      >
+        +
+      </button>
+    </div>
   );
 }

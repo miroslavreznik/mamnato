@@ -214,7 +214,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
             <button
               key={s.id}
               onClick={() => openAndScroll(s.id)}
-              className="px-3 py-1.5 text-sm rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="px-3 py-2 min-h-[44px] sm:min-h-0 sm:py-1.5 text-sm rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               {s.label}
             </button>

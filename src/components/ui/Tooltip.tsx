@@ -1,30 +1,61 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface TooltipProps {
   text: string;
 }
 
 export default function Tooltip({ text }: TooltipProps) {
-  const [show, setShow] = useState(false);
+  // Tři nezávislé důvody, proč nápovědu ukázat. Kdyby se míchaly do jednoho
+  // stavu, klepnutí na mobilu by ji hned zase zavřelo (hover + klik naráz).
+  const [pinned, setPinned] = useState(false); // klepnutí / kliknutí
+  const [hovered, setHovered] = useState(false); // jen skutečná myš
+  const [keyboardFocus, setKeyboardFocus] = useState(false);
+  const wrapRef = useRef<HTMLSpanElement>(null);
+
+  const show = pinned || hovered || keyboardFocus;
+
+  // Otevřenou (připnutou) nápovědu jde zavřít klepnutím jinam nebo Escapem.
+  useEffect(() => {
+    if (!pinned) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (!wrapRef.current?.contains(e.target as Node)) setPinned(false);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPinned(false);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [pinned]);
 
   return (
-    <span className="relative inline-block ml-1">
+    <span ref={wrapRef} className="relative inline-block ml-1 align-middle">
       <button
         type="button"
-        className="w-5 h-5 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-xs font-bold inline-flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-        onFocus={() => setShow(true)}
-        onBlur={() => setShow(false)}
+        className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-xs font-bold inline-flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        onClick={() => setPinned((v) => !v)}
+        // Hover jen pro myš — dotyk jinak nápovědu otevře a zavře zároveň.
+        onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHovered(true); }}
+        onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHovered(false); }}
+        // Fokus ukazuje nápovědu při procházení klávesnicí, ne po klepnutí.
+        onFocus={(e) => { if (e.currentTarget.matches(':focus-visible')) setKeyboardFocus(true); }}
+        onBlur={() => setKeyboardFocus(false)}
         aria-label="Nápověda"
+        aria-expanded={show}
       >
         ?
       </button>
       {show && (
-        <div className="absolute z-10 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-2 text-sm text-white bg-gray-800 rounded-lg shadow-lg">
+        <span
+          role="tooltip"
+          className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 block w-64 max-w-[calc(100vw-2rem)] p-2 text-sm font-normal text-left normal-case tracking-normal text-white bg-gray-800 rounded-lg shadow-lg"
+        >
           {text}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800" />
-        </div>
+          <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800" />
+        </span>
       )}
     </span>
   );

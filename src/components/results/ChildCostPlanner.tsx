@@ -64,6 +64,7 @@ export default function ChildCostPlanner({ state }: Props) {
             onChange={setNumberOfChildren}
             min={1} max={5}
             ariaLabel="Počet dětí"
+            step={1}
             className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
           {numberOfChildren > 1 && (
@@ -77,6 +78,7 @@ export default function ChildCostPlanner({ state }: Props) {
             onChange={setHorizonYears}
             min={1} max={26}
             ariaLabel="Horizont v letech"
+            step={1}
             className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
@@ -113,7 +115,7 @@ export default function ChildCostPlanner({ state }: Props) {
                       value={customCosts[range.label]}
                       onChange={(v) => setCustomCosts({ ...customCosts, [range.label]: v })}
                       ariaLabel={`Náklady ${range.label}`}
-                      className="w-24 text-right px-2 py-1 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
+                      className="w-24 text-right px-2 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
                     />
                   </td>
                 </tr>

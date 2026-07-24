@@ -44,7 +44,7 @@ export default function DtiDstiIndicator({ state }: Props) {
             <span className="font-semibold">DTI</span>
             <Tooltip text="DTI říká, kolikrát váš roční příjem pokryje celkový dluh (nová hypotéka i zůstatek stávajících úvěrů). Závazný horní limit ČNB od ledna 2024 nevyžaduje; banky ho ale běžně posuzují, obvykle kolem 8,5×." />
           </div>
-          <div className="text-2xl font-bold">{dtiVal === Infinity ? '∞' : dtiVal.toFixed(1)}×</div>
+          <div className="text-xl sm:text-2xl font-bold whitespace-nowrap">{dtiVal === Infinity ? '∞' : dtiVal.toFixed(1)}×</div>
           <div className="text-xs mt-1">Orientační limit bank: {DEFAULTS.dtiLimit}×</div>
         </div>
 

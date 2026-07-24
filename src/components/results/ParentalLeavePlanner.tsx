@@ -119,7 +119,8 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             min={1}
             max={48}
             ariaLabel="Délka volna v měsících"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+            step={1}
+            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
         <div>
@@ -129,7 +130,9 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             onChange={(v) => update({ monthlyBenefit: v })}
             min={0}
             ariaLabel="Měsíční příjem během volna"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+            step={1000}
+            suffix="Kč"
+            className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
           <p className="mt-1 text-[10px] text-gray-400">Rodičovská 350 000 Kč se rozloží podle délky (kratší volno = vyšší dávka). Mateřská bývá zpočátku vyšší — částku můžete upravit.</p>
         </div>
