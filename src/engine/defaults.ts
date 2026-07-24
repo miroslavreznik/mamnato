@@ -1,4 +1,4 @@
-// Zdroj: ČSÚ, ČNB, ČBA — datum poslední revize níže.
+// Zdroje: ČSÚ, ČNB, ČBA. Datum poslední revize níže.
 // Při aktualizaci projděte i komentáře u jednotlivých hodnot a datum posuňte;
 // appka datum zobrazuje uživateli (tooltip u úrokové sazby), takže zastaralá
 // data se sama prozradí.
@@ -7,7 +7,7 @@ export const DEFAULTS_DATE = '2026-07';
 // Stav regulace ČNB (borrower-based measures), ověřeno 7/2026:
 //  - Závazný je jen limit LTV: max 80 %, u žadatelů do 36 let 90 %
 //    → povinná akontace 20 %, resp. 10 %. Pro vlastní bydlení se nemění.
-//  - Horní limit DSTI ČNB deaktivovala (od 7/2023), DTI (od 1/2024) — banky
+//  - Horní limit DSTI ČNB deaktivovala (od 7/2023), DTI (od 1/2024), banky
 //    je ale i tak běžně posuzují jako interní obezřetnostní vodítko.
 //  - Od 4/2026 doporučuje ČNB přísnější limity (LTV 70 %, DTI 7) pro
 //    INVESTIČNÍ hypotéky (3. a další nemovitost nebo nemovitost na pronájem).
@@ -33,7 +33,7 @@ export const DEFAULTS = {
   },
   property: {
     // Byt ~70 m² při celorepublikovém průměru (2025: 72 410 Kč/m², v roce 2026
-    // dál rostl). V Praze je reálná cena výrazně vyšší — uživatel si ji upraví.
+    // dál rostl). V Praze je reálná cena výrazně vyšší, uživatel si ji upraví.
     targetPrice: 5500000,
     // ČBA, průměrná realizovaná sazba nových hypoték 7/2026: 4,79 %.
     // Data ČBA vycházejí s ~dvouměsíčním zpožděním.
@@ -53,7 +53,7 @@ export const DEFAULTS = {
 } as const;
 
 // Průměrné měsíční náklady na 1 dítě dle věku (Kč)
-// Zdroj: ČSÚ, odhad 2024 — od té doby neaktualizováno, reálné náklady dnes
+// Zdroj: ČSÚ, odhad 2024, od té doby neaktualizováno, reálné náklady dnes
 // budou o inflaci vyšší. Uživatel si částky může v kalkulačce přepsat.
 export const CHILD_COSTS_CZ = [
   { from: 0, to: 3, monthlyCost: 8000, label: '0–3 roky' },

@@ -69,7 +69,7 @@ export default function Step3Expenses() {
         />
       ))}
 
-      {/* Zbytné výdaje — buď jedním polem, nebo podrobným rozpisem do skupin */}
+      {/* Zbytné výdaje, buď jedním polem, nebo podrobným rozpisem do skupin */}
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">Zbytné výdaje</h3>
       <NumberInput
         label="Zbytné výdaje (zábava, dovolená, koníčky, předplatné)"
@@ -133,7 +133,7 @@ export default function Step3Expenses() {
         </div>
       )}
 
-      {/* Zbývající dluhy — zůstatek (ne měsíční výdaj), pro výpočet DTI */}
+      {/* Zbývající dluhy, zůstatek (ne měsíční výdaj), pro výpočet DTI */}
       <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
         <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Zbývající dluhy (nepovinné)</h3>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">

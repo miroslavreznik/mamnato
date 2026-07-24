@@ -85,7 +85,7 @@ export function breakdownSurplus(
   return income - spent;
 }
 
-// Spoření na cíle (měsíční toky). Nezahrnuje hypotéku — ta je výdajem v „Po koupi".
+// Spoření na cíle (měsíční toky). Nezahrnuje hypotéku, ta je výdajem v „Po koupi".
 function goalFlows(state: WizardState, allocations: GoalAllocations): GoalFlow[] {
   const flows: GoalFlow[] = [];
   if (state.goals.includes('retirement') && allocations.retirement > 0) {

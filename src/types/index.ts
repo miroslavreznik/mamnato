@@ -7,7 +7,7 @@ export interface WizardState {
   currentStep: number;
   completedSteps: number[];
 
-  // Step 1 — Mode
+  // Step 1: Mode
   mode: UserMode;
   numberOfChildren?: number;
 
@@ -15,19 +15,19 @@ export interface WizardState {
   // tedy nižší povinná akontace (10 % místo 20 %).
   applicantUnder36?: boolean;
 
-  // Step 2 — Income
+  // Step 2: Income
   income: {
     person1NetMonthly: number;
     person2NetMonthly?: number;
     parentalAllowance?: number;
   };
 
-  // Věk žadatelů — ovlivňuje limit LTV (do 36 let), horizont spoření na důchod
+  // Věk žadatelů, ovlivňuje limit LTV (do 36 let), horizont spoření na důchod
   // a splatnost hypotéky. Nepovinné (0 / undefined = nezadáno).
   person1Age?: number;
   person2Age?: number;
 
-  // Step 3 — Expenses
+  // Step 3: Expenses
   expenses: {
     rent: number;
     existingLoans: number;
@@ -42,20 +42,20 @@ export interface WizardState {
     discretionaryBreakdown?: Record<string, number>;
   };
 
-  // Zůstatek jistiny stávajících úvěrů — pro výpočet DTI dle ČNB (nezahrnuje novou hypotéku)
+  // Zůstatek jistiny stávajících úvěrů, pro výpočet DTI dle ČNB (nezahrnuje novou hypotéku)
   existingDebtPrincipal?: number;
 
-  // Step 4 — Savings
+  // Step 4: Savings
   savings: {
     totalSavings: number;
     downPaymentFromSavings?: number;
     breakdown?: SavingsBreakdown;
   };
 
-  // Step 5 — Goals
+  // Step 5: Goals
   goals: FinancialGoal[];
 
-  // Step 6 — Property
+  // Step 6: Property
   property: {
     targetPrice: number;
     ownershipCosts?: number;

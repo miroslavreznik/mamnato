@@ -48,7 +48,7 @@ export default function StepIndicator({ currentStep, steps, completedSteps, onSt
                     ? { type: 'button' as const, onClick: () => onStepClick(step), 'aria-current': isCurrent ? ('step' as const) : undefined }
                     : {})}
                   className={`${circleBase} ${circleCls} ${canJump && !isCurrent ? 'cursor-pointer' : 'cursor-default'}`}
-                  aria-label={canJump && !isCurrent ? `${label} — upravit` : label}
+                  aria-label={canJump && !isCurrent ? `${label} (upravit)` : label}
                 >
                   {isCompleted ? (
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>

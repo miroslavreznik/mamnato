@@ -2,7 +2,7 @@ interface Props {
   className?: string;
 }
 
-// Značka aplikace — domeček s rostoucí šipkou (shodná s faviconem).
+// Značka aplikace, domeček s rostoucí šipkou (shodná s faviconem).
 export default function BrandMark({ className = 'w-8 h-8' }: Props) {
   return (
     <svg viewBox="0 0 64 64" className={className} role="img" aria-label="MámNaTo?">

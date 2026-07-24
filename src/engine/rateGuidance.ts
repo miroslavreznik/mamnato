@@ -7,7 +7,7 @@ import {
   loanTermYears,
 } from './mortgage';
 
-// Banky v ČR neúčtují jednu sazbu — odstupňovávají ji podle LTV (poměru úvěru
+// Banky v ČR neúčtují jednu sazbu, odstupňovávají ji podle LTV (poměru úvěru
 // k ceně nemovitosti). Čím víc dáte z vlastního, tím nižší riziko pro banku
 // a tím lepší sazba. Přirážky/slevy níže jsou orientační tržní zvyklost
 // (rozdíly mezi bankami jsou v řádu desetin p. b.), měřeno proti standardnímu
@@ -40,7 +40,7 @@ export function ltvBandFor(ltvValue: number): LtvBand {
   return LTV_BANDS.find((b) => ltvValue <= b.maxLtv) ?? LTV_BANDS[LTV_BANDS.length - 1];
 }
 
-// Splátka při jiné sazbě (stejná jistina i splatnost) — pro modelování refixace.
+// Splátka při jiné sazbě (stejná jistina i splatnost), pro modelování refixace.
 export function paymentAtRate(state: WizardState, rate: number): number {
   return monthlyMortgagePayment(loanAmount(state), rate, loanTermYears(state));
 }
@@ -80,7 +80,7 @@ export function ltvRateAdvice(state: WizardState): LtvRateAdvice | null {
 
   const dp = effectiveDownPayment(state);
   // Aby úvěr klesl pod hranici pásma, musí akontace pokrýt zbytek ceny.
-  // Zaokrouhleno na celé koruny — jde o částku, kterou uživatel doplácí.
+  // Zaokrouhleno na celé koruny, jde o částku, kterou uživatel doplácí.
   const dpForNextBand = Math.round(price - nextBand.maxLtv * price);
   const extraDownPayment = Math.max(0, dpForNextBand - dp);
   const affordable = dp + extraDownPayment <= state.savings.totalSavings;

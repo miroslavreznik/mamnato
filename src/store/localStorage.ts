@@ -117,7 +117,7 @@ export function saveState(state: WizardState): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {
-    // localStorage full or unavailable — silently fail
+    // localStorage full or unavailable, silently fail
   }
 }
 

@@ -34,7 +34,7 @@ export interface LeaveImpact {
   incomeDuringLeave: number;
   disposableNow: number;
   disposableDuringLeave: number;
-  // Disponibilní částka během volna už po koupi (splátka místo nájmu) — jen když je cíl nemovitost
+  // Disponibilní částka během volna už po koupi (splátka místo nájmu), jen když je cíl nemovitost
   disposableDuringLeaveAfterPurchase: number | null;
   savingsLostTotal: number; // o kolik méně naspoříte za celé volno
   // Krytí schodku z rezervy: kolik úspor zbyde (po akontaci, když se kupuje),
@@ -68,7 +68,7 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   const savingsLostTotal = Math.max(0, disposableNow - disposableDuringLeave) * pl.durationMonths;
 
   // Rezerva, ze které se dá schodek během volna krýt. Když se kupuje nemovitost,
-  // většina úspor padne na akontaci — počítáme s tím, co zbyde po ní.
+  // většina úspor padne na akontaci, počítáme s tím, co zbyde po ní.
   const isBuying = state.goals.includes('property');
   const reserveAfter = Math.max(0, state.savings.totalSavings - (isBuying ? effectiveDownPayment(state) : 0));
   const relevantDisposable = disposableDuringLeaveAfterPurchase ?? disposableDuringLeave;

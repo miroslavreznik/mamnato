@@ -10,7 +10,7 @@ function formatDataDate(iso: string): string {
 /**
  * Právní upozornění k výsledkům.
  *
- * Klíčové body jsou vidět vždy, podrobné znění je rozbalovací — schované
+ * Klíčové body jsou vidět vždy, podrobné znění je rozbalovací, schované
  * podmínky by ztrácely smysl, ale nemá cenu jimi zahltit celý závěr přehledu.
  */
 export default function Disclaimer() {
@@ -73,7 +73,7 @@ export default function Disclaimer() {
               <span className="whitespace-nowrap">{dataDate}</span> a mohou být neaktuální nebo
               nemusí odpovídat vaší situaci. Výpočty nezohledňují všechny poplatky, daně, pojištění,
               inflaci ani individuální podmínky konkrétní banky. Skutečnou úrokovou sazbu, výši
-              splátky i schválení úvěru posuzuje vždy banka individuálně — reálná nabídka se může
+              splátky i schválení úvěru posuzuje vždy banka individuálně a reálná nabídka se může
               podstatně lišit. Nic zde uvedeného nezaručuje, že úvěr získáte.
             </dd>
           </div>
@@ -94,7 +94,7 @@ export default function Disclaimer() {
               Zadané údaje zůstávají ve vašem prohlížeči, neodesílají se na žádný server a
               provozovatel k nim nemá přístup.{' '}
               <strong className="font-semibold">Pozor u funkce sdílení:</strong> vygenerovaný odkaz
-              obsahuje vaše zadané údaje zakódované přímo v adrese — kdokoli, kdo odkaz získá, uvidí
+              obsahuje vaše zadané údaje zakódované přímo v adrese. Kdokoli, kdo odkaz získá, uvidí
               vaše příjmy, výdaje i úspory. Posílejte ho jen lidem, kterým důvěřujete.
             </dd>
           </div>
@@ -103,7 +103,7 @@ export default function Disclaimer() {
             <dt className="font-semibold text-gray-600 dark:text-gray-300">6. Doporučení</dt>
             <dd>
               Před uzavřením hypotéky, investicí nebo jiným zásadním finančním rozhodnutím
-              konzultujte svou situaci s licencovaným odborníkem — hypotečním specialistou banky,
+              konzultujte svou situaci s licencovaným odborníkem: hypotečním specialistou banky,
               samostatným zprostředkovatelem registrovaným u ČNB, investičním nebo daňovým poradcem.
             </dd>
           </div>

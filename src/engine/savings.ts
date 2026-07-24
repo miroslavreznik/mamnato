@@ -96,7 +96,7 @@ export function cashFlowAfterPurchase(
   // After purchase: remove rent + utilities, add mortgage + ownership costs
   const disposableAfter = totalMonthlyIncome(state) - expensesAfterPurchase(state);
 
-  // Obě řady vycházejí ze srovnatelné základny — dnešní výše úspor.
+  // Obě řady vycházejí ze srovnatelné základny, dnešní výše úspor.
   // Když nekoupím, úspory dál rostou disponibilní částkou.
   // Když koupím, utratím akontaci a dál spořím (nižší) disponibilní částkou po koupi.
   const startSavings = state.savings.totalSavings;

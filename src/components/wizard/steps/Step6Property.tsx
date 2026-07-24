@@ -56,12 +56,12 @@ export default function Step6Property() {
       {youngest !== undefined ? (
         <div className="mb-6 text-xs text-gray-500 dark:text-gray-400">
           {youngest < 36
-            ? `Nejmladšímu žadateli je ${youngest} let — díky vyššímu LTV (do 36 let) stačí akontace ${reqDpPct} % místo 20 %.`
-            : `Nejmladšímu žadateli je ${youngest} let — povinná akontace je ${reqDpPct} % (LTV 80 %).`}
+            ? `Nejmladšímu žadateli je ${youngest} let, díky vyššímu LTV (do 36 let) stačí akontace ${reqDpPct} % místo 20 %.`
+            : `Nejmladšímu žadateli je ${youngest} let, povinná akontace je ${reqDpPct} % (LTV 80 %).`}
         </div>
       ) : (
         <div className="mb-6 text-xs text-gray-500 dark:text-gray-400">
-          Tip: zadejte věk v kroku <span className="font-medium">Příjmy</span> — žadatelům do 36 let stačí díky vyššímu LTV akontace jen 10 %.
+          Tip: zadejte věk v kroku <span className="font-medium">Příjmy</span>. Žadatelům do 36 let stačí díky vyššímu LTV akontace jen 10 %.
         </div>
       )}
 
@@ -122,7 +122,7 @@ export default function Step6Property() {
         label="Úroková sazba hypotéky"
         value={Math.round(rate * 1000) / 10}
         onChange={(v) => dispatch({ type: 'UPDATE_PROPERTY', field: 'mortgageRate', value: v / 100 })}
-        tooltip={`Výchozí hodnota vychází z průměrné sazby nových hypoték dle ČBA (${DEFAULTS_DATE}). Vaše nabídka se může lišit podle banky i LTV — klidně ji přepište.`}
+        tooltip={`Výchozí hodnota vychází z průměrné sazby nových hypoték dle ČBA (${DEFAULTS_DATE}). Vaše nabídka se může lišit podle banky i LTV, klidně ji přepište.`}
         suffix="%"
         min={0.1}
         max={20}
@@ -142,7 +142,7 @@ export default function Step6Property() {
         </select>
         {termTooLongForAge && (
           <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
-            Při délce {term} let by hypotéka byla doplacena ve věku {ageAtPayoff} let. Banky obvykle chtějí splacení do {DEFAULTS.mortgageMaxAge} let — počítejte s kratší dobou splácení (a vyšší splátkou), nebo mladším spolužadatelem.
+            Při délce {term} let by hypotéka byla doplacena ve věku {ageAtPayoff} let. Banky obvykle chtějí splacení do {DEFAULTS.mortgageMaxAge} let, počítejte s kratší dobou splácení (a vyšší splátkou), nebo mladším spolužadatelem.
           </p>
         )}
       </div>

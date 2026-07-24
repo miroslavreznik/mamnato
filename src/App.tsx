@@ -77,7 +77,7 @@ function App() {
 
       <footer className="no-print max-w-3xl mx-auto px-4 pb-8 pt-4 text-center">
         <p className="text-xs text-gray-400 dark:text-gray-600">
-          MámNaTo? — orientační finanční přehled. Data zůstávají ve vašem prohlížeči.
+          MámNaTo? Orientační finanční přehled. Data zůstávají ve vašem prohlížeči.
         </p>
       </footer>
     </div>

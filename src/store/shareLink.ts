@@ -2,7 +2,7 @@ import type { WizardState } from '../types';
 import { normalizeState, saveState } from './localStorage';
 
 // Sdílení přehledu odkazem: stav se zakóduje do fragmentu URL (#s=…).
-// Nic se neposílá na server — data „jedou" v adrese. Příjemce si otevře
+// Nic se neposílá na server, data „jedou" v adrese. Příjemce si otevře
 // stejný scénář a může si ho dál upravovat ve svém prohlížeči.
 
 const HASH_PREFIX = '#s=';
@@ -23,7 +23,7 @@ function fromBase64Url(b64url: string): string {
   return new TextDecoder().decode(bytes);
 }
 
-// Čisté funkce (bez window) — snadno testovatelné.
+// Čisté funkce (bez window), snadno testovatelné.
 export function encodeStatePayload(state: WizardState): string {
   return toBase64Url(JSON.stringify(state));
 }

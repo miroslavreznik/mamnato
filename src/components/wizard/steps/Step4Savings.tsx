@@ -73,7 +73,7 @@ export default function Step4Savings() {
             label="Investice (fondy, ETF, akcie)"
             value={investments}
             onChange={(v) => dispatch({ type: 'UPDATE_SAVINGS_BREAKDOWN', field: 'investments', value: v })}
-            tooltip="Hodnota investičního portfolia — podílové fondy, ETF, akcie a podobně."
+            tooltip="Hodnota investičního portfolia: podílové fondy, ETF, akcie a podobně."
             step={10000}
           />
 

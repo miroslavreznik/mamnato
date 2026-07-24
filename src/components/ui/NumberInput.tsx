@@ -56,8 +56,8 @@ export default function NumberInput({
   const cursorRef = useRef<number | null>(null);
 
   // Sync display when value changes externally (e.g. spinner, shorthand).
-  // Záměrná synchronizace zobrazení s propem, když pole není ve fokusu —
-  // během psaní si displayValue drží rozepsaný text uživatele.
+  // Záměrná synchronizace zobrazení s propem, když pole není ve fokusu.
+  // Během psaní si displayValue drží rozepsaný text uživatele.
   useEffect(() => {
     if (!isFocused && value !== prevValueRef.current) {
       // eslint-disable-next-line react-hooks/set-state-in-effect

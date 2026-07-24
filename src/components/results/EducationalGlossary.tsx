@@ -9,12 +9,12 @@ const items: GlossaryItem[] = [
   {
     term: 'Nezbytné vs. zbytné výdaje',
     explanation:
-      'Nezbytné výdaje musíte platit i při výpadku příjmu — bydlení, jídlo, doprava, splátky. Zbytné jsou ty, které jde dočasně omezit — zábava, dovolená, předplatné. Rozdělení výdajů takhle vám ukáže, kolik doopravdy potřebujete na přežití a jakou rezervu si máte vytvořit.',
+      'Nezbytné výdaje musíte platit i při výpadku příjmu: bydlení, jídlo, doprava, splátky. Zbytné jsou ty, které jde dočasně omezit: zábava, dovolená, předplatné. Rozdělení výdajů takhle vám ukáže, kolik doopravdy potřebujete na přežití a jakou rezervu si máte vytvořit.',
   },
   {
     term: 'Nouzová rezerva',
     explanation:
-      'Peníze stranou zhruba na 3–6 měsíců nezbytných výdajů, snadno dostupné (spořicí účet, ne investice). Když přijde nečekaná rána — ztráta práce, porouchané auto, nemoc — nemusíte sahat po drahé půjčce ani vytáhnout investice v nejhorší chvíli. Tohle je první věc, kterou má smysl mít hotovou.',
+      'Peníze stranou zhruba na 3–6 měsíců nezbytných výdajů, snadno dostupné (spořicí účet, ne investice). Když přijde nečekaná rána (ztráta práce, porouchané auto, nemoc), nemusíte sahat po drahé půjčce ani vytáhnout investice v nejhorší chvíli. Tohle je první věc, kterou má smysl mít hotovou.',
   },
   {
     term: 'LTV a akontace',
@@ -29,27 +29,27 @@ const items: GlossaryItem[] = [
   {
     term: 'Úroková sazba, fixace a refixace',
     explanation:
-      'Úrok je cena za půjčené peníze. Fixace je doba, po kterou máte sazbu zaručenou (např. 5 let). Když fixace skončí, banka nabídne novou sazbu podle aktuálního trhu — tomu se říká refixace. Zhruba rok předem se vyplatí porovnat nabídky i jiných bank, hypotéku lze bez sankce přenést.',
+      'Úrok je cena za půjčené peníze. Fixace je doba, po kterou máte sazbu zaručenou (např. 5 let). Když fixace skončí, banka nabídne novou sazbu podle aktuálního trhu, tomu se říká refixace. Zhruba rok předem se vyplatí porovnat nabídky i jiných bank, hypotéku lze bez sankce přenést.',
   },
   {
     term: 'RPSN vs. úroková sazba',
     explanation:
-      'Úroková sazba je jen cena peněz. RPSN (roční procentní sazba nákladů) navíc zahrnuje poplatky, pojištění a další náklady úvěru — je to poctivější číslo pro srovnání nabídek. Dvě hypotéky se stejným úrokem můžou mít různé RPSN. Vždy porovnávejte RPSN, ne jen úrok.',
+      'Úroková sazba je jen cena peněz. RPSN (roční procentní sazba nákladů) navíc zahrnuje poplatky, pojištění a další náklady úvěru. Je to poctivější číslo pro srovnání nabídek. Dvě hypotéky se stejným úrokem můžou mít různé RPSN. Vždy porovnávejte RPSN, ne jen úrok.',
   },
   {
     term: 'Náklady na vlastnictví',
     explanation:
-      'Vlastní bydlení není jen splátka hypotéky. Připočtěte fond oprav (u bytu v SVJ typicky 1–3 tis. měsíčně), pojištění nemovitosti, daň z nemovitosti a údržbu. Právě tyhle „skryté" položky lidé při srovnání s nájmem často podcení — počítejte s nimi dopředu.',
+      'Vlastní bydlení není jen splátka hypotéky. Připočtěte fond oprav (u bytu v SVJ typicky 1–3 tis. měsíčně), pojištění nemovitosti, daň z nemovitosti a údržbu. Právě tyhle „skryté" položky lidé při srovnání s nájmem často podcení, počítejte s nimi dopředu.',
   },
   {
     term: 'Dobrý a špatný dluh',
     explanation:
-      'Dobrý dluh financuje něco, co drží nebo zvyšuje hodnotu, nebo vydělává — třeba hypotéka na bydlení. Špatný dluh financuje spotřebu a bývá drahý — kreditní karty, rychlopůjčky, spotřebák na dovolenou. Špatný dluh splácejte přednostně, u dobrého to takhle nehoří.',
+      'Dobrý dluh financuje něco, co drží nebo zvyšuje hodnotu, nebo vydělává, třeba hypotéka na bydlení. Špatný dluh financuje spotřebu a bývá drahý, kreditní karty, rychlopůjčky, spotřebák na dovolenou. Špatný dluh splácejte přednostně, u dobrého to takhle nehoří.',
   },
   {
     term: 'Složené úročení',
     explanation:
-      'Úroky a výnosy se přičítají k jistině a samy pak nesou další výnos — peníze tak rostou zrychleně, čím déle je necháte pracovat. Proto je u dlouhodobých cílů (důchod) rozhodující začít brzy. U dluhů funguje stejný princip obráceně, proti vám.',
+      'Úroky a výnosy se přičítají k jistině a samy pak nesou další výnos. Peníze tak rostou zrychleně, čím déle je necháte pracovat. Proto je u dlouhodobých cílů (důchod) rozhodující začít brzy. U dluhů funguje stejný princip obráceně, proti vám.',
   },
   {
     term: 'Diverzifikace',
@@ -74,7 +74,7 @@ const items: GlossaryItem[] = [
   {
     term: 'Inflace',
     explanation:
-      'Postupné znehodnocování peněz — za stejnou částku si příští rok koupíte o něco míň. Peníze ležící bez úroku na běžném účtu proto reálně ztrácejí hodnotu. Naopak z reálné výše dluhu inflace „ukrajuje", takže u hypotéky s fixní splátkou pracuje spíš pro vás.',
+      'Postupné znehodnocování peněz: za stejnou částku si příští rok koupíte o něco míň. Peníze ležící bez úroku na běžném účtu proto reálně ztrácejí hodnotu. Naopak z reálné výše dluhu inflace „ukrajuje", takže u hypotéky s fixní splátkou pracuje spíš pro vás.',
   },
 ];
 

@@ -20,7 +20,7 @@ const instrumentDefs = [
 
 interface Props {
   state: WizardState;
-  // Kolik na důchod plánujete měsíčně dávat — sdílené s rozpočtem, takže změna
+  // Kolik na důchod plánujete měsíčně dávat, sdílené s rozpočtem, takže změna
   // se projeví i v grafu rozpočtu a ve verdiktu (a naopak).
   monthlyContribution: number;
   onChangeContribution: (value: number) => void;
@@ -142,7 +142,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           <div className="flex-1 sm:text-right">
             <p className="text-sm text-gray-500 dark:text-gray-400">Potřebná hodnota portfolia</p>
             <p className="text-xl sm:text-2xl font-bold whitespace-nowrap text-emerald-700 dark:text-emerald-400">
-              {targetPortfolio === Infinity ? '—' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}
+              {targetPortfolio === Infinity ? '–' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}
             </p>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             <p>
               Podle pravidla 4 % můžete každý rok bezpečně vybrat zhruba 4 % hodnoty svého portfolia, aniž byste ho vyčerpali.
               Pro rentu {monthlyRent.toLocaleString('cs-CZ')} Kč měsíčně (tj. {(monthlyRent * 12).toLocaleString('cs-CZ')} Kč ročně)
-              tak potřebujete portfolio o hodnotě přibližně <strong>{targetPortfolio === Infinity ? '—' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}</strong> (renta × 300).
+              tak potřebujete portfolio o hodnotě přibližně <strong>{targetPortfolio === Infinity ? '–' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}</strong> (renta × 300).
             </p>
             <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80">
               Jde o zjednodušený orientační výpočet. Skutečná bezpečná míra výběru závisí na délce renty, složení portfolia a vývoji trhů.

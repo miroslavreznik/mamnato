@@ -20,16 +20,16 @@ import Tooltip from '../ui/Tooltip';
 
 // Orientační dlouhodobý výnos akcií pro srovnání alternativy k akontaci.
 const STOCK_RETURN = 0.07;
-// Rozsah posuvníku sazby — pokrývá historické minimum i vyšší scénáře.
+// Rozsah posuvníku sazby, pokrývá historické minimum i vyšší scénáře.
 const RATE_MIN = 0.02;
 const RATE_MAX = 0.09;
 
 interface Props {
   state: WizardState;
-  // Když je předáno, jde akontací hýbat přímo tady — změna se přes sdílený
+  // Když je předáno, jde akontací hýbat přímo tady, změna se přes sdílený
   // stav promítne do celé stránky (splátka, DTI/DSTI, rezerva, časová osa…).
   onChangeDownPayment?: (value: number) => void;
-  // Totéž pro úrokovou sazbu — druhá páka, která nejvíc hýbe splátkou.
+  // Totéž pro úrokovou sazbu, druhá páka, která nejvíc hýbe splátkou.
   onChangeRate?: (value: number) => void;
 }
 
@@ -99,13 +99,13 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
           tooltip={
             dpPct === 10
               ? 'Žadateli do 36 let banka půjčí až 90 % ceny (LTV), takže z vlastního stačí 10 %.'
-              : 'Kolik banka požaduje zaplatit z vlastních peněz. Obvykle 20 % ceny nemovitosti (LTV 80 %) — zbytek pokryje hypotéka.'
+              : 'Kolik banka požaduje zaplatit z vlastních peněz. Obvykle 20 % ceny nemovitosti (LTV 80 %), zbytek pokryje hypotéka.'
           }
         />
         <Row
           label="Pokryto z vlastních úspor"
           value={`${fmt(dpValue)} Kč`}
-          tooltip="Kolik z vašich naspořených peněz vložíte do akontace. Můžete upravit posuvníkem níže — vše se hned přepočítá."
+          tooltip="Kolik z vašich naspořených peněz vložíte do akontace. Můžete upravit posuvníkem níže. Vše se hned přepočítá."
         />
         <Row
           label="Chybějící akontace"
@@ -114,7 +114,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
           tooltip="Rozdíl mezi potřebnou akontací a tím, co pokryjete z úspor. Tuto částku je potřeba ještě naspořit, než se dá o hypotéku požádat."
         />
 
-        {/* Posuvník akontace — hýbe celou stránkou přes sdílený stav */}
+        {/* Posuvník akontace: hýbe celou stránkou přes sdílený stav */}
         {onChangeDownPayment && totalSavings > 0 && (
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
             <div className="flex items-center justify-between mb-1.5">
@@ -168,12 +168,12 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
             {safeMax > 0 ? (
               <p className={`mt-1.5 text-xs ${dpValue > safeMax ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
                 {dpValue > safeMax
-                  ? `Jste za bezpečnou hranicí — nad ${fmt(safeMax)} Kč akontace zbyde rezerva na méně než 6 měsíců výdajů.`
-                  : `Bezpečné maximum: ${fmt(safeMax)} Kč (zelená zóna) — víc by nechalo rezervu pod 6 měsíců výdajů po koupi.`}
+                  ? `Jste za bezpečnou hranicí. Nad ${fmt(safeMax)} Kč akontace zbyde rezerva na méně než 6 měsíců výdajů.`
+                  : `Bezpečné maximum: ${fmt(safeMax)} Kč (zelená zóna), víc by nechalo rezervu pod 6 měsíců výdajů po koupi.`}
               </p>
             ) : (
               <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
-                Úspory zatím nestačí na akontaci a zároveň 6měsíční rezervu — jakákoli akontace rezervu ukrojí.
+                Úspory zatím nestačí na akontaci a zároveň 6měsíční rezervu. Jakákoli akontace rezervu ukrojí.
               </p>
             )}
 
@@ -181,7 +181,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
               {/* (1) Cena/přínos každých +100 000 Kč */}
               <p>
                 <span className="font-medium text-gray-700 dark:text-gray-300">Každých +100 000 Kč akontace:</span>{' '}
-                splátka −{fmt(paymentDelta)} Kč/měs a na úrocích za {term} let ušetříte ~{fmt(interestDelta)} Kč — jistý efekt ve výši úrokové sazby ({fmtRate(rate)} %).
+                splátka −{fmt(paymentDelta)} Kč/měs a na úrocích za {term} let ušetříte ~{fmt(interestDelta)} Kč, jistý efekt ve výši úrokové sazby ({fmtRate(rate)} %).
               </p>
               {/* (3) Alternativa: investovat zbytek místo vyšší akontace */}
               {reserve > 0 && loanAmount > 0 && (
@@ -197,13 +197,13 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
           </div>
         )}
 
-        {/* Posuvník úrokové sazby — druhá hlavní páka splátky */}
+        {/* Posuvník úrokové sazby: druhá hlavní páka splátky */}
         {onChangeRate && (
           <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center">
                 Úroková sazba
-                <Tooltip text="Sazbu si nasmlouváte s bankou. Banky ji odstupňovávají podle LTV (jakou část ceny si půjčujete) — čím víc dáte z vlastního, tím nižší sazbu obvykle dostanete. Posuňte a uvidíte, jak se změní splátka i celé výsledky." />
+                <Tooltip text="Sazbu si nasmlouváte s bankou. Banky ji odstupňovávají podle LTV (jakou část ceny si půjčujete), čím víc dáte z vlastního, tím nižší sazbu obvykle dostanete. Posuňte a uvidíte, jak se změní splátka i celé výsledky." />
               </span>
               <span className="text-sm font-semibold text-gray-900 dark:text-white">{fmtRate(rate)} % ročně</span>
             </div>
@@ -242,15 +242,15 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
               <div className="mt-2 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                 <p>
                   <span className="font-medium text-gray-700 dark:text-gray-300">Vaše LTV je {ltvPct} %</span>{' '}
-                  — pásmo {advice.band.label}.{' '}
+                 , pásmo {advice.band.label}.{' '}
                   {advice.band.key === 'best' && 'To je nejlepší pásmo, banky tu nabízejí nejnižší sazby.'}
-                  {advice.band.key === 'standard' && 'Standardní pásmo — pod 80 % LTV už banky nepřidávají rizikovou přirážku.'}
+                  {advice.band.key === 'standard' && 'Standardní pásmo: pod 80 % LTV už banky nepřidávají rizikovou přirážku.'}
                   {advice.band.key === 'high' && 'Nad 80 % LTV si banky obvykle připlácejí rizikovou přirážku k sazbě.'}
                 </p>
 
                 {!advice.band.available && (
                   <p className="text-red-600 dark:text-red-400">
-                    Nad 90 % LTV hypotéku nedostanete — limit ČNB. Je potřeba vyšší akontace.
+                    Nad 90 % LTV hypotéku nedostanete (limit ČNB). Je potřeba vyšší akontace.
                   </p>
                 )}
 
@@ -259,7 +259,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
                     <span className="font-medium">Tip:</span>{' '}
                     kdybyste do akontace dali o {fmt(advice.extraDownPayment)} Kč víc, dostanete se pod{' '}
                     {Math.round(advice.nextBand.maxLtv * 100)} % LTV. Tam banky dávají sazbu zhruba o{' '}
-                    {(advice.rateDrop * 100).toLocaleString('cs-CZ', { maximumFractionDigits: 2 })} p. b. nižší —
+                    {(advice.rateDrop * 100).toLocaleString('cs-CZ', { maximumFractionDigits: 2 })} p. b. nižší,
                     splátka by klesla přibližně o {fmt(advice.monthlySaving)} Kč/měs.
                     {!advice.affordable && ' Na to by ale vaše úspory zatím nestačily.'}
                   </p>
@@ -271,7 +271,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
                   splátka povyskočí o ~{fmt(paymentPlus1pp)} Kč/měs.
                 </p>
                 <p className="text-gray-400 dark:text-gray-500">
-                  Přirážky podle LTV jsou orientační tržní zvyklost — konkrétní sazbu vždy potvrdí až banka.
+                  Přirážky podle LTV jsou orientační tržní zvyklost. Konkrétní sazbu vždy potvrdí až banka.
                 </p>
               </div>
             )}
@@ -310,13 +310,13 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
         <span className="font-semibold">Nezapomeňte na refixaci.</span>{' '}
         Za {fixationYears} {fixationYears === 1 ? 'rok' : fixationYears < 5 ? 'roky' : 'let'} vám končí fixace úrokové sazby.
-        Zhruba rok předem začněte porovnávat nabídky refinancování u jiných bank — po skončení fixace lze hypotéku bez sankce přenést jinam.
+        Zhruba rok předem začněte porovnávat nabídky refinancování u jiných bank. Po skončení fixace lze hypotéku bez sankce přenést jinam.
       </div>
     </div>
   );
 }
 
-// Krokovací tlačítko k posuvníku — na mobilu se posuvníkem těžko trefuje
+// Krokovací tlačítko k posuvníku, na mobilu se posuvníkem těžko trefuje
 // přesná hodnota, tlačítka dávají spolehlivý krok.
 function StepButton({ onClick, disabled, label, children }: {
   onClick: () => void;
@@ -351,7 +351,7 @@ function Row({ label, value, highlight, bold, tooltip }: {
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </span>
-      {/* Částka se nikdy nesmí zalomit doprostřed — na mobilu by se rozpadla přes dva řádky. */}
+      {/* Částka se nikdy nesmí zalomit doprostřed: na mobilu by se rozpadla přes dva řádky. */}
       <span className={`shrink-0 whitespace-nowrap ${bold ? 'text-base sm:text-lg font-bold' : 'font-semibold'} ${valueColor}`}>
         {value}
       </span>

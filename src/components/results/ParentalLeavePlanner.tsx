@@ -33,7 +33,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
     if (pl) onChange({ ...pl, ...patch });
   };
 
-  // Rodičovský příspěvek je fixní balík — kratší volno = vyšší měsíční dávka.
+  // Rodičovský příspěvek je fixní balík, kratší volno = vyšší měsíční dávka.
   // Při změně délky proto dopočítáme dávku, pokud si ji uživatel ručně neupravil.
   const changeDuration = (durationMonths: number) => {
     if (!pl) return;
@@ -46,7 +46,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Rodičovská: co udělá s rozpočtem</h3>
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Když jeden z vás zůstane doma s dítětem, na čas klesne příjem (mateřská a rodičovská bývají nižší než mzda). Spočítejte si, jestli to rozpočet — a hlavně splátka hypotéky — během volna zvládne.
+          Když jeden z vás zůstane doma s dítětem, na čas klesne příjem (mateřská a rodičovská bývají nižší než mzda). Spočítejte si, jestli to rozpočet, a hlavně splátka hypotéky, během volna zvládne.
         </p>
         <button
           onClick={enable}
@@ -134,7 +134,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             suffix="Kč"
             className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
-          <p className="mt-1 text-[10px] text-gray-400">Rodičovská 350 000 Kč se rozloží podle délky (kratší volno = vyšší dávka). Mateřská bývá zpočátku vyšší — částku můžete upravit.</p>
+          <p className="mt-1 text-[10px] text-gray-400">Rodičovská 350 000 Kč se rozloží podle délky (kratší volno = vyšší dávka). Mateřská bývá zpočátku vyšší, částku můžete upravit.</p>
         </div>
       </div>
 
@@ -143,20 +143,20 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         {tile('Příjem nyní', impact.incomeNow, { tooltip: 'Součet současných čistých měsíčních příjmů domácnosti.' })}
         {tile('Příjem během volna', impact.incomeDuringLeave, { tooltip: 'Příjem domácnosti, kde mzdu pečujícího rodiče nahradí dávky (mateřská/rodičovská).' })}
         {tile('Volná rezerva nyní', impact.disposableNow, { negativeBad: true, tooltip: 'Co měsíčně zbyde po zaplacení všech výdajů (příjem − výdaje) při současných příjmech.' })}
-        {tile('Volná rezerva během volna', impact.disposableDuringLeave, { negativeBad: true, tooltip: 'Co měsíčně zbyde po výdajích v období rodičovské — se sníženým příjmem, ještě před případnou splátkou hypotéky.' })}
+        {tile('Volná rezerva během volna', impact.disposableDuringLeave, { negativeBad: true, tooltip: 'Co měsíčně zbyde po výdajích v období rodičovské se sníženým příjmem, ještě před případnou splátkou hypotéky.' })}
       </div>
 
       {hasProperty && afterPurchase !== null && (
         <div className={`p-3 rounded-lg mb-3 text-sm ${afterNeg ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300'}`}>
           {afterNeg ? (
             <>
-              Po koupi byste během rodičovské byli <strong>−{fmt(Math.abs(afterPurchase))} Kč/měs v mínusu</strong> — splátku hypotéky a nezbytné výdaje byste z běžného příjmu neutáhli.{' '}
+              Po koupi byste během rodičovské byli <strong>−{fmt(Math.abs(afterPurchase))} Kč/měs v mínusu</strong>, splátku hypotéky a nezbytné výdaje byste z běžného příjmu neutáhli.{' '}
               {impact.reserveAfter <= 0 ? (
-                <>Po zaplacení akontace vám přitom <strong>nezbude žádná rezerva</strong>, ze které byste schodek kryli — počítejte s došetřením, levnější nemovitostí nebo kratším volnem.</>
+                <>Po zaplacení akontace vám přitom <strong>nezbude žádná rezerva</strong>, ze které byste schodek kryli. Počítejte s došetřením, levnější nemovitostí nebo kratším volnem.</>
               ) : impact.monthsCovered !== null && impact.monthsCovered >= impact.durationMonths ? (
-                <>Rezerva, která vám po akontaci zbyde (~<strong>{fmt(impact.reserveAfter)} Kč</strong>), schodek za celé volno ({fmt(impact.shortfallTotal)} Kč) <strong>pokryje</strong> — ale z velké části na něj padne.</>
+                <>Rezerva, která vám po akontaci zbyde (~<strong>{fmt(impact.reserveAfter)} Kč</strong>), schodek za celé volno ({fmt(impact.shortfallTotal)} Kč) <strong>pokryje</strong>, ale z velké části na něj padne.</>
               ) : (
-                <>Rezerva po akontaci (~<strong>{fmt(impact.reserveAfter)} Kč</strong>) pokryje jen asi <strong>{impact.monthsCovered} z {impact.durationMonths} měsíců</strong> volna — na zbytek schodku ({fmt(Math.max(0, impact.shortfallTotal - impact.reserveAfter))} Kč) je potřeba došetřit, zlevnit nemovitost nebo volno zkrátit.</>
+                <>Rezerva po akontaci (~<strong>{fmt(impact.reserveAfter)} Kč</strong>) pokryje jen asi <strong>{impact.monthsCovered} z {impact.durationMonths} měsíců</strong> volna, na zbytek schodku ({fmt(Math.max(0, impact.shortfallTotal - impact.reserveAfter))} Kč) je potřeba došetřit, zlevnit nemovitost nebo volno zkrátit.</>
               )}
             </>
           ) : (
@@ -175,7 +175,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
               <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) pokryjí jen asi {impact.monthsCovered} z {impact.durationMonths} měsíců volna.</>
             )
           ) : (
-            <>Nemáte rezervu, ze které byste schodek kryli — budete ji potřebovat vytvořit.</>
+            <>Nemáte rezervu, ze které byste schodek kryli. Budete ji potřebovat vytvořit.</>
           )}
         </div>
       )}
@@ -183,7 +183,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
       <p className="text-sm text-gray-600 dark:text-gray-400">
         Za celé volno ({impact.durationMonths} měs.) klesne příjem dohromady o{' '}
         <span className="font-semibold text-gray-900 dark:text-white">{fmt(impact.savingsLostTotal)} Kč</span>
-        {' '}— o tolik méně naspoříte (nebo tolik budete potřebovat v rezervě).
+        {', o tolik méně naspoříte (nebo tolik budete potřebovat v rezervě).'}
       </p>
     </div>
   );

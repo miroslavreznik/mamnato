@@ -46,7 +46,7 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
         </h1>
 
         <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-8 max-w-xl mx-auto">
-          Zadejte příjmy, výdaje a cíle. Za pár minut uvidíte jasný přehled — jestli na hypotéku dosáhnete, kolik můžete spořit a kam vaše peníze plynou.
+          Zadejte příjmy, výdaje a cíle. Za pár minut uvidíte jasný přehled: jestli na hypotéku dosáhnete, kolik můžete spořit a kam vaše peníze plynou.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">

@@ -29,7 +29,7 @@ export default function Step5Goals() {
     } else if (hasOther) {
       dispatch({ type: 'GO_TO_STEP', step: 7 }); // Vlastní cíle
     } else {
-      // Žádný krok navíc — rovnou na výsledky
+      // Žádný krok navíc, rovnou na výsledky
       dispatch({ type: 'GO_TO_STEP', step: 8 });
     }
   };

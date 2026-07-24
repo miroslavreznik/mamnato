@@ -154,7 +154,7 @@ export default function Step7CustomGoals() {
           </div>
           {overBudget && (
             <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-              Cíle dohromady potřebují víc, než máte k dispozici. Nevadí — ve výsledcích uvidíte, na které dosáhnete a jak upravit horizont.
+              Cíle dohromady potřebují víc, než máte k dispozici. Nevadí, ve výsledcích uvidíte, na které dosáhnete a jak upravit horizont.
             </p>
           )}
         </div>

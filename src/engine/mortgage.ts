@@ -23,7 +23,7 @@ export function effectiveDownPayment(state: WizardState): number {
   );
 }
 
-// Sdílené parametry hypotéky se zálohou na výchozí hodnoty — jediný zdroj pravdy
+// Sdílené parametry hypotéky se zálohou na výchozí hodnoty, jediný zdroj pravdy
 // pro všechny výpočty (splátka, DSTI, cash flow po koupi, časová osa jmění…).
 export function mortgageRate(state: WizardState): number {
   return state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;

@@ -69,7 +69,7 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
 export default function CustomGoalPlanner({ state, onChangeGoals }: Props) {
   const colors = useChartColors();
   const disposable = monthlyDisposable(state);
-  // Cíle jsou zdrojem pravdy ve sdíleném stavu — změny se hned promítnou
+  // Cíle jsou zdrojem pravdy ve sdíleném stavu, změny se hned promítnou
   // do souhrnu i grafu rozpočtu a uloží se do prohlížeče.
   const goals = useMemo(() => state.customGoals ?? [], [state.customGoals]);
   const setGoals = onChangeGoals;

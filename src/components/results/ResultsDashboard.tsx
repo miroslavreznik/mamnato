@@ -48,7 +48,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   const hasLeave = parentalLeaveApplicable(state);
   const hasGoalPlanners = hasRetirement || hasChild || hasLeave || hasOther;
 
-  // Tematické sekce výsledků — jen ty, které dávají smysl podle cílů.
+  // Tematické sekce výsledků, jen ty, které dávají smysl podle cílů.
   const sectionDefs = [
     { id: 'souhrn', label: 'Souhrn' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
@@ -68,7 +68,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
-  // Odškrtnuté výdajové kategorie z grafu rozpočtu — platí pro celou stránku.
+  // Odškrtnuté výdajové kategorie z grafu rozpočtu, platí pro celou stránku.
   const [excludedExpenses, setExcludedExpenses] = useState<Set<string>>(() => new Set());
   // „Živý" stav, ze kterého počítají všechny karty (kromě grafu rozpočtu, který
   // potřebuje původní výdaje, aby šlo kategorie zase zapnout).
@@ -106,7 +106,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     saveState(next);
   };
 
-  // Akontace jde upravit přímo ve výsledcích — změna se uloží a přepočítá vše.
+  // Akontace jde upravit přímo ve výsledcích, změna se uloží a přepočítá vše.
   const handleChangeDownPayment = (value: number) => {
     const clamped = Math.max(0, Math.min(value, state.savings.totalSavings));
     const next = { ...state, savings: { ...state.savings, downPaymentFromSavings: clamped } };
@@ -122,7 +122,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     saveState(next);
   };
 
-  // Sdílení přehledu odkazem — stav se zakóduje do URL, nic se neposílá na server.
+  // Sdílení přehledu odkazem, stav se zakóduje do URL, nic se neposílá na server.
   const [shareCopied, setShareCopied] = useState(false);
   const handleShare = async () => {
     const url = buildShareUrl(state);
@@ -136,7 +136,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     }
   };
 
-  // Tisk / uložení do PDF — rozbalí všechny sekce (aby se vykreslily i grafy),
+  // Tisk / uložení do PDF, rozbalí všechny sekce (aby se vykreslily i grafy),
   // vypne dark mód a po tisku vše vrátí zpět.
   const handlePrint = () => {
     const prevOpen = openSections;
@@ -157,7 +157,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   return (
     <div>
       <div className="print-only mb-4">
-        <h1 className="text-lg font-bold text-gray-900">MámNaTo? — finanční přehled</h1>
+        <h1 className="text-lg font-bold text-gray-900">MámNaTo? Finanční přehled</h1>
         <p className="text-xs text-gray-500">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
@@ -223,7 +223,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
       )}
 
       <div className="space-y-4">
-        {/* Souhrn — hlavní odpověď „vyjde mi to?" */}
+        {/* Souhrn: hlavní odpověď „vyjde mi to?" */}
         <ResultsSection id="souhrn" title="Souhrn" subtitle="Verdikt, rozpočet a připravenost cílů" open={isOpen('souhrn')} onToggle={() => toggleSection('souhrn')}>
           <ResultsOverview state={activeState} allocations={allocations} />
           <ExpenseBreakdownChart

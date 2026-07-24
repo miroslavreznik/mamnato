@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
  * Sdílený vizuální základ pro všechny grafy.
  *
  * Barvy vychází z validované dataviz palety (CVD-safe, ověřeno pro light i dark
- * povrch). Dark mód je *vybraný* — vlastní odstíny pro tmavý povrch, ne pouhé
+ * povrch). Dark mód je *vybraný*, vlastní odstíny pro tmavý povrch, ne pouhé
  * převrácení. Osy/mřížka/popisky se přepínají podle aktuálního motivu.
  */
 
@@ -22,19 +22,19 @@ export function useIsDark(): boolean {
 }
 
 export interface ChartColors {
-  primary: string; // modrá — hlavní / „aktuální stav"
-  positive: string; // aqua — „po koupi / růst / dobré"
-  negative: string; // červená — „cíl / nájem / schodek"
-  accent: string; // žlutá — doplňková série
-  accent2: string; // fialová — další doplňková série
-  neutral: string; // šedá — rezerva / přebytek
+  primary: string; // modrá, hlavní / „aktuální stav"
+  positive: string; // aqua, „po koupi / růst / dobré"
+  negative: string; // červená, „cíl / nájem / schodek"
+  accent: string; // žlutá, doplňková série
+  accent2: string; // fialová, další doplňková série
+  neutral: string; // šedá, rezerva / přebytek
   grid: string; // mřížka
   axis: string; // osy a čáry baseline
   tick: string; // popisky os
   surface: string; // pozadí karty (pro mezery mezi segmenty)
   // Kategoriální paleta pro rozpad výdajů (pevné pořadí slotů)
   categorical: Record<string, string>;
-  // Paleta pro jednotlivé cíle (důchod, dítě, vlastní…) — odlišná od výdajů
+  // Paleta pro jednotlivé cíle (důchod, dítě, vlastní…), odlišná od výdajů
   goalColors: string[];
   // Paleta pro skupiny zbytných výdajů (rozpad „za co utrácíte")
   discretionaryColors: string[];

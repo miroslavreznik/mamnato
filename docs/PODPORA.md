@@ -1,4 +1,4 @@
-# Sekce „Podpořte projekt" — podklad k implementaci
+# Sekce „Podpořte projekt": podklad k implementaci
 
 Návrh dobrovolného příspěvku pro MámNaTo?. Záměrně **bez reklamy a bez affiliate**:
 appka staví na tom, že data neopouštějí prohlížeč, a reklamní skripty třetích stran
@@ -8,7 +8,7 @@ by tenhle argument zabily (plus cookie lišta podle GDPR).
 > Jakmile by se přidal odkaz na konkrétní hypoteční produkt s provizí, hrozí, že se
 > to posoudí jako **zprostředkování spotřebitelského úvěru** podle zákona
 > č. 257/2016 Sb. (oprávnění ČNB, pokuty od 50 000 Kč). Hranice: tipař smí předat
-> kontakt, ale nesmí doporučovat konkrétní produkt — a tahle appka doporučuje.
+> kontakt, ale nesmí doporučovat konkrétní produkt. A tahle appka doporučuje.
 > Viz `docs/` poznámky nebo konzultace před jakoukoli provizí.
 
 ---
@@ -19,7 +19,7 @@ by tenhle argument zabily (plus cookie lišta podle GDPR).
 
 Proč tam: uživatel v tu chvíli právě dostal hodnotu (verdikt, splátku, timeline).
 To je jediný moment, kdy má smysl o příspěvek říct. Nikdy ne před výsledky ani
-v průvodci — to působí jako paywall.
+v průvodci, protože to působí jako paywall.
 
 **Sekundárně (volitelně):** decentní řádek v patičce, jen textový odkaz.
 
@@ -29,29 +29,29 @@ v průvodci — to působí jako paywall.
 
 ## 2. Texty (čeština, hotové k použití)
 
-### Varianta A — hlavní, doporučená
+### Varianta A, hlavní, doporučená
 
 > ### Pomohlo vám to?
 >
 > MámNaTo? je koníčkový projekt, který dělám po večerech. Je zdarma, bez reklam
-> a bez sledování — vaše čísla nikdy neopustí váš prohlížeč a nikam se neposílají.
+> a bez sledování, vaše čísla nikdy neopustí váš prohlížeč a nikam se neposílají.
 >
 > Zatím je za tím **{POCET_HODIN}+ hodin práce**, {POCET_TESTU} automatických testů
 > a spousta hrabání se v pravidlech ČNB, aby čísla odpovídala české realitě.
 > Provoz i doména něco stojí.
 >
-> Jestli vám přehled pomohl se rozhodnout — nebo vás jen ušetřil hodiny v Excelu —
+> Jestli vám přehled pomohl se rozhodnout, nebo vás jen ušetřil hodiny v Excelu 
 > můžete mi hodit na kávu. Dobrovolně a jednorázově, nic se tím neodemyká.
 >
 > [☕ Kup mi kávu]  [Zobrazit QR platbu]
 >
-> *Díky i za sdílení — pomůže víc než peníze.*
+> *Díky i za sdílení, pomůže víc než peníze.*
 
-### Varianta B — kratší, do patičky
+### Varianta B, kratší, do patičky
 
 > MámNaTo? je zdarma a bez reklam. Jestli vám to pomohlo, [můžete mě podpořit](#) ☕
 
-### Varianta C — nejsilnější claim (pro odvážnější)
+### Varianta C, nejsilnější claim (pro odvážnější)
 
 > ### Ušetřilo vám to čas?
 >
@@ -66,7 +66,7 @@ proti důvěryhodnosti, na které appka stojí.
 
 ### Ověřená čísla k doplnění (stav 7/2026)
 
-Tvrzení v textu ať jsou pravdivá — tohle jsou reálné údaje z repa:
+Tvrzení v textu ať jsou pravdivá, tohle jsou reálné údaje z repa:
 
 | Údaj | Hodnota | Kde ověřit |
 |---|---|---|
@@ -96,13 +96,13 @@ Formát je **SPAYD** (Short Payment Descriptor, česká norma pro QR platbu):
 SPD*1.0*ACC:CZ0000000000000000000000*AM:100.00*CC:CZK*MSG:MAMNATO KAVA
 ```
 
-- `ACC` — IBAN účtu
-- `AM` — částka (volitelná; bez ní si uživatel zvolí sám)
-- `CC` — měna
-- `MSG` — zpráva pro příjemce
+- `ACC`, IBAN účtu
+- `AM`, částka (volitelná; bez ní si uživatel zvolí sám)
+- `CC`, měna
+- `MSG`, zpráva pro příjemce
 
 QR se dá vygenerovat čistě v prohlížeči (např. drobná knihovna typu `qrcode`),
-takže **nepřibývá žádný backend ani žádné volání třetí strany**. To je důležité —
+takže **nepřibývá žádný backend ani žádné volání třetí strany**. To je důležité 
 zachová se tvrzení, že appka nikam nic neposílá.
 
 Nabídni tři přednastavené částky (**50 / 100 / 250 Kč**) a možnost zadat vlastní.
@@ -116,16 +116,16 @@ Kotvení částek výrazně zvyšuje průměrný příspěvek oproti prázdnému
 
 ### Co nepoužívat
 
-- **Patreon** — je na opakované předplatné, tady nedává smysl
-- **Přímé číslo účtu jako text** — nikdo to nepřepisuje ručně
+- **Patreon**, je na opakované předplatné, tady nedává smysl
+- **Přímé číslo účtu jako text**, nikdo to nepřepisuje ručně
 
 ---
 
 ## 4. Technická poznámka k implementaci
 
-- Sekci schovat při tisku (třída `no-print` — appka ji už používá).
+- Sekci schovat při tisku (třída `no-print`, appka ji už používá).
 - Odkazy ven: `target="_blank" rel="noopener noreferrer"`.
-- QR generovat až po kliknutí (lazy) — ať se kvůli tomu nenafukuje první načtení.
+- QR generovat až po kliknutí (lazy), ať se kvůli tomu nenafukuje první načtení.
 - Dodržet dotykové cíle min. 44 px, appka je na to už sjednocená.
 - Světlý i tmavý režim.
 - Doplnit e2e test: sekce je vidět na výsledcích a QR se po kliknutí zobrazí.
@@ -139,7 +139,7 @@ Konverze na dobrovolné příspěvky se u nástrojů tohohle typu běžně pohyb
 občasný příspěvek než pravidelný příjem.
 
 Ber to tak, že cílem je **zaplatit doménu (~250 Kč/rok)** a občas kávu. Když to
-vyjde na víc, je to bonus. Když ne, appka tě stejně stojí jen tu doménu — hosting
+vyjde na víc, je to bonus. Když ne, appka tě stejně stojí jen tu doménu, hosting
 na GitHub Pages je zdarma.
 
 ---
@@ -148,5 +148,5 @@ na GitHub Pages je zdarma.
 
 Dobrovolné dary nejsou „neviditelný" příjem. Při zanedbatelných částkách to řeší
 osvobození pro bezúplatné příjmy, u vyšších částek nebo pravidelného toku už
-je potřeba to řešit v přiznání. Až se to rozjede, ověř si aktuální limity —
+je potřeba to řešit v přiznání. Až se to rozjede, ověř si aktuální limity 
 tenhle dokument není daňové poradenství.

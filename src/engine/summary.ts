@@ -35,7 +35,7 @@ function fmtMonths(months: number): string {
   return m > 0 ? `${y} let a ${m} měs.` : `${y} let`;
 }
 
-// Připravenost cíle „nemovitost" — z existujícího scénáře + čísel.
+// Připravenost cíle „nemovitost", z existujícího scénáře + čísel.
 function propertyReadiness(state: WizardState): GoalReadiness {
   const scenario = evaluateScenario(state);
   const months = monthsToSaveDownPayment(state);
@@ -127,7 +127,7 @@ function customReadiness(state: WizardState, allocations: GoalAllocations): Goal
 
 const OVERALL: Record<OverallStatusKey, { icon: string; title: string }> = {
   fix_budget: { icon: '⚠️', title: 'Nejdříve je potřeba vyrovnat rozpočet' },
-  not_yet: { icon: '🕒', title: 'Zatím to úplně nevychází — ale máte kam sáhnout' },
+  not_yet: { icon: '🕒', title: 'Zatím to úplně nevychází, ale máte kam sáhnout' },
   tight: { icon: '⚖️', title: 'Dosažitelné, ale s napjatou rezervou' },
   good: { icon: '✅', title: 'Vaše cíle jsou v dosahu' },
 };
@@ -146,7 +146,7 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   if (leaveRow) goals.push(leaveRow); // schodek během volna → status se sám sníží (warning)
 
   // Rozpočtový souhrn počítá jen skutečné měsíční spoření na cíle (důchod/dítě/vlastní).
-  // Hypotéka NENÍ „spoření" — je to budoucí výdaj na bydlení, který nahradí nájem;
+  // Hypotéka NENÍ „spoření", je to budoucí výdaj na bydlení, který nahradí nájem;
   // dostupnost nemovitosti řeší připravenost cíle (DSTI / akontace), ne tento rozpočet.
   const hasSavingGoals = state.goals.includes('retirement')
     || state.goals.includes('child') || state.goals.includes('other');
@@ -166,41 +166,41 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
     status = 'fix_budget';
     description = 'Vaše výdaje jsou vyšší nebo stejné jako příjmy, takže zatím nezbývá na spoření ani na splátky. Než budete řešit velké cíle, je potřeba dostat rozpočet do plusu.';
     tips = [
-      'Projděte výdaje po kategoriích a hledejte, kde se dá ubrat — nejčastěji předplatná, pojistky, doprava.',
+      'Projděte výdaje po kategoriích a hledejte, kde se dá ubrat. Nejčastěji předplatná, pojistky, doprava.',
       'Zvažte možnosti navýšení příjmu (změna práce, vedlejší příjem, návrat z rodičovské).',
     ];
   } else if (budget && !budget.fits) {
     status = 'not_yet';
-    description = `Vaše cíle dohromady vyžadují ${allocated.toLocaleString('cs-CZ')} Kč/měs, ale k dispozici máte ${disposable.toLocaleString('cs-CZ')} Kč/měs. Chybí ${Math.abs(surplus).toLocaleString('cs-CZ')} Kč/měs — cíle se zatím nevejdou najednou.`;
+    description = `Vaše cíle dohromady vyžadují ${allocated.toLocaleString('cs-CZ')} Kč/měs, ale k dispozici máte ${disposable.toLocaleString('cs-CZ')} Kč/měs. Chybí ${Math.abs(surplus).toLocaleString('cs-CZ')} Kč/měs, cíle se zatím nevejdou najednou.`;
     tips = [
       'Upravte částky u cílů níže, nebo prodlužte jejich horizont.',
       'Zvažte, které cíle jsou prioritní teď a které mohou počkat.',
     ];
   } else {
-    // Rozpočet vychází — status podle nejslabšího cíle a rezervy
+    // Rozpočet vychází, status podle nejslabšího cíle a rezervy
     const hasWarning = goals.some((g) => g.status === 'warning');
     const hasCaution = goals.some((g) => g.status === 'caution');
     const worstProperty = state.goals.includes('property') && evaluateScenario(state).id === 'cannot_afford_dsti';
 
     if (hasWarning || worstProperty) {
       status = 'not_yet';
-      description = 'Rozpočet zvládáte, ale některý z cílů zatím naráží na limity. Podívejte se na jeho detail níže — často pomůže upravit parametry nebo horizont.';
+      description = 'Rozpočet zvládáte, ale některý z cílů zatím naráží na limity. Podívejte se na jeho detail níže, často pomůže upravit parametry nebo horizont.';
       tips = [
         'Podívejte se na detail cíle, který naráží na limity, a upravte jeho částku nebo horizont.',
-        'Prioritizujte — některé cíle mohou počkat, jiné jsou teď důležitější.',
+        'Prioritizujte: některé cíle mohou počkat, jiné jsou teď důležitější.',
       ];
     } else if (hasCaution || runway < 3 || rate < 0.1) {
       status = 'tight';
       description = 'Vaše cíle jsou dosažitelné, ale rezerva je napjatá. Před velkými kroky je dobré mít nouzový fond na 3–6 měsíců výdajů a nechat si v rozpočtu prostor.';
       tips = [
-        'Vytvořte si nouzový fond na 3–6 měsíců výdajů — dá rozpočtu odolnost.',
+        'Vytvořte si nouzový fond na 3–6 měsíců výdajů, dodá rozpočtu odolnost.',
         'Projděte zbytné výdaje; i menší úspora zvětší rezervu.',
       ];
     } else {
       status = 'good';
       description = 'Rozpočet máte v plusu, cíle se do disponibilní částky vejdou a máte i rezervu. Můžete pokračovat a jednotlivé cíle si doladit níže.';
       tips = [
-        'Máte prostor — zvažte navýšení spoření nebo investování volné rezervy pro rychlejší růst.',
+        'Máte prostor: zvažte navýšení spoření nebo investování volné rezervy pro rychlejší růst.',
         'Držte si nouzový fond 3–6 měsíců výdajů pro nečekané situace.',
       ];
     }

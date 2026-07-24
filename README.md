@@ -2,7 +2,7 @@
 
 **Orientační finanční přehled pro jednotlivce, páry i rodiny v Česku.** Pomáhá pochopit vlastní rozpočet a rozhodnout se, jestli si můžete dovolit vlastní bydlení a jak reálné jsou vaše finanční cíle (důchod, dítě, vlastní cíle).
 
-Celá aplikace běží v prohlížeči — **žádný backend, žádné přihlášení, žádná data neopouštějí váš počítač.** Zadané hodnoty se ukládají jen do `localStorage` vašeho prohlížeče.
+Celá aplikace běží v prohlížeči, **žádný backend, žádné přihlášení, žádná data neopouštějí váš počítač.** Zadané hodnoty se ukládají jen do `localStorage` vašeho prohlížeče.
 
 🔗 **Živá ukázka:** https://miroslavreznik.github.io/mamnato/
 
@@ -28,35 +28,35 @@ Celá aplikace běží v prohlížeči — **žádný backend, žádné přihlá
 ### Průvodce (wizard)
 Krok za krokem se zeptá na vše potřebné. Kroky se přizpůsobují podle režimu a zvolených cílů:
 
-1. **Režim** — jednotlivec / pár / rodina s dětmi
-2. **Příjmy** — čisté měsíční příjmy domácnosti (u páru/rodiny i druhá osoba, rodičovský příspěvek) a nepovinný **věk** žadatelů (ovlivní akontaci, horizont spoření na důchod i splatnost hypotéky)
-3. **Výdaje** — po kategoriích, předvyplněné průměrem ČR. Zbytné výdaje lze volitelně **rozepsat do skupin** (zábava, předplatné, dovolená, nákupy) — pomůže uvědomit si, za co se vlastně platí
-4. **Úspory** — celková částka, volitelně rozdělená na běžný/spořicí účet a investice (upozorní na peníze ležící ladem)
-5. **Cíle** — nemovitost, dítě/rodina, důchod, jiné (lze vybrat víc)
-6. **Nemovitost** *(jen při cíli nemovitost)* — cena, sazba, fixace, rozdělení úspor na akontaci. Výše akontace se řídí věkem žadatele (do 36 let 10 %, jinak 20 %) a upozorní, pokud by hypotéka byla splacena až po ~70 letech věku
-7. **Vlastní cíle** *(jen při cíli „jiné")* — co chci, kolik potřebuji a za jak dlouho
+1. **Režim**, jednotlivec / pár / rodina s dětmi
+2. **Příjmy**, čisté měsíční příjmy domácnosti (u páru/rodiny i druhá osoba, rodičovský příspěvek) a nepovinný **věk** žadatelů (ovlivní akontaci, horizont spoření na důchod i splatnost hypotéky)
+3. **Výdaje**, po kategoriích, předvyplněné průměrem ČR. Zbytné výdaje lze volitelně **rozepsat do skupin** (zábava, předplatné, dovolená, nákupy), pomůže uvědomit si, za co se vlastně platí
+4. **Úspory**, celková částka, volitelně rozdělená na běžný/spořicí účet a investice (upozorní na peníze ležící ladem)
+5. **Cíle**, nemovitost, dítě/rodina, důchod, jiné (lze vybrat víc)
+6. **Nemovitost** *(jen při cíli nemovitost)*, cena, sazba, fixace, rozdělení úspor na akontaci. Výše akontace se řídí věkem žadatele (do 36 let 10 %, jinak 20 %) a upozorní, pokud by hypotéka byla splacena až po ~70 letech věku
+7. **Vlastní cíle** *(jen při cíli „jiné")*, co chci, kolik potřebuji a za jak dlouho
 
 ### Výsledky (dashboard)
 Přehled je uspořádaný do **sbalitelných tematických sekcí** (Souhrn, Bydlení a hypotéka, Cíle, Slovníček) se sticky navigací „Přejít na". Souhrn s verdiktem je otevřený, zbytek je detail na kliknutí.
 
-- **Verdikt na základě cílů** — srozumitelné shrnutí („v dosahu" / „napjaté" / „zatím ne" / „nejdřív vyrovnat rozpočet") s konkrétními tipy
-- **Rozpočet: kam jde váš příjem** — jeden graf rozdělí příjem na výdaje, spoření na jednotlivé cíle a volnou rezervu; částky na cíle jdou upravovat živě
-- **Vývoj jmění v čase** — časová osa úspor přes plánované události: spoření na akontaci, koupě (pokles o akontaci, nájem → hypotéka), narození dítěte (náklady dle věku) a rodičovská (výpadek příjmu); zvýrazní, kdyby úspory klesly pod nulu
-- **Zbytné výdaje: za co utrácíte** — rozpad podrobného rozpisu po skupinách *(když je vyplněn)*
+- **Verdikt na základě cílů**, srozumitelné shrnutí („v dosahu" / „napjaté" / „zatím ne" / „nejdřív vyrovnat rozpočet") s konkrétními tipy
+- **Rozpočet: kam jde váš příjem**, jeden graf rozdělí příjem na výdaje, spoření na jednotlivé cíle a volnou rezervu; částky na cíle jdou upravovat živě
+- **Vývoj jmění v čase**, časová osa úspor přes plánované události: spoření na akontaci, koupě (pokles o akontaci, nájem → hypotéka), narození dítěte (náklady dle věku) a rodičovská (výpadek příjmu); zvýrazní, kdyby úspory klesly pod nulu
+- **Zbytné výdaje: za co utrácíte**, rozpad podrobného rozpisu po skupinách *(když je vyplněn)*
 - Graf rozpočtu jde přepnout i na **tabulku s přesnými částkami** (příjem − výdaje − spoření = volná rezerva)
-- **Kalkulačka nemovitosti** — akontace (dynamicky 10 % / 20 % dle věku), výše hypotéky, měsíční splátka, čas na naspoření, připomínka refixace
-- **Ukazatele DTI a DSTI** — orientační bankovní vodítka (viz [Metodika](#metodika-a-zdroje))
+- **Kalkulačka nemovitosti**, akontace (dynamicky 10 % / 20 % dle věku), výše hypotéky, měsíční splátka, čas na naspoření, připomínka refixace
+- **Ukazatele DTI a DSTI**, orientační bankovní vodítka (viz [Metodika](#metodika-a-zdroje))
 - **Vývoj úspor** a **cash flow po koupi**
-- **Koupě vs. nájem** — vývoj čistého jmění při koupi vs. investování rozdílu
-- **Důchodový plánovač** — projekce portfolia, pravidlo 4 %, porovnání výnosů
+- **Koupě vs. nájem**, vývoj čistého jmění při koupi vs. investování rozdílu
+- **Důchodový plánovač**, projekce portfolia, pravidlo 4 %, porovnání výnosů
 - **Kalkulačka nákladů na dítě** a **plánovač vlastních cílů** (priority, odklad, doporučené nástroje)
-- **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)* — po dobu volna nahradí mzdu pečujícího rodiče dávky; ukáže příjem a volnou rezervu během volna, jestli během něj vyjde i splátka hypotéky, a celkový výpadek příjmu
-- **Slovníček pojmů** — LTV, akontace, DTI/DSTI, fixace…
+- **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)*, po dobu volna nahradí mzdu pečujícího rodiče dávky; ukáže příjem a volnou rezervu během volna, jestli během něj vyjde i splátka hypotéky, a celkový výpadek příjmu
+- **Slovníček pojmů**, LTV, akontace, DTI/DSTI, fixace…
 
 ### Napříč aplikací
 - 🌗 **Tmavý / světlý režim**
-- 🔗 **Sdílet přehled odkazem** — celý scénář se zakóduje do adresy (nic na server); příjemce si otevře stejná čísla a může si je upravit
-- 🖨️ **Vytisknout / uložit do PDF** — přehled bez aplikačního rámu, s hlavičkou a datem
+- 🔗 **Sdílet přehled odkazem**, celý scénář se zakóduje do adresy (nic na server); příjemce si otevře stejná čísla a může si je upravit
+- 🖨️ **Vytisknout / uložit do PDF**, přehled bez aplikačního rámu, s hlavičkou a datem
 - 💾 **Automatické ukládání** do prohlížeče (lze se vrátit a pokračovat)
 - 📱 Responzivní design pro mobil i desktop
 
@@ -73,7 +73,7 @@ Průvodce (React UI)  →  Výpočetní jádro (čisté funkce)  →  Výsledky 
 ```
 
 - **UI** (`src/components`) sbírá vstupy a vykresluje výsledky.
-- **Výpočetní jádro** (`src/engine`) je čistý TypeScript bez závislosti na Reactu — snadno testovatelné (viz [testy](#testy-a-kontrola-kvality)).
+- **Výpočetní jádro** (`src/engine`) je čistý TypeScript bez závislosti na Reactu, snadno testovatelné (viz [testy](#testy-a-kontrola-kvality)).
 - **Stav** (`src/store`) drží data průvodce a stará se o uložení/načtení včetně validace (poškozená nebo starší data se doplní na aktuální tvar, nikdy nespadnou do výpočtů).
 
 ---
@@ -87,13 +87,13 @@ Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum 
 - Horní limity **DSTI** (od 7/2023) a **DTI** (od 1/2024) ČNB závazně nevyžaduje. Aplikace je proto ukazuje jako **orientační bankovní vodítko** (banky je i tak běžně posuzují, typicky DSTI ~45 %, DTI ~8,5×), ne jako závazný limit.
 
 **Další výpočty:**
-- **Hypotéka** — standardní anuitní splátka.
-- **Věk žadatele** — nejmladší do 36 let → nižší akontace (10 %); horizont spoření na důchod se počítá do 65 let; upozornění, pokud by hypotéka byla splacena až po ~70 letech.
-- **Rodičovská** — po dobu volna se mzda pečujícího rodiče nahradí dávkami (výchozí odhad = rodičovský příspěvek 350 000 Kč / doba čerpání, nastavitelné); počítá příjem a rezervu během volna i to, jestli vyjde splátka hypotéky.
-- **Důchod / investice** — složené úročení; reálný výnos přes Fisherovu rovnici (očištění o inflaci), pravidlo bezpečného výběru 4 %.
-- **Cíle** — prioritní alokace disponibilní částky; u nesplnitelných cílů návrhy (prodloužit horizont, snížit částku, přesunout prioritu).
+- **Hypotéka**, standardní anuitní splátka.
+- **Věk žadatele**, nejmladší do 36 let → nižší akontace (10 %); horizont spoření na důchod se počítá do 65 let; upozornění, pokud by hypotéka byla splacena až po ~70 letech.
+- **Rodičovská**, po dobu volna se mzda pečujícího rodiče nahradí dávkami (výchozí odhad = rodičovský příspěvek 350 000 Kč / doba čerpání, nastavitelné); počítá příjem a rezervu během volna i to, jestli vyjde splátka hypotéky.
+- **Důchod / investice**, složené úročení; reálný výnos přes Fisherovu rovnici (očištění o inflaci), pravidlo bezpečného výběru 4 %.
+- **Cíle**, prioritní alokace disponibilní částky; u nesplnitelných cílů návrhy (prodloužit horizont, snížit částku, přesunout prioritu).
 
-> ⚠️ Regulatorní pravidla se mění — před reálným rozhodnutím si aktuální limity a sazby ověřte u ČNB nebo své banky.
+> ⚠️ Regulatorní pravidla se mění, před reálným rozhodnutím si aktuální limity a sazby ověřte u ČNB nebo své banky.
 
 ---
 
@@ -101,7 +101,7 @@ Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum 
 
 - **Bez backendu a bez účtu.** Nic se nikam neodesílá.
 - Všechny zadané údaje zůstávají v `localStorage` daného prohlížeče a zařízení.
-- Odkaz na živou ukázku je veřejný, ale data, která do ní kdokoli zadá, zůstávají jen v jeho prohlížeči — nejsou nikde sdílená ani viditelná ostatním.
+- Odkaz na živou ukázku je veřejný, ale data, která do ní kdokoli zadá, zůstávají jen v jeho prohlížeči, nejsou nikde sdílená ani viditelná ostatním.
 - Tlačítko **„Začít znovu"** data z prohlížeče smaže.
 
 ---
@@ -117,8 +117,8 @@ React 19 · TypeScript · Vite 8 · Tailwind CSS 4 · Recharts · Vitest · ESLi
 ```
 src/
 ├── components/
-│   ├── wizard/          Průvodce — kontejner, krokovník, jednotlivé kroky (Step1–Step7)
-│   ├── results/         Výsledky — dashboard a jednotlivé grafy/karty + chartTheme
+│   ├── wizard/          Průvodce, kontejner, krokovník, jednotlivé kroky (Step1–Step7)
+│   ├── results/         Výsledky, dashboard a jednotlivé grafy/karty + chartTheme
 │   └── ui/              Sdílené prvky (NumberInput, NumField, Tooltip, ThemeToggle…)
 ├── engine/              Výpočetní jádro (čisté funkce, bez Reactu):
 │   ├── cashflow.ts      příjmy, výdaje, disponibilní částka, míra úspor, rezerva
@@ -135,7 +135,7 @@ src/
 └── types/               Sdílené TypeScript typy
 
 tests/                   Vitest testy jádra (engine) a úložiště (store)
-.github/workflows/       CI/CD — nasazení na GitHub Pages
+.github/workflows/       CI/CD, nasazení na GitHub Pages
 ```
 
 ---
@@ -163,7 +163,7 @@ npm run test:watch # testy v watch režimu
 
 ## Testy a kontrola kvality
 
-Výpočetní jádro je pokryté unit testy (Vitest) — **96 testů v 9 souborech** pokrývá cash flow, hypotéku, úspory, scénáře, souhrn, náklady na dítě, rozpad zbytných výdajů i validaci uloženého stavu.
+Výpočetní jádro je pokryté unit testy (Vitest), **96 testů v 9 souborech** pokrývá cash flow, hypotéku, úspory, scénáře, souhrn, náklady na dítě, rozpad zbytných výdajů i validaci uloženého stavu.
 
 ```bash
 npm run test
@@ -179,8 +179,8 @@ Projekt se **automaticky nasazuje na GitHub Pages** při každém pushi do větv
 
 > V `vite.config.ts` je pro produkční build nastaven `base: '/mamnato/'`, aby se assety načítaly ze správného podadresáře. Vývojový server běží na kořeni `/`.
 
-**Alternativy** (stačí propojit repozitář, jde o statickou SPA — v repu je `vercel.json` s SPA rewrites):
-- **Vercel** / **Netlify** — build command `npm run build`, output directory `dist`.
+**Alternativy** (stačí propojit repozitář, jde o statickou SPA, v repu je `vercel.json` s SPA rewrites):
+- **Vercel** / **Netlify**, build command `npm run build`, output directory `dist`.
 
 ---
 

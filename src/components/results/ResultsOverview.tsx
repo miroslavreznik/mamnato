@@ -73,7 +73,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
           <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
             {hasProperty ? 'Rezerva po koupi vydrží' : 'Rezerva vydrží'}
             <Tooltip text={hasProperty
-              ? 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu — počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.'
+              ? 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu, počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.'
               : 'Kolik měsíců by vaše úspory pokryly nezbytné výdaje při výpadku příjmu (úspory ÷ nezbytné výdaje). Ideál je 3–6 měsíců.'} />
           </span>
           <p className={`text-xl font-bold ${runway >= 6 ? 'text-emerald-600 dark:text-emerald-400' : runway >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -92,7 +92,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
                 <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${goalDot[g.status]}`} />
                 <div className="min-w-0">
                   <span className="text-sm font-medium text-gray-900 dark:text-white">{g.label}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400"> — {g.headline}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">: {g.headline}</span>
                 </div>
               </div>
             ))}
@@ -104,9 +104,9 @@ export default function ResultsOverview({ state, allocations }: Props) {
       {summary.budget && (
         <div className={`p-3 rounded-lg mb-5 text-sm ${summary.budget.fits ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'}`}>
           {summary.budget.fits ? (
-            <>Cíle vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs</strong> z <strong>{fmt(summary.budget.disposable)} Kč/měs</strong> disponibilních — zbývá vám ještě <strong>{fmt(summary.budget.surplus)} Kč/měs</strong> volných.</>
+            <>Cíle vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs</strong> z <strong>{fmt(summary.budget.disposable)} Kč/měs</strong> disponibilních, zbývá vám ještě <strong>{fmt(summary.budget.surplus)} Kč/měs</strong> volných.</>
           ) : (
-            <>Cíle dohromady vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs</strong>, ale máte <strong>{fmt(summary.budget.disposable)} Kč/měs</strong> — chybí <strong>{fmt(Math.abs(summary.budget.surplus))} Kč/měs</strong>. Upravte částky u cílů níže.</>
+            <>Cíle dohromady vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs</strong>, ale máte <strong>{fmt(summary.budget.disposable)} Kč/měs</strong>, chybí <strong>{fmt(Math.abs(summary.budget.surplus))} Kč/měs</strong>. Upravte částky u cílů níže.</>
           )}
         </div>
       )}
@@ -127,7 +127,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
       )}
 
       <p className="text-xs text-gray-400 dark:text-gray-500">
-        Čísla jsou nejlepší odhad (úroková sazba, výnosy nikdo nepředpoví). Vše se přepočítá, když parametry upravíte — v jednotlivých sekcích níže.
+        Čísla jsou nejlepší odhad (úroková sazba, výnosy nikdo nepředpoví). Vše se přepočítá, když parametry upravíte v jednotlivých sekcích níže.
       </p>
     </div>
   );

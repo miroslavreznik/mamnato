@@ -5,7 +5,7 @@ import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortg
 import { parentSalary } from './parentalLeave';
 
 // Časová osa jmění: měsíc po měsíci simuluje vývoj úspor domácnosti přes
-// plánované životní události — spoření na akontaci, koupi (jednorázový pokles
+// plánované životní události, spoření na akontaci, koupi (jednorázový pokles
 // o akontaci a přechod z nájmu na hypotéku), narození dítěte (náklady dle
 // věku) a rodičovskou (výpadek mzdy nahrazený dávkami).
 //
@@ -71,7 +71,7 @@ export function wealthTimeline(
   points.push({ month: 0, cash: Math.round(cash) });
 
   for (let m = 0; m < horizon; m++) {
-    // Koupě: jakmile je na cílovou akontaci naspořeno (dynamicky — zohlední
+    // Koupě: jakmile je na cílovou akontaci naspořeno (dynamicky, zohlední
     // i to, že dítě nebo rodičovská spoření zpomalí).
     if (hasProperty && purchaseMonth === null && cash >= targetDownPayment) {
       purchaseMonth = m;

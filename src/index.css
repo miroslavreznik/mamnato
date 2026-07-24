@@ -19,7 +19,7 @@ body {
   background: rgba(79, 70, 229, 0.18);
 }
 
-/* Klidnější číselné vstupy — skryté spinnery (máme vlastní +/−) */
+/* Klidnější číselné vstupy: skryté spinnery (máme vlastní +/−) */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

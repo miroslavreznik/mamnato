@@ -68,7 +68,7 @@ export default function DtiDstiIndicator({ state }: Props) {
       )}
 
       <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
-        Závazný je dnes už jen limit LTV (výše hypotéky vůči ceně): max 80 %, u žadatelů do 36 let 90 %. Horní limity DTI a DSTI ČNB závazně nevyžaduje — banky je ale posuzují jako interní vodítko.
+        Závazný je dnes už jen limit LTV (výše hypotéky vůči ceně): max 80 %, u žadatelů do 36 let 90 %. Horní limity DTI a DSTI ČNB závazně nevyžaduje, banky je ale posuzují jako interní vodítko.
       </p>
     </div>
   );

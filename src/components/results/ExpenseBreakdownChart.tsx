@@ -129,7 +129,7 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
 
   const freeColor = (v: number) => (v >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400');
 
-  // Ovládatelné cíle (mimo hypotéku — ta je výdajem)
+  // Ovládatelné cíle (mimo hypotéku, ta je výdajem)
   const controllableGoals: Array<{ key: string; label: string; value: number; onChange: (v: number) => void }> = [];
   if (state.goals.includes('retirement')) {
     controllableGoals.push({ key: 'retirement', label: 'Spoření na důchod', value: allocations.retirement, onChange: (v) => onChangeAllocation('retirement', null, v) });
@@ -151,7 +151,7 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
       </p>
 
       {/* Stat tiles: volná rezerva */}
-      {/* Na mobilu dlaždice pod sebe — vedle sebe se částka i s „/měs" nevejde. */}
+      {/* Na mobilu dlaždice pod sebe: vedle sebe se částka i s „/měs" nevejde. */}
       <div className={`grid gap-3 mb-5 ${flowAfter ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
         <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
           <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
@@ -246,7 +246,7 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
         )}
       </div>
 
-      {/* Stejná čísla jako tabulka — pro ty, kdo chtějí přesné částky pod sebou */}
+      {/* Stejná čísla jako tabulka pro ty, kdo chtějí přesné částky pod sebou */}
       <div className="mt-3">
         <button
           onClick={() => setShowTable((v) => !v)}
@@ -309,7 +309,7 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
             ))}
           </div>
           <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-            Hypotéka není v tomto seznamu — po koupi je součástí výdajů na bydlení. Změny se okamžitě promítnou do grafu i do volné rezervy.
+            Hypotéka není v tomto seznamu. Po koupi je součástí výdajů na bydlení. Změny se okamžitě promítnou do grafu i do volné rezervy.
           </p>
         </div>
       )}

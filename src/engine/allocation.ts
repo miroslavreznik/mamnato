@@ -14,12 +14,12 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
   const disposable = monthlyDisposable(state);
   const allocs: GoalAllocations = { mortgage: 0, retirement: 0, child: 0, custom: [] };
 
-  // Mortgage — fixed payment
+  // Mortgage: fixed payment
   if (state.goals.includes('property')) {
     allocs.mortgage = Math.round(mortgagePayment(state));
   }
 
-  // Child — weighted average monthly cost for first 18 years
+  // Child: weighted average monthly cost for first 18 years
   if (state.goals.includes('child')) {
     let totalMonths = 0;
     let totalCost = 0;
@@ -32,13 +32,13 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
     allocs.child = totalMonths > 0 ? Math.round(totalCost / totalMonths) : 0;
   }
 
-  // Retirement — remainder capped at 30% of disposable
+  // Retirement: remainder capped at 30% of disposable
   if (state.goals.includes('retirement')) {
     const remaining = disposable - allocs.mortgage - allocs.child;
     allocs.retirement = Math.max(0, Math.min(Math.round(remaining), Math.round(disposable * 0.3)));
   }
 
-  // Custom goals — simple split of what's left
+  // Custom goals: simple split of what's left
   if (state.goals.includes('other') && state.customGoals && state.customGoals.length > 0) {
     const used = allocs.mortgage + allocs.retirement + allocs.child;
     const remaining = Math.max(0, disposable - used);

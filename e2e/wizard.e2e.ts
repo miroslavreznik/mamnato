@@ -97,7 +97,7 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await expect(page.getByRole('textbox', { name: 'Měsíční příjem během volna', exact: true })).toHaveValue(/19.444/)
 })
 
-test('výsledky jsou v sekcích — „Bydlení" je sbalené a otevře se z navigace', async ({ page }) => {
+test('výsledky jsou v sekcích, „Bydlení" je sbalené a otevře se z navigace', async ({ page }) => {
   await goToGoals(page)
   await page.getByRole('button', { name: /Nemovitost/ }).first().click()
   await next(page) // krok Nemovitost

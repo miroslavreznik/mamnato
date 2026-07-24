@@ -37,7 +37,7 @@ export default function Tooltip({ text }: TooltipProps) {
         type="button"
         className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-xs font-bold inline-flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
         onClick={() => setPinned((v) => !v)}
-        // Hover jen pro myš — dotyk jinak nápovědu otevře a zavře zároveň.
+        // Hover jen pro myš, dotyk jinak nápovědu otevře a zavře zároveň.
         onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHovered(true); }}
         onPointerLeave={(e) => { if (e.pointerType === 'mouse') setHovered(false); }}
         // Fokus ukazuje nápovědu při procházení klávesnicí, ne po klepnutí.

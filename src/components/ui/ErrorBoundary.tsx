@@ -13,7 +13,7 @@ interface State {
  * Záchranná síť pro neošetřené chyby při renderu.
  *
  * Bez ní React při výjimce odmountuje celý strom a uživateli zůstane prázdná
- * bílá stránka — po proklikání celého průvodce ten nejhorší možný konec.
+ * bílá stránka, po proklikání celého průvodce ten nejhorší možný konec.
  * Nejčastější příčinou bývá rozbitý nebo starý stav v localStorage, proto
  * nabízíme i možnost data smazat a začít znovu.
  */
@@ -25,9 +25,9 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Nikam se nic neposílá — appka běží bez serveru i bez analytiky.
+    // Nikam se nic neposílá, appka běží bez serveru i bez analytiky.
     // Výpis v konzoli je jediná stopa pro případné hlášení chyby.
-    console.error('MámNaTo? — neočekávaná chyba:', error, info.componentStack);
+    console.error('MámNaTo? Neočekávaná chyba:', error, info.componentStack);
   }
 
   private handleReload = () => {
@@ -56,7 +56,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             Něco se pokazilo
           </h1>
           <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">
-            Omlouváme se — aplikace narazila na neočekávanou chybu. Vaše data
+            Omlouváme se, ale aplikace narazila na neočekávanou chybu. Vaše data
             zůstala ve vašem prohlížeči a nikam se neodeslala.
           </p>
           <div className="flex flex-col sm:flex-row gap-2 justify-center">
@@ -76,7 +76,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             </button>
           </div>
           <p className="mt-4 text-xs text-gray-400">
-            Když chyba přetrvává, pomůže obvykle druhá možnost — bývá to
+            Když chyba přetrvává, pomůže obvykle druhá možnost. Nejčastěji za to může
             rozbitým rozpracovaným přehledem uloženým v prohlížeči.
           </p>
         </div>

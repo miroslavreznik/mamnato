@@ -20,7 +20,7 @@ const fmtMonth = (m: number) => {
 export default function WealthTimelineChart({ state }: Props) {
   const colors = useChartColors();
   const hasChild = state.goals.includes('child');
-  // Kdy čekáte dítě — „co kdyby" parametr časové osy (neovlivňuje verdikt).
+  // Kdy čekáte dítě, „co kdyby" parametr časové osy (neovlivňuje verdikt).
   const [childOffset, setChildOffset] = useState(12);
 
   const tl = useMemo(
@@ -38,10 +38,10 @@ export default function WealthTimelineChart({ state }: Props) {
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center">
         Vývoj jmění v čase
-        <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Bez výnosů z investic a inflace — konzervativní odhad." />
+        <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Bez výnosů z investic a inflace, konzervativní odhad." />
       </h3>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        Jak se vaše úspory vyvinou přes plánované události — spoření, koupi, dítě i rodičovskou. Nejde o předpověď, ale o kontrolu, jestli plán projde bez pádu pod nulu.
+        Jak se vaše úspory vyvinou přes plánované události: spoření, koupi, dítě i rodičovskou. Nejde o předpověď, ale o kontrolu, jestli plán projde bez pádu pod nulu.
       </p>
 
       {hasChild && (
@@ -101,17 +101,17 @@ export default function WealthTimelineChart({ state }: Props) {
       {tl.firstNegativeMonth !== null ? (
         <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
           Kolem <strong>{fmtMonth(tl.firstNegativeMonth)}</strong> by úspory klesly pod nulu (nejníž {fmtKc(tl.minCash)}).
-          Plán v této podobě neprojde — pomůže větší rezerva, levnější nemovitost, kratší rodičovská nebo odklad některé události.
+          Plán v této podobě neprojde. Pomůže větší rezerva, levnější nemovitost, kratší rodičovská nebo odklad některé události.
         </div>
       ) : (
         <div className="mt-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-800 dark:text-emerald-300">
-          Úspory zůstávají po celou dobu v plusu — nejnižší bod je <strong>{fmtKc(tl.minCash)}</strong> ({fmtMonth(tl.minCashMonth)}).
+          Úspory zůstávají po celou dobu v plusu. Nejnižší bod je <strong>{fmtKc(tl.minCash)}</strong> ({fmtMonth(tl.minCashMonth)}).
         </div>
       )}
 
       {state.goals.includes('property') && tl.purchaseMonth === null && (
         <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-          Na akontaci v horizontu 10 let nedosáhnete — koupě se na časové ose nekoná.
+          Na akontaci v horizontu 10 let nedosáhnete, takže se koupě na časové ose nekoná.
         </p>
       )}
 
