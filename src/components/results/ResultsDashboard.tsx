@@ -14,6 +14,7 @@ import RetirementPlanner from './RetirementPlanner';
 import CustomGoalPlanner from './CustomGoalPlanner';
 import ChildCostPlanner from './ChildCostPlanner';
 import ParentalLeavePlanner from './ParentalLeavePlanner';
+import TaxReliefCard from './TaxReliefCard';
 import EducationalGlossary from './EducationalGlossary';
 import ResultsSection from './ResultsSection';
 import { calculateDefaultAllocations } from '../../engine/allocation';
@@ -269,6 +270,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
             <MortgageVsRent state={activeState} />
             <CashFlowAfterChart state={activeState} />
             <InvestmentComparisonChart state={activeState} />
+            <TaxReliefCard state={activeState} />
           </ResultsSection>
         )}
 
