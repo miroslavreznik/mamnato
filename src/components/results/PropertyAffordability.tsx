@@ -17,6 +17,7 @@ import {
 import { necessaryMonthlyExpenses } from '../../engine/cashflow';
 import { formatMonths, formatYears } from '../../engine/format';
 import { ltvRateAdvice, paymentAtRate } from '../../engine/rateGuidance';
+import { purchaseOneOffCosts } from '../../engine/purchaseCosts';
 import Tooltip from '../ui/Tooltip';
 
 // Orientační dlouhodobý výnos akcií pro srovnání alternativy k akontaci.
@@ -82,6 +83,13 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
   const ltvPct = advice ? Math.round(advice.ltv * 100) : 0;
   // Riziko refixace: o kolik povyskočí splátka, když sazba stoupne o 1 p. b.
   const paymentPlus1pp = paymentAtRate(state, rate + 0.01) - payment;
+  // Konec fixace uprostřed rodičovské je nejhorší možné načasování: splátka
+  // povyskočí zrovna ve chvíli, kdy je rozpočet nejtenčí.
+  const leaveMonths = state.parentalLeave?.enabled ? state.parentalLeave.durationMonths : 0;
+  const fixationEndsDuringLeave = leaveMonths > 0 && fixationYears * 12 <= leaveMonths;
+
+  // Jednorázové náklady koupě, které odejdou z rezervy hned na začátku.
+  const oneOff = purchaseOneOffCosts(state);
 
   const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
   // Sazba česky s desetinnou čárkou (5,2 místo 5.2).
@@ -255,6 +263,13 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
                   </p>
                 )}
 
+                <p>
+                  <span className="font-medium text-gray-700 dark:text-gray-300">Pozor na odhad banky:</span>{' '}
+                  LTV počítáme z ceny, kterou jste zadali. Banka ho ale počítá ze svého odhadu, a ten
+                  bývá spíš konzervativní. Když odhadce dům ocení níž, spadnete do horšího pásma a
+                  rozdíl musíte doplatit z vlastních peněz. Vyplatí se nechat si odhad udělat u víc bank.
+                </p>
+
                 {advice.nextBand && advice.extraDownPayment > 0 && advice.rateDrop > 0 && (
                   <p className={advice.affordable ? 'text-green-700 dark:text-green-400' : ''}>
                     <span className="font-medium">Tip:</span>{' '}
@@ -270,6 +285,16 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
                   <span className="font-medium text-gray-700 dark:text-gray-300">Riziko refixace:</span>{' '}
                   kdyby sazba za {formatYears(fixationYears)} stoupla o 1 p. b.,
                   splátka povyskočí o ~{fmt(paymentPlus1pp)} Kč/měs.
+                  {fixationEndsDuringLeave && (
+                    <>
+                      {' '}<span className="text-amber-600 dark:text-amber-400">
+                        Fixace vám navíc skončí ve chvíli, kdy podle svého plánu můžete být na rodičovské
+                        (volno máte nastavené na {formatMonths(leaveMonths)}). Skokové zvýšení splátky by
+                        tak padlo do nejtenčího období rozpočtu. Delší fixace tomu předejde, i za cenu
+                        o něco vyšší sazby.
+                      </span>
+                    </>
+                  )}
                 </p>
                 <p className="text-gray-400 dark:text-gray-500">
                   Přirážky podle LTV jsou orientační tržní zvyklost. Konkrétní sazbu vždy potvrdí až banka.
@@ -307,6 +332,27 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
           </>
         )}
       </div>
+
+      {oneOff && (
+        <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Kromě akontace počítejte s jednorázovými náklady
+            <Tooltip text="Poplatky a služby, které koupi na hypotéku doprovázejí. Daň z nabytí nemovitosti byla zrušena v roce 2020, takže tu není. Ceny služeb se liší podle poskytovatele, proto jsou uvedená rozpětí. Stěhování a vybavení sem nepočítáme, ta se u každého liší příliš." />
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+            Dohromady zhruba <span className="font-semibold text-gray-900 dark:text-white">{fmt(oneOff.min)} až {fmt(oneOff.max)} Kč</span>.
+            O tuhle částku se rezerva sníží hned při koupi, ještě než začnete splácet.
+          </p>
+          <div className="space-y-1">
+            {oneOff.items.map((item) => (
+              <div key={item.key} className="flex justify-between gap-3 text-xs">
+                <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
+                <span className="text-gray-500 dark:text-gray-400 shrink-0">{fmt(item.min)} až {fmt(item.max)} Kč</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
         <span className="font-semibold">Nezapomeňte na refixaci.</span>{' '}
