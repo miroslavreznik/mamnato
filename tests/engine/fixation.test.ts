@@ -7,6 +7,9 @@ import {
   isRateOverridden,
   mortgageRate,
   mortgagePayment,
+  ownershipCosts,
+  suggestedOwnershipCosts,
+  isOwnershipCostsOverridden,
 } from '../../src/engine/mortgage';
 import { DEFAULTS } from '../../src/engine/defaults';
 import { createInitialState } from '../../src/store/wizardStore';
@@ -69,5 +72,31 @@ describe('délka fixace', () => {
     expect(suggestedRate(withFixation(3))).toBe(suggestedRateForFixation(3));
     // Bez zadané fixace platí výchozí (pětiletá).
     expect(suggestedRate(withFixation(undefined))).toBe(suggestedRateForFixation(5));
+  });
+});
+
+describe('náklady na vlastnictví', () => {
+  it('odhadují se z ceny nemovitosti, ne paušálem', () => {
+    // 1 % ročně, zaokrouhleno na stokoruny.
+    expect(suggestedOwnershipCosts(5500000)).toBe(4600);
+    expect(suggestedOwnershipCosts(12500000)).toBe(10400);
+    // Dvojnásobná cena znamená dvojnásobné náklady.
+    expect(suggestedOwnershipCosts(6000000)).toBe(2 * suggestedOwnershipCosts(3000000));
+  });
+
+  it('výchozí stav je nemá zadané a mění se s cenou', () => {
+    const base = createInitialState();
+    expect(isOwnershipCostsOverridden(base)).toBe(false);
+    expect(ownershipCosts(base)).toBe(suggestedOwnershipCosts(base.property.targetPrice));
+
+    const pricier = { ...base, property: { ...base.property, targetPrice: 12500000 } };
+    expect(ownershipCosts(pricier)).toBe(suggestedOwnershipCosts(12500000));
+  });
+
+  it('ručně zadaná částka má přednost a s cenou se nemění', () => {
+    const base = createInitialState();
+    const own = { ...base, property: { ...base.property, targetPrice: 12500000, ownershipCosts: 3000 } };
+    expect(isOwnershipCostsOverridden(own)).toBe(true);
+    expect(ownershipCosts(own)).toBe(3000);
   });
 });

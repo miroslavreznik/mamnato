@@ -1,6 +1,6 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
-import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRate, suggestedRateForFixation, isRateOverridden } from '../../../engine/mortgage';
+import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRate, suggestedRateForFixation, isRateOverridden, ownershipCosts as ownershipCostsOf, suggestedOwnershipCosts, isOwnershipCostsOverridden } from '../../../engine/mortgage';
 import { formatYears } from '../../../engine/format';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
@@ -12,6 +12,12 @@ const FIXATION_CHOICES = [1, 3, 5, 7, 10];
 // Sazba se zadává v procentech na jedno desetinné místo.
 const pct = (rate: number) => (Math.round(rate * 1000) / 10).toLocaleString('cs-CZ');
 
+// Podíl z ceny nemovitosti, ze kterého se odhadují náklady na vlastnictví.
+// Schválně funkce, ne konstanta na úrovni modulu: ta by se vyhodnotila už při
+// importu, tedy dřív, než se stihne vykreslit ErrorBoundary, a případná výjimka
+// ve formátování by shodila celou stránku do bílé.
+const ownershipPct = () => (DEFAULTS.ownershipCostRate * 100).toLocaleString('cs-CZ');
+
 export default function Step6Property() {
   const { state, dispatch } = useWizard();
   const price = state.property.targetPrice;
@@ -21,6 +27,8 @@ export default function Step6Property() {
   const rateOverridden = isRateOverridden(state);
   const suggestedForCurrentFixation = suggestedRate(state);
   const fixationDiff = suggestedForCurrentFixation - suggestedRateForFixation(5);
+  const ownership = ownershipCostsOf(state);
+  const ownershipOverridden = isOwnershipCostsOverridden(state);
   const dpFraction = downPaymentFraction(state);
   const reqDpPct = Math.round(dpFraction * 100);
   const reqDp = requiredDownPayment(price, dpFraction);
@@ -123,11 +131,31 @@ export default function Step6Property() {
 
       <NumberInput
         label="Odhadované náklady na bydlení při vlastnictví"
-        value={state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts}
+        value={ownership}
         onChange={(v) => dispatch({ type: 'UPDATE_PROPERTY', field: 'ownershipCosts', value: v })}
-        tooltip="Při vlastnictví platíte energie stejně jako v nájmu, ale přibude fond oprav (pro byt v SVJ typicky 1 000–3 000 Kč/měsíc) a pojistka nemovitosti (cca 500–1 500 Kč/měsíc)."
+        tooltip={`Fond oprav, opravy a údržba, pojištění nemovitosti a daň z nemovitých věcí. Energie sem nepatří, ty platíte stejně jako v nájmu a máte je zadané v kroku Výdaje. Odhadujeme ${ownershipPct()} % z ceny nemovitosti ročně, což je běžné pravidlo pro údržbu a opravy. Skutečnost závisí hlavně na stáří domu a výši fondu oprav, klidně částku přepište.`}
         step={500}
       />
+
+      {ownershipOverridden ? (
+        <p className="-mt-2 mb-6 text-xs text-gray-500 dark:text-gray-400">
+          Částku máte zadanou ručně, s cenou nemovitosti se proto nemění. Odhad by pro tuhle cenu vycházel
+          na {suggestedOwnershipCosts(price).toLocaleString('cs-CZ')} Kč.{' '}
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'RESET_OWNERSHIP_COSTS' })}
+            className="underline underline-offset-2 hover:text-gray-700 dark:hover:text-gray-200"
+          >
+            Vrátit odhad podle ceny
+          </button>
+        </p>
+      ) : (
+        <p className="-mt-2 mb-6 text-xs text-gray-500 dark:text-gray-400">
+          Odhad: {ownershipPct()} % z ceny {price.toLocaleString('cs-CZ')} Kč za rok, tedy{' '}
+          {ownership.toLocaleString('cs-CZ')} Kč měsíčně. Zahrnuje fond oprav, údržbu, pojištění a daň
+          z nemovitých věcí, ne energie.
+        </p>
+      )}
 
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">Parametry hypotéky</h3>
       <NumberInput

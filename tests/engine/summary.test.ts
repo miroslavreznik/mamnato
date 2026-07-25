@@ -80,6 +80,8 @@ describe('evaluateOverall', () => {
   });
 
   it('adds a parental-leave readiness row and downgrades the verdict when leave goes negative', () => {
+    // Rezerva po akontaci (200 000 Kč) schodek za celé volno (~168 000 Kč)
+    // pokryje, takže „pozor", ne „nevychází". Verdikt ale zelený být nesmí.
     const state = makeState({
       mode: 'couple',
       goals: ['property', 'child'],
@@ -89,8 +91,22 @@ describe('evaluateOverall', () => {
     });
     const s = evaluateOverall(state, allocs({ mortgage: 26000 }));
     const leave = s.goals.find((g) => g.key === 'leave');
-    expect(leave?.status).toBe('warning');
+    expect(leave?.status).toBe('caution');
     expect(s.status).not.toBe('good');
+  });
+
+  it('marks the leave as not workable when savings run out mid-leave', () => {
+    const state = makeState({
+      mode: 'couple',
+      goals: ['property', 'child'],
+      income: { person1NetMonthly: 45000, person2NetMonthly: 30000 },
+      savings: { totalSavings: 1050000 }, // po akontaci zbyde jen 50 000 Kč
+      property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
+      parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
+    });
+    const s = evaluateOverall(state, allocs({ mortgage: 26000 }));
+    expect(s.goals.find((g) => g.key === 'leave')?.status).toBe('warning');
+    expect(s.status).toBe('not_yet');
   });
 });
 

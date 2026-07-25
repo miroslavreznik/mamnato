@@ -27,10 +27,10 @@ export function createInitialState(): WizardState {
     goals: [],
     property: {
       targetPrice: DEFAULTS.property.targetPrice,
-      ownershipCosts: DEFAULTS.property.ownershipCosts,
-      // mortgageRate se schválně nevyplňuje: dokud ho uživatel nezadá, odvozuje
-      // se z délky fixace (viz suggestedRate). Jakmile tu hodnota je, znamená
-      // to „tohle mi nabídla banka" a fixace s ní už nehýbe.
+      // mortgageRate ani ownershipCosts se schválně nevyplňují. Dokud je
+      // uživatel nezadá, odvozují se: sazba z délky fixace (suggestedRate),
+      // náklady na vlastnictví z ceny (suggestedOwnershipCosts). Jakmile tu
+      // hodnota je, znamená to „takhle to mám doopravdy" a odhad ustoupí.
       fixationYears: DEFAULTS.property.fixationYears,
       loanTermYears: DEFAULTS.property.loanTermYears,
     },
@@ -52,6 +52,7 @@ export type WizardAction =
   | { type: 'SET_GOALS'; goals: FinancialGoal[] }
   | { type: 'UPDATE_PROPERTY'; field: string; value: number }
   | { type: 'RESET_MORTGAGE_RATE' }
+  | { type: 'RESET_OWNERSHIP_COSTS' }
   | { type: 'SET_NUMBER_OF_CHILDREN'; count: number }
   | { type: 'SET_PERSON_AGE'; person: 1 | 2; value: number }
   | { type: 'UPDATE_CUSTOM_GOALS'; goals: WizardState['customGoals'] }
@@ -144,6 +145,12 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'RESET_MORTGAGE_RATE': {
       // Odebrání ručně zadané sazby vrátí odhad podle délky fixace.
       const { mortgageRate: _drop, ...property } = state.property;
+      void _drop;
+      return { ...state, property };
+    }
+    case 'RESET_OWNERSHIP_COSTS': {
+      // Odebrání ručně zadaných nákladů vrátí odhad podle ceny nemovitosti.
+      const { ownershipCosts: _drop, ...property } = state.property;
       void _drop;
       return { ...state, property };
     }

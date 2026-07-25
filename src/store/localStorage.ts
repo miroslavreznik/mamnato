@@ -90,7 +90,8 @@ export function normalizeState(raw: unknown): WizardState | null {
     goals: raw.goals.filter((g): g is FinancialGoal => VALID_GOALS.includes(g as FinancialGoal)),
     property: {
       targetPrice: num(rProperty.targetPrice, base.property.targetPrice),
-      ownershipCosts: rProperty.ownershipCosts != null ? num(rProperty.ownershipCosts, base.property.ownershipCosts!) : base.property.ownershipCosts,
+      // Chybějící náklady na vlastnictví jsou platný stav („odhadni z ceny").
+      ownershipCosts: rProperty.ownershipCosts != null ? num(rProperty.ownershipCosts, 0) : undefined,
       // Chybějící sazba je platný stav (znamená „řiď se fixací"), takže se
       // nedoplňuje výchozí hodnotou.
       mortgageRate: rProperty.mortgageRate != null ? num(rProperty.mortgageRate, DEFAULTS.property.mortgageRate) : undefined,

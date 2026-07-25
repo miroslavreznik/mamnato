@@ -41,8 +41,17 @@ export const DEFAULTS = {
     mortgageRate: 0.048,
     fixationYears: 5,
     loanTermYears: 30,
-    ownershipCosts: 5500,
   },
+  // Náklady na vlastnictví se odhadují jako podíl z ceny nemovitosti za rok.
+  // Paušální částka nedávala smysl: u bytu za 3 miliony a domu za 12 milionů
+  // to nejsou stejné peníze.
+  //
+  // 1 % ročně je běžné stavařské pravidlo pro údržbu a opravy. V něm je
+  // zahrnuto: fond oprav (v SVJ obvykle 15–35 Kč/m² měsíčně), vlastní opravy
+  // a údržba, pojištění nemovitosti a daň z nemovitých věcí. Je to odhad,
+  // ne výpočet z konkrétního domu, proto jde částka přepsat.
+  // Kontrola: byt za 5,5 mil. → 4 583 Kč/měs, dům za 12,5 mil. → 10 417 Kč/měs.
+  ownershipCostRate: 0.01,
   // Délka fixace sazbu reálně ovlivňuje, banka si účtuje jinou cenu za různě
   // dlouhou garanci. Hodnoty jsou rozdíl oproti pětileté fixaci, ze které
   // vychází výchozí sazba výše (orientační tržní zvyklost v ČR, 7/2026;

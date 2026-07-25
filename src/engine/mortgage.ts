@@ -59,8 +59,21 @@ export function loanTermYears(state: WizardState): number {
   return state.property.loanTermYears ?? DEFAULTS.property.loanTermYears;
 }
 
+// Odhad měsíčních nákladů na vlastnictví z ceny nemovitosti (1 % ročně).
+// Zaokrouhluje se na stokoruny, protože přesnost na koruny by u odhadu
+// předstírala jistotu, kterou nemá.
+export function suggestedOwnershipCosts(price: number): number {
+  return Math.round((price * DEFAULTS.ownershipCostRate) / 12 / 100) * 100;
+}
+
 export function ownershipCosts(state: WizardState): number {
-  return state.property.ownershipCosts ?? DEFAULTS.property.ownershipCosts;
+  return state.property.ownershipCosts ?? suggestedOwnershipCosts(state.property.targetPrice);
+}
+
+// Zadal uživatel náklady na vlastnictví ručně? Stejná logika jako u sazby:
+// dokud ne, drží se odhadu a mění se s cenou nemovitosti.
+export function isOwnershipCostsOverridden(state: WizardState): boolean {
+  return state.property.ownershipCosts != null;
 }
 
 // Výše hypotéky = cena nemovitosti minus akontace (nikdy záporná).
