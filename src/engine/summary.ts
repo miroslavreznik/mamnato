@@ -5,6 +5,7 @@ import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
 import type { GoalAllocations } from './allocation';
+import { formatMonths } from './format';
 
 export type OverallStatusKey = 'good' | 'tight' | 'not_yet' | 'fix_budget';
 export type GoalStatus = 'good' | 'caution' | 'warning';
@@ -33,21 +34,11 @@ export interface Verdict {
 export interface OverallSummary {
   status: OverallStatusKey;
   icon: string;
-  title: string;
   description: string;
   verdict: Verdict;
   tips: string[];
   goals: GoalReadiness[];
   budget: { disposable: number; allocated: number; surplus: number; fits: boolean } | null;
-}
-
-function fmtMonths(months: number): string {
-  if (!isFinite(months)) return 'více než 10 let';
-  if (months <= 0) return 'ihned';
-  if (months < 12) return `${Math.round(months)} měs.`;
-  const y = Math.floor(months / 12);
-  const m = Math.round(months % 12);
-  return m > 0 ? `${y} let a ${m} měs.` : `${y} let`;
 }
 
 // Připravenost cíle „nemovitost", z existujícího scénáře + čísel.
@@ -69,7 +60,7 @@ function propertyReadiness(state: WizardState): GoalReadiness {
   const headline =
     scenario.id === 'cannot_afford_dsti'
       ? `Splátka nad obvyklý limit bank${dstiPart}`
-      : `Na akontaci ${fmtMonths(months)}${dstiPart}`;
+      : `Na akontaci ${formatMonths(months, true)}${dstiPart}`;
   return { key: 'property', label: 'Nemovitost', status, headline };
 }
 
@@ -204,11 +195,11 @@ function buildVerdict(
   }
 }
 
-const OVERALL: Record<OverallStatusKey, { icon: string; title: string }> = {
-  fix_budget: { icon: '⚠️', title: 'Nejdříve je potřeba vyrovnat rozpočet' },
-  not_yet: { icon: '🕒', title: 'Zatím to úplně nevychází, ale máte kam sáhnout' },
-  tight: { icon: '⚖️', title: 'Dosažitelné, ale s napjatou rezervou' },
-  good: { icon: '✅', title: 'Vaše cíle jsou v dosahu' },
+const OVERALL_ICON: Record<OverallStatusKey, string> = {
+  fix_budget: '⚠️',
+  not_yet: '🕒',
+  tight: '⚖️',
+  good: '✅',
 };
 
 export function evaluateOverall(state: WizardState, allocations: GoalAllocations): OverallSummary {
@@ -306,7 +297,6 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
     }
   }
 
-  const meta = OVERALL[status];
   const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable);
-  return { status, icon: meta.icon, title: meta.title, description, verdict, tips, goals, budget };
+  return { status, icon: OVERALL_ICON[status], description, verdict, tips, goals, budget };
 }

@@ -15,6 +15,7 @@ import {
   ownershipCosts as ownershipCostsOf,
 } from '../../engine/mortgage';
 import { necessaryMonthlyExpenses } from '../../engine/cashflow';
+import { formatMonths } from '../../engine/format';
 import { ltvRateAdvice, paymentAtRate } from '../../engine/rateGuidance';
 import Tooltip from '../ui/Tooltip';
 
@@ -295,7 +296,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
             <div className="border-t dark:border-gray-600 pt-3" />
             <Row
               label="Čas na naspoření chybějící akontace"
-              value={months < 12 ? `${months} měsíců` : `${Math.floor(months / 12)} let a ${months % 12} měs.`}
+              value={formatMonths(months)}
             />
           </>
         )}

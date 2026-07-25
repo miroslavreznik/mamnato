@@ -1,22 +1,17 @@
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
 import { evaluateOverall } from '../../engine/summary';
-import type { GoalStatus, OverallStatusKey, VerdictAnswer } from '../../engine/summary';
+import type { GoalStatus, VerdictAnswer } from '../../engine/summary';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
-import { postPurchaseRunwayMonths } from '../../engine/mortgage';
+import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, monthsToSaveDownPayment, dsti } from '../../engine/mortgage';
+import { DEFAULTS } from '../../engine/defaults';
+import { formatMonths } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 
 interface Props {
   state: WizardState;
   allocations: GoalAllocations;
 }
-
-const statusStyles: Record<OverallStatusKey, string> = {
-  good: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800',
-  tight: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
-  not_yet: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
-  fix_budget: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-};
 
 // Odpověď „Mám na to?": zelená ano, jantarová ano s výhradou, oranžová zatím ne
 // s cestou ven, červená jasné ne.
@@ -39,6 +34,24 @@ const verdictStyles: Record<VerdictAnswer, { box: string; text: string }> = {
   },
 };
 
+type Tone = 'good' | 'warn' | 'bad' | 'plain';
+
+interface Kpi {
+  label: string;
+  tooltip: string;
+  value: string;
+  unit?: string;
+  sub?: string;
+  tone: Tone;
+}
+
+const toneClass: Record<Tone, string> = {
+  good: 'text-emerald-600 dark:text-emerald-400',
+  warn: 'text-amber-600 dark:text-amber-400',
+  bad: 'text-red-600 dark:text-red-400',
+  plain: 'text-gray-900 dark:text-white',
+};
+
 const goalDot: Record<GoalStatus, string> = {
   good: 'bg-emerald-500',
   caution: 'bg-amber-500',
@@ -55,71 +68,115 @@ export default function ResultsOverview({ state, allocations }: Props) {
   const runway = hasProperty ? postPurchaseRunwayMonths(state) : emergencyRunwayMonths(state);
 
   const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
-  const runwayLabel = runway === Infinity ? '∞' : `${runway.toFixed(1)} měs.`;
+  const runwayLabel = runway === Infinity ? '∞' : runway.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const runwayTone: Tone = runway >= 6 ? 'good' : runway >= 3 ? 'warn' : 'bad';
+
+  // Dlaždice se liší podle toho, co uživatel řeší. U hypotéky jsou nejdůležitější
+  // splátka a akontace (jinak schované ve sbalené sekci Bydlení), ne obecné
+  // ukazatele rozpočtu, které stejně vidí hned pod tím v grafu.
+  const kpis: Kpi[] = hasProperty
+    ? [
+        (() => {
+          const payment = mortgagePayment(state);
+          const dstiPct = dsti(state);
+          return {
+            label: 'Měsíční splátka',
+            tooltip: 'Odhadovaná splátka hypotéky při zadané ceně, akontaci, sazbě a délce splácení. Kolik z příjmu ukrojí, ukazuje řádek pod částkou (DSTI).',
+            value: fmt(payment),
+            unit: 'Kč/měs',
+            sub: isFinite(dstiPct) ? `${Math.round(dstiPct * 100)} % čistého příjmu` : undefined,
+            tone: !isFinite(dstiPct) || dstiPct > DEFAULTS.dstiLimit ? 'bad' : dstiPct > DEFAULTS.dstiLimit * 0.85 ? 'warn' : 'plain',
+          };
+        })(),
+        (() => {
+          const gap = downPaymentGap(state);
+          const months = monthsToSaveDownPayment(state);
+          return {
+            label: 'Chybějící akontace',
+            tooltip: 'Rozdíl mezi akontací, kterou banka požaduje (20 % ceny, u žadatelů do 36 let 10 %), a tím, co pokryjete z úspor. Bez ní vám banka hypotéku neposkytne.',
+            value: gap > 0 ? fmt(gap) : '0',
+            unit: 'Kč',
+            sub: gap > 0
+              ? (isFinite(months) ? `naspoříte za ${formatMonths(months, true)}` : 'při současném rozpočtu nenaspoříte')
+              : 'akontaci máte pokrytou',
+            tone: gap > 0 ? (isFinite(months) ? 'warn' : 'bad') : 'good',
+          };
+        })(),
+        {
+          label: 'Rezerva po koupi vydrží',
+          tooltip: 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu, počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.',
+          value: runwayLabel,
+          unit: 'měs.',
+          tone: runwayTone,
+        },
+      ]
+    : [
+        {
+          label: 'Disponibilní částka',
+          tooltip: 'Kolik vám měsíčně zbyde po odečtení všech výdajů od čistých příjmů (příjmy − výdaje). Z této částky spoříte na cíle a tvoříte rezervu.',
+          value: `${disposable >= 0 ? '+' : ''}${fmt(disposable)}`,
+          unit: 'Kč/měs',
+          tone: disposable >= 0 ? 'plain' : 'bad',
+        },
+        {
+          label: 'Míra úspor',
+          tooltip: 'Jaký podíl čistého příjmu vám po výdajích zbývá (disponibilní částka ÷ příjem). Zdravé bývá aspoň 10–20 %.',
+          value: (rate * 100).toFixed(1),
+          unit: '%',
+          tone: rate >= 0.2 ? 'good' : rate >= 0.1 ? 'plain' : 'warn',
+        },
+        {
+          label: 'Rezerva vydrží',
+          tooltip: 'Kolik měsíců by vaše úspory pokryly nezbytné výdaje při výpadku příjmu (úspory ÷ nezbytné výdaje). Ideál je 3–6 měsíců.',
+          value: runwayLabel,
+          unit: 'měs.',
+          tone: runwayTone,
+        },
+      ];
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      {/* Odpověď na otázku z názvu appky. Záměrně první a největší věc na stránce. */}
-      <div className={`rounded-xl border p-5 sm:p-6 mb-4 text-center ${verdictStyles[summary.verdict.answer].box}`}>
-        <p className="text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight">
-          <span className={verdictStyles[summary.verdict.answer].text}>{summary.verdict.headline}</span>
-          {summary.verdict.qualifier && (
-            <>
-              <span className={verdictStyles[summary.verdict.answer].text}>,</span>{' '}
-              <span className="text-gray-500 dark:text-gray-400 font-bold">{summary.verdict.qualifier}</span>
-            </>
-          )}
-          <span className={verdictStyles[summary.verdict.answer].text}>
-            {summary.verdict.answer === 'yes' ? '.' : summary.verdict.answer === 'no' ? '.' : '…'}
-          </span>
-        </p>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 max-w-xl mx-auto leading-relaxed">
-          {summary.verdict.reason}
-        </p>
-      </div>
-
-      {/* Rozbor verdiktu */}
-      <div className={`rounded-xl border p-5 mb-5 ${statusStyles[summary.status]}`}>
-        <div className="flex items-start gap-3">
-          <span className="text-3xl leading-none">{summary.icon}</span>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{summary.title}</h3>
-            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{summary.description}</p>
-          </div>
+      {/* Odpověď na otázku z názvu appky i její rozbor. Jedna karta, aby se
+          totéž neříkalo dvakrát za sebou. */}
+      <div className={`rounded-xl border p-5 sm:p-6 mb-5 ${verdictStyles[summary.verdict.answer].box}`}>
+        <div className="text-center">
+          <span className="text-3xl leading-none" aria-hidden="true">{summary.icon}</span>
+          <p className="mt-1 text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight">
+            <span className={verdictStyles[summary.verdict.answer].text}>{summary.verdict.headline}</span>
+            {summary.verdict.qualifier && (
+              <>
+                <span className={verdictStyles[summary.verdict.answer].text}>,</span>{' '}
+                <span className="text-gray-500 dark:text-gray-400 font-bold">{summary.verdict.qualifier}</span>
+              </>
+            )}
+            <span className={verdictStyles[summary.verdict.answer].text}>
+              {summary.verdict.answer === 'yes' || summary.verdict.answer === 'no' ? '.' : '…'}
+            </span>
+          </p>
+          <p className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-200 max-w-xl mx-auto leading-relaxed">
+            {summary.verdict.reason}
+          </p>
         </div>
+        <p className="mt-4 pt-4 border-t border-current/10 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+          {summary.description}
+        </p>
       </div>
 
-      {/* KPI dlaždice */}
+      {/* Čísla, na kterých verdikt stojí */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
-            Disponibilní částka
-            <Tooltip text="Kolik vám měsíčně zbyde po odečtení všech výdajů od čistých příjmů (příjmy − výdaje). Z této částky spoříte na cíle a tvoříte rezervu." />
-          </span>
-          <p className={`text-xl font-bold ${disposable >= 0 ? 'text-gray-900 dark:text-white' : 'text-red-600 dark:text-red-400'}`}>
-            {disposable >= 0 ? '+' : ''}{fmt(disposable)} <span className="text-sm font-normal text-gray-400">Kč/měs</span>
-          </p>
-        </div>
-        <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
-            Míra úspor
-            <Tooltip text="Jaký podíl čistého příjmu vám po výdajích zbývá (disponibilní částka ÷ příjem). Zdravé bývá aspoň 10–20 %." />
-          </span>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
-            {(rate * 100).toFixed(1)} <span className="text-sm font-normal text-gray-400">%</span>
-          </p>
-        </div>
-        <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
-            {hasProperty ? 'Rezerva po koupi vydrží' : 'Rezerva vydrží'}
-            <Tooltip text={hasProperty
-              ? 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu, počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.'
-              : 'Kolik měsíců by vaše úspory pokryly nezbytné výdaje při výpadku příjmu (úspory ÷ nezbytné výdaje). Ideál je 3–6 měsíců.'} />
-          </span>
-          <p className={`text-xl font-bold ${runway >= 6 ? 'text-emerald-600 dark:text-emerald-400' : runway >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
-            {runwayLabel}
-          </p>
-        </div>
+        {kpis.map((k) => (
+          <div key={k.label} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+            <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+              {k.label}
+              <Tooltip text={k.tooltip} />
+            </span>
+            <p className={`text-xl font-bold whitespace-nowrap ${toneClass[k.tone]}`}>
+              {k.value}
+              {k.unit && <span className="text-sm font-normal text-gray-400"> {k.unit}</span>}
+            </p>
+            {k.sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{k.sub}</p>}
+          </div>
+        ))}
       </div>
 
       {/* Připravenost cílů */}
