@@ -53,6 +53,12 @@ Přehled je uspořádaný do **sbalitelných tematických sekcí** (Souhrn, Bydl
 - **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)*, po dobu volna nahradí mzdu pečujícího rodiče dávky; ukáže příjem a volnou rezervu během volna, jestli během něj vyjde i splátka hypotéky, a celkový výpadek příjmu
 - **Slovníček pojmů**, LTV, akontace, DTI/DSTI, fixace…
 
+### Co přehled odpoví jako první
+Výsledky začínají přímou odpovědí na otázku z názvu: **Máte na to** / **Máte na to, ale bude to napjaté** / **Zatím na to nemáte, ale máte kam sáhnout** / **Zatím na to nemáte**, vždy s jednořádkovým zdůvodněním a klíčovými čísly (splátka a její podíl na příjmu, chybějící akontace, rezerva po koupi).
+
+### Co kdyby
+Rozpočet slouží k modelování: klepnutím vypnete výdaj nebo celý cíl a hned uvidíte, jestli by pak odpověď vyšla jinak. Když se verdikt nezmění, aplikace vysvětlí proč, například že vysokou splátku vůči příjmu škrtáním výdajů nespravíte. Kdo si vyplnil podrobný rozpis zbytných výdajů, může vypnout i jednotlivou položku.
+
 ### Napříč aplikací
 - 🌗 **Tmavý / světlý režim**
 - 🔗 **Sdílet přehled odkazem**, celý scénář se zakóduje do adresy (nic na server); příjemce si otevře stejná čísla a může si je upravit
@@ -129,12 +135,18 @@ src/
 │   ├── discretionary.ts katalog a součty zbytných výdajů po skupinách
 │   ├── childCost.ts     náklady na dítě dle věku
 │   ├── scenarios.ts     rule-based scénáře dostupnosti nemovitosti
-│   ├── summary.ts       celkový verdikt a připravenost jednotlivých cílů
-│   └── defaults.ts      předvyplněné hodnoty a konstanty (ČSÚ/ČNB)
+│   ├── rateGuidance.ts  LTV pásma a orientační přirážky bank k sazbě
+│   ├── wealthTimeline.ts vývoj jmění přes plánované události
+│   ├── parentalLeave.ts  dopad rodičovské na rozpočet
+│   ├── summary.ts       celkový verdikt „Máte na to" a stav jednotlivých cílů
+│   ├── format.ts        skloňování času (1 rok / 2 roky / 5 let)
+│   └── defaults.ts      předvyplněné hodnoty a konstanty (ČSÚ/ČNB/ČBA)
 ├── store/               Stav průvodce (reducer) + ukládání do localStorage s validací
 └── types/               Sdílené TypeScript typy
 
 tests/                   Vitest testy jádra (engine) a úložiště (store)
+e2e/                     Playwright testy průchodu aplikací
+docs/                    Poznámky k záměrům, které ještě nejsou hotové
 .github/workflows/       CI/CD, nasazení na GitHub Pages
 ```
 
@@ -163,7 +175,9 @@ npm run test:watch # testy v watch režimu
 
 ## Testy a kontrola kvality
 
-Výpočetní jádro je pokryté unit testy (Vitest), **96 testů v 9 souborech** pokrývá cash flow, hypotéku, úspory, scénáře, souhrn, náklady na dítě, rozpad zbytných výdajů i validaci uloženého stavu.
+Výpočetní jádro je pokryté unit testy (Vitest), **155 testů v 15 souborech** pokrývá cash flow, hypotéku, sazby podle LTV, úspory, scénáře, souhrn a verdikt, náklady na dítě, rozpad zbytných výdajů, formátování i validaci uloženého stavu.
+
+Průchod aplikací hlídá **18 e2e testů (Playwright)** v Chromiu i ve WebKitu (jádro Safari): celý průvodce, dynamické přepočty, posuvníky akontace a sazby, ovládání na mobilu, záchranná obrazovka při chybě a sdílení odkazem.
 
 ```bash
 npm run test

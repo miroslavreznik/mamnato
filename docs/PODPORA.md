@@ -71,14 +71,14 @@ Tvrzení v textu ať jsou pravdivá. Tohle jsou reálné údaje z repa:
 | Údaj | Hodnota | Kde ověřit |
 |---|---|---|
 | Vývoj běží od | 04/2026 | `git log --reverse` |
-| Commitů | 36 | `git rev-list --count HEAD` |
-| Řádků kódu (bez testů) | ~6 800 | `find src -name '*.ts*' \| xargs wc -l` |
-| Řádků testů | ~1 600 | `find tests e2e -name '*.ts' \| xargs wc -l` |
-| Automatických testů | 139 unit + 12 e2e | `npx vitest run`, `npx playwright test` |
-| Výpočetních modulů | 13 | `ls src/engine/*.ts` |
+| Commitů | 46 | `git rev-list --count HEAD` |
+| Řádků kódu (bez testů) | ~7 500 | `find src -name '*.ts*' \| xargs wc -l` |
+| Řádků testů | ~1 900 | `find tests e2e -name '*.ts' \| xargs wc -l` |
+| Automatických testů | 155 unit + 18 e2e | `npx vitest run`, `npx playwright test` |
+| Výpočetních modulů | 14 | `ls src/engine/*.ts` |
 
 **Nevymýšlej si počet hodin.** Buď ho odhadni poctivě, nebo použij formulaci, kterou
-umíš doložit: *„přes 30 večerů"*, *„139 automatických testů, aby čísla seděla"*.
+umíš doložit: *„přes 30 večerů"*, *„173 automatických testů, aby čísla seděla"*.
 U appky o penězích je důvěryhodnost to jediné, co máš.
 
 ---
