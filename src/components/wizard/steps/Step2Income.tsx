@@ -18,18 +18,19 @@ function AgeField({ label, value, onChange, tooltip }: {
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </label>
-      <div className="relative">
-        <NumField
-          value={value}
-          onChange={onChange}
-          min={0}
-          max={100}
-          placeholder="např. 34"
-          ariaLabel={label}
-          className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">let</span>
-      </div>
+      {/* Jednotka jde přes prop `suffix`, ne vlastním absolutním popiskem:
+          ten by ležel přes tlačítko + a sebral mu kliknutí. */}
+      <NumField
+        value={value}
+        onChange={onChange}
+        min={0}
+        max={100}
+        step={1}
+        suffix="let"
+        placeholder="např. 34"
+        ariaLabel={label}
+        className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
     </div>
   );
 }

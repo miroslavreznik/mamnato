@@ -40,7 +40,8 @@ test('projde průvodcem a zobrazí výsledky', async ({ page }) => {
 test('věk do 36 let sníží povinnou akontaci na 10 %', async ({ page }) => {
   await start(page)
   await next(page) // → Příjmy
-  await page.getByLabel('Můj věk').fill('30')
+  // Pole má vedle sebe krokovací tlačítka se stejným názvem, proto exact.
+  await page.getByRole('textbox', { name: 'Můj věk', exact: true }).fill('30')
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
@@ -363,4 +364,61 @@ test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ 
   await expect(page2.getByText(/54\s?321/).first()).toBeVisible()
   await ctx1.close()
   await ctx2.close()
+})
+
+test('kurzor zůstane tam, kde uživatel maže, a nespadne za poslední nulu', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+
+  const price = page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true })
+  await price.fill('12000000')
+
+  // Kurzor za druhou číslici, smazat „2" a napsat „0": z 12 000 000 má být
+  // 10 000 000. Dřív kurzor po smazání odskočil na konec a vzniklo 1 000 0000.
+  await price.click()
+  await price.evaluate((el: HTMLInputElement) => el.setSelectionRange(2, 2))
+  await page.keyboard.press('Backspace')
+  await page.keyboard.type('0')
+
+  const digits = async () => Number(((await price.inputValue()) ?? '').replace(/\D/g, ''))
+  await expect.poll(digits).toBe(10000000)
+})
+
+test('délka fixace mění nabízenou sazbu i splátku', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+
+  const fixation = page.getByLabel('Doba fixace úrokové sazby')
+  const rate = page.getByRole('textbox', { name: 'Úroková sazba hypotéky', exact: true })
+
+  // Splátka ze souhrnu pod formulářem (v kroku průvodce je bez „/měs.").
+  const payment = async () => {
+    const row = page.getByText('Odhadovaná měsíční splátka:').locator('xpath=..')
+    return Number(((await row.textContent()) ?? '').replace(/\D/g, ''))
+  }
+
+  await fixation.selectOption('3')
+  await expect(rate).toHaveValue('4,7')
+  const cheapFix = await payment()
+
+  await fixation.selectOption('10')
+  await expect(rate).toHaveValue('5,3')
+  expect(await payment()).toBeGreaterThan(cheapFix)
+
+  // Ručně zadaná sazba má přednost, fixace s ní přestane hýbat.
+  await rate.fill('3')
+  await rate.blur()
+  await fixation.selectOption('1')
+  await expect(rate).toHaveValue('3')
+  await expect(page.getByText(/Sazbu máte zadanou ručně/)).toBeVisible()
 })

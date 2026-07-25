@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { groupThousands, reformatWithCaret, stripGroupSeparators } from './numericText';
 
 interface NumFieldProps {
   value: number;
@@ -20,6 +21,9 @@ interface NumFieldProps {
  * Řeší otravnou nulu: prázdné pole se nedrží jako „0", kterou nejde smazat.
  * Během psaní si drží přesně to, co uživatel napsal (žádná vnucená nula
  * před číslem), a nulová hodnota se zobrazuje jako prázdno.
+ *
+ * Formátování tisíců i kotvení kurzoru sdílí s `NumberInput` přes `numericText`,
+ * aby se obě pole ovládala stejně.
  */
 export default function NumField({
   value,
@@ -34,14 +38,27 @@ export default function NumField({
 }: NumFieldProps) {
   const [focused, setFocused] = useState(false);
   const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const caretRef = useRef<number | null>(null);
 
   const clamp = (n: number) => Math.max(min, Math.min(max, n));
   // Během psaní ukazujeme přesně zadaný text; jinak hezky s oddělovači tisíců
   // (např. „300 000", „7,5"), konzistentně s hlavním NumberInput.
   const shown = focused ? draft : value ? value.toLocaleString('cs-CZ') : '';
 
+  // Kurzor se musí nastavit až po vykreslení nového textu, jinak ho React
+  // vzápětí přepíše a kurzor skončí na konci pole.
+  useEffect(() => {
+    if (caretRef.current !== null && inputRef.current && focused) {
+      const pos = caretRef.current;
+      inputRef.current.setSelectionRange(pos, pos);
+      caretRef.current = null;
+    }
+  });
+
   const input = (
     <input
+      ref={inputRef}
       type="text"
       inputMode="decimal"
       value={shown}
@@ -61,13 +78,20 @@ export default function NumField({
         e.currentTarget.select();
       }}
       onChange={(e) => {
-        const raw = e.target.value.replace(/[^\d.,-]/g, '');
-        setDraft(raw);
+        // Oddělovače tisíců se dopisují rovnou při psaní. Dřív se ze zadaného
+        // textu vyhazovaly, text se tím zkrátil a prohlížeč odložil kurzor
+        // na konec pole i uprostřed opravy.
+        const typed = e.target.value;
+        const { text, caret } = reformatWithCaret(typed, e.target.selectionStart ?? typed.length);
+        setDraft(text);
+        caretRef.current = caret;
+
+        const raw = stripGroupSeparators(text).replace(',', '.');
         if (raw.trim() === '' || raw === '-') {
           onChange(clamp(0));
           return;
         }
-        const n = Number(raw.replace(',', '.'));
+        const n = Number(raw);
         if (!Number.isNaN(n)) onChange(clamp(n));
       }}
       onBlur={() => setFocused(false)}
@@ -93,7 +117,10 @@ export default function NumField({
   // Krok zaokrouhlujeme, aby desetinné kroky (0,5 %) nenasbíraly chyby floatu.
   const bump = (direction: 1 | -1) => {
     const next = Math.round((value + direction * step) * 1e6) / 1e6;
-    onChange(clamp(next));
+    const clamped = clamp(next);
+    onChange(clamped);
+    // Když je pole rozepsané, musí se s hodnotou posunout i zobrazený text.
+    if (focused) setDraft(clamped ? groupThousands(String(clamped).replace('.', ',')) : '');
   };
 
   const btn =

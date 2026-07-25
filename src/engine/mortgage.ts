@@ -23,10 +23,36 @@ export function effectiveDownPayment(state: WizardState): number {
   );
 }
 
+export function fixationYears(state: WizardState): number {
+  return state.property.fixationYears ?? DEFAULTS.property.fixationYears;
+}
+
+// Rozdíl sazby oproti pětileté fixaci. Neznámou délku fixace bereme jako
+// pětiletou, ať se nikdy nepřičte náhodná přirážka.
+export function fixationPremium(years: number): number {
+  return DEFAULTS.fixationRatePremium[years] ?? 0;
+}
+
+// Odhad sazby, kterou banka nabídne pro danou délku fixace. Zaokrouhluje se,
+// aby se z desetinných přirážek nestala čísla typu 4,7999999 %.
+export function suggestedRateForFixation(years: number): number {
+  return Math.round((DEFAULTS.property.mortgageRate + fixationPremium(years)) * 1e5) / 1e5;
+}
+
+export function suggestedRate(state: WizardState): number {
+  return suggestedRateForFixation(fixationYears(state));
+}
+
+// Zadal uživatel sazbu ručně? Pak má jeho číslo přednost před odhadem podle
+// fixace, protože nejspíš vychází z konkrétní nabídky banky.
+export function isRateOverridden(state: WizardState): boolean {
+  return state.property.mortgageRate != null;
+}
+
 // Sdílené parametry hypotéky se zálohou na výchozí hodnoty, jediný zdroj pravdy
 // pro všechny výpočty (splátka, DSTI, cash flow po koupi, časová osa jmění…).
 export function mortgageRate(state: WizardState): number {
-  return state.property.mortgageRate ?? DEFAULTS.property.mortgageRate;
+  return state.property.mortgageRate ?? suggestedRate(state);
 }
 
 export function loanTermYears(state: WizardState): number {

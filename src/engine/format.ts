@@ -8,6 +8,12 @@ export function yearWord(years: number): string {
   return 'let';
 }
 
+// „1 rok", „3 roky", „5 let". Ruční skládání téhle trojice se v komponentách
+// opakovalo a pokaždé se v něm dal udělat překlep.
+export function formatYears(years: number): string {
+  return `${years} ${yearWord(years)}`;
+}
+
 // 1 měsíc, 2–4 měsíce, 5+ měsíců
 export function monthWord(months: number): string {
   if (months === 1) return 'měsíc';

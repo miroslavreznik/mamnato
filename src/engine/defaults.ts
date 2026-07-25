@@ -36,12 +36,27 @@ export const DEFAULTS = {
     // dál rostl). V Praze je reálná cena výrazně vyšší, uživatel si ji upraví.
     targetPrice: 5500000,
     // ČBA, průměrná realizovaná sazba nových hypoték 7/2026: 4,79 %.
-    // Data ČBA vycházejí s ~dvouměsíčním zpožděním.
+    // Data ČBA vycházejí s ~dvouměsíčním zpožděním. Hodnota platí pro
+    // pětiletou fixaci, ze které se odvozují ostatní (viz fixationRatePremium).
     mortgageRate: 0.048,
     fixationYears: 5,
     loanTermYears: 30,
     ownershipCosts: 5500,
   },
+  // Délka fixace sazbu reálně ovlivňuje, banka si účtuje jinou cenu za různě
+  // dlouhou garanci. Hodnoty jsou rozdíl oproti pětileté fixaci, ze které
+  // vychází výchozí sazba výše (orientační tržní zvyklost v ČR, 7/2026;
+  // konkrétní banka se může lišit o desetiny p. b.):
+  //  - roční fixace bývá dražší, banka počítá s tím, že klient brzy odejde,
+  //  - tříletá je dnes nejčastěji nejlevnější,
+  //  - sedmi a desetiletá si nechávají zaplatit jistotu neměnné splátky.
+  fixationRatePremium: {
+    1: 0.004,
+    3: -0.001,
+    5: 0,
+    7: 0.002,
+    10: 0.005,
+  } as Record<number, number>,
   ltvRequired: 0.20, // povinná akontace při LTV 80 %
   ltvRequiredUnder36: 0.10, // do 36 let LTV až 90 % → akontace jen 10 %
   retirementAge: 65, // orientační věk odchodu do důchodu (horizont spoření na stáří)

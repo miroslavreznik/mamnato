@@ -1,5 +1,4 @@
 import type { WizardState } from '../../types';
-import { DEFAULTS } from '../../engine/defaults';
 import {
   requiredDownPayment,
   downPaymentGap,
@@ -13,9 +12,10 @@ import {
   loanAmount as loanAmountOf,
   mortgagePayment,
   ownershipCosts as ownershipCostsOf,
+  fixationYears as fixationYearsOf,
 } from '../../engine/mortgage';
 import { necessaryMonthlyExpenses } from '../../engine/cashflow';
-import { formatMonths } from '../../engine/format';
+import { formatMonths, formatYears } from '../../engine/format';
 import { ltvRateAdvice, paymentAtRate } from '../../engine/rateGuidance';
 import Tooltip from '../ui/Tooltip';
 
@@ -38,7 +38,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
   const price = state.property.targetPrice;
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
-  const fixationYears = state.property.fixationYears ?? DEFAULTS.property.fixationYears;
+  const fixationYears = fixationYearsOf(state);
   const dpFraction = downPaymentFraction(state);
   const dpPct = Math.round(dpFraction * 100);
   const dp = requiredDownPayment(price, dpFraction);
@@ -268,7 +268,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
 
                 <p>
                   <span className="font-medium text-gray-700 dark:text-gray-300">Riziko refixace:</span>{' '}
-                  kdyby sazba za {fixationYears} {fixationYears === 1 ? 'rok' : fixationYears < 5 ? 'roky' : 'let'} stoupla o 1 p. b.,
+                  kdyby sazba za {formatYears(fixationYears)} stoupla o 1 p. b.,
                   splátka povyskočí o ~{fmt(paymentPlus1pp)} Kč/měs.
                 </p>
                 <p className="text-gray-400 dark:text-gray-500">
@@ -289,7 +289,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
         />
         {!onChangeRate && <Row label="Úroková sazba" value={`${fmtRate(rate)} % ročně`} />}
         <Row label="Délka hypotéky" value={`${term} let`} />
-        <Row label="Fixace sazby" value={`${fixationYears} ${fixationYears === 1 ? 'rok' : fixationYears < 5 ? 'roky' : 'let'}`} />
+        <Row label="Fixace sazby" value={formatYears(fixationYears)} />
 
         {gap > 0 && months !== Infinity && (
           <>
@@ -310,7 +310,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
 
       <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
         <span className="font-semibold">Nezapomeňte na refixaci.</span>{' '}
-        Za {fixationYears} {fixationYears === 1 ? 'rok' : fixationYears < 5 ? 'roky' : 'let'} vám končí fixace úrokové sazby.
+        Za {formatYears(fixationYears)} vám končí fixace úrokové sazby.
         Zhruba rok předem začněte porovnávat nabídky refinancování u jiných bank. Po skončení fixace lze hypotéku bez sankce přenést jinam.
       </div>
     </div>

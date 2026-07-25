@@ -1,15 +1,26 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
-import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears } from '../../../engine/mortgage';
+import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRate, suggestedRateForFixation, isRateOverridden } from '../../../engine/mortgage';
+import { formatYears } from '../../../engine/format';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
 import StepNavigation from '../StepNavigation';
+
+// Fixace, které banky běžně nabízejí.
+const FIXATION_CHOICES = [1, 3, 5, 7, 10];
+
+// Sazba se zadává v procentech na jedno desetinné místo.
+const pct = (rate: number) => (Math.round(rate * 1000) / 10).toLocaleString('cs-CZ');
 
 export default function Step6Property() {
   const { state, dispatch } = useWizard();
   const price = state.property.targetPrice;
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
+  const fixation = fixationYears(state);
+  const rateOverridden = isRateOverridden(state);
+  const suggestedForCurrentFixation = suggestedRate(state);
+  const fixationDiff = suggestedForCurrentFixation - suggestedRateForFixation(5);
   const dpFraction = downPaymentFraction(state);
   const reqDpPct = Math.round(dpFraction * 100);
   const reqDp = requiredDownPayment(price, dpFraction);
@@ -20,6 +31,7 @@ export default function Step6Property() {
   const reserve = totalSavings - dpValue;
   const loanAmount = Math.max(0, price - dpValue);
   const payment = monthlyMortgagePayment(loanAmount, rate, term);
+  const paymentAtFiveYearFix = monthlyMortgagePayment(loanAmount, suggestedRateForFixation(5), term);
   const dpPercent = price > 0 ? ((dpValue / price) * 100).toFixed(1) : '0';
   const recommendedReserve = totalMonthlyExpenses(state) * 3;
   const lowReserve = reserve < recommendedReserve && reserve < totalSavings;
@@ -122,16 +134,36 @@ export default function Step6Property() {
         label="Úroková sazba hypotéky"
         value={Math.round(rate * 1000) / 10}
         onChange={(v) => dispatch({ type: 'UPDATE_PROPERTY', field: 'mortgageRate', value: v / 100 })}
-        tooltip={`Výchozí hodnota vychází z průměrné sazby nových hypoték dle ČBA (${DEFAULTS_DATE}). Vaše nabídka se může lišit podle banky i LTV, klidně ji přepište.`}
+        tooltip={`Výchozí hodnota vychází z průměrné sazby nových hypoték dle ČBA (${DEFAULTS_DATE}) a upravuje se podle zvolené fixace. Vaše nabídka se může lišit podle banky i LTV, klidně ji přepište.`}
         suffix="%"
         min={0.1}
         max={20}
         step={0.1}
       />
 
+      {rateOverridden ? (
+        <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
+          Sazbu máte zadanou ručně, délka fixace s ní proto nehýbe. Pro fixaci na {formatYears(fixation)}{' '}
+          by orientačně vycházela {pct(suggestedForCurrentFixation)} %.{' '}
+          <button
+            type="button"
+            onClick={() => dispatch({ type: 'RESET_MORTGAGE_RATE' })}
+            className="underline underline-offset-2 hover:text-gray-700 dark:hover:text-gray-200"
+          >
+            Vrátit odhad podle fixace
+          </button>
+        </p>
+      ) : (
+        <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
+          Sazba se odvozuje od zvolené fixace. Jakmile ji přepíšete, zůstane vaše hodnota.
+        </p>
+      )}
+
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Délka hypotéky</label>
+        <label htmlFor="loan-term" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Délka hypotéky</label>
         <select
+          id="loan-term"
+          aria-label="Délka hypotéky"
           value={term}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'loanTermYears', value: parseInt(e.target.value) })}
           className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -148,17 +180,34 @@ export default function Step6Property() {
       </div>
 
       <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Doba fixace úrokové sazby</label>
+        <label htmlFor="fixation-years" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Doba fixace úrokové sazby</label>
         <select
-          value={state.property.fixationYears ?? DEFAULTS.property.fixationYears}
+          id="fixation-years"
+          aria-label="Doba fixace úrokové sazby"
+          value={fixation}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'fixationYears', value: parseInt(e.target.value) })}
           className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {[1, 3, 5, 7, 10].map((y) => (
-            <option key={y} value={y}>{y} {y === 1 ? 'rok' : y < 5 ? 'roky' : 'let'}</option>
+          {/* U každé fixace je rovnou vidět, na jakou sazbu vede. Bez toho
+              vypadá volba jako kosmetika, přitom mění splátku. */}
+          {FIXATION_CHOICES.map((y) => (
+            <option key={y} value={y}>
+              {formatYears(y)}{rateOverridden ? '' : ` (odhad ${pct(suggestedRateForFixation(y))} %)`}
+            </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-gray-400">Po dobu fixace máte garantovanou úrokovou sazbu. Po jejím konci se sazba přepočítá dle aktuálních podmínek.</p>
+        <p className="mt-1 text-xs text-gray-400">
+          Po dobu fixace máte garantovanou úrokovou sazbu. Po jejím konci se sazba přepočítá dle aktuálních podmínek.
+          Delší fixace znamená jistotu, kterou si banka nechá zaplatit vyšší sazbou, kratší je levnější, ale dřív vás
+          vystaví tomu, jaké budou sazby potom.
+        </p>
+        {!rateOverridden && fixationDiff !== 0 && (
+          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+            Oproti nejběžnější pětileté fixaci je to o {pct(Math.abs(fixationDiff))} p. b.{' '}
+            {fixationDiff > 0 ? 'dráž' : 'levněji'}, splátka je {fixationDiff > 0 ? 'vyšší' : 'nižší'} zhruba
+            o {Math.abs(Math.round(payment - paymentAtFiveYearFix)).toLocaleString('cs-CZ')} Kč měsíčně.
+          </p>
+        )}
       </div>
 
       <div className="mt-4 space-y-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">

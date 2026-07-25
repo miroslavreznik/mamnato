@@ -2,10 +2,14 @@ import { useWizard } from '../../../store/wizardStore';
 import type { UserMode } from '../../../types';
 import StepNavigation from '../StepNavigation';
 
+// Popisky mluví o tom, jak žijete dnes, ne o tom, co plánujete. Rozdíl je
+// podstatný: kdo teprve dítě zvažuje, vybírá „Jsme pár" a dítě si o pár kroků
+// dál přidá jako cíl. Dřív z popisků plynulo, že si má rovnou zvolit rodinu,
+// a výdaje na dítě se mu tak započítaly, jako by ho měl už teď.
 const modes: { value: UserMode; label: string; description: string; icon: string }[] = [
-  { value: 'individual', label: 'Jsem sám/sama', description: 'Plánuji sám/sama jako jednotlivec', icon: '👤' },
-  { value: 'couple', label: 'Jsme pár', description: 'Plánujeme společně jako pár bez dětí', icon: '👫' },
-  { value: 'family', label: 'Jsme rodina s dětmi', description: 'Plánujeme jako rodina s jedním nebo více dětmi', icon: '👨‍👩‍👧' },
+  { value: 'individual', label: 'Jsem sám/sama', description: 'Teď žiji sám/sama, příjmy i výdaje jsou jen moje', icon: '👤' },
+  { value: 'couple', label: 'Jsme pár', description: 'Teď žijeme ve dvou a děti zatím nemáme (i když je plánujeme)', icon: '👫' },
+  { value: 'family', label: 'Jsme rodina s dětmi', description: 'Už teď s námi žije jedno nebo víc dětí', icon: '👨‍👩‍👧' },
 ];
 
 export default function Step1Mode() {
@@ -14,7 +18,13 @@ export default function Step1Mode() {
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Kdo plánuje?</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">Vyberte, zda plánujete sám/sama, jako pár, nebo jako rodina.</p>
+      <p className="text-gray-500 dark:text-gray-400 mb-2">
+        Vyberte, jak žijete <span className="font-medium">teď</span>, ne co plánujete.
+      </p>
+      <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+        Dítě, které teprve plánujete, si přidáte jako cíl v kroku <span className="font-medium">Cíle</span>.
+        Tady jde o vaši dnešní situaci, aby výpočet vycházel z toho, co skutečně platíte.
+      </p>
 
       <div className="grid gap-3">
         {modes.map((m) => (
@@ -39,8 +49,10 @@ export default function Step1Mode() {
 
       {state.mode === 'family' && (
         <div className="mt-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Počet dětí</label>
+          <label htmlFor="children-count" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Počet dětí</label>
           <select
+            id="children-count"
+            aria-label="Počet dětí"
             value={state.numberOfChildren ?? 1}
             onChange={(e) => dispatch({ type: 'SET_NUMBER_OF_CHILDREN', count: parseInt(e.target.value) })}
             className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"

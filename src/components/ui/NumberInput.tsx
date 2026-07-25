@@ -1,5 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useId, useRef, useCallback } from 'react';
 import Tooltip from './Tooltip';
+import { groupThousands, stripGroupSeparators, reformatWithCaret } from './numericText';
 
 interface NumberInputProps {
   label: string;
@@ -14,15 +15,6 @@ interface NumberInputProps {
   error?: string;
   liveFormat?: boolean; // enable thousand separators while typing (default true for Kč)
   disabled?: boolean;
-}
-
-function formatWithThousands(digits: string): string {
-  if (!digits) return '';
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '\u00A0'); // non-breaking space
-}
-
-function stripSpaces(s: string): string {
-  return s.replace(/[\s\u00A0]/g, '');
 }
 
 export default function NumberInput({
@@ -44,7 +36,7 @@ export default function NumberInput({
 
   const formatForDisplay = useCallback((val: number) => {
     if (shouldLiveFormat) {
-      return formatWithThousands(String(Math.round(val)));
+      return groupThousands(String(Math.round(val)));
     }
     return val.toLocaleString('cs-CZ');
   }, [shouldLiveFormat]);
@@ -54,6 +46,10 @@ export default function NumberInput({
   const prevValueRef = useRef(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const cursorRef = useRef<number | null>(null);
+  // Popisek nebyl s polem svázaný, takže odečítač obrazovky četl jen „editační
+  // pole" a klepnutí na popisek pole nezaostřilo. Jméno drží aria-label, aby
+  // se do něj nezapočítal tooltip vložený uvnitř <label>.
+  const inputId = useId();
 
   // Sync display when value changes externally (e.g. spinner, shorthand).
   // Záměrná synchronizace zobrazení s propem, když pole není ve fokusu.
@@ -90,7 +86,7 @@ export default function NumberInput({
     const raw = e.target.value;
 
     // Try shorthand parsing immediately (5.5M, 550k)
-    const normalized = stripSpaces(raw).replace(',', '.');
+    const normalized = stripGroupSeparators(raw).replace(',', '.');
     const shorthandMatch = normalized.match(/^(-?\d*\.?\d+)(mil|m|k)$/i);
     if (shorthandMatch) {
       const base = parseFloat(shorthandMatch[1]);
@@ -106,31 +102,17 @@ export default function NumberInput({
     }
 
     if (shouldLiveFormat) {
+      // Kurzor se kotví k číslici, u které uživatel stál. Pozice ve znacích se
+      // přeskupením tisíců posune, počet číslic před kurzorem ne. Bez toho
+      // kurzor po smazání první číslice odskočil až za poslední nulu.
       const cursorPos = e.target.selectionStart ?? raw.length;
-      // Count digits before cursor in the raw input
-      const digitsBeforeCursor = stripSpaces(raw.slice(0, cursorPos)).replace(/[^\d]/g, '').length;
-
-      const digits = stripSpaces(raw).replace(/[^\d]/g, '');
-      const formatted = formatWithThousands(digits);
+      const { text: formatted, caret } = reformatWithCaret(raw, cursorPos);
       setDisplayValue(formatted);
+      cursorRef.current = caret;
 
       // Commit to state on every keystroke
-      const parsed = parseInt(digits, 10) || 0;
+      const parsed = parseInt(stripGroupSeparators(formatted).replace(/\D/g, ''), 10) || 0;
       onChange(Math.max(min, parsed));
-
-      // Calculate new cursor position: find where the Nth digit is in formatted string
-      let digitCount = 0;
-      let newCursorPos = formatted.length;
-      for (let i = 0; i < formatted.length; i++) {
-        if (formatted[i] !== '\u00A0' && formatted[i] !== ' ') {
-          digitCount++;
-          if (digitCount === digitsBeforeCursor) {
-            newCursorPos = i + 1;
-            break;
-          }
-        }
-      }
-      cursorRef.current = newCursorPos;
     } else {
       setDisplayValue(raw);
     }
@@ -143,7 +125,7 @@ export default function NumberInput({
       setDisplayValue(formatForDisplay(value));
       return;
     }
-    const normalized = stripSpaces(displayValue).replace(',', '.').replace(/[^0-9.-]/g, '');
+    const normalized = stripGroupSeparators(displayValue).replace(',', '.').replace(/[^0-9.-]/g, '');
     const parsed = parseFloat(normalized);
 
     if (!isNaN(parsed)) {
@@ -175,7 +157,7 @@ export default function NumberInput({
 
   return (
     <div className="mb-4">
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </label>
@@ -186,7 +168,7 @@ export default function NumberInput({
             onClick={decrement}
             disabled={disabled}
             className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700"
-            aria-label="Snížit"
+            aria-label={`Snížit: ${label}`}
           >
             −
           </button>
@@ -194,8 +176,10 @@ export default function NumberInput({
         <div className="relative flex-1">
           <input
             ref={inputRef}
+            id={inputId}
             type="text"
             inputMode="decimal"
+            aria-label={label}
             value={displayValue}
             onChange={handleChange}
             onFocus={handleFocus}
@@ -218,7 +202,7 @@ export default function NumberInput({
             onClick={increment}
             disabled={disabled}
             className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700"
-            aria-label="Zvýšit"
+            aria-label={`Zvýšit: ${label}`}
           >
             +
           </button>

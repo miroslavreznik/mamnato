@@ -1,5 +1,6 @@
 import type { WizardState, FinancialGoal, UserMode } from '../types';
 import { createInitialState } from './wizardStore';
+import { DEFAULTS } from '../engine/defaults';
 
 const STORAGE_KEY = 'mamnato_wizard_v1';
 const CURRENT_VERSION = '1.0';
@@ -90,7 +91,9 @@ export function normalizeState(raw: unknown): WizardState | null {
     property: {
       targetPrice: num(rProperty.targetPrice, base.property.targetPrice),
       ownershipCosts: rProperty.ownershipCosts != null ? num(rProperty.ownershipCosts, base.property.ownershipCosts!) : base.property.ownershipCosts,
-      mortgageRate: rProperty.mortgageRate != null ? num(rProperty.mortgageRate, base.property.mortgageRate!) : base.property.mortgageRate,
+      // Chybějící sazba je platný stav (znamená „řiď se fixací"), takže se
+      // nedoplňuje výchozí hodnotou.
+      mortgageRate: rProperty.mortgageRate != null ? num(rProperty.mortgageRate, DEFAULTS.property.mortgageRate) : undefined,
       fixationYears: rProperty.fixationYears != null ? num(rProperty.fixationYears, base.property.fixationYears!) : base.property.fixationYears,
       loanTermYears: rProperty.loanTermYears != null ? num(rProperty.loanTermYears, base.property.loanTermYears!) : base.property.loanTermYears,
     },

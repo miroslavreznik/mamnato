@@ -63,6 +63,9 @@ Klíčové moduly a jejich role:
 
 - `mortgage.ts`: jediné místo, kde se skládá hypotéka. `mortgageRate()`, `loanTermYears()`,
   `ownershipCosts()`, `loanAmount()`, `mortgagePayment()`, `expensesAfterPurchase()`.
+  Sazba se odvozuje z délky fixace (`suggestedRate()`), dokud ji uživatel nezadá ručně;
+  proto `state.property.mortgageRate` **záměrně chybí ve výchozím stavu** a `undefined`
+  tam znamená „řiď se fixací", ne „chybí data".
   **Vždy použij tyhle pomocníky**, nikdy neopakuj `state.property.mortgageRate ?? DEFAULTS…`;
   ten vzorec byl dřív rozkopírovaný v devíti souborech.
 - `summary.ts`: celkový verdikt (`Máte na to` / `…ale bude to napjaté` / `Zatím na to nemáte…`)
@@ -103,7 +106,15 @@ V grafech se vlastní komponenta importuje jako `HelpTip`.
 
 **Čísla česky.** `toLocaleString('cs-CZ')`, tedy desetinná čárka a úzká nezlomitelná
 mezera jako oddělovač tisíců. V e2e testech proto **porovnávej čísla, ne řetězce**
-(`replace(/[^\d]/g, '')`), jinak test selže na neviditelném rozdílu mezer.
+(`replace(/[^\d]/g, '')`), jinak test selže na neviditelném rozdílu mezer. Konkrétní
+druh mezery se liší podle verze ICU (U+00A0 vs U+202F), na to se nedá spoléhat.
+
+**Číselná pole mají jedno chování.** Formátování tisíců za běhu i kotvení kurzoru
+řeší `components/ui/numericText.ts`, který používá `NumberInput` i `NumField`.
+Když se v poli text přeformátuje, musí se kurzor nastavit podle **počtu číslic
+před ním**, ne podle pozice ve znacích. Bez toho odskakuje na konec (nula číslic
+před kurzorem je platný stav, ne „nenalezeno"). Nové číselné pole ať jde přes
+tyhle dvě komponenty, ne přes vlastní `<input>`.
 
 **Dotykové cíle min. 44 px** a pole na mobilu min. 16 px (jinak iOS Safari zoomuje).
 Absolutně umístěné popisky uvnitř polí musí mít `pointer-events-none`, jinak překryjí
