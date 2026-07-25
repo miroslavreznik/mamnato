@@ -75,7 +75,9 @@ export interface ParentalLeave {
   enabled: boolean;
   parent: 1 | 2; // který rodič zůstane doma
   durationMonths: number; // délka volna (mateřská + rodičovská)
-  monthlyBenefit: number; // průměrný měsíční příjem během volna (dávky)
+  // Ručně zadaná měsíční dávka. Když chybí, odhadne se z příjmu pečujícího
+  // rodiče: mateřská prvních 28 týdnů, pak rodičovský příspěvek (leavePhases).
+  monthlyBenefit?: number;
 }
 
 export interface CustomGoal {

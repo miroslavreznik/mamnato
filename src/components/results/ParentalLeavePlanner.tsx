@@ -1,9 +1,9 @@
 import type { WizardState, ParentalLeave } from '../../types';
 import {
   evaluateParentalLeave,
-  defaultMonthlyBenefit,
   defaultCaringParent,
   parentSalary,
+  PPM_WEEKS,
 } from '../../engine/parentalLeave';
 import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
@@ -21,24 +21,20 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
   const impact = evaluateParentalLeave(state);
 
   const enable = () => {
-    const durationMonths = 36;
-    onChange({
-      enabled: true,
-      parent: defaultCaringParent(state),
-      durationMonths,
-      monthlyBenefit: defaultMonthlyBenefit(durationMonths),
-    });
+    // Dávka se schválně nevyplňuje: odhadne se z příjmu pečujícího rodiče
+    // (mateřská prvních 28 týdnů, pak rodičovský příspěvek).
+    onChange({ enabled: true, parent: defaultCaringParent(state), durationMonths: 36 });
   };
   const update = (patch: Partial<ParentalLeave>) => {
     if (pl) onChange({ ...pl, ...patch });
   };
 
-  // Rodičovský příspěvek je fixní balík, kratší volno = vyšší měsíční dávka.
-  // Při změně délky proto dopočítáme dávku, pokud si ji uživatel ručně neupravil.
-  const changeDuration = (durationMonths: number) => {
-    if (!pl) return;
-    const wasDefault = pl.monthlyBenefit === defaultMonthlyBenefit(pl.durationMonths);
-    update(wasDefault ? { durationMonths, monthlyBenefit: defaultMonthlyBenefit(durationMonths) } : { durationMonths });
+  const changeDuration = (durationMonths: number) => update({ durationMonths });
+
+  // Odhad podle fází vs. ručně zadaná částka, stejný vzorec jako u sazby.
+  const benefitOverridden = pl?.monthlyBenefit != null;
+  const resetBenefit = () => {
+    if (pl) onChange({ enabled: pl.enabled, parent: pl.parent, durationMonths: pl.durationMonths });
   };
 
   if (!enabled || !impact) {
@@ -134,9 +130,45 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             suffix="Kč"
             className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
-          <p className="mt-1 text-[10px] text-gray-400">Rodičovská 350 000 Kč se rozloží podle délky (kratší volno = vyšší dávka). Mateřská bývá zpočátku vyšší, částku můžete upravit.</p>
+          <p className="mt-1 text-[10px] text-gray-400">
+            {benefitOverridden ? (
+              <>
+                Zadáno ručně, platí po celé volno.{' '}
+                <button type="button" onClick={resetBenefit} className="underline underline-offset-2">
+                  Vrátit odhad
+                </button>
+              </>
+            ) : (
+              'Průměr za celé volno. Skutečný průběh je rozepsaný níže.'
+            )}
+          </p>
         </div>
       </div>
+
+      {/* Průběh dávek. Bez tohohle rozpisu vypadá začátek volna dramatičtěji,
+          než jaký je: mateřská je výrazně vyšší než rodičovský příspěvek. */}
+      {!benefitOverridden && impact.phases.length > 1 && (
+        <div className="mb-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
+          <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Dávky se v čase mění
+            <Tooltip text={`Mateřská (peněžitá pomoc v mateřství) se vyplácí ${PPM_WEEKS} týdnů a činí 70 % redukovaného denního vyměřovacího základu, takže u vyšších příjmů je výrazně vyšší než rodičovský příspěvek. Počítáme ji z čisté mzdy pečujícího rodiče přes odhad hrubé mzdy, přesnou částku určí ČSSZ. Po jejím konci se čerpá rodičovský příspěvek 350 000 Kč, rozložený na zbytek volna.`} />
+          </p>
+          <div className="space-y-1">
+            {impact.phases.map((phase) => (
+              <div key={phase.key} className="flex justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">
+                  {phase.label} <span className="text-gray-400">({Math.round(phase.months)} měs.)</span>
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">{fmt(phase.monthlyBenefit)} Kč/měs</span>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-[11px] text-gray-400">
+            Mateřská = 70 % z redukovaného denního základu vaší mzdy. Rodičovský příspěvek = 350 000 Kč
+            dělených zbývajícími {Math.round(impact.phases[1]?.months ?? 0)} měsíci.
+          </p>
+        </div>
+      )}
 
       {/* Dopad */}
       <div className="grid grid-cols-2 gap-3 mb-3">

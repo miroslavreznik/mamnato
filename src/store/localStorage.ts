@@ -111,7 +111,10 @@ export function normalizeState(raw: unknown): WizardState | null {
           enabled: raw.parentalLeave.enabled === true,
           parent: raw.parentalLeave.parent === 2 ? 2 : 1,
           durationMonths: Math.max(1, num(raw.parentalLeave.durationMonths, 36)),
-          monthlyBenefit: Math.max(0, num(raw.parentalLeave.monthlyBenefit, 0)),
+          // Chybějící dávka je platný stav: odhadne se z příjmu rodiče.
+          monthlyBenefit: raw.parentalLeave.monthlyBenefit != null
+            ? Math.max(0, num(raw.parentalLeave.monthlyBenefit, 0))
+            : undefined,
         }
       : undefined,
   };

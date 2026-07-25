@@ -88,10 +88,18 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await expect(page.getByText('Rodičovská: co udělá s rozpočtem')).toBeVisible()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await expect(page.getByText('Volná rezerva během volna')).toBeVisible()
-  // Fixní balík rodičovské: kratší volno → vyšší měsíční dávka (350 000 / 18 ≈ 19 444)
-  const duration = page.getByRole('textbox', { name: 'Délka volna v měsících', exact: true })
-  await duration.fill('18')
-  await expect(page.getByRole('textbox', { name: 'Měsíční příjem během volna', exact: true })).toHaveValue(/19.444/)
+
+  // Volno má dvě fáze: mateřská je vyšší a kratší, rodičovský příspěvek nižší.
+  await expect(page.getByText('Dávky se v čase mění')).toBeVisible()
+  await expect(page.getByText(/Mateřská \(prvních 28 týdnů\)/)).toBeVisible()
+  await expect(page.getByText(/Rodičovský příspěvek \(\d+ měs\.\)/)).toBeVisible()
+
+  // Fixní balík rodičovské: kratší volno → vyšší dávka ve druhé fázi.
+  const benefit = page.getByRole('textbox', { name: 'Měsíční příjem během volna', exact: true })
+  const asNumber = async () => Number((await benefit.inputValue()).replace(/\D/g, ''))
+  const before = await asNumber()
+  await page.getByRole('textbox', { name: 'Délka volna v měsících', exact: true }).fill('18')
+  await expect.poll(asNumber).toBeGreaterThan(before)
 })
 
 test('výsledky jsou v sekcích, „Bydlení" je sbalené a otevře se z navigace', async ({ page }) => {
