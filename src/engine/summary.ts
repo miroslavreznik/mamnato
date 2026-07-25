@@ -66,7 +66,7 @@ function propertyReadiness(state: WizardState): GoalReadiness {
 function retirementReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const monthly = allocations.retirement;
   if (monthly <= 0) {
-    return { key: 'retirement', label: 'Důchod', status: 'warning', headline: 'Zatím na důchod nespoříte' };
+    return { key: 'retirement', label: 'Důchod', status: 'warning', headline: 'Zatím na důchod nespoříte nic.' };
   }
   const years = yearsUntilRetirement(state.person1Age);
   const projection = retirementProjection(monthly, years, 0.07);
@@ -78,7 +78,9 @@ function retirementReadiness(state: WizardState, allocations: GoalAllocations): 
     key: 'retirement',
     label: 'Důchod',
     status: modest ? 'caution' : 'good',
-    headline: `${monthly.toLocaleString('cs-CZ')} Kč/měs → ~${Math.round(monthlyRent).toLocaleString('cs-CZ')} Kč renty${modest ? ' (zatím spíš doplněk)' : ''}`,
+    headline: modest
+      ? `Spoříte ${monthly.toLocaleString('cs-CZ')} Kč/měs, v důchodu to vyjde zhruba na ${Math.round(monthlyRent).toLocaleString('cs-CZ')} Kč/měs. Zatím spíš doplněk než plnohodnotný příjem.`
+      : `Spoříte ${monthly.toLocaleString('cs-CZ')} Kč/měs, v důchodu to vyjde zhruba na ${Math.round(monthlyRent).toLocaleString('cs-CZ')} Kč/měs.`,
   };
 }
 
@@ -91,13 +93,13 @@ function leaveReadiness(state: WizardState): GoalReadiness | null {
     : leave.disposableDuringLeave;
   const fmt = (n: number) => Math.round(Math.abs(n)).toLocaleString('cs-CZ');
   if (relevant < 0) {
-    return { key: 'leave', label: 'Rodičovská', status: 'warning', headline: `Během volna −${fmt(relevant)} Kč/měs (schodek)` };
+    return { key: 'leave', label: 'Rodičovská', status: 'warning', headline: `Během volna byste byli ${fmt(relevant)} Kč/měs v mínusu.` };
   }
   return {
     key: 'leave',
     label: 'Rodičovská',
     status: relevant < 3000 ? 'caution' : 'good',
-    headline: `Během volna ${fmt(relevant)} Kč/měs volných`,
+    headline: `Během volna vám měsíčně zbyde ${fmt(relevant)} Kč.`,
   };
 }
 
@@ -108,15 +110,15 @@ function childReadiness(allocations: GoalAllocations): GoalReadiness {
     label: 'Dítě / rodina',
     status: monthly > 0 ? 'good' : 'caution',
     headline: monthly > 0
-      ? `Rezerva ${monthly.toLocaleString('cs-CZ')} Kč/měs`
-      : 'Bez měsíční rezervy na dítě',
+      ? `Odkládáte ${monthly.toLocaleString('cs-CZ')} Kč/měs na náklady spojené s dítětem.`
+      : 'Zatím neodkládáte nic na náklady spojené s dítětem.',
   };
 }
 
 function customReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const goals = state.customGoals ?? [];
   if (goals.length === 0) {
-    return { key: 'other', label: 'Vlastní cíle', status: 'caution', headline: 'Zatím bez zadaných cílů' };
+    return { key: 'other', label: 'Vlastní cíle', status: 'caution', headline: 'Zatím jste žádný vlastní cíl nezadali.' };
   }
   const totalAlloc = allocations.custom.reduce((s, v) => s + v, 0);
   const results = allocateGoals(goals, totalAlloc);
@@ -126,7 +128,7 @@ function customReadiness(state: WizardState, allocations: GoalAllocations): Goal
     key: 'other',
     label: 'Vlastní cíle',
     status,
-    headline: `${achievable} z ${goals.length} v horizontu`,
+    headline: `${achievable} z ${goals.length} ${goals.length === 1 ? 'cíle' : 'cílů'} stihnete v termínu, který jste zadali.`,
   };
 }
 

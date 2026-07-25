@@ -62,10 +62,21 @@ const meterBar: Record<Tone, string> = {
   plain: 'bg-blue-500',
 };
 
-const goalDot: Record<GoalStatus, string> = {
-  good: 'bg-emerald-500',
-  caution: 'bg-amber-500',
-  warning: 'bg-red-500',
+// Stav cíle slovem, ne jen barvou. Samotná tečka nešla bez legendy pochopit
+// a legenda navíc pro tři stavy nemá cenu.
+const goalBadge: Record<GoalStatus, { label: string; className: string }> = {
+  good: {
+    label: 'V pořádku',
+    className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+  },
+  caution: {
+    label: 'Pozor',
+    className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+  },
+  warning: {
+    label: 'Nevychází',
+    className: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+  },
 };
 
 export default function ResultsOverview({ state, allocations }: Props) {
@@ -208,18 +219,20 @@ export default function ResultsOverview({ state, allocations }: Props) {
         ))}
       </div>
 
-      {/* Připravenost cílů */}
+      {/* Stav jednotlivých cílů */}
       {readinessGoals.length > 0 && (
         <div className="mb-5">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Připravenost cílů</h4>
+          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Jak jste na tom s cíli</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {readinessGoals.map((g) => (
-              <div key={g.key} className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
-                <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${goalDot[g.status]}`} />
-                <div className="min-w-0">
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{g.label}</span>
-                  <span className="text-sm text-gray-500 dark:text-gray-400">: {g.headline}</span>
+              <div key={g.key} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{g.label}</span>
+                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${goalBadge[g.status].className}`}>
+                    {goalBadge[g.status].label}
+                  </span>
                 </div>
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{g.headline}</p>
               </div>
             ))}
           </div>
