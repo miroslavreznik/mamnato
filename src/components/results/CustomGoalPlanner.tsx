@@ -6,10 +6,13 @@ import type { GoalAllocation } from '../../engine/savings';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
+import GoalAllocationField from './GoalAllocationField';
 
 interface Props {
   state: WizardState;
   onChangeGoals: (goals: CustomGoal[]) => void;
+  allocations: number[];
+  onChangeAllocation: (index: number, value: number) => void;
 }
 
 let nextId = 1;
@@ -66,7 +69,7 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
   );
 }
 
-export default function CustomGoalPlanner({ state, onChangeGoals }: Props) {
+export default function CustomGoalPlanner({ state, onChangeGoals, allocations, onChangeAllocation }: Props) {
   const colors = useChartColors();
   const disposable = monthlyDisposable(state);
   // Cíle jsou zdrojem pravdy ve sdíleném stavu, změny se hned promítnou
@@ -242,6 +245,12 @@ export default function CustomGoalPlanner({ state, onChangeGoals }: Props) {
                   />
                 </div>
               </div>
+
+              <GoalAllocationField
+                label="Kolik na tento cíl měsíčně dávám"
+                value={allocations[index] ?? 0}
+                onChange={(v) => onChangeAllocation(index, v)}
+              />
 
               {!isDeferred && alloc && (
                 <div className="space-y-2 mb-4">

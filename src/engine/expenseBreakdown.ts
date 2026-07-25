@@ -72,6 +72,13 @@ export function withExcludedExpenses(state: WizardState, excluded: Set<string>):
   return { ...state, expenses: e };
 }
 
+// Vrátí stav bez vypnutých cílů. Slouží k modelování „co kdyby": vypnutím
+// cíle se ukáže, jestli by na zbytek peníze stačily.
+export function withExcludedGoals(state: WizardState, excluded: Set<string>): WizardState {
+  if (excluded.size === 0) return state;
+  return { ...state, goals: state.goals.filter((g) => !excluded.has(g)) };
+}
+
 // Přebytek příjmu po odečtení zapnutých kategorií (odškrtnuté klíče se ignorují).
 export function breakdownSurplus(
   state: WizardState,

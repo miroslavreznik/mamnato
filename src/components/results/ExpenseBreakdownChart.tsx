@@ -1,20 +1,24 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
-import { incomeFlow } from '../../engine/expenseBreakdown';
+import { incomeFlow, withExcludedExpenses, withExcludedGoals } from '../../engine/expenseBreakdown';
+import { evaluateOverall } from '../../engine/summary';
+import { evaluateScenario } from '../../engine/scenarios';
+import { downPaymentGap, monthsToSaveDownPayment, dsti } from '../../engine/mortgage';
+import { formatMonths } from '../../engine/format';
 import type { ExpenseCategory } from '../../engine/expenseBreakdown';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
-import NumField from '../ui/NumField';
 import HelpTip from '../ui/Tooltip';
 
 interface Props {
   state: WizardState;
   allocations: GoalAllocations;
-  onChangeAllocation: (goal: string, index: number | null, value: number) => void;
-  // Odškrtnuté výdajové kategorie drží dashboard, aby přepočet platil pro celou stránku.
+  // Vypnuté výdaje i cíle drží dashboard, aby přepočet platil pro celou stránku.
   excluded: Set<string>;
   setExcluded: Dispatch<SetStateAction<Set<string>>>;
+  excludedGoals: Set<string>;
+  setExcludedGoals: Dispatch<SetStateAction<Set<string>>>;
 }
 
 interface Row {
@@ -36,24 +40,7 @@ function toggle(prev: Set<string>, key: string): Set<string> {
   return next;
 }
 
-// Ovládací pole pro měsíční částku na cíl
-function GoalInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
-      <label className="text-sm text-gray-600 dark:text-gray-300">{label}</label>
-      <NumField
-        value={value}
-        onChange={onChange}
-        ariaLabel={label}
-        step={500}
-        suffix="Kč"
-        className="w-24 text-right pr-8 pl-2 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
-      />
-    </div>
-  );
-}
-
-export default function ExpenseBreakdownChart({ state, allocations, onChangeAllocation, excluded, setExcluded }: Props) {
+export default function ExpenseBreakdownChart({ state, allocations, excluded, setExcluded, excludedGoals, setExcludedGoals }: Props) {
   const colors = useChartColors();
   const [showTable, setShowTable] = useState(false);
 
@@ -92,19 +79,17 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
     const segs: GoalSegment[] = [];
     const nextColor = () => palette[segs.length % palette.length];
     if (state.goals.includes('retirement') && allocations.retirement > 0) {
-      segs.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement, color: nextColor() });
+      segs.push({ key: 'retirement', label: 'Spoření na důchod', amount: excludedGoals.has('retirement') ? 0 : allocations.retirement, color: nextColor() });
     }
     if (state.goals.includes('child') && allocations.child > 0) {
-      segs.push({ key: 'child', label: 'Rezerva na dítě', amount: allocations.child, color: nextColor() });
+      segs.push({ key: 'child', label: 'Rezerva na dítě', amount: excludedGoals.has('child') ? 0 : allocations.child, color: nextColor() });
     }
     if (state.goals.includes('other')) {
-      (state.customGoals ?? []).forEach((g, i) => {
-        const amount = allocations.custom[i] ?? 0;
-        if (amount > 0) segs.push({ key: `custom-${i}`, label: g.name || `Vlastní cíl ${i + 1}`, amount, color: nextColor() });
-      });
+      const total = allocations.custom.reduce((sum, v) => sum + v, 0);
+      if (total > 0) segs.push({ key: 'other', label: 'Vlastní cíle', amount: excludedGoals.has('other') ? 0 : total, color: nextColor() });
     }
     return segs;
-  }, [state.goals, state.customGoals, allocations, colors.goalColors]);
+  }, [state.goals, allocations, excludedGoals, colors.goalColors]);
 
   const goalLabelByKey = useMemo(
     () => Object.fromEntries(goalSegments.map((s) => [s.key, s.label])),
@@ -129,26 +114,79 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
 
   const freeColor = (v: number) => (v >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400');
 
-  // Ovládatelné cíle (mimo hypotéku, ta je výdajem)
-  const controllableGoals: Array<{ key: string; label: string; value: number; onChange: (v: number) => void }> = [];
-  if (state.goals.includes('retirement')) {
-    controllableGoals.push({ key: 'retirement', label: 'Spoření na důchod', value: allocations.retirement, onChange: (v) => onChangeAllocation('retirement', null, v) });
-  }
-  if (state.goals.includes('child')) {
-    controllableGoals.push({ key: 'child', label: 'Rezerva na dítě', value: allocations.child, onChange: (v) => onChangeAllocation('child', null, v) });
-  }
-  if (state.goals.includes('other')) {
-    (state.customGoals ?? []).forEach((g, i) => {
-      controllableGoals.push({ key: `custom-${i}`, label: g.name || `Vlastní cíl ${i + 1}`, value: allocations.custom[i] ?? 0, onChange: (v) => onChangeAllocation('custom', i, v) });
-    });
-  }
+  // Jádro téhle sekce: co udělá vypnutí položky s odpovědí „Mám na to?".
+  // Porovnáváme verdikt beze změn s verdiktem po vypnutí.
+  const anythingOff = excluded.size > 0 || excludedGoals.size > 0;
+  const whatIf = useMemo(() => {
+    if (!anythingOff) return null;
+    const baseline = evaluateOverall(state, allocations);
+    const adjusted = withExcludedGoals(withExcludedExpenses(state, excluded), excludedGoals);
+    const adjustedAllocations = {
+      mortgage: excludedGoals.has('property') ? 0 : allocations.mortgage,
+      retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
+      child: excludedGoals.has('child') ? 0 : allocations.child,
+      custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
+    };
+    const now = evaluateOverall(adjusted, adjustedAllocations);
+    const rank = { no: 0, no_but: 1, yes_but: 2, yes: 3 } as const;
+    const improved = rank[now.verdict.answer] > rank[baseline.verdict.answer];
+    const worsened = rank[now.verdict.answer] < rank[baseline.verdict.answer];
+
+    // Když se verdikt nehnul, je potřeba říct proč. Některé překážky
+    // (hlavně vysoká splátka vůči příjmu) se škrtáním výdajů spravit nedají
+    // a uživatel by jinak zbytečně vypínal další a další položky.
+    let hint = 'Na celkovou odpověď to zatím nestačí. Zkuste vypnout i něco dalšího.';
+    if (!improved && adjusted.goals.includes('property')) {
+      const scenario = evaluateScenario(adjusted);
+      const dstiPct = Math.round(dsti(adjusted) * 100);
+      const gap = downPaymentGap(adjusted);
+      if (scenario.id === 'cannot_afford_dsti') {
+        hint = `Splátka by zabrala ${dstiPct} % čistého příjmu, což je nad tím, co banky obvykle schválí. Tohle škrtáním výdajů nespravíte: pomohla by levnější nemovitost, vyšší akontace, delší splatnost nebo vyšší příjem.`;
+      } else if (gap > 0) {
+        const before = monthsToSaveDownPayment(state);
+        const after = monthsToSaveDownPayment(adjusted);
+        hint = after < before
+          ? `Verdikt se zatím nezměnil, ale chybějící akontaci díky tomu naspoříte za ${formatMonths(after, true)} místo ${formatMonths(before, true)}.`
+          : 'Zbývá naspořit akontaci. Na celkovou odpověď to zatím nestačí.';
+      }
+    }
+
+    return { baseline: baseline.verdict, now: now.verdict, improved, worsened, hint };
+  }, [anythingOff, state, allocations, excluded, excludedGoals]);
+
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Rozpočet: kam jde váš příjem</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Co kdyby: kam jde váš příjem</h3>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        Celý měsíční příjem ({fmtKc(income)}) rozdělený na výdaje, spoření na cíle a volnou rezervu. Odškrtnutím položky nebo úpravou částek se vše přepočítá.
+        Celý měsíční příjem ({fmtKc(income)}) rozdělený na výdaje, cíle a volnou rezervu.{' '}
+        <span className="text-gray-600 dark:text-gray-300">Klepnutím na položku ji vypnete</span> a hned uvidíte, jestli by vám pak na zbytek vyšlo. Zkuste třeba vypnout dovolenou nebo dítě.
       </p>
+
+      {/* Výsledek pokusu: změnila se odpověď „Mám na to?" */}
+      {whatIf && (
+        <div className={`mb-4 p-3 rounded-lg border text-sm ${
+          whatIf.improved
+            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
+            : whatIf.worsened
+              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'
+        }`}>
+          <p className="text-gray-800 dark:text-gray-100">
+            <span className="font-semibold">Bez vypnutých položek: {whatIf.now.headline}
+              {whatIf.now.qualifier ? `, ${whatIf.now.qualifier}` : ''}.</span>
+          </p>
+          {whatIf.improved && (
+            <p className="mt-0.5 text-emerald-800 dark:text-emerald-300">
+              Pomohlo to. Původně: {whatIf.baseline.headline.toLowerCase()}
+              {whatIf.baseline.qualifier ? `, ${whatIf.baseline.qualifier}` : ''}.
+            </p>
+          )}
+          {!whatIf.improved && (
+            <p className="mt-0.5 text-gray-600 dark:text-gray-400">{whatIf.hint}</p>
+          )}
+        </div>
+      )}
 
       {/* Stat tiles: volná rezerva */}
       {/* Na mobilu dlaždice pod sebe: vedle sebe se částka i s „/měs" nevejde. */}
@@ -225,23 +263,54 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
               </button>
             );
           })}
-          {goalSegments.map((s) => (
-            <span key={s.key} className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400">
-              <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: s.color }} />
-              {s.label}
-            </span>
-          ))}
+          {goalSegments.map((seg) => {
+            const off = excludedGoals.has(seg.key);
+            return (
+              <button
+                key={seg.key}
+                onClick={() => setExcludedGoals((prev) => toggle(prev, seg.key))}
+                className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
+                  off
+                    ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
+                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200'
+                }`}
+                title="Cíl, zkuste ho vypnout a uvidíte, co to udělá s verdiktem"
+              >
+                <span
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: off ? 'transparent' : seg.color, border: off ? `1px solid ${seg.color}` : 'none' }}
+                />
+                {seg.label}
+                <span className="text-[10px] text-blue-600 dark:text-blue-400">cíl</span>
+              </button>
+            );
+          })}
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400">
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.categorical.surplus }} />
             Volná rezerva
           </span>
         </div>
-        {excluded.size > 0 && (
+        {hasProperty && (
+          <div className="mt-2">
+            <button
+              onClick={() => setExcludedGoals((prev) => toggle(prev, 'property'))}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
+                excludedGoals.has('property')
+                  ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
+                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200'
+              }`}
+            >
+              Koupě nemovitosti
+              <span className="text-[10px] text-blue-600 dark:text-blue-400">cíl</span>
+            </button>
+          </div>
+        )}
+        {(excluded.size > 0 || excludedGoals.size > 0) && (
           <button
-            onClick={() => setExcluded(new Set())}
+            onClick={() => { setExcluded(new Set()); setExcludedGoals(new Set()); }}
             className="mt-2 inline-block py-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
           >
-            Zobrazit vše
+            Vrátit vše zpět
           </button>
         )}
       </div>
@@ -299,20 +368,6 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
         )}
       </div>
 
-      {/* Ovládání částek na cíle */}
-      {controllableGoals.length > 0 && (
-        <div className="mt-5 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Kolik měsíčně dávat na cíle</h4>
-          <div className="space-y-2">
-            {controllableGoals.map((g) => (
-              <GoalInput key={g.key} label={g.label} value={g.value} onChange={g.onChange} />
-            ))}
-          </div>
-          <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-            Hypotéka není v tomto seznamu. Po koupi je součástí výdajů na bydlení.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

@@ -119,14 +119,20 @@ test('odškrtnutí výdaje v grafu přepočítá celý souhrn (dynamické výsle
   await expect(page.getByText('= Volná rezerva')).toBeVisible()
 })
 
-test('částka na důchod je sdílená mezi rozpočtem a kalkulačkou důchodu', async ({ page }) => {
+test('částka na cíl se nastavuje v kartě cíle a promítne se do rozpočtu', async ({ page }) => {
   await goToGoals(page)
   await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
-  const budgetInput = page.getByRole('textbox', { name: 'Spoření na důchod', exact: true })
-  await budgetInput.fill('5000')
+
+  // Částka patří ke svému cíli, ne do rozpočtu
   await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
-  await expect(page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true })).toHaveValue(/5.000/)
+  await page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true }).fill('5000')
+
+  // Rozpočet to musí okamžitě zohlednit: 39 500 − 29 000 − 5 000 = 5 500 volných
+  await page.getByRole('navigation').getByRole('button', { name: 'Souhrn', exact: true }).click()
+  await expect
+    .poll(async () => /zbývá vám ještě\s*5.500/.test(await page.locator('#souhrn').innerText()))
+    .toBe(true)
 })
 
 test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ page }) => {
@@ -188,14 +194,17 @@ test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async
   await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
-  // Krokování částky na cíl v grafu rozpočtu (krok 500 Kč)
-  const budget = page.getByRole('textbox', { name: 'Spoření na důchod', exact: true })
+  // Krokování částky na cíl v jeho vlastní kartě (krok 500 Kč).
+  // Porovnáváme čísla, ne řetězce: oddělovač tisíců je úzká nezlomitelná mezera.
+  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  const budget = page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true })
   await budget.scrollIntoViewIfNeeded()
-  const before = Number((await budget.inputValue()).replace(/[\s\u00a0\u202f]/g, ''))
-  await page.getByRole('button', { name: 'Zvýšit: Spoření na důchod' }).click()
-  await expect(budget).toHaveValue(String(before + 500).replace(/\B(?=(\d{3})+(?!\d))/g, ' '))
-  await page.getByRole('button', { name: 'Snížit: Spoření na důchod' }).click()
-  await expect(budget).toHaveValue(String(before).replace(/\B(?=(\d{3})+(?!\d))/g, ' '))
+  const amount = async () => Number((await budget.inputValue()).replace(/[^\d]/g, ''))
+  const before = await amount()
+  await page.getByRole('button', { name: 'Zvýšit: Měsíční částka k investování' }).click()
+  await expect.poll(amount).toBe(before + 500)
+  await page.getByRole('button', { name: 'Snížit: Měsíční částka k investování' }).click()
+  await expect.poll(amount).toBe(before)
 
   // Stránka se na mobilu nesmí rolovat do šířky
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
@@ -222,6 +231,29 @@ test('výsledky začínají přímou odpovědí Máte na to', async ({ page }) =
 
   // Až za odpovědí následuje rozbor
   await expect(page.getByText(/Disponibilní částka/)).toBeVisible()
+})
+
+test('rozpočet umí co kdyby: vypnutí cíle změní celkovou odpověď', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  // Nízký příjem, aby se rezerva na dítě do rozpočtu nevešla
+  await page.locator('input[inputmode="decimal"]').first().fill('33000')
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Dítě \/ rodina/ }).first().click()
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  await expect(page.getByText(/Zatím na to nemáte/).first()).toBeVisible()
+
+  // Vypnutí cíle „dítě" musí odpověď zlepšit a říct to
+  await page.getByRole('button', { name: /Rezerva na dítě/ }).click()
+  await expect(page.getByText(/Bez vypnutých položek:/)).toBeVisible()
+  await expect(page.getByText(/Pomohlo to\. Původně:/)).toBeVisible()
+
+  // Vrácení zpět obnoví původní stav
+  await page.getByRole('button', { name: 'Vrátit vše zpět' }).click()
+  await expect(page.getByText(/Bez vypnutých položek:/)).toBeHidden()
 })
 
 test('výsledky obsahují právní upozornění včetně rozbalitelných podmínek', async ({ page }) => {

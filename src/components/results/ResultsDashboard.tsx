@@ -19,7 +19,7 @@ import ResultsSection from './ResultsSection';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
-import { withExcludedExpenses } from '../../engine/expenseBreakdown';
+import { withExcludedExpenses, withExcludedGoals } from '../../engine/expenseBreakdown';
 import { parentalLeaveApplicable } from '../../engine/parentalLeave';
 import type { CustomGoal, ParentalLeave } from '../../types';
 import { saveState } from '../../store/localStorage';
@@ -68,18 +68,29 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
     requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
-  // Odškrtnuté výdajové kategorie z grafu rozpočtu, platí pro celou stránku.
+  // Vypnuté výdajové kategorie a cíle z rozpočtu („co kdyby"), platí pro
+  // celou stránku, takže se přepočítá i verdikt nahoře.
   const [excludedExpenses, setExcludedExpenses] = useState<Set<string>>(() => new Set());
-  // „Živý" stav, ze kterého počítají všechny karty (kromě grafu rozpočtu, který
-  // potřebuje původní výdaje, aby šlo kategorie zase zapnout).
+  const [excludedGoals, setExcludedGoals] = useState<Set<string>>(() => new Set());
+
+  // „Živý" stav, ze kterého počítají všechny karty (kromě rozpočtu, který
+  // potřebuje původní hodnoty, aby šlo položky zase zapnout).
   const activeState = useMemo(
-    () => withExcludedExpenses(state, excludedExpenses),
-    [state, excludedExpenses]
+    () => withExcludedGoals(withExcludedExpenses(state, excludedExpenses), excludedGoals),
+    [state, excludedExpenses, excludedGoals]
   );
 
   const [allocations, setAllocations] = useState<GoalAllocations>(() =>
     calculateDefaultAllocations(state)
   );
+
+  // Vypnutý cíl nesmí dál ukrajovat z rozpočtu.
+  const activeAllocations = useMemo<GoalAllocations>(() => ({
+    mortgage: excludedGoals.has('property') ? 0 : allocations.mortgage,
+    retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
+    child: excludedGoals.has('child') ? 0 : allocations.child,
+    custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
+  }), [allocations, excludedGoals]);
 
   const handleChangeAllocation = (goal: string, index: number | null, value: number) => {
     setAllocations((prev) => {
@@ -225,13 +236,14 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
       <div className="space-y-4">
         {/* Souhrn: hlavní odpověď „vyjde mi to?" */}
         <ResultsSection id="souhrn" title="Souhrn" subtitle="Verdikt, rozpočet a připravenost cílů" open={isOpen('souhrn')} onToggle={() => toggleSection('souhrn')}>
-          <ResultsOverview state={activeState} allocations={allocations} />
+          <ResultsOverview state={activeState} allocations={activeAllocations} />
           <ExpenseBreakdownChart
             state={state}
             allocations={allocations}
-            onChangeAllocation={handleChangeAllocation}
             excluded={excludedExpenses}
             setExcluded={setExcludedExpenses}
+            excludedGoals={excludedGoals}
+            setExcludedGoals={setExcludedGoals}
           />
           {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
             <DiscretionaryBreakdownChart state={activeState} />
@@ -270,9 +282,22 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
                 onChangeContribution={(v) => handleChangeAllocation('retirement', null, v)}
               />
             )}
-            {hasChild && <ChildCostPlanner state={activeState} />}
+            {hasChild && (
+              <ChildCostPlanner
+                state={activeState}
+                monthlyAllocation={allocations.child}
+                onChangeAllocation={(v) => handleChangeAllocation('child', null, v)}
+              />
+            )}
             {hasLeave && <ParentalLeavePlanner state={activeState} onChange={handleChangeParentalLeave} />}
-            {hasOther && <CustomGoalPlanner state={activeState} onChangeGoals={handleChangeCustomGoals} />}
+            {hasOther && (
+              <CustomGoalPlanner
+                state={activeState}
+                onChangeGoals={handleChangeCustomGoals}
+                allocations={allocations.custom}
+                onChangeAllocation={(i, v) => handleChangeAllocation('custom', i, v)}
+              />
+            )}
           </ResultsSection>
         )}
 

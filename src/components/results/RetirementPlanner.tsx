@@ -89,16 +89,14 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Měsíční částka k investování
           </label>
-          <div className="relative">
-            <NumField
-              value={monthlyAmount}
-              onChange={setMonthlyAmount}
-              ariaLabel="Měsíční částka k investování"
-              step={500}
-              className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kč</span>
-          </div>
+          <NumField
+            value={monthlyAmount}
+            onChange={setMonthlyAmount}
+            ariaLabel="Měsíční částka k investování"
+            step={500}
+            suffix="Kč"
+            className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+          />
           <p className="mt-1 text-xs text-gray-400">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs</p>
         </div>
         <div>
@@ -128,16 +126,14 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                 aria-label="Informace o 4% pravidle"
               >ⓘ</button>
             </label>
-            <div className="relative">
-              <NumField
-                value={monthlyRent}
-                onChange={setMonthlyRent}
-                ariaLabel="Požadovaná měsíční renta"
-                step={1000}
-                className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
-              />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">Kč</span>
-            </div>
+            <NumField
+              value={monthlyRent}
+              onChange={setMonthlyRent}
+              ariaLabel="Požadovaná měsíční renta"
+              step={1000}
+              suffix="Kč"
+              className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            />
           </div>
           <div className="flex-1 sm:text-right">
             <p className="text-sm text-gray-500 dark:text-gray-400">Potřebná hodnota portfolia</p>

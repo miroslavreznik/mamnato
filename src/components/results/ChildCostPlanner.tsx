@@ -5,12 +5,15 @@ import { calculateChildCosts } from '../../engine/childCost';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
+import GoalAllocationField from './GoalAllocationField';
 
 interface Props {
   state: WizardState;
+  monthlyAllocation: number;
+  onChangeAllocation: (v: number) => void;
 }
 
-export default function ChildCostPlanner({ state }: Props) {
+export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAllocation }: Props) {
   const colors = useChartColors();
   const isFamily = state.mode === 'family';
   const [numberOfChildren, setNumberOfChildren] = useState(state.numberOfChildren ?? 1);
@@ -167,6 +170,12 @@ export default function ChildCostPlanner({ state }: Props) {
       <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
         Zdroj: ČSÚ, průměr pro rok 2024. Částky jsou orientační a zahrnují běžné výdaje bez jednorázových položek.
       </p>
+      <GoalAllocationField
+        label="Kolik měsíčně odkládám na dítě"
+        value={monthlyAllocation}
+        onChange={onChangeAllocation}
+        hint="Částka se promítne do rozpočtu i do celkového verdiktu."
+      />
     </div>
   );
 }
