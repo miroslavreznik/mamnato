@@ -1,7 +1,7 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
-import { incomeFlow, withExcludedExpenses, withExcludedGoals } from '../../engine/expenseBreakdown';
+import { incomeFlow, expenseCategories, withExcludedExpenses, withExcludedGoals } from '../../engine/expenseBreakdown';
 import { evaluateOverall } from '../../engine/summary';
 import { evaluateScenario } from '../../engine/scenarios';
 import { downPaymentGap, monthsToSaveDownPayment, dsti } from '../../engine/mortgage';
@@ -9,6 +9,7 @@ import { formatMonths } from '../../engine/format';
 import type { ExpenseCategory } from '../../engine/expenseBreakdown';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
+import { discretionaryGroupTotals, hasDiscretionaryBreakdown } from '../../engine/discretionary';
 import HelpTip from '../ui/Tooltip';
 
 interface Props {
@@ -34,6 +35,37 @@ interface GoalSegment {
   color: string;
 }
 
+// Jednotný přepínač pro výdaj, položku rozpisu i cíl.
+function Chip({ label, color, off, onClick, note, title }: {
+  label: string;
+  color: string;
+  off: boolean;
+  onClick: () => void;
+  note?: string;
+  title?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      aria-pressed={!off}
+      className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
+        off
+          ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
+          : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+      }`}
+    >
+      <span
+        className="w-2.5 h-2.5 rounded-full shrink-0"
+        style={{ backgroundColor: off ? 'transparent' : color, border: off ? `1px solid ${color}` : 'none' }}
+      />
+      {label}
+      {note && <span className="text-[10px] text-amber-600 dark:text-amber-400">{note}</span>}
+    </button>
+  );
+}
+
 function toggle(prev: Set<string>, key: string): Set<string> {
   const next = new Set(prev);
   if (next.has(key)) next.delete(key); else next.add(key);
@@ -46,11 +78,28 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
 
   const hasProperty = state.goals.includes('property');
 
-  const flowNow = useMemo(() => incomeFlow(state, allocations, false, excluded), [state, allocations, excluded]);
-  const flowAfter = useMemo(
-    () => (hasProperty ? incomeFlow(state, allocations, true, excluded) : null),
-    [state, allocations, hasProperty, excluded]
+  // Stav po vypnutí položek. Z něj se počítají částky, protože u zbytných
+  // výdajů jde vypnout i jen jedna položka podrobného rozpisu.
+  const adjustedState = useMemo(
+    () => withExcludedGoals(withExcludedExpenses(state, excluded), excludedGoals),
+    [state, excluded, excludedGoals]
   );
+  const adjustedAllocations = useMemo<GoalAllocations>(() => ({
+    mortgage: allocations.mortgage,
+    retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
+    child: excludedGoals.has('child') ? 0 : allocations.child,
+    custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
+  }), [allocations, excludedGoals]);
+
+  const flowNow = useMemo(() => incomeFlow(adjustedState, adjustedAllocations, false), [adjustedState, adjustedAllocations]);
+  const flowAfter = useMemo(
+    () => (hasProperty ? incomeFlow(adjustedState, adjustedAllocations, true) : null),
+    [adjustedState, adjustedAllocations, hasProperty]
+  );
+  // Seznam přepínačů musí vycházet z původního stavu, jinak by vypnutá
+  // položka zmizela a nešla zase zapnout.
+  const baseNow = useMemo(() => expenseCategories(state, false), [state]);
+  const baseAfter = useMemo(() => (hasProperty ? expenseCategories(state, true) : []), [state, hasProperty]);
 
   const income = flowNow.income;
 
@@ -66,11 +115,17 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
         amountForSort[c.key] = Math.max(amountForSort[c.key] ?? 0, c.amount);
       });
     };
-    merge(flowNow.expenses);
-    if (flowAfter) merge(flowAfter.expenses);
-    const keys = Object.keys(labels).sort((a, b) => amountForSort[b] - amountForSort[a]);
+    merge(baseNow);
+    merge(baseAfter);
+    // Podle výše, ale zbytné vždy poslední: je to jediná položka, kterou jde
+    // reálně omezit, takže patří na konec jako „co ještě můžu ubrat".
+    const keys = Object.keys(labels).sort((a, b) => {
+      if (a === 'other') return 1;
+      if (b === 'other') return -1;
+      return amountForSort[b] - amountForSort[a];
+    });
     return { orderedKeys: keys, labelMap: labels, necessaryMap: necessary };
-  }, [flowNow, flowAfter]);
+  }, [baseNow, baseAfter]);
 
   // Jednotlivé cíle jako samostatné segmenty grafu (místo jedné souhrnné „cíle").
   // Součet částek odpovídá spoření na cíle z incomeFlow, takže sloupce sedí na příjem.
@@ -98,11 +153,12 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
 
   const buildRow = (name: string, expenses: ExpenseCategory[], free: number): Row => {
     const row: Row = { name, free: Math.max(0, free) };
-    for (const c of expenses) {
-      row[c.key] = excluded.has(c.key) ? 0 : c.amount;
+    const byKey = Object.fromEntries(expenses.map((c) => [c.key, c.amount]));
+    for (const key of orderedKeys) {
+      row[key] = byKey[key] ?? 0;
     }
-    for (const s of goalSegments) {
-      row[s.key] = s.amount;
+    for (const seg of goalSegments) {
+      row[seg.key] = seg.amount;
     }
     return row;
   };
@@ -113,6 +169,17 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
   }
 
   const freeColor = (v: number) => (v >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400');
+
+  // Jednotlivé zbytné položky nabízíme jen tomu, kdo si rozpis opravdu vyplnil.
+  // Bez něj by tam byly prázdné kolonky, které nic neříkají.
+  const discretionaryItems = useMemo(() => {
+    const breakdown = state.expenses.discretionaryBreakdown;
+    if (!hasDiscretionaryBreakdown(breakdown)) return [];
+    return discretionaryGroupTotals(breakdown)
+      .flatMap((g) => g.items)
+      .filter((item) => item.amount > 0)
+      .sort((a, b) => b.amount - a.amount);
+  }, [state.expenses.discretionaryBreakdown]);
 
   // Jádro téhle sekce: co udělá vypnutí položky s odpovědí „Mám na to?".
   // Porovnáváme verdikt beze změn s verdiktem po vypnutí.
@@ -237,82 +304,78 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Toggle chips výdajů + legenda skupin */}
-      <div className="mt-4">
-        <div className="flex flex-wrap gap-2">
-          {orderedKeys.map((key) => {
-            const off = excluded.has(key);
-            const color = colors.categorical[key] ?? colors.primary;
-            return (
-              <button
+      {/* Přepínače ve skupinách, ať je jasné, co je výdaj a co cíl */}
+      <div className="mt-4 space-y-3">
+        <div>
+          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Výdaje</p>
+          <div className="flex flex-wrap gap-2">
+            {orderedKeys.map((key) => (
+              <Chip
                 key={key}
+                label={labelMap[key]}
+                color={colors.categorical[key] ?? colors.primary}
+                off={excluded.has(key)}
                 onClick={() => setExcluded((prev) => toggle(prev, key))}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
-                  off
-                    ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200'
-                }`}
-                title={necessaryMap[key] ? 'Nezbytný výdaj' : 'Zbytný výdaj'}
-              >
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: off ? 'transparent' : color, border: off ? `1px solid ${color}` : 'none' }}
+                note={!necessaryMap[key] ? 'zbytné' : undefined}
+                title={necessaryMap[key] ? 'Nezbytný výdaj' : 'Zbytný výdaj, dá se omezit'}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Jednotlivé zbytné položky jen tomu, kdo si je opravdu rozepsal */}
+        {discretionaryItems.length > 0 && !excluded.has('other') && (
+          <div>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+              Z toho zbytné podrobně
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {discretionaryItems.map((item) => (
+                <Chip
+                  key={item.key}
+                  label={`${item.label} (${fmtKc(item.amount)})`}
+                  color={colors.categorical.other ?? colors.primary}
+                  off={excluded.has(item.key)}
+                  onClick={() => setExcluded((prev) => toggle(prev, item.key))}
+                  title="Položka z podrobného rozpisu zbytných výdajů"
                 />
-                {labelMap[key]}
-                {!necessaryMap[key] && <span className="text-[10px] text-amber-600 dark:text-amber-400">zbytné</span>}
-              </button>
-            );
-          })}
-          {goalSegments.map((seg) => {
-            const off = excludedGoals.has(seg.key);
-            return (
-              <button
-                key={seg.key}
-                onClick={() => setExcludedGoals((prev) => toggle(prev, seg.key))}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
-                  off
-                    ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
-                    : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200'
-                }`}
-                title="Cíl, zkuste ho vypnout a uvidíte, co to udělá s verdiktem"
-              >
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: off ? 'transparent' : seg.color, border: off ? `1px solid ${seg.color}` : 'none' }}
+              ))}
+            </div>
+          </div>
+        )}
+
+        {goalSegments.length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Cíle</p>
+            <div className="flex flex-wrap gap-2">
+              {goalSegments.map((seg) => (
+                <Chip
+                  key={seg.key}
+                  label={seg.label}
+                  color={seg.color}
+                  off={excludedGoals.has(seg.key)}
+                  onClick={() => setExcludedGoals((prev) => toggle(prev, seg.key))}
+                  title="Cíl, zkuste ho vypnout a uvidíte, co to udělá s verdiktem"
                 />
-                {seg.label}
-                <span className="text-[10px] text-blue-600 dark:text-blue-400">cíl</span>
-              </button>
-            );
-          })}
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs text-gray-500 dark:text-gray-400">
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.categorical.surplus }} />
             Volná rezerva
           </span>
-        </div>
-        {hasProperty && (
-          <div className="mt-2">
+          {anythingOff && (
             <button
-              onClick={() => setExcludedGoals((prev) => toggle(prev, 'property'))}
-              className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
-                excludedGoals.has('property')
-                  ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
-                  : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200'
-              }`}
+              onClick={() => { setExcluded(new Set()); setExcludedGoals(new Set()); }}
+              className="py-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
             >
-              Koupě nemovitosti
-              <span className="text-[10px] text-blue-600 dark:text-blue-400">cíl</span>
+              Vrátit vše zpět
             </button>
-          </div>
-        )}
-        {(excluded.size > 0 || excludedGoals.size > 0) && (
-          <button
-            onClick={() => { setExcluded(new Set()); setExcludedGoals(new Set()); }}
-            className="mt-2 inline-block py-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
-          >
-            Vrátit vše zpět
-          </button>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Stejná čísla jako tabulka pro ty, kdo chtějí přesné částky pod sebou */}
@@ -321,7 +384,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
           onClick={() => setShowTable((v) => !v)}
           className="inline-block py-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
         >
-          {showTable ? 'Skrýt tabulku' : 'Zobrazit čísla v tabulce'}
+        {showTable ? 'Skrýt tabulku' : 'Zobrazit čísla v tabulce'}
         </button>
         {showTable && (
           <div className="mt-2 overflow-x-auto">

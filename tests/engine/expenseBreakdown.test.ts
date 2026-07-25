@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { expenseCategories, breakdownSurplus, incomeFlow } from '../../src/engine/expenseBreakdown';
+import { expenseCategories, breakdownSurplus, incomeFlow, withExcludedExpenses } from '../../src/engine/expenseBreakdown';
 import type { WizardState } from '../../src/types';
 import type { GoalAllocations } from '../../src/engine/allocation';
 
@@ -92,5 +92,37 @@ describe('incomeFlow', () => {
     const state = makeState({ goals: ['property'] });
     const flow = incomeFlow(state, allocs({ mortgage: 20000 }), true);
     expect(flow.goals.find((g) => g.key === 'mortgage')).toBeUndefined();
+  });
+});
+
+describe('withExcludedExpenses: položky podrobného rozpisu', () => {
+  const withBreakdown = (): WizardState => makeState({
+    expenses: {
+      rent: 12000, existingLoans: 0, insurance: 1500, food: 6000, transport: 3000,
+      children: 0, utilities: 3500, other: 8000,
+      discretionaryBreakdown: { 'travel.abroad': 5000, 'leisure.dining': 3000 },
+    },
+  });
+
+  it('vypnutím jedné položky klesnou zbytné výdaje o její částku', () => {
+    const next = withExcludedExpenses(withBreakdown(), new Set(['travel.abroad']));
+    expect(next.expenses.other).toBe(3000);
+    expect(next.expenses.discretionaryBreakdown).toEqual({ 'leisure.dining': 3000 });
+  });
+
+  it('zvládne vypnout víc položek najednou', () => {
+    const next = withExcludedExpenses(withBreakdown(), new Set(['travel.abroad', 'leisure.dining']));
+    expect(next.expenses.other).toBe(0);
+  });
+
+  it('vypnutí celé kategorie „zbytné" má přednost před položkami', () => {
+    const next = withExcludedExpenses(withBreakdown(), new Set(['other', 'travel.abroad']));
+    expect(next.expenses.other).toBe(0);
+    expect(next.expenses.discretionaryBreakdown).toBeUndefined();
+  });
+
+  it('neznámý klíč položky nic nezmění', () => {
+    const next = withExcludedExpenses(withBreakdown(), new Set(['neexistuje.polozka']));
+    expect(next.expenses.other).toBe(8000);
   });
 });

@@ -126,12 +126,16 @@ test('částka na cíl se nastavuje v kartě cíle a promítne se do rozpočtu',
 
   // Částka patří ke svému cíli, ne do rozpočtu
   await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
-  await page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true }).fill('5000')
+  const amount = page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true })
+  await amount.fill('5000')
+  // Nejdřív ověřit, že se hodnota opravdu zapsala, jinak by následná kontrola
+  // rozpočtu selhala jen kvůli pomalejšímu vykreslení.
+  await expect(amount).toHaveValue(/5.?000/)
 
-  // Rozpočet to musí okamžitě zohlednit: 39 500 − 29 000 − 5 000 = 5 500 volných
+  // Rozpočet to musí zohlednit: 39 500 − 29 000 − 5 000 = 5 500 volných
   await page.getByRole('navigation').getByRole('button', { name: 'Souhrn', exact: true }).click()
   await expect
-    .poll(async () => /zbývá vám ještě\s*5.500/.test(await page.locator('#souhrn').innerText()))
+    .poll(async () => /zbývá vám ještě\s*5.500/.test(await page.locator('#souhrn').innerText()), { timeout: 10_000 })
     .toBe(true)
 })
 
@@ -254,6 +258,38 @@ test('rozpočet umí co kdyby: vypnutí cíle změní celkovou odpověď', async
   // Vrácení zpět obnoví původní stav
   await page.getByRole('button', { name: 'Vrátit vše zpět' }).click()
   await expect(page.getByText(/Bez vypnutých položek:/)).toBeHidden()
+})
+
+test('bez podrobného rozpisu se jednotlivé zbytné položky nenabízejí', async ({ page }) => {
+  await goToGoals(page)
+  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  await expect(page.getByText('Z toho zbytné podrobně')).toBeHidden()
+})
+
+test('s podrobným rozpisem jde vypnout jedna zbytná položka', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await page.getByRole('button', { name: /Rozepsat zbytné výdaje/ }).click()
+  await page.getByLabel('Zahraniční rekreace').fill('4000')
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  await expect(page.getByText('Z toho zbytné podrobně')).toBeVisible()
+
+  const free = async () => {
+    // Mezi popiskem a částkou je ještě ikonka nápovědy, proto [^\d]*
+    const m = (await page.locator('#souhrn').innerText())
+      .match(/Volná rezerva nyní[^\d]*([\d\s\u00a0\u202f]+)/)
+    return Number((m?.[1] ?? '').replace(/[^\d]/g, ''))
+  }
+  const before = await free()
+  // Vypnutím položky za 4 000 Kč vzroste volná rezerva přesně o 4 000 Kč
+  await page.getByRole('button', { name: /Zahraniční rekreace/ }).click()
+  await expect.poll(free).toBe(before + 4000)
 })
 
 test('výsledky obsahují právní upozornění včetně rozbalitelných podmínek', async ({ page }) => {

@@ -68,7 +68,30 @@ export function withExcludedExpenses(state: WizardState, excluded: Set<string>):
   if (excluded.has('insurance')) e.insurance = 0;
   if (excluded.has('existingLoans')) e.existingLoans = 0;
   if (excluded.has('children')) e.children = 0;
-  if (excluded.has('other')) { e.other = 0; e.discretionaryBreakdown = undefined; }
+
+  if (excluded.has('other')) {
+    e.other = 0;
+    e.discretionaryBreakdown = undefined;
+  } else if (e.discretionaryBreakdown) {
+    // Klíče s tečkou („travel.abroad") jsou jednotlivé položky podrobného
+    // rozpisu zbytných výdajů. Vypnutím jedné se o její částku sníží i celková
+    // položka „zbytné", ne aby se odečetla dvakrát.
+    const breakdown = { ...e.discretionaryBreakdown };
+    let removed = 0;
+    for (const key of excluded) {
+      if (!key.includes('.')) continue;
+      const amount = breakdown[key] ?? 0;
+      if (amount > 0) {
+        removed += amount;
+        delete breakdown[key];
+      }
+    }
+    if (removed > 0) {
+      e.other = Math.max(0, e.other - removed);
+      e.discretionaryBreakdown = breakdown;
+    }
+  }
+
   return { ...state, expenses: e };
 }
 
