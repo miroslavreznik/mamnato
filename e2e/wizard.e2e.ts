@@ -457,3 +457,28 @@ test('schodek na rodičovské krytý úsporami neshodí verdikt', async ({ page 
   await expect(page.getByText('Máte na to').first()).toBeVisible()
   await expect(page.getByText(/během rodičovské budete sahat do úspor/i)).toBeVisible()
 })
+
+test('rekonstrukce se přičte k investici a během ní se platí jen úrok', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await page.locator('input[inputmode="decimal"]').first().fill('3000000')
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+
+  await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('10000000')
+  const requiredDp = async () =>
+    Number(((await page.getByText(/Doporučená akontace/).locator('xpath=..').textContent()) ?? '').replace(/\D/g, ''))
+  const before = await requiredDp()
+
+  // Ve výchozím stavu se na rekonstrukci nikdo neptá, je to jen odkaz.
+  await page.getByRole('button', { name: '+ Budu rekonstruovat' }).click()
+  await page.getByRole('textbox', { name: 'Rozpočet na rekonstrukci', exact: true }).fill('2500000')
+
+  // Akontace se počítá z celé investice, takže povyskočí.
+  await expect.poll(requiredDp).toBeGreaterThan(before)
+  // A během rekonstrukce se platí jen úrok z vyčerpané části.
+  await expect(page.getByText(/Během rekonstrukce zaplatíte bance míň/)).toBeVisible()
+})

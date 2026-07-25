@@ -1,8 +1,8 @@
 import type { WizardState } from '../types';
 import { CHILD_COSTS_CZ } from './defaults';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts } from './mortgage';
-import { parentSalary } from './parentalLeave';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost } from './mortgage';
+import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
 
 // Časová osa jmění: měsíc po měsíci simuluje vývoj úspor domácnosti přes
 // plánované životní události, spoření na akontaci, koupi (jednorázový pokles
@@ -47,7 +47,7 @@ export function wealthTimeline(
   const rent = state.expenses.rent + state.expenses.utilities;
 
   // Cílová akontace: požadovaná dle LTV; když si uživatel vyhradil víc, platí jeho volba.
-  const price = state.property.targetPrice;
+  const price = totalProjectCost(state);
   const required = requiredDownPayment(price, downPaymentFraction(state));
   const chosen = state.savings.downPaymentFromSavings;
   const targetDownPayment = chosen != null ? Math.max(required, chosen) : required;
@@ -59,6 +59,7 @@ export function wealthTimeline(
   const childMonth = hasChild ? Math.max(0, Math.round(opts.childOffsetMonths ?? 12)) : null;
   const pl = state.parentalLeave;
   const leaveActive = !!pl?.enabled && childMonth !== null;
+  const phases = leavePhases(state);
   const leaveEndMonth = leaveActive ? childMonth! + pl!.durationMonths : null;
 
   const points: WealthPoint[] = [];
@@ -80,7 +81,9 @@ export function wealthTimeline(
 
     let income = baseIncome;
     if (leaveActive && m >= childMonth! && m < leaveEndMonth!) {
-      income = income - parentSalary(state, pl!.parent) + pl!.monthlyBenefit;
+      // Dávka se během volna mění: mateřská na začátku, pak rodičovský
+      // příspěvek. Plochý průměr by úbytek úspor rozložil špatně.
+      income = income - parentSalary(state, pl!.parent) + benefitAtLeaveMonth(phases, m - childMonth!);
     }
 
     let expenses = baseExpenses;

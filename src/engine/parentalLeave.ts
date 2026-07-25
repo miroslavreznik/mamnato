@@ -94,6 +94,21 @@ export function leavePhases(state: WizardState): LeavePhase[] {
   return phases;
 }
 
+/**
+ * Dávka v konkrétním měsíci volna (0 = první měsíc).
+ *
+ * Používá to časová osa jmění, aby úbytek úspor odpovídal skutečnému průběhu:
+ * na začátku mateřská, potom nižší rodičovský příspěvek.
+ */
+export function benefitAtLeaveMonth(phases: LeavePhase[], monthIntoLeave: number): number {
+  let elapsed = 0;
+  for (const phase of phases) {
+    elapsed += phase.months;
+    if (monthIntoLeave < elapsed) return phase.monthlyBenefit;
+  }
+  return phases[phases.length - 1]?.monthlyBenefit ?? 0;
+}
+
 // Výchozí měsíční příjem během volna = rodičovský příspěvek rozložený na dobu čerpání.
 export function defaultMonthlyBenefit(durationMonths: number): number {
   return Math.round(RODICOVSKA_POOL / Math.max(1, durationMonths));

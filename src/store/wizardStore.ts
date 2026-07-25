@@ -53,6 +53,7 @@ export type WizardAction =
   | { type: 'UPDATE_PROPERTY'; field: string; value: number }
   | { type: 'RESET_MORTGAGE_RATE' }
   | { type: 'RESET_OWNERSHIP_COSTS' }
+  | { type: 'SET_RENOVATION'; value: WizardState['property']['renovation'] }
   | { type: 'SET_NUMBER_OF_CHILDREN'; count: number }
   | { type: 'SET_PERSON_AGE'; person: 1 | 2; value: number }
   | { type: 'UPDATE_CUSTOM_GOALS'; goals: WizardState['customGoals'] }
@@ -154,6 +155,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       void _drop;
       return { ...state, property };
     }
+    case 'SET_RENOVATION':
+      return { ...state, property: { ...state.property, renovation: action.value } };
     case 'UPDATE_CUSTOM_GOALS':
       return { ...state, customGoals: action.goals };
     case 'SET_PARENTAL_LEAVE':

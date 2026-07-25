@@ -5,6 +5,7 @@ import {
   loanAmount,
   mortgageRate,
   loanTermYears,
+  totalProjectCost,
 } from './mortgage';
 
 // Banky v ČR neúčtují jednu sazbu, odstupňovávají ji podle LTV (poměru úvěru
@@ -31,7 +32,7 @@ export const LTV_BANDS: LtvBand[] = [
 
 // LTV = jaká část ceny je půjčená. 0 když cena není zadaná.
 export function ltv(state: WizardState): number {
-  const price = state.property.targetPrice;
+  const price = totalProjectCost(state);
   if (price <= 0) return 0;
   return loanAmount(state) / price;
 }
@@ -63,7 +64,7 @@ export interface LtvRateAdvice {
 // Poradí, jestli se vyplatí doplatit akontaci kvůli lepšímu pásmu sazby.
 // Vrací null, když nemovitost nemá cenu (nedá se počítat LTV).
 export function ltvRateAdvice(state: WizardState): LtvRateAdvice | null {
-  const price = state.property.targetPrice;
+  const price = totalProjectCost(state);
   if (price <= 0) return null;
 
   const current = ltv(state);

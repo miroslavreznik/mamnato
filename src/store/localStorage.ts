@@ -97,6 +97,13 @@ export function normalizeState(raw: unknown): WizardState | null {
       mortgageRate: rProperty.mortgageRate != null ? num(rProperty.mortgageRate, DEFAULTS.property.mortgageRate) : undefined,
       fixationYears: rProperty.fixationYears != null ? num(rProperty.fixationYears, base.property.fixationYears!) : base.property.fixationYears,
       loanTermYears: rProperty.loanTermYears != null ? num(rProperty.loanTermYears, base.property.loanTermYears!) : base.property.loanTermYears,
+      renovation: isRecord(rProperty.renovation)
+        ? {
+            cost: Math.max(0, num(rProperty.renovation.cost, 0)),
+            months: Math.max(1, num(rProperty.renovation.months, 1)),
+            payingRentMeanwhile: rProperty.renovation.payingRentMeanwhile !== false,
+          }
+        : undefined,
     },
     customGoals: Array.isArray(raw.customGoals)
       ? raw.customGoals.filter(isRecord).map((g) => ({

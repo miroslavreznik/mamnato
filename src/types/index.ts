@@ -62,6 +62,15 @@ export interface WizardState {
     mortgageRate?: number;
     fixationYears?: number;
     loanTermYears?: number;
+    // Nepovinné: rekonstrukce po koupi. Když chybí, appka se chová jako dřív
+    // a na nic navíc se neptá.
+    renovation?: {
+      cost: number;
+      // Jak dlouho potrvá. Po tu dobu se obvykle bydlí dál v nájmu.
+      months: number;
+      // Bydlíte během rekonstrukce jinde a platíte dosavadní nájem?
+      payingRentMeanwhile: boolean;
+    };
   };
 
   // Custom goals (for 'other')

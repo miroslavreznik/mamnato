@@ -22,7 +22,7 @@ npm run lint         # ESLint (musí být čistý)
 npm run test         # Vitest jednorázově
 npm run test:watch   # Vitest ve watch režimu
 npm run test:e2e     # Playwright (Chromium + WebKit)
-npx tsc --noEmit     # jen typová kontrola
+npx tsc -b           # jen typová kontrola (POZOR: `tsc --noEmit` nekontroluje nic)
 ```
 
 Jeden soubor nebo jeden test:
@@ -90,6 +90,11 @@ a spadne se na výchozí hodnoty, takže poškozený `localStorage` appku neshod
 `store/shareLink.ts` kóduje stav do `#s=` (base64url).
 
 ## Konvence, na kterých záleží
+
+**Typy kontroluj přes `npx tsc -b`, ne `tsc --noEmit`.** Kořenový `tsconfig.json`
+má `"files": []` a jen odkazuje na `tsconfig.app.json` a `tsconfig.node.json`,
+takže `tsc --noEmit` projde i nad souborem se zjevnou typovou chybou. Jediná
+spolehlivá kontrola před commitem je `npm run build`.
 
 **Texty jsou česky a vykají.** Včetně nadpisů, chybových hlášek i `aria-label`.
 

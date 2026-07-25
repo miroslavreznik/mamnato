@@ -13,13 +13,29 @@ export function monthlyMortgagePayment(
   return loanAmount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
 }
 
+// Rozpočet na rekonstrukci, 0 když se nerekonstruuje.
+export function renovationCost(state: WizardState): number {
+  return state.property.renovation?.cost ?? 0;
+}
+
+/**
+ * Celková investice do bydlení: kupní cena plus rekonstrukce.
+ *
+ * Banka půjčuje proti hodnotě nemovitosti PO rekonstrukci, takže i akontace
+ * i LTV se počítají z téhle částky, ne jen z kupní ceny. Bez toho by
+ * rekonstrukce vypadala jako peníze, které se objeví odnikud.
+ */
+export function totalProjectCost(state: WizardState): number {
+  return state.property.targetPrice + renovationCost(state);
+}
+
 export function effectiveDownPayment(state: WizardState): number {
   if (state.savings.downPaymentFromSavings != null) return state.savings.downPaymentFromSavings;
   // Výchozí: povinné minimum dle LTV (zbytek úspor zůstává jako rezerva),
   // omezené tím, co skutečně máte naspořeno.
   return Math.min(
     state.savings.totalSavings,
-    requiredDownPayment(state.property.targetPrice, downPaymentFraction(state))
+    requiredDownPayment(totalProjectCost(state), downPaymentFraction(state))
   );
 }
 
@@ -67,7 +83,7 @@ export function suggestedOwnershipCosts(price: number): number {
 }
 
 export function ownershipCosts(state: WizardState): number {
-  return state.property.ownershipCosts ?? suggestedOwnershipCosts(state.property.targetPrice);
+  return state.property.ownershipCosts ?? suggestedOwnershipCosts(totalProjectCost(state));
 }
 
 // Zadal uživatel náklady na vlastnictví ručně? Stejná logika jako u sazby:
@@ -78,7 +94,7 @@ export function isOwnershipCostsOverridden(state: WizardState): boolean {
 
 // Výše hypotéky = cena nemovitosti minus akontace (nikdy záporná).
 export function loanAmount(state: WizardState): number {
-  return Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
+  return Math.max(0, totalProjectCost(state) - effectiveDownPayment(state));
 }
 
 // Odhadovaná měsíční splátka hypotéky pro zvolenou akontaci a parametry úvěru.
@@ -133,7 +149,7 @@ export function requiredDownPayment(
 }
 
 export function downPaymentGap(state: WizardState): number {
-  const required = requiredDownPayment(state.property.targetPrice, downPaymentFraction(state));
+  const required = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
   return Math.max(0, required - effectiveDownPayment(state));
 }
 
@@ -163,7 +179,7 @@ export function postPurchaseRunwayMonths(state: WizardState): number {
 }
 
 export function dti(state: WizardState): number {
-  const newLoan = state.property.targetPrice - effectiveDownPayment(state);
+  const newLoan = totalProjectCost(state) - effectiveDownPayment(state);
   // Limit ČNB se vztahuje na celkový dluh, tedy vč. zůstatku stávajících úvěrů.
   const totalDebt = newLoan + (state.existingDebtPrincipal ?? 0);
   const annualIncome = totalMonthlyIncome(state) * 12;

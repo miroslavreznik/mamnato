@@ -8,6 +8,7 @@ import {
   loanAmount,
   mortgagePayment,
   expensesAfterPurchase,
+  totalProjectCost,
 } from './mortgage';
 
 export interface GoalAllocation {
@@ -117,7 +118,7 @@ export function investmentComparison(
   years: number = 30
 ): InvestmentProjectionPoint[] {
   const downPayment = effectiveDownPayment(state);
-  const price = state.property.targetPrice;
+  const price = totalProjectCost(state);
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
   const loan = loanAmount(state);
