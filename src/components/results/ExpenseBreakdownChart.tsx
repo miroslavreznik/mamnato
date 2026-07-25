@@ -309,7 +309,7 @@ export default function ExpenseBreakdownChart({ state, allocations, onChangeAllo
             ))}
           </div>
           <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
-            Hypotéka není v tomto seznamu. Po koupi je součástí výdajů na bydlení. Změny se okamžitě promítnou do grafu i do volné rezervy.
+            Hypotéka není v tomto seznamu. Po koupi je součástí výdajů na bydlení.
           </p>
         </div>
       )}

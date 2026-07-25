@@ -34,7 +34,6 @@ export interface Verdict {
 export interface OverallSummary {
   status: OverallStatusKey;
   icon: string;
-  description: string;
   verdict: Verdict;
   tips: string[];
   goals: GoalReadiness[];
@@ -229,19 +228,16 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
 
   // Celkový status
   let status: OverallStatusKey;
-  let description: string;
   let tips: string[] = [];
 
   if (disposable <= 0) {
     status = 'fix_budget';
-    description = 'Vaše výdaje jsou vyšší nebo stejné jako příjmy, takže zatím nezbývá na spoření ani na splátky. Než budete řešit velké cíle, je potřeba dostat rozpočet do plusu.';
     tips = [
       'Projděte výdaje po kategoriích a hledejte, kde se dá ubrat. Nejčastěji předplatná, pojistky, doprava.',
       'Zvažte možnosti navýšení příjmu (změna práce, vedlejší příjem, návrat z rodičovské).',
     ];
   } else if (budget && !budget.fits) {
     status = 'not_yet';
-    description = `Vaše cíle dohromady vyžadují ${allocated.toLocaleString('cs-CZ')} Kč/měs, ale k dispozici máte ${disposable.toLocaleString('cs-CZ')} Kč/měs. Chybí ${Math.abs(surplus).toLocaleString('cs-CZ')} Kč/měs, cíle se zatím nevejdou najednou.`;
     tips = [
       'Upravte částky u cílů níže, nebo prodlužte jejich horizont.',
       'Zvažte, které cíle jsou prioritní teď a které mohou počkat.',
@@ -254,21 +250,18 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
 
     if (hasWarning || worstProperty) {
       status = 'not_yet';
-      description = 'Rozpočet zvládáte, ale některý z cílů zatím naráží na limity. Podívejte se na jeho detail níže, často pomůže upravit parametry nebo horizont.';
       tips = [
         'Podívejte se na detail cíle, který naráží na limity, a upravte jeho částku nebo horizont.',
         'Prioritizujte: některé cíle mohou počkat, jiné jsou teď důležitější.',
       ];
     } else if (hasCaution || runway < 3 || rate < 0.1) {
       status = 'tight';
-      description = 'Vaše cíle jsou dosažitelné, ale rezerva je napjatá. Před velkými kroky je dobré mít nouzový fond na 3–6 měsíců výdajů a nechat si v rozpočtu prostor.';
       tips = [
         'Vytvořte si nouzový fond na 3–6 měsíců výdajů, dodá rozpočtu odolnost.',
         'Projděte zbytné výdaje; i menší úspora zvětší rezervu.',
       ];
     } else {
       status = 'good';
-      description = 'Rozpočet máte v plusu, cíle se do disponibilní částky vejdou a máte i rezervu. Můžete pokračovat a jednotlivé cíle si doladit níže.';
       tips = [
         'Máte prostor: zvažte navýšení spoření nebo investování volné rezervy pro rychlejší růst.',
         'Držte si nouzový fond 3–6 měsíců výdajů pro nečekané situace.',
@@ -298,5 +291,5 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   }
 
   const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable);
-  return { status, icon: OVERALL_ICON[status], description, verdict, tips, goals, budget };
+  return { status, icon: OVERALL_ICON[status], verdict, tips, goals, budget };
 }

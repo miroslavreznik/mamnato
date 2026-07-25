@@ -3,7 +3,7 @@ import type { GoalAllocations } from '../../engine/allocation';
 import { evaluateOverall } from '../../engine/summary';
 import type { GoalStatus, VerdictAnswer } from '../../engine/summary';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
-import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, monthsToSaveDownPayment, dsti } from '../../engine/mortgage';
+import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, monthsToSaveDownPayment, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
 import { DEFAULTS } from '../../engine/defaults';
 import { formatMonths } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
@@ -43,6 +43,9 @@ interface Kpi {
   unit?: string;
   sub?: string;
   tone: Tone;
+  // Naplnění 0..1 pro proužek pod číslem. Ukazuje, jak daleko je hodnota
+  // od svého cíle, takže stav jde poznat bez čtení.
+  meter?: number;
 }
 
 const toneClass: Record<Tone, string> = {
@@ -50,6 +53,13 @@ const toneClass: Record<Tone, string> = {
   warn: 'text-amber-600 dark:text-amber-400',
   bad: 'text-red-600 dark:text-red-400',
   plain: 'text-gray-900 dark:text-white',
+};
+
+const meterBar: Record<Tone, string> = {
+  good: 'bg-emerald-500',
+  warn: 'bg-amber-500',
+  bad: 'bg-red-500',
+  plain: 'bg-blue-500',
 };
 
 const goalDot: Record<GoalStatus, string> = {
@@ -86,11 +96,14 @@ export default function ResultsOverview({ state, allocations }: Props) {
             unit: 'Kč/měs',
             sub: isFinite(dstiPct) ? `${Math.round(dstiPct * 100)} % čistého příjmu` : undefined,
             tone: !isFinite(dstiPct) || dstiPct > DEFAULTS.dstiLimit ? 'bad' : dstiPct > DEFAULTS.dstiLimit * 0.85 ? 'warn' : 'plain',
+            // Proužek vůči obvyklému bankovnímu stropu DSTI.
+            meter: isFinite(dstiPct) ? dstiPct / DEFAULTS.dstiLimit : 1,
           };
         })(),
         (() => {
           const gap = downPaymentGap(state);
           const months = monthsToSaveDownPayment(state);
+          const required = requiredDownPayment(state.property.targetPrice, downPaymentFraction(state));
           return {
             label: 'Chybějící akontace',
             tooltip: 'Rozdíl mezi akontací, kterou banka požaduje (20 % ceny, u žadatelů do 36 let 10 %), a tím, co pokryjete z úspor. Bez ní vám banka hypotéku neposkytne.',
@@ -100,6 +113,8 @@ export default function ResultsOverview({ state, allocations }: Props) {
               ? (isFinite(months) ? `naspoříte za ${formatMonths(months, true)}` : 'při současném rozpočtu nenaspoříte')
               : 'akontaci máte pokrytou',
             tone: gap > 0 ? (isFinite(months) ? 'warn' : 'bad') : 'good',
+            // Kolik z požadované akontace je už pokryto.
+            meter: required > 0 ? (required - gap) / required : 1,
           };
         })(),
         {
@@ -108,6 +123,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
           value: runwayLabel,
           unit: 'měs.',
           tone: runwayTone,
+          meter: runway === Infinity ? 1 : runway / 6,
         },
       ]
     : [
@@ -124,6 +140,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
           value: (rate * 100).toFixed(1),
           unit: '%',
           tone: rate >= 0.2 ? 'good' : rate >= 0.1 ? 'plain' : 'warn',
+          meter: rate / 0.2,
         },
         {
           label: 'Rezerva vydrží',
@@ -131,8 +148,15 @@ export default function ResultsOverview({ state, allocations }: Props) {
           value: runwayLabel,
           unit: 'měs.',
           tone: runwayTone,
+          meter: runway === Infinity ? 1 : runway / 6,
         },
       ];
+
+  // Nemovitost mají dlaždice pokrytou (splátka, akontace, rezerva), takže by
+  // se v připravenosti cílů opakovala se stejnými čísly.
+  const readinessGoals = hasProperty
+    ? summary.goals.filter((g) => g.key !== 'property')
+    : summary.goals;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -157,9 +181,6 @@ export default function ResultsOverview({ state, allocations }: Props) {
             {summary.verdict.reason}
           </p>
         </div>
-        <p className="mt-4 pt-4 border-t border-current/10 text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-          {summary.description}
-        </p>
       </div>
 
       {/* Čísla, na kterých verdikt stojí */}
@@ -174,17 +195,25 @@ export default function ResultsOverview({ state, allocations }: Props) {
               {k.value}
               {k.unit && <span className="text-sm font-normal text-gray-400"> {k.unit}</span>}
             </p>
-            {k.sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{k.sub}</p>}
+            {k.meter !== undefined && (
+              <div className="mt-1.5 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+                <div
+                  className={`h-full rounded-full ${meterBar[k.tone]}`}
+                  style={{ width: `${Math.max(4, Math.min(100, k.meter * 100))}%` }}
+                />
+              </div>
+            )}
+            {k.sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{k.sub}</p>}
           </div>
         ))}
       </div>
 
       {/* Připravenost cílů */}
-      {summary.goals.length > 0 && (
+      {readinessGoals.length > 0 && (
         <div className="mb-5">
           <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Připravenost cílů</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {summary.goals.map((g) => (
+            {readinessGoals.map((g) => (
               <div key={g.key} className="flex items-center gap-2 p-2.5 rounded-lg border border-gray-200 dark:border-gray-700">
                 <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${goalDot[g.status]}`} />
                 <div className="min-w-0">
@@ -223,9 +252,6 @@ export default function ResultsOverview({ state, allocations }: Props) {
         </div>
       )}
 
-      <p className="text-xs text-gray-400 dark:text-gray-500">
-        Čísla jsou nejlepší odhad (úroková sazba, výnosy nikdo nepředpoví). Vše se přepočítá, když parametry upravíte v jednotlivých sekcích níže.
-      </p>
     </div>
   );
 }
