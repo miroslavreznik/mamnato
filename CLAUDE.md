@@ -119,6 +119,15 @@ Když měníš chování enginu, přidej unit test. Když měníš tok v UI, př
 Změna výchozích hodnot v `defaults.ts` rozbije e2e testy, které počítají s konkrétními
 částkami; ty je potřeba dopočítat, ne otupit.
 
+**Podezření na flaky test nejdřív reprodukuj**, teprve pak vysvětluj. Slouží k tomu
+`npx playwright test --project=chromium -g "název" --repeat-each=8`. Když padne většina
+opakování, není to náhoda ani prostředí, ale skutečná chyba v aplikaci. Stalo se to:
+pád e2e byl svedený na zastaralý dev server, ve skutečnosti `NumField` při fokusu
+přepisoval obsah pole a zapsané znaky se místo nahrazení připisovaly (`5 000` skončilo
+jako `31 505 000`). Playwright k tomu přikládá `test-results/**/error-context.md`
+se stavem stránky v okamžiku pádu, kde to bylo přímo vidět; přečti ho dřív, než
+vymyslíš teorii.
+
 ## Git
 
 Vývoj probíhá na větvi `claude/czech-calculator-questions-8vxvvb`, odtud se dělá
