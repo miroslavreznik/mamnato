@@ -49,10 +49,16 @@ export default function NumField({
       aria-label={ariaLabel}
       className={className}
       onFocus={(e) => {
+        // Draft se zakládá na tom, co je v poli vidět, ne na holém čísle.
+        // Kdyby se text při fokusu změnil (z „3 150" na „3150"), přepsal by
+        // React obsah pole zrovna ve chvíli, kdy do něj něco zapisuje uživatel
+        // nebo test, a znaky by se místo nahrazení připsaly.
         setFocused(true);
-        setDraft(value ? String(value) : '');
-        const el = e.currentTarget;
-        requestAnimationFrame(() => el.select());
+        setDraft(value ? value.toLocaleString('cs-CZ') : '');
+        // Výběr musí proběhnout hned. Odložení přes requestAnimationFrame
+        // dokázalo označit text až uprostřed psaní a další znak pak smazal,
+        // co bylo napsáno předtím.
+        e.currentTarget.select();
       }}
       onChange={(e) => {
         const raw = e.target.value.replace(/[^\d.,-]/g, '');
