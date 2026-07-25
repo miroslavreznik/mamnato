@@ -43,6 +43,11 @@ export interface LeaveImpact {
   shortfallPerMonth: number; // 0 = během volna žádný schodek
   shortfallTotal: number;
   monthsCovered: number | null; // null = žádný schodek; jinak počet pokrytých měsíců
+  // Rezerva pokryje celé volno. Dočasný schodek krytý úsporami je něco jiného
+  // než schodek, na který nemáte, a verdikt to musí umět rozlišit.
+  coversWholeLeave: boolean;
+  reserveLeftAfterLeave: number; // co z rezervy zbyde, až volno skončí
+  runwayMonthsAfterLeave: number; // a na kolik měsíců výdajů to potom vystačí
 }
 
 // Mimo React testovatelné vyhodnocení dopadu rodičovské. Vrací null, když
@@ -59,22 +64,31 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   const disposableNow = incomeNow - expenses;
   const disposableDuringLeave = incomeDuringLeave - expenses;
 
+  // Výdaje, se kterými se během volna reálně počítá: po koupi mizí nájem
+  // a energie, přibývá splátka a náklady na vlastnictví.
+  const isBuying = state.goals.includes('property');
+  const relevantExpenses = isBuying ? expensesAfterPurchase(state) : expenses;
+
   let disposableDuringLeaveAfterPurchase: number | null = null;
-  if (state.goals.includes('property')) {
-    // Po koupi mizí nájem + energie, přibývá splátka + náklady na vlastnictví.
-    disposableDuringLeaveAfterPurchase = incomeDuringLeave - expensesAfterPurchase(state);
+  if (isBuying) {
+    disposableDuringLeaveAfterPurchase = incomeDuringLeave - relevantExpenses;
   }
 
   const savingsLostTotal = Math.max(0, disposableNow - disposableDuringLeave) * pl.durationMonths;
 
   // Rezerva, ze které se dá schodek během volna krýt. Když se kupuje nemovitost,
   // většina úspor padne na akontaci, počítáme s tím, co zbyde po ní.
-  const isBuying = state.goals.includes('property');
   const reserveAfter = Math.max(0, state.savings.totalSavings - (isBuying ? effectiveDownPayment(state) : 0));
   const relevantDisposable = disposableDuringLeaveAfterPurchase ?? disposableDuringLeave;
   const shortfallPerMonth = Math.max(0, -relevantDisposable);
   const shortfallTotal = shortfallPerMonth * pl.durationMonths;
   const monthsCovered = shortfallPerMonth > 0 ? Math.floor(reserveAfter / shortfallPerMonth) : null;
+
+  const coversWholeLeave = shortfallPerMonth === 0 || reserveAfter >= shortfallTotal;
+  const reserveLeftAfterLeave = Math.max(0, reserveAfter - shortfallTotal);
+  const runwayMonthsAfterLeave = relevantExpenses > 0
+    ? reserveLeftAfterLeave / relevantExpenses
+    : Infinity;
 
   return {
     parent: pl.parent,
@@ -91,6 +105,9 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
     shortfallPerMonth,
     shortfallTotal,
     monthsCovered,
+    coversWholeLeave,
+    reserveLeftAfterLeave,
+    runwayMonthsAfterLeave,
   };
 }
 

@@ -422,3 +422,30 @@ test('délka fixace mění nabízenou sazbu i splátku', async ({ page }) => {
   await expect(rate).toHaveValue('3')
   await expect(page.getByText(/Sazbu máte zadanou ručně/)).toBeVisible()
 })
+
+test('schodek na rodičovské krytý úsporami neshodí verdikt', async ({ page }) => {
+  await start(page)
+  await page.getByRole('button', { name: /Jsme pár/ }).click()
+  await next(page) // → Příjmy
+  await page.getByRole('textbox', { name: 'Čistý měsíční příjem: osoba 1', exact: true }).fill('57000')
+  await page.getByRole('textbox', { name: 'Čistý měsíční příjem: osoba 2', exact: true }).fill('100000')
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await page.locator('input[inputmode="decimal"]').first().fill('4800000')
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await page.getByRole('button', { name: /Dítě \/ rodina/ }).first().click()
+  await next(page) // → krok Nemovitost
+  await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('12500000')
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  // Doma zůstane ten s vyšším příjmem → během volna vzniká měsíční schodek,
+  // rezerva po akontaci ho ale pokryje. Verdikt to musí zohlednit.
+  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
+  await page.getByRole('button', { name: /Osoba 2/ }).click()
+
+  await page.getByRole('navigation').getByRole('button', { name: 'Souhrn', exact: true }).click()
+  await expect(page.getByText('Máte na to').first()).toBeVisible()
+  await expect(page.getByText(/během rodičovské budete sahat do úspor/i)).toBeVisible()
+})

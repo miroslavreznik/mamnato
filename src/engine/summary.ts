@@ -3,7 +3,7 @@ import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from './cashflo
 import { dsti, monthsToSaveDownPayment } from './mortgage';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
-import { evaluateParentalLeave } from './parentalLeave';
+import { evaluateParentalLeave, type LeaveImpact } from './parentalLeave';
 import type { GoalAllocations } from './allocation';
 import { formatMonths } from './format';
 
@@ -84,7 +84,18 @@ function retirementReadiness(state: WizardState, allocations: GoalAllocations): 
   };
 }
 
+// Kolik měsíců výdajů musí zbýt po skončení volna, aby to ještě šlo nazvat
+// rezervou. Pod touhle hranicí je sice volno ufinancovatelné, ale na nečekaný
+// výdaj (s malým dítětem a hypotékou) už nic nezbývá.
+const MIN_RUNWAY_AFTER_LEAVE = 3;
+
 // Připravenost na výpadek příjmu během rodičovské (jen když je scénář zapnutý).
+//
+// Samotný měsíční schodek nestačí na to označit cíl za nedosažitelný. Rodičovská
+// je z podstaty dočasná a kryje se z úspor; rozhoduje, jestli rezerva vydrží
+// celé volno a co po něm zbyde. Dřív stačilo jediné minusové číslo a celý
+// verdikt spadl na „Zatím na to nemáte", i když rezerva schodek pokrývala
+// několikrát.
 function leaveReadiness(state: WizardState): GoalReadiness | null {
   const leave = evaluateParentalLeave(state);
   if (!leave) return null;
@@ -92,14 +103,40 @@ function leaveReadiness(state: WizardState): GoalReadiness | null {
     ? leave.disposableDuringLeaveAfterPurchase
     : leave.disposableDuringLeave;
   const fmt = (n: number) => Math.round(Math.abs(n)).toLocaleString('cs-CZ');
-  if (relevant < 0) {
-    return { key: 'leave', label: 'Rodičovská', status: 'warning', headline: `Během volna byste byli ${fmt(relevant)} Kč/měs v mínusu.` };
+
+  if (relevant >= 0) {
+    return {
+      key: 'leave',
+      label: 'Rodičovská',
+      status: relevant < 3000 ? 'caution' : 'good',
+      headline: `Během volna vám měsíčně zbyde ${fmt(relevant)} Kč.`,
+    };
   }
+
+  const perMonth = `Během volna vám bude chybět ${fmt(relevant)} Kč měsíčně, za ${formatMonths(leave.durationMonths)} celkem ${fmt(leave.shortfallTotal)} Kč.`;
+
+  if (!leave.coversWholeLeave) {
+    const covered = leave.monthsCovered ?? 0;
+    return {
+      key: 'leave',
+      label: 'Rodičovská',
+      status: 'warning',
+      headline: leave.reserveAfter <= 0
+        ? `${perMonth} Nemáte rezervu, ze které byste to pokryli.`
+        : `${perMonth} Rezerva vydrží ${covered} z ${leave.durationMonths} měsíců volna.`,
+    };
+  }
+
+  // Rezerva volno pokryje. Není to bez následku (o tu částku se ztenčí), ale
+  // je to zvládnutelné, takže „pozor", ne „nevychází".
+  const thin = leave.runwayMonthsAfterLeave < MIN_RUNWAY_AFTER_LEAVE;
   return {
     key: 'leave',
     label: 'Rodičovská',
-    status: relevant < 3000 ? 'caution' : 'good',
-    headline: `Během volna vám měsíčně zbyde ${fmt(relevant)} Kč.`,
+    status: 'caution',
+    headline: thin
+      ? `${perMonth} Rezerva to pokryje, ale zbyde z ní jen ${fmt(leave.reserveLeftAfterLeave)} Kč, což je na nečekané výdaje málo.`
+      : `${perMonth} Rezerva to pokryje a zbyde vám ${fmt(leave.reserveLeftAfterLeave)} Kč.`,
   };
 }
 
@@ -138,7 +175,8 @@ function buildVerdict(
   status: OverallStatusKey,
   goals: GoalReadiness[],
   hasGoals: boolean,
-  disposable: number
+  disposable: number,
+  leave: LeaveImpact | null
 ): Verdict {
   // Bez zvolených cílů není na co odpovídat, tak aspoň zhodnotíme rozpočet.
   if (!hasGoals) {
@@ -160,6 +198,19 @@ function buildVerdict(
   const weak = goals.filter((g) => g.status === 'warning').map((g) => g.label);
   const list = (labels: string[]) =>
     labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} a ${labels[labels.length - 1]}`;
+  const fmt = (n: number) => Math.round(Math.abs(n)).toLocaleString('cs-CZ');
+
+  // Dočasný schodek během rodičovské krytý úsporami je vlastní příběh: je to
+  // „ano, ale budete sahat do úspor", ne obecné „bude to napjaté".
+  const drawingOnSavings = leave !== null && leave.shortfallPerMonth > 0 && leave.coversWholeLeave;
+  if (status === 'tight' && drawingOnSavings && leave) {
+    return {
+      answer: 'yes_but',
+      headline: 'Máte na to',
+      qualifier: 'ale během rodičovské budete sahat do úspor',
+      reason: `Po dobu volna vám bude chybět ${fmt(leave.shortfallPerMonth)} Kč měsíčně, celkem ${fmt(leave.shortfallTotal)} Kč. Rezerva to pokryje a zbyde vám ${fmt(leave.reserveLeftAfterLeave)} Kč.`,
+    };
+  }
 
   switch (status) {
     case 'good':
@@ -177,6 +228,14 @@ function buildVerdict(
         reason: 'Na cíle vám to vyjde, jenže bez velkého polštáře. Nečekaný výdaj by rozpočet rozhodil.',
       };
     case 'not_yet':
+      if (leave && leave.shortfallPerMonth > 0 && !leave.coversWholeLeave) {
+        return {
+          answer: 'no_but',
+          headline: 'Zatím na to nemáte',
+          qualifier: 'chybí rezerva na dobu rodičovské',
+          reason: `Během volna vám bude chybět ${fmt(leave.shortfallPerMonth)} Kč měsíčně a rezerva vydrží ${leave.monthsCovered ?? 0} z ${leave.durationMonths} měsíců. Pomůže došetřit, zkrátit volno nebo hledat levnější nemovitost.`,
+        };
+      }
       return {
         answer: 'no_but',
         headline: 'Zatím na to nemáte',
@@ -276,22 +335,20 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
     tips = evaluateScenario(state).tips;
   }
 
-  // Rodičovská: upozornit, když v období volna klesne příjem do mínusu
-  // (po zaplacení splátky, resp. výdajů).
+  // Rodičovská: rada se liší podle toho, jestli na schodek máte z čeho brát.
+  // Radit „počítejte s rezervou" někomu, komu rezerva schodek pokryje třikrát,
+  // vypadá, že jsme si vlastní čísla nepřečetli.
   const leave = evaluateParentalLeave(state);
-  if (leave) {
-    const problem =
-      leave.disposableDuringLeaveAfterPurchase !== null
-        ? leave.disposableDuringLeaveAfterPurchase < 0
-        : leave.disposableDuringLeave < 0;
-    if (problem) {
-      tips = [
-        ...tips,
-        'Během rodičovské klesne příjem a rozpočet by se v tomto období dostal do mínusu. Počítejte s rezervou na dobu volna, levnější nemovitostí nebo kratší rodičovskou.',
-      ];
-    }
+  if (leave && leave.shortfallPerMonth > 0) {
+    const czk = (n: number) => Math.round(n).toLocaleString('cs-CZ');
+    tips = [
+      ...tips,
+      leave.coversWholeLeave
+        ? `Během rodičovské budete rozpočet dotovat z úspor, celkem asi ${czk(leave.shortfallTotal)} Kč. Počítejte s tím, že o tuhle částku se rezerva ztenčí, a nespoléhejte na ni zároveň jako na nouzový fond.`
+        : 'Během rodičovské klesne příjem a rozpočet by se v tomto období dostal do mínusu, na který rezerva nestačí. Počítejte s došetřením, levnější nemovitostí nebo kratší rodičovskou.',
+    ];
   }
 
-  const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable);
+  const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable, leave);
   return { status, icon: OVERALL_ICON[status], verdict, tips, goals, budget };
 }
