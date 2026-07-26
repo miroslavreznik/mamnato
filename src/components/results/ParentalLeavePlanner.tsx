@@ -95,13 +95,16 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
               <button
                 key={p}
                 onClick={() => update({ parent: p })}
+                aria-pressed={impact.parent === p}
                 className={`flex-1 px-2 py-2 text-sm rounded-lg border ${
                   impact.parent === p
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
                     : 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'
                 }`}
               >
-                Osoba {p}
+                {/* „✓" je jediné, co v tisku spolehlivě přežije; podle barvy
+                    pozadí nešlo z reportu poznat, kdo vlastně zůstane doma. */}
+                {impact.parent === p ? '✓ ' : ''}Osoba {p}
                 <span className="block text-[10px] text-gray-400">{fmt(parentSalary(state, p))} Kč</span>
               </button>
             ))}

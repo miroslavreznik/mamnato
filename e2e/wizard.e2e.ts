@@ -90,9 +90,11 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await expect(page.getByText('Volná rezerva během volna')).toBeVisible()
 
   // Volno má dvě fáze: mateřská je vyšší a kratší, rodičovský příspěvek nižší.
-  await expect(page.getByText('Dávky se v čase mění')).toBeVisible()
-  await expect(page.getByText(/Mateřská \(prvních 28 týdnů\)/)).toBeVisible()
-  await expect(page.getByText(/Rodičovský příspěvek \(\d+ měs\.\)/)).toBeVisible()
+  // Rozpis fází je i v kartě předpokladů, proto se míří jen do téhle karty.
+  const phases = page.getByText('Dávky se v čase mění').locator('xpath=..')
+  await expect(phases).toBeVisible()
+  await expect(phases.getByText(/Mateřská \(prvních 28 týdnů\)/)).toBeVisible()
+  await expect(phases.getByText(/Rodičovský příspěvek \(\d+ měs\.\)/)).toBeVisible()
 
   // Fixní balík rodičovské: kratší volno → vyšší dávka ve druhé fázi.
   const benefit = page.getByRole('textbox', { name: 'Měsíční příjem během volna', exact: true })
@@ -481,4 +483,30 @@ test('rekonstrukce se přičte k investici a během ní se platí jen úrok', as
   await expect.poll(requiredDp).toBeGreaterThan(before)
   // A během rekonstrukce se platí jen úrok z vyčerpané části.
   await expect(page.getByText(/Během rekonstrukce zaplatíte bance míň/)).toBeVisible()
+})
+
+test('report uvádí předpoklady výpočtu včetně toho, kdo jde na rodičovskou', async ({ page }) => {
+  await start(page)
+  await page.getByRole('button', { name: /Jsme pár/ }).click()
+  await next(page) // → Příjmy
+  await page.getByRole('textbox', { name: 'Čistý měsíční příjem: osoba 2', exact: true }).fill('100000')
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await page.getByRole('button', { name: /Dítě \/ rodina/ }).first().click()
+  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  // Vybraná volba nesmí být poznat jen podle barvy, kvůli tisku i odečítači.
+  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
+  await expect(page.getByRole('button', { name: /Osoba 1/ })).toHaveAttribute('aria-pressed', 'true')
+
+  // <summary> se v accessibility stromu neexponuje jako tlačítko.
+  await page.locator('summary', { hasText: 'Z čeho přehled počítá' }).click()
+  // Stejný seznam je i ve verzi jen pro tisk, proto .first().
+  await expect(page.getByText('Na rodičovské zůstane').first()).toBeVisible()
+  await expect(page.getByText(/Osoba 1 \(příjem/).first()).toBeVisible()
+  await expect(page.getByText('Úroková sazba').first()).toBeVisible()
 })

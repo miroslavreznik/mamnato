@@ -26,6 +26,7 @@ import type { CustomGoal, ParentalLeave } from '../../types';
 import { saveState } from '../../store/localStorage';
 import { buildShareUrl } from '../../store/shareLink';
 import Disclaimer from '../ui/Disclaimer';
+import AssumptionsCard from './AssumptionsCard';
 
 interface ResultsDashboardProps {
   state: WizardState;
@@ -307,6 +308,12 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Finanční pojmy jednoduše" open={isOpen('slovnicek')} onToggle={() => toggleSection('slovnicek')}>
           <EducationalGlossary />
         </ResultsSection>
+      </div>
+
+      {/* Předpoklady patří až za rozbor, ale před právní upozornění: čte se to
+          jako „takhle jsme k tomu došli", ne jako další kapitola výsledků. */}
+      <div className="mt-6">
+        <AssumptionsCard state={activeState} />
       </div>
 
       <Disclaimer />

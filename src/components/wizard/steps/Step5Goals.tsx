@@ -47,6 +47,7 @@ export default function Step5Goals() {
               key={g.value}
               type="button"
               onClick={() => toggleGoal(g.value)}
+              aria-pressed={selected}
               className={`flex flex-col items-center gap-2 p-4 border-2 rounded-xl transition-colors min-h-[44px] ${
                 selected
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
@@ -55,6 +56,10 @@ export default function Step5Goals() {
             >
               <span className="text-2xl">{g.icon}</span>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{g.label}</span>
+              {/* Viditelná značka i bez barvy, kvůli tisku a přístupnosti. */}
+              <span className={`text-xs ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-transparent'}`}>
+                {selected ? '✓ vybráno' : 'nevybráno'}
+              </span>
             </button>
           );
         })}
