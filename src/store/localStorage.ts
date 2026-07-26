@@ -127,7 +127,22 @@ export function normalizeState(raw: unknown): WizardState | null {
   };
 }
 
+/**
+ * Zámek zápisu.
+ *
+ * Když se otevře sdílený odkaz a uživatel už má vlastní uložený přehled,
+ * nesmí mu sdílená data přepsat, dokud to výslovně nepotvrdí. Zámek je
+ * schválně tady, na jediném místě, kudy zápis prochází: kdyby se hlídal až
+ * v komponentách, stačilo by jedno zapomenuté `saveState()` a data jsou pryč.
+ */
+let persistenceEnabled = true;
+
+export function setPersistenceEnabled(enabled: boolean): void {
+  persistenceEnabled = enabled;
+}
+
 export function saveState(state: WizardState): void {
+  if (!persistenceEnabled) return;
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch {

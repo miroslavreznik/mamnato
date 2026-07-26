@@ -1,18 +1,36 @@
 import { useState, useCallback } from 'react';
+import type { WizardState } from './types';
 import WizardContainer from './components/wizard/WizardContainer';
 import ResultsDashboard from './components/results/ResultsDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
 import ThemeToggle from './components/ui/ThemeToggle';
 import BrandMark from './components/ui/BrandMark';
 import { loadState, clearState } from './store/localStorage';
-import { loadedFromShare } from './store/shareLink';
+import { loadedFromShare, sharedStateToShow, sharedReplacesExisting, acceptSharedState, discardSharedState } from './store/shareLink';
 
 type View = 'welcome' | 'wizard' | 'results';
 
 function App() {
-  // Sdílený přehled z odkazu už bootstrap uložil (viz main.tsx) → rovnou výsledky.
+  // Sdílený přehled z odkazu (viz main.tsx) → rovnou výsledky.
   const [view, setView] = useState<View>(() => (loadedFromShare() ? 'results' : 'welcome'));
   const [returnToStep, setReturnToStep] = useState<number | null>(null);
+  // Cizí přehled se zobrazuje jen dokud se uživatel nerozhodne; do té doby je
+  // zápis do localStorage zamčený, aby o svá data nepřišel ani úpravou hodnot.
+  const [shared, setShared] = useState<WizardState | null>(() => sharedStateToShow());
+  const [sharedConflict, setSharedConflict] = useState(() => sharedReplacesExisting());
+
+  const keepShared = () => {
+    if (!shared) return;
+    acceptSharedState(shared);
+    setSharedConflict(false);
+  };
+
+  const keepOwn = () => {
+    discardSharedState();
+    setShared(null);
+    setSharedConflict(false);
+    setView('results');
+  };
 
   const handleComplete = useCallback(() => {
     setReturnToStep(null);
@@ -20,6 +38,9 @@ function App() {
   }, []);
 
   const handleStart = () => {
+    discardSharedState();
+    setShared(null);
+    setSharedConflict(false);
     clearState();
     setReturnToStep(null);
     setView('wizard');
@@ -31,7 +52,8 @@ function App() {
   };
 
   const handleEdit = () => {
-    const state = loadState();
+    // Dokud je cizí přehled otevřený, zobrazuje se on, ne uložená data.
+  const state = shared ?? loadState();
     const hasProperty = state?.goals.includes('property');
     const hasOther = state?.goals.includes('other');
     setReturnToStep(hasProperty ? 6 : hasOther ? 7 : 5);
@@ -45,7 +67,8 @@ function App() {
     }
   };
 
-  const state = loadState();
+  // Dokud je cizí přehled otevřený, zobrazuje se on, ne uložená data.
+  const state = shared ?? loadState();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-gray-50 to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 transition-colors">
@@ -66,6 +89,32 @@ function App() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
+        {sharedConflict && (
+          <div className="no-print mb-5 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              Tenhle přehled je z odkazu od někoho jiného.
+            </p>
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+              Svůj vlastní uložený přehled máte pořád k dispozici, tenhle se zatím nikam neuložil.
+              Dokud se nerozhodnete, žádná změna se neukládá.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={keepShared}
+                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                Uložit tenhle a přepsat svůj
+              </button>
+              <button
+                onClick={keepOwn}
+                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg border border-amber-400 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+              >
+                Zpět na můj přehled
+              </button>
+            </div>
+          </div>
+        )}
+
         {view === 'results' && state ? (
           <ResultsDashboard state={state} onEdit={handleEdit} onReset={handleReset} />
         ) : view === 'wizard' ? (

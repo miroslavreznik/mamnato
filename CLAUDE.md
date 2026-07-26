@@ -89,6 +89,18 @@ s `normalizeState()`, která validuje a migruje uložený stav. Rozbitý zápis 
 a spadne se na výchozí hodnoty, takže poškozený `localStorage` appku neshodí.
 `store/shareLink.ts` kóduje stav do `#s=` (base64url).
 
+**Sdílený přehled se nikdy neukládá sám.** Když příjemce už něco uloženého má,
+cizí scénář se jen zobrazí a zápis se zamkne přes `setPersistenceEnabled(false)`,
+dokud uživatel nerozhodne. Zámek je schválně uvnitř `saveState()`, ne
+v komponentách: kdyby se hlídal až tam, stačilo by jedno zapomenuté volání a
+uživatel přijde o data. Dřív se sdílený stav ukládal rovnou a klik na cizí
+odkaz cizí plán nenávratně přepsal.
+
+**CSP je jen v produkčním buildu** (`vite.config.ts`, plugin `mamnato-csp`).
+`connect-src 'none'` technicky vynucuje slib, že data neopustí prohlížeč.
+Do `index.html` nepatří: dev server si vkládá vlastní inline skript pro Fast
+Refresh, který by `script-src 'self'` zablokoval a HMR by tiše přestal fungovat.
+
 ## Konvence, na kterých záleží
 
 **Typy kontroluj přes `npx tsc -b`, ne `tsc --noEmit`.** Kořenový `tsconfig.json`

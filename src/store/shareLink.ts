@@ -1,5 +1,5 @@
 import type { WizardState } from '../types';
-import { normalizeState, saveState } from './localStorage';
+import { normalizeState, saveState, loadState, setPersistenceEnabled } from './localStorage';
 
 // Sdílení přehledu odkazem: stav se zakóduje do fragmentu URL (#s=…).
 // Nic se neposílá na server, data „jedou" v adrese. Příjemce si otevře
@@ -53,19 +53,62 @@ export function clearShareHash(): void {
   window.history.replaceState(null, '', window.location.pathname + window.location.search);
 }
 
-// Jednorázový bootstrap při startu (mimo React render, takže se pod StrictMode
-// nespouští dvakrát): sdílený stav z URL uložíme a fragment vyčistíme.
-let bootstrappedFromShare = false;
+/**
+ * Jednorázový bootstrap při startu (mimo React render, takže se pod StrictMode
+ * nespouští dvakrát).
+ *
+ * Sdílený přehled se **neukládá automaticky**. Dřív se ukládal, takže kdokoli
+ * si otevřel cizí odkaz, nenávratně přišel o svůj vlastní rozpracovaný plán,
+ * aniž by se ho kdokoli zeptal. Stačilo na to jedno kliknutí na odkaz.
+ *
+ * Teď platí: když příjemce nic uloženého nemá, není co ztratit a scénář se
+ * převezme rovnou. Když něco uloženého má, sdílený přehled se jen zobrazí,
+ * zápis se do potvrzení zamkne a jeho data zůstanou nedotčená.
+ */
+let sharedState: WizardState | null = null;
+let replacesExisting = false;
 
 export function bootstrapSharedState(): void {
   const shared = readSharedState();
-  if (shared) {
+  if (!shared) return;
+
+  clearShareHash();
+  sharedState = shared;
+
+  if (loadState() === null) {
     saveState(shared);
-    clearShareHash();
-    bootstrappedFromShare = true;
+    return;
   }
+
+  replacesExisting = true;
+  setPersistenceEnabled(false);
 }
 
 export function loadedFromShare(): boolean {
-  return bootstrappedFromShare;
+  return sharedState !== null;
+}
+
+// Sdílený přehled k zobrazení. Přednost má před uloženým stavem, dokud
+// se uživatel nerozhodne.
+export function sharedStateToShow(): WizardState | null {
+  return sharedState;
+}
+
+// Zobrazujeme cizí přehled a uživatel má vlastní data, o která by přišel?
+export function sharedReplacesExisting(): boolean {
+  return replacesExisting;
+}
+
+// Uživatel sdílený přehled přijal: odemknout zápis a uložit.
+export function acceptSharedState(state: WizardState): void {
+  setPersistenceEnabled(true);
+  saveState(state);
+  replacesExisting = false;
+}
+
+// Uživatel se vrací ke svému přehledu: sdílený zahodit, zápis odemknout.
+export function discardSharedState(): void {
+  setPersistenceEnabled(true);
+  sharedState = null;
+  replacesExisting = false;
 }

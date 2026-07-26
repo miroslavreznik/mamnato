@@ -510,3 +510,63 @@ test('report uvádí předpoklady výpočtu včetně toho, kdo jde na rodičovsk
   await expect(page.getByText(/Osoba 1 \(příjem/).first()).toBeVisible()
   await expect(page.getByText('Úroková sazba').first()).toBeVisible()
 })
+
+test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ browser }) => {
+  // Odesílatel: scénář s výrazným příjmem, ze kterého vznikne odkaz.
+  const senderCtx = await browser.newContext()
+  const sender = await senderCtx.newPage()
+  await sender.addInitScript(() => {
+    const store = { text: '' }
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: async (t: string) => { store.text = t },
+        readText: async () => store.text,
+      },
+    })
+  })
+  await start(sender)
+  await next(sender) // → Příjmy
+  await sender.locator('input[inputmode="decimal"]').first().fill('98765')
+  await next(sender) // → Výdaje
+  await next(sender) // → Úspory
+  await next(sender) // → Cíle
+  await sender.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await sender.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  await sender.getByRole('button', { name: /Sdílet přehled/ }).click()
+  const sharedUrl = await sender.evaluate(() => navigator.clipboard.readText())
+
+  // Příjemce si nejdřív udělá vlastní přehled s jiným příjmem.
+  const recipientCtx = await browser.newContext()
+  const recipient = await recipientCtx.newPage()
+  await start(recipient)
+  await next(recipient) // → Příjmy
+  await recipient.locator('input[inputmode="decimal"]').first().fill('12345')
+  await next(recipient) // → Výdaje
+  await next(recipient) // → Úspory
+  await next(recipient) // → Cíle
+  await recipient.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await recipient.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  const saved = () => recipient.evaluate(() => localStorage.getItem('mamnato_wizard_v1'))
+  expect(await saved()).toContain('12345')
+
+  // Otevře cizí odkaz: vidí cizí přehled, ale svoje data má pořád uložená.
+  // Mezikrok přes about:blank je nutný, jinak by šlo jen o změnu fragmentu
+  // v rámci téhož dokumentu a stránka by se vůbec nenačetla znovu.
+  await recipient.goto('about:blank')
+  await recipient.goto(sharedUrl)
+  await expect(recipient.getByText(/přehled je z odkazu od někoho jiného/i)).toBeVisible()
+  expect(await saved()).toContain('12345')
+
+  // Ani úprava hodnot v cizím přehledu nesmí jeho data přepsat.
+  await recipient.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await recipient.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true }).fill('4321')
+  expect(await saved()).toContain('12345')
+
+  // Návrat ke svému přehledu data zachová.
+  await recipient.getByRole('button', { name: /Zpět na můj přehled/ }).click()
+  expect(await saved()).toContain('12345')
+
+  await senderCtx.close()
+  await recipientCtx.close()
+})
