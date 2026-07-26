@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
-import { downPaymentGap } from './mortgage';
+import { downPaymentGap, postPurchaseRunwayMonths } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
@@ -16,6 +16,11 @@ import { formatMonths, czk, czkMonthly, czkPerMonth } from './format';
  * záleží víc, než se zdá.
  */
 export type GoalStatus = 'good' | 'caution' | 'warning';
+
+// Kolik měsíců nezbytných výdajů musí zbýt v rezervě po zaplacení akontace.
+// Pod touhle hranicí je koupě sice možná, ale první nečekaný výdaj
+// (rozbitá pračka, výpadek příjmu) se řeší dluhem.
+export const MIN_RESERVE_MONTHS_AFTER_PURCHASE = 3;
 
 export interface GoalReadiness {
   key: string;
@@ -47,7 +52,16 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
     ready_now: 'good',
     very_comfortable: 'good',
   };
-  const status = statusByScenario[scenario.id] ?? 'caution';
+  let status = statusByScenario[scenario.id] ?? 'caution';
+
+  // Rezerva po zaplacení akontace. Scénář ji nezná, protože sleduje jen
+  // dostupnost hypotéky, takže bez tohohle kroku appka označila za „v pořádku"
+  // i koupi, po které domácnosti nezbyde ani koruna na nečekané výdaje.
+  const thinReserve = postPurchaseRunwayMonths(state) < MIN_RESERVE_MONTHS_AFTER_PURCHASE;
+  if (thinReserve && status === 'good') status = 'caution';
+  const reservePart = thinReserve
+    ? ' Po zaplacení akontace by vám ale nezbyla rezerva na nečekané výdaje.'
+    : '';
 
   // Konkrétní čísla (splátka, DSTI, chybějící akontace, termín) jsou
   // v dlaždicích nad tímhle seznamem. Věta u cíle na ně nesahá a odpovídá
@@ -60,9 +74,11 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
   } else if (gap > 0 && !isFinite(months)) {
     headline = 'Akontace ještě chybí a zatím na ni nic neodkládáte. Nastavte si měsíční částku v sekci Bydlení.';
   } else if (gap > 0) {
-    headline = status === 'good'
-      ? 'Akontaci ještě dospořujete, splátku byste ale unesli.'
-      : 'Než na koupi dosáhnete, je potřeba dospořit akontaci.';
+    headline = thinReserve
+      ? `Než na koupi dosáhnete, je potřeba dospořit akontaci.${reservePart}`
+      : 'Akontaci ještě dospořujete, splátku byste ale unesli.';
+  } else if (thinReserve) {
+    headline = `Akontaci máte pokrytou a na splátku dosáhnete.${reservePart}`;
   } else {
     headline = status === 'good'
       ? 'Akontaci máte pokrytou a splátku unesete.'

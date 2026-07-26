@@ -79,3 +79,21 @@ describe('bydlení mezi cíli', () => {
     expect(property?.label).toBe('Vlastní bydlení');
   });
 });
+
+describe('rezerva po zaplacení akontace', () => {
+  it('koupě, po které nezbyde rezerva, není „v pořádku"', () => {
+    // Scénář hypotéky rezervu nezná, sleduje jen dostupnost úvěru. Bez
+    // tohohle kroku dostal cíl zelenou i ten, komu po akontaci nezbyde nic.
+    const state = makeState({ savings: { totalSavings: 800000 } });
+    const r = propertyReadiness(state, allocs());
+    expect(r.status).toBe('caution');
+    expect(r.headline).toMatch(/nezbyla rezerva na nečekané výdaje/);
+  });
+
+  it('kdo si rezervu nechá, zelenou neztrácí', () => {
+    const state = makeState({ savings: { totalSavings: 2000000 } });
+    const r = propertyReadiness(state, allocs());
+    expect(r.status).toBe('good');
+    expect(r.headline).not.toMatch(/rezerva/);
+  });
+});

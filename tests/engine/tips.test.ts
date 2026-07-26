@@ -93,3 +93,17 @@ describe('odůvodnění verdiktu', () => {
     expect(s.verdict.reason).toMatch(/Naráží to na cíl Důchod/);
   });
 });
+
+describe('rezerva po koupi', () => {
+  it('nulová rezerva po akontaci dostane vlastní radu', () => {
+    // Dřív to appka řekla jen šedým číslem v dlaždici „Rezerva po koupi
+    // vydrží 0,0 měs.", což je z celého přehledu ta nejrizikovější věc.
+    const s = evaluateOverall(makeState({ savings: { totalSavings: 800000 } }), allocs());
+    expect(s.tips.some((t) => t.includes('nezbyla rezerva na nečekané výdaje'))).toBe(true);
+  });
+
+  it('komu rezerva zbyde, tomu se o ní neradí', () => {
+    const s = evaluateOverall(makeState({ savings: { totalSavings: 2000000 } }), allocs({ retirement: 5000 }));
+    expect(s.tips.some((t) => t.includes('nezbyla rezerva'))).toBe(false);
+  });
+});
