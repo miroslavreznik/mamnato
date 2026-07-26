@@ -51,7 +51,7 @@ function sentences(state: WizardState): string[] {
     s.verdict.reason,
     ...s.verdict.questions.map((q) => q.answer),
     ...s.goals.map((g) => g.headline),
-    ...s.tips,
+    ...s.tips.map((t) => t.text),
   ];
 }
 

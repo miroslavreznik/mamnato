@@ -18,6 +18,7 @@ import TaxReliefCard from './TaxReliefCard';
 import EducationalGlossary from './EducationalGlossary';
 import ResultsSection from './ResultsSection';
 import ResultsHeader from './ResultsHeader';
+import ResultsTabs, { type TabDef } from './ResultsTabs';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
@@ -49,23 +50,24 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   const hasLeave = parentalLeaveApplicable(state);
   const hasGoalPlanners = hasRetirement || hasChild || hasLeave || hasOther;
 
-  // Tematické sekce výsledků, jen ty, které dávají smysl podle cílů.
-  const sectionDefs = [
+  // Části výsledků jako záložky, jen ty, které dávají smysl podle cílů.
+  const sectionDefs: TabDef[] = [
     { id: 'souhrn', label: 'Souhrn' },
+    { id: 'rozpocet', label: 'Rozpočet' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
     ...(hasGoalPlanners ? [{ id: 'cile', label: 'Ostatní cíle' }] : []),
     { id: 'slovnicek', label: 'Slovníček' },
   ];
-  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(['souhrn']));
-  const isOpen = (id: string) => openSections.has(id);
-  const toggleSection = (id: string) =>
-    setOpenSections((prev) => {
-      const nextSet = new Set(prev);
-      if (nextSet.has(id)) nextSet.delete(id); else nextSet.add(id);
-      return nextSet;
-    });
-  const openAndScroll = (id: string) => {
-    setOpenSections((prev) => new Set(prev).add(id));
+  const [activeTab, setActiveTab] = useState('souhrn');
+
+  // Tisk potřebuje všechno naráz, jinak by v PDF zbyla jedna záložka. Není to
+  // jen CSS: grafy se musí opravdu vykreslit, a to v `display: none` neumí.
+  const [printAll, setPrintAll] = useState(false);
+  const isVisible = (id: string) => printAll || activeTab === id;
+
+  const selectTab = (id: string) => {
+    setActiveTab(id);
+    // Přepnutí záložky nesmí nechat uživatele v půlce předchozího obsahu.
     requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
@@ -151,14 +153,13 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   // Tisk / uložení do PDF, rozbalí všechny sekce (aby se vykreslily i grafy),
   // vypne dark mód a po tisku vše vrátí zpět.
   const handlePrint = () => {
-    const prevOpen = openSections;
-    setOpenSections(new Set(sectionDefs.map((s) => s.id)));
+    setPrintAll(true);
     const root = document.documentElement;
     const wasDark = root.classList.contains('dark');
     if (wasDark) root.classList.remove('dark');
     const restore = () => {
       if (wasDark) root.classList.add('dark');
-      setOpenSections(prevOpen);
+      setPrintAll(false);
       window.removeEventListener('afterprint', restore);
     };
     window.addEventListener('afterprint', restore);
@@ -181,36 +182,22 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         onReset={onReset}
       />
 
-      {/* Rychlá navigace mezi sekcemi. Zůstává u horního okraje, protože
-          stránka je dlouhá; rozbalená sekce je zvýrazněná, ať je vidět,
-          kde se uživatel nachází. Popisek „Přejít na:" zmizel, dělal
-          z lišty formulářové pole a pilulky se vysvětlují samy. */}
-      {sectionDefs.length > 2 && (
-        <nav
-          aria-label="Sekce přehledu"
-          className="no-print sticky top-16 z-30 mb-5 -mx-4 sm:mx-0 px-2 py-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur border-y sm:border sm:rounded-2xl border-gray-200 dark:border-gray-700 flex gap-1 overflow-x-auto"
-        >
-          {sectionDefs.map((section) => (
-            <button
-              key={section.id}
-              onClick={() => openAndScroll(section.id)}
-              aria-current={isOpen(section.id) ? 'true' : undefined}
-              className={`shrink-0 px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 text-sm font-medium rounded-xl transition-colors ${
-                isOpen(section.id)
-                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
-                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-              }`}
-            >
-              {section.label}
-            </button>
-          ))}
-        </nav>
-      )}
+      <ResultsTabs tabs={sectionDefs} active={activeTab} onSelect={selectTab} />
 
-      <div className="space-y-4">
+      <div>
         {/* Souhrn: hlavní odpověď „vyjde mi to?" */}
-        <ResultsSection id="souhrn" title="Souhrn" subtitle="Verdikt, rozpočet a připravenost cílů" open={isOpen('souhrn')} onToggle={() => toggleSection('souhrn')}>
-          <ResultsOverview state={activeState} allocations={activeAllocations} />
+        <ResultsSection id="souhrn" title="Souhrn" subtitle="Odpověď, čísla za ní a stav vašich cílů" active={isVisible('souhrn')}>
+          <ResultsOverview state={activeState} allocations={activeAllocations} onOpenSection={selectTab} />
+          {hasNoGoals && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
+              <p className="text-amber-800 dark:text-amber-300">Vraťte se a vyberte své finanční cíle pro podrobnější analýzu.</p>
+            </div>
+          )}
+        </ResultsSection>
+
+        {/* Rozpočet: kam jde příjem a jak se jmění vyvíjí v čase. Dřív viselo
+            pod souhrnem a dělalo z něj pět tisíc pixelů. */}
+        <ResultsSection id="rozpocet" title="Rozpočet" subtitle="Kam jde váš příjem, co kdyby a vývoj jmění v čase" active={isVisible('rozpocet')}>
           <ExpenseBreakdownChart
             state={state}
             allocations={allocations}
@@ -223,16 +210,11 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
             <DiscretionaryBreakdownChart state={activeState} />
           )}
           <WealthTimelineChart state={activeState} />
-          {hasNoGoals && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-6 text-center">
-              <p className="text-amber-800 dark:text-amber-300">Vraťte se a vyberte své finanční cíle pro podrobnější analýzu.</p>
-            </div>
-          )}
         </ResultsSection>
 
         {/* Bydlení a hypotéka */}
         {hasProperty && (
-          <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Největší položka plánu: akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
+          <ResultsSection id="bydleni" title="Vlastní bydlení" subtitle="Největší položka plánu: akontace, splátka, limity a srovnání s nájmem" active={isVisible('bydleni')}>
             <SavingsChart state={activeState} monthlySaving={activeAllocations.downPayment} />
             <PropertyAffordability
               state={activeState}
@@ -251,7 +233,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
 
         {/* Cíle */}
         {hasGoalPlanners && (
-          <ResultsSection id="cile" title="Ostatní cíle" subtitle="Důchod, dítě, rodičovská a vlastní cíle" open={isOpen('cile')} onToggle={() => toggleSection('cile')}>
+          <ResultsSection id="cile" title="Ostatní cíle" subtitle="Důchod, dítě, rodičovská a vlastní cíle" active={isVisible('cile')}>
             {hasRetirement && (
               <RetirementPlanner
                 state={activeState}
@@ -279,7 +261,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         )}
 
         {/* Slovníček */}
-        <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Finanční pojmy jednoduše" open={isOpen('slovnicek')} onToggle={() => toggleSection('slovnicek')}>
+        <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Finanční pojmy jednoduše" active={isVisible('slovnicek')}>
           <EducationalGlossary />
         </ResultsSection>
       </div>

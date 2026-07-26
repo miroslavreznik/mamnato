@@ -13,7 +13,7 @@ import {
 } from './readiness';
 import { buildVerdict, type Verdict, type OverallStatusKey } from './verdict';
 import { budgetNow, budgetAfterPurchase, type BudgetView } from './budget';
-import { buildTips } from './tips';
+import { buildTips, type Tip } from './tips';
 
 /**
  * Celkové vyhodnocení přehledu: verdikt, stav cílů, rozpočet a tipy.
@@ -26,12 +26,13 @@ import { buildTips } from './tips';
 export type { GoalReadiness, GoalStatus } from './readiness';
 export type { Verdict, VerdictAnswer, OverallStatusKey } from './verdict';
 export type { BudgetView } from './budget';
+export type { Tip } from './tips';
 
 export interface OverallSummary {
   status: OverallStatusKey;
   icon: string;
   verdict: Verdict;
-  tips: string[];
+  tips: Tip[];
   goals: GoalReadiness[];
   /** Rozpočet dnes. Null, když si uživatel nezvolil žádný cíl. */
   budget: BudgetView | null;

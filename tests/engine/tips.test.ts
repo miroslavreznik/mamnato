@@ -34,13 +34,13 @@ describe('rady pod verdiktem', () => {
     // takže „na důchod nespoříte nic" zůstalo bez rady.
     const s = evaluateOverall(makeState(), allocs({ retirement: 0 }));
     expect(s.goals.find((g) => g.key === 'retirement')?.status).toBe('warning');
-    expect(s.tips.some((t) => t.includes('Na důchod zatím nejde nic'))).toBe(true);
+    expect(s.tips.some((t) => t.text.includes('Na důchod zatím nejde nic'))).toBe(true);
   });
 
   it('rada odpovídá tomu, co blokuje verdikt', () => {
     const s = evaluateOverall(tightAfterPurchase(), allocs({ retirement: 2000 }));
     expect(s.status).toBe('not_yet');
-    expect(s.tips[0]).toMatch(/Po koupi by rozpočet nevyšel/);
+    expect(s.tips[0].text).toMatch(/Po koupi by rozpočet nevyšel/);
   });
 
   it('scénář bydlení radí jen tomu, komu bydlení opravdu drhne', () => {
@@ -48,7 +48,7 @@ describe('rady pod verdiktem', () => {
     const s = evaluateOverall(makeState({ goals: ['property'] }), allocs());
     const property = s.goals.find((g) => g.key === 'property');
     if (property?.status === 'good') {
-      expect(s.tips.some((t) => t.includes('snížit cenu nemovitosti'))).toBe(false);
+      expect(s.tips.some((t) => t.text.includes('snížit cenu nemovitosti'))).toBe(false);
     }
   });
 
@@ -69,14 +69,14 @@ describe('rady pod verdiktem', () => {
     });
     const s = evaluateOverall(state, allocs({ downPayment: 10300 }));
     expect(s.goals.find((g) => g.key === 'retirement')?.status).toBe('warning');
-    expect(s.tips.some((t) => t.includes('Na důchod zatím nejde nic'))).toBe(true);
-    expect(s.tips.some((t) => t.includes('nezbyla rezerva'))).toBe(true);
+    expect(s.tips.some((t) => t.text.includes('Na důchod zatím nejde nic'))).toBe(true);
+    expect(s.tips.some((t) => t.text.includes('nezbyla rezerva'))).toBe(true);
   });
 
   it('u záporného rozpočtu se radí jen s rozpočtem', () => {
     const s = evaluateOverall(makeState({ income: { person1NetMonthly: 20000 } }), allocs());
     expect(s.status).toBe('fix_budget');
-    expect(s.tips.every((t) => !t.includes('nemovitost'))).toBe(true);
+    expect(s.tips.every((t) => !t.text.includes('nemovitost'))).toBe(true);
   });
 });
 
@@ -115,11 +115,11 @@ describe('rezerva po koupi', () => {
     // Dřív to appka řekla jen šedým číslem v dlaždici „Rezerva po koupi
     // vydrží 0,0 měs.", což je z celého přehledu ta nejrizikovější věc.
     const s = evaluateOverall(makeState({ savings: { totalSavings: 800000 } }), allocs());
-    expect(s.tips.some((t) => t.includes('nezbyla rezerva na nečekané výdaje'))).toBe(true);
+    expect(s.tips.some((t) => t.text.includes('nezbyla rezerva na nečekané výdaje'))).toBe(true);
   });
 
   it('komu rezerva zbyde, tomu se o ní neradí', () => {
     const s = evaluateOverall(makeState({ savings: { totalSavings: 2000000 } }), allocs({ retirement: 5000 }));
-    expect(s.tips.some((t) => t.includes('nezbyla rezerva'))).toBe(false);
+    expect(s.tips.some((t) => t.text.includes('nezbyla rezerva'))).toBe(false);
   });
 });

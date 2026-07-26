@@ -108,12 +108,12 @@ describe('verdikt při schodku na rodičovské', () => {
 
   it('rada odpovídá tomu, jestli na schodek máte z čeho brát', () => {
     const covered = evaluateOverall(buyingCoupleOnLeave(), allocs());
-    expect(covered.tips.some((t) => t.includes('dotovat z úspor'))).toBe(true);
+    expect(covered.tips.some((t) => t.text.includes('dotovat z úspor'))).toBe(true);
 
     const state = buyingCoupleOnLeave({
       savings: { totalSavings: 2700000, downPaymentFromSavings: 2510000 },
     });
     const short = evaluateOverall(state, allocs());
-    expect(short.tips.some((t) => t.includes('na který rezerva nestačí'))).toBe(true);
+    expect(short.tips.some((t) => t.text.includes('na který rezerva nestačí'))).toBe(true);
   });
 });

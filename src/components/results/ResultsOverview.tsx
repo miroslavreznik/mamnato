@@ -13,6 +13,9 @@ import BudgetSummary from './BudgetSummary';
 interface Props {
   state: WizardState;
   allocations: GoalAllocations;
+  // Přepnutí na záložku, kde se dá rada rovnou provést. Bez toho musel
+  // uživatel místo, na které rada odkazuje, najít sám.
+  onOpenSection?: (id: string) => void;
 }
 
 // Odpověď „Mám na to?": zelená ano, jantarová ano s výhradou, oranžová zatím ne
@@ -89,7 +92,7 @@ const conditionalBadge = {
   className: 'bg-gray-200 text-gray-600 dark:bg-gray-600/60 dark:text-gray-300',
 };
 
-export default function ResultsOverview({ state, allocations }: Props) {
+export default function ResultsOverview({ state, allocations, onOpenSection }: Props) {
   const summary = evaluateOverall(state, allocations);
   const disposable = monthlyDisposable(state);
   const rate = savingsRate(state);
@@ -286,7 +289,22 @@ export default function ResultsOverview({ state, allocations }: Props) {
             {summary.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
                 <span className="text-blue-500 mt-0.5 flex-shrink-0">&#x2022;</span>
-                <span>{tip}</span>
+                <span>
+                  {tip.text}
+                  {tip.section && tip.actionLabel && onOpenSection && (
+                    <>
+                      {' '}
+                      <button
+                        type="button"
+                        onClick={() => onOpenSection(tip.section!)}
+                        className="no-print inline-flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                      >
+                        {tip.actionLabel}
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+                      </button>
+                    </>
+                  )}
+                </span>
               </li>
             ))}
           </ul>
