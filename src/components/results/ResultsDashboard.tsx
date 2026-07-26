@@ -17,6 +17,7 @@ import ParentalLeavePlanner from './ParentalLeavePlanner';
 import TaxReliefCard from './TaxReliefCard';
 import EducationalGlossary from './EducationalGlossary';
 import ResultsSection from './ResultsSection';
+import ResultsHeader from './ResultsHeader';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
@@ -35,8 +36,6 @@ interface ResultsDashboardProps {
 }
 
 export default function ResultsDashboard({ state: initialState, onEdit, onReset }: ResultsDashboardProps) {
-  const modeLabels = { individual: 'Jednotlivec', couple: 'Pár', family: 'Rodina' };
-
   // Výsledková stránka pracuje s vlastní kopií stavu, aby úpravy cílů (např.
   // ve „Vlastní finanční cíle") okamžitě přepočítaly souhrn i grafy a zároveň
   // se uložily do prohlížeče.
@@ -173,63 +172,36 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         <h1 className="text-lg font-bold text-gray-900">MámNaTo? Finanční přehled</h1>
         <p className="text-xs text-gray-500">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
       </div>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Váš finanční plán</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Režim: {modeLabels[state.mode]}</p>
-        </div>
-        <div className="no-print flex flex-wrap gap-2">
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"
-            title="Zkopíruje odkaz, který obsahuje vaše zadaná data (v adrese). Nic se neukládá na server."
-          >
-            {shareCopied ? (
-              <>
-                <svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
-                Odkaz zkopírován
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" /></svg>
-                Sdílet přehled
-              </>
-            )}
-          </button>
-          <button
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" /></svg>
-            Vytisknout / PDF
-          </button>
-          <button
-            onClick={onEdit}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors min-h-[44px]"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4v16h16v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z" /></svg>
-            Upravit údaje
-          </button>
-          <button
-            onClick={onReset}
-            className="inline-flex items-center px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/70 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors min-h-[44px]"
-          >
-            Začít znovu
-          </button>
-        </div>
-      </div>
+      <ResultsHeader
+        mode={state.mode}
+        shareCopied={shareCopied}
+        onShare={handleShare}
+        onPrint={handlePrint}
+        onEdit={onEdit}
+        onReset={onReset}
+      />
 
-      {/* Rychlá navigace mezi sekcemi */}
+      {/* Rychlá navigace mezi sekcemi. Zůstává u horního okraje, protože
+          stránka je dlouhá; rozbalená sekce je zvýrazněná, ať je vidět,
+          kde se uživatel nachází. Popisek „Přejít na:" zmizel, dělal
+          z lišty formulářové pole a pilulky se vysvětlují samy. */}
       {sectionDefs.length > 2 && (
-        <nav className="no-print sticky top-16 z-30 mb-5 -mx-4 sm:mx-0 px-4 sm:px-3 py-2 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-y sm:border sm:rounded-xl border-gray-200/80 dark:border-gray-800/80 flex flex-wrap gap-1.5">
-          <span className="text-xs text-gray-400 self-center mr-1 hidden sm:inline">Přejít na:</span>
-          {sectionDefs.map((s) => (
+        <nav
+          aria-label="Sekce přehledu"
+          className="no-print sticky top-16 z-30 mb-5 -mx-4 sm:mx-0 px-2 py-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur border-y sm:border sm:rounded-2xl border-gray-200 dark:border-gray-700 flex gap-1 overflow-x-auto"
+        >
+          {sectionDefs.map((section) => (
             <button
-              key={s.id}
-              onClick={() => openAndScroll(s.id)}
-              className="px-3 py-2 min-h-[44px] sm:min-h-0 sm:py-1.5 text-sm rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              key={section.id}
+              onClick={() => openAndScroll(section.id)}
+              aria-current={isOpen(section.id) ? 'true' : undefined}
+              className={`shrink-0 px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 text-sm font-medium rounded-xl transition-colors ${
+                isOpen(section.id)
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+              }`}
             >
-              {s.label}
+              {section.label}
             </button>
           ))}
         </nav>

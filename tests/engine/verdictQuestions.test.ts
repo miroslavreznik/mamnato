@@ -83,3 +83,26 @@ describe('druhá otázka u nedosažitelného bydlení', () => {
     expect(v.questions[1].answer).not.toMatch(/Kdyby na bydlení došlo/);
   });
 });
+
+describe('podmíněná odpověď se označí', () => {
+  it('nese příznak, aby ji šlo vybarvit neutrálně', () => {
+    // Zelené „v pořádku" hned pod červeným „nevychází" vypadá, jako by si
+    // appka odporovala. Barvu si zaslouží jen odpověď, která opravdu platí.
+    const state = makeState({
+      goals: ['property', 'retirement'],
+      income: { person1NetMonthly: 44000 },
+      expenses: { rent: 14000, existingLoans: 0, insurance: 800, food: 6500, transport: 1500, children: 0, utilities: 3200, other: 5000 },
+      savings: { totalSavings: 380000 },
+      property: { targetPrice: 4200000, mortgageRate: 0.052, loanTermYears: 30 },
+      person1Age: 29,
+    });
+    const v = evaluateOverall(state, allocs({ downPayment: 6500, retirement: 3000 })).verdict;
+    expect(v.questions[1].conditional).toBe(true);
+    expect(v.questions[0].conditional).toBeUndefined();
+  });
+
+  it('platná odpověď příznak nemá', () => {
+    const v = evaluateOverall(makeState(), allocs({ retirement: 5000 })).verdict;
+    expect(v.questions[1].conditional).toBe(false);
+  });
+});

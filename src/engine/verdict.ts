@@ -23,6 +23,13 @@ export interface VerdictQuestion {
   question: string;
   answer: string;
   status: GoalStatus;
+  /**
+   * Odpověď platí jen za předpokladu, který zatím neplatí (koupě, na kterou
+   * se nedosáhne). Nálepka se pak vybarví neutrálně: zelené „v pořádku"
+   * vedle červeného „nevychází" vypadá, jako by si appka odporovala,
+   * i když každá odpověď mluví o něčem jiném.
+   */
+  conditional?: boolean;
 }
 
 export interface Verdict {
@@ -94,13 +101,14 @@ export function buildVerdictQuestions(
   // Když se na bydlení zatím nedosáhne, druhá otázka mluví o rozpočtu po
   // koupi, která by takhle neproběhla. Bez té podmínky vedle sebe stojí
   // „Zatím ne" a „Ano", což vypadá, že si appka odporuje.
-  const second = property.status === 'warning'
+  const conditional = property.status === 'warning';
+  const second = conditional
     ? `Kdyby na bydlení došlo: ${answer.charAt(0).toLowerCase()}${answer.slice(1)}`
     : answer;
 
   return [
     { question: 'Dosáhnete na vlastní bydlení?', answer: reachable[property.status], status: property.status },
-    { question: 'Zbyde vám pak na zbytek?', answer: second, status },
+    { question: 'Zbyde vám pak na zbytek?', answer: second, status, conditional },
   ];
 }
 

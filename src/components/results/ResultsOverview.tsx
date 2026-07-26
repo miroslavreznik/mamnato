@@ -81,6 +81,14 @@ const goalBadge: Record<GoalStatus, { label: string; className: string }> = {
   },
 };
 
+// Odpověď, která platí jen za předpokladu, jenž zatím neplatí. Barvu si
+// nezaslouží: zelené „v pořádku" hned pod červeným „nevychází" vypadá, jako
+// by si appka odporovala, i když každá odpověď mluví o něčem jiném.
+const conditionalBadge = {
+  label: 'Podmíněně',
+  className: 'bg-gray-200 text-gray-600 dark:bg-gray-600/60 dark:text-gray-300',
+};
+
 export default function ResultsOverview({ state, allocations }: Props) {
   const summary = evaluateOverall(state, allocations);
   const disposable = monthlyDisposable(state);
@@ -199,17 +207,20 @@ export default function ResultsOverview({ state, allocations }: Props) {
             a uživatel pak nepozná, která z nich ho brzdí. */}
         {summary.verdict.questions.length > 0 && (
           <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 space-y-2">
-            {summary.verdict.questions.map((q) => (
-              <div key={q.question} className="flex items-start gap-2.5">
-                <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-medium ${goalBadge[q.status].className}`}>
-                  {goalBadge[q.status].label}
-                </span>
-                <p className="text-sm text-gray-700 dark:text-gray-200 min-w-0">
-                  <span className="font-semibold">{q.question}</span>{' '}
-                  <span className="text-gray-600 dark:text-gray-400">{q.answer}</span>
-                </p>
-              </div>
-            ))}
+            {summary.verdict.questions.map((q) => {
+              const badge = q.conditional ? conditionalBadge : goalBadge[q.status];
+              return (
+                <div key={q.question} className="flex items-start gap-2.5">
+                  <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
+                    {badge.label}
+                  </span>
+                  <p className={`text-sm min-w-0 ${q.conditional ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                    <span className="font-semibold">{q.question}</span>{' '}
+                    <span className="text-gray-600 dark:text-gray-400">{q.answer}</span>
+                  </p>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
