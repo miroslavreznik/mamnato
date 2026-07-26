@@ -131,11 +131,6 @@ export function benefitAtLeaveMonth(phases: LeavePhase[], monthIntoLeave: number
   return phases[phases.length - 1]?.monthlyBenefit ?? 0;
 }
 
-// Výchozí měsíční příjem během volna = rodičovský příspěvek rozložený na dobu čerpání.
-export function defaultMonthlyBenefit(durationMonths: number): number {
-  return Math.round(RODICOVSKA_POOL / Math.max(1, durationMonths));
-}
-
 export function parentSalary(state: WizardState, parent: 1 | 2): number {
   return parent === 1
     ? state.income.person1NetMonthly ?? 0

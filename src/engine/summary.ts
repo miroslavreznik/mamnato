@@ -1,35 +1,29 @@
 import type { WizardState } from '../types';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from './cashflow';
-import { dsti, monthsToSaveDownPayment } from './mortgage';
 import { evaluateScenario } from './scenarios';
-import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
-import { evaluateParentalLeave, type LeaveImpact } from './parentalLeave';
+import { evaluateParentalLeave } from './parentalLeave';
 import type { GoalAllocations } from './allocation';
-import { formatMonths, czk, czkMonthly, czkPerMonth } from './format';
+import { czk } from './format';
+import {
+  propertyReadiness,
+  retirementReadiness,
+  childReadiness,
+  customReadiness,
+  leaveReadiness,
+  type GoalReadiness,
+} from './readiness';
+import { buildVerdict, type Verdict, type OverallStatusKey } from './verdict';
 
-export type OverallStatusKey = 'good' | 'tight' | 'not_yet' | 'fix_budget';
-export type GoalStatus = 'good' | 'caution' | 'warning';
+/**
+ * Celkové vyhodnocení přehledu: verdikt, stav cílů, rozpočet a tipy.
+ *
+ * Tenhle soubor jen skládá dohromady výsledky ostatních modulů. Hodnocení
+ * jednotlivých cílů je v `readiness.ts`, formulace odpovědi ve `verdict.ts`.
+ */
 
-export interface GoalReadiness {
-  key: string;
-  label: string;
-  status: GoalStatus;
-  headline: string;
-}
-
-// Přímá odpověď na otázku z názvu appky. Zobrazuje se jako první věc ve
-// výsledcích, teprve pak následuje rozbor.
-export type VerdictAnswer = 'yes' | 'yes_but' | 'no_but' | 'no';
-
-export interface Verdict {
-  answer: VerdictAnswer;
-  // Hlavní věta, např. „Máte na to".
-  headline: string;
-  // Doplněk za čárkou u variant „ale…"; u jasného ano/ne prázdný.
-  qualifier: string;
-  // Jednořádkové zdůvodnění pod odpovědí.
-  reason: string;
-}
+// Zachováno kvůli zpětné kompatibilitě importů napříč aplikací.
+export type { GoalReadiness, GoalStatus } from './readiness';
+export type { Verdict, VerdictAnswer, OverallStatusKey } from './verdict';
 
 export interface OverallSummary {
   status: OverallStatusKey;
@@ -38,219 +32,6 @@ export interface OverallSummary {
   tips: string[];
   goals: GoalReadiness[];
   budget: { disposable: number; allocated: number; surplus: number; fits: boolean } | null;
-}
-
-// Připravenost cíle „nemovitost", z existujícího scénáře + čísel.
-function propertyReadiness(state: WizardState): GoalReadiness {
-  const scenario = evaluateScenario(state);
-  const months = monthsToSaveDownPayment(state);
-  const dstiPct = Math.round(dsti(state) * 100);
-  const statusByScenario: Record<string, GoalStatus> = {
-    cannot_afford_cashflow: 'warning',
-    cannot_afford_dsti: 'warning',
-    no_savings: 'warning',
-    tight_but_possible: 'caution',
-    ready_in_1_2_years: 'caution',
-    ready_now: 'good',
-    very_comfortable: 'good',
-  };
-  const status = statusByScenario[scenario.id] ?? 'caution';
-  const dstiPart = isFinite(dstiPct) ? ` · DSTI ${dstiPct} %` : '';
-  const headline =
-    scenario.id === 'cannot_afford_dsti'
-      ? `Splátka nad obvyklý limit bank${dstiPart}`
-      : `Na akontaci ${formatMonths(months, true)}${dstiPart}`;
-  return { key: 'property', label: 'Nemovitost', status, headline };
-}
-
-function retirementReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
-  const monthly = allocations.retirement;
-  if (monthly <= 0) {
-    return { key: 'retirement', label: 'Důchod', status: 'warning', headline: 'Zatím na důchod nespoříte nic.' };
-  }
-  const years = yearsUntilRetirement(state.person1Age);
-  const projection = retirementProjection(monthly, years, 0.07);
-  const finalValue = projection[projection.length - 1]?.portfolioValue ?? 0;
-  const monthlyRent = finalValue * 0.04 / 12;
-  // Renta pod ~8 000 Kč/měs je spíš doplněk k důchodu než plnohodnotný příjem.
-  const modest = monthlyRent < 8000;
-  return {
-    key: 'retirement',
-    label: 'Důchod',
-    status: modest ? 'caution' : 'good',
-    headline: modest
-      ? `Spoříte ${czkPerMonth(monthly)}, v důchodu to vyjde zhruba na ${czkPerMonth(monthlyRent)}. Zatím spíš doplněk než plnohodnotný příjem.`
-      : `Spoříte ${czkPerMonth(monthly)}, v důchodu to vyjde zhruba na ${czkPerMonth(monthlyRent)}.`,
-  };
-}
-
-// Kolik měsíců výdajů musí zbýt po skončení volna, aby to ještě šlo nazvat
-// rezervou. Pod touhle hranicí je sice volno ufinancovatelné, ale na nečekaný
-// výdaj (s malým dítětem a hypotékou) už nic nezbývá.
-const MIN_RUNWAY_AFTER_LEAVE = 3;
-
-// Připravenost na výpadek příjmu během rodičovské (jen když je scénář zapnutý).
-//
-// Samotný měsíční schodek nestačí na to označit cíl za nedosažitelný. Rodičovská
-// je z podstaty dočasná a kryje se z úspor; rozhoduje, jestli rezerva vydrží
-// celé volno a co po něm zbyde. Dřív stačilo jediné minusové číslo a celý
-// verdikt spadl na „Zatím na to nemáte", i když rezerva schodek pokrývala
-// několikrát.
-function leaveReadiness(state: WizardState): GoalReadiness | null {
-  const leave = evaluateParentalLeave(state);
-  if (!leave) return null;
-  const relevant = leave.disposableDuringLeaveAfterPurchase !== null
-    ? leave.disposableDuringLeaveAfterPurchase
-    : leave.disposableDuringLeave;
-
-  if (relevant >= 0) {
-    return {
-      key: 'leave',
-      label: 'Rodičovská',
-      status: relevant < 3000 ? 'caution' : 'good',
-      headline: `Během volna vám měsíčně zbyde ${czk(relevant)}.`,
-    };
-  }
-
-  const perMonth = `Během volna vám bude chybět ${czkMonthly(Math.abs(relevant))}, za ${formatMonths(leave.durationMonths)} celkem ${czk(leave.shortfallTotal)}.`;
-
-  if (!leave.coversWholeLeave) {
-    const covered = leave.monthsCovered ?? 0;
-    return {
-      key: 'leave',
-      label: 'Rodičovská',
-      status: 'warning',
-      headline: leave.reserveAfter <= 0
-        ? `${perMonth} Nemáte rezervu, ze které byste to pokryli.`
-        : `${perMonth} Rezerva vydrží ${covered} z ${leave.durationMonths} měsíců volna.`,
-    };
-  }
-
-  // Rezerva volno pokryje. Není to bez následku (o tu částku se ztenčí), ale
-  // je to zvládnutelné, takže „pozor", ne „nevychází".
-  const thin = leave.runwayMonthsAfterLeave < MIN_RUNWAY_AFTER_LEAVE;
-  return {
-    key: 'leave',
-    label: 'Rodičovská',
-    status: 'caution',
-    headline: thin
-      ? `${perMonth} Rezerva to pokryje, ale zbyde z ní jen ${czk(leave.reserveLeftAfterLeave)}, což je na nečekané výdaje málo.`
-      : `${perMonth} Rezerva to pokryje a zbyde vám ${czk(leave.reserveLeftAfterLeave)}.`,
-  };
-}
-
-function childReadiness(allocations: GoalAllocations): GoalReadiness {
-  const monthly = allocations.child;
-  return {
-    key: 'child',
-    label: 'Dítě / rodina',
-    status: monthly > 0 ? 'good' : 'caution',
-    headline: monthly > 0
-      ? `Odkládáte ${czkPerMonth(monthly)} na náklady spojené s dítětem.`
-      : 'Zatím neodkládáte nic na náklady spojené s dítětem.',
-  };
-}
-
-function customReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
-  const goals = state.customGoals ?? [];
-  if (goals.length === 0) {
-    return { key: 'other', label: 'Vlastní cíle', status: 'caution', headline: 'Zatím jste žádný vlastní cíl nezadali.' };
-  }
-  const totalAlloc = allocations.custom.reduce((s, v) => s + v, 0);
-  const results = allocateGoals(goals, totalAlloc);
-  const achievable = results.filter((r) => r.achievable).length;
-  const status: GoalStatus = achievable === goals.length ? 'good' : achievable > 0 ? 'caution' : 'warning';
-  return {
-    key: 'other',
-    label: 'Vlastní cíle',
-    status,
-    headline: `${achievable} z ${goals.length} ${goals.length === 1 ? 'cíle' : 'cílů'} stihnete v termínu, který jste zadali.`,
-  };
-}
-
-// Odpověď „Mám na to?" odvozená z celkového statusu. Formulace jsou úmyslně
-// krátké, aby fungovaly jako velký nadpis nad celým přehledem.
-function buildVerdict(
-  status: OverallStatusKey,
-  goals: GoalReadiness[],
-  hasGoals: boolean,
-  disposable: number,
-  leave: LeaveImpact | null
-): Verdict {
-  // Bez zvolených cílů není na co odpovídat, tak aspoň zhodnotíme rozpočet.
-  if (!hasGoals) {
-    return disposable > 0
-      ? {
-          answer: 'yes_but',
-          headline: 'Rozpočet máte v plusu',
-          qualifier: 'ale nemáte zvolený žádný cíl',
-          reason: `Měsíčně vám zbývá ${czk(disposable)}. Vyberte si cíl a spočítám, jestli na něj máte.`,
-        }
-      : {
-          answer: 'no',
-          headline: 'Rozpočet je v mínusu',
-          qualifier: '',
-          reason: 'Výdaje jsou vyšší než příjmy. Než budete plánovat cíle, je potřeba dostat rozpočet do plusu.',
-        };
-  }
-
-  const weak = goals.filter((g) => g.status === 'warning').map((g) => g.label);
-  const list = (labels: string[]) =>
-    labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} a ${labels[labels.length - 1]}`;
-
-  // Dočasný schodek během rodičovské krytý úsporami je vlastní příběh: je to
-  // „ano, ale budete sahat do úspor", ne obecné „bude to napjaté".
-  const drawingOnSavings = leave !== null && leave.shortfallPerMonth > 0 && leave.coversWholeLeave;
-  if (status === 'tight' && drawingOnSavings && leave) {
-    return {
-      answer: 'yes_but',
-      headline: 'Máte na to',
-      qualifier: 'ale během rodičovské budete sahat do úspor',
-      reason: `Po dobu volna vám bude chybět ${czkMonthly(leave.shortfallPerMonth)}, celkem ${czk(leave.shortfallTotal)}. Rezerva to pokryje a zbyde vám ${czk(leave.reserveLeftAfterLeave)}.`,
-    };
-  }
-
-  switch (status) {
-    case 'good':
-      return {
-        answer: 'yes',
-        headline: 'Máte na to',
-        qualifier: '',
-        reason: 'Rozpočet je v plusu, cíle se do něj vejdou a zbývá vám i rezerva.',
-      };
-    case 'tight':
-      return {
-        answer: 'yes_but',
-        headline: 'Máte na to',
-        qualifier: 'ale bude to napjaté',
-        reason: 'Na cíle vám to vyjde, jenže bez velkého polštáře. Nečekaný výdaj by rozpočet rozhodil.',
-      };
-    case 'not_yet':
-      if (leave && leave.shortfallPerMonth > 0 && !leave.coversWholeLeave) {
-        return {
-          answer: 'no_but',
-          headline: 'Zatím na to nemáte',
-          qualifier: 'chybí rezerva na dobu rodičovské',
-          reason: `Během volna vám bude chybět ${czkMonthly(leave.shortfallPerMonth)} a rezerva vydrží ${leave.monthsCovered ?? 0} z ${leave.durationMonths} měsíců. Pomůže došetřit, zkrátit volno nebo hledat levnější nemovitost.`,
-        };
-      }
-      return {
-        answer: 'no_but',
-        headline: 'Zatím na to nemáte',
-        qualifier: 'ale máte kam sáhnout',
-        reason: weak.length
-          ? `Naráží to na cíl ${list(weak)}. Úpravou částky, horizontu nebo výdajů se to dá dostat do zelené.`
-          : 'Cíle se zatím nevejdou do disponibilní částky. Úpravou částek nebo horizontu se to dá srovnat.',
-      };
-    case 'fix_budget':
-    default:
-      return {
-        answer: 'no',
-        headline: 'Zatím na to nemáte',
-        qualifier: '',
-        reason: 'Výdaje jsou vyšší nebo stejné jako příjmy, takže nezbývá na spoření. Začít je potřeba rozpočtem.',
-      };
-  }
 }
 
 const OVERALL_ICON: Record<OverallStatusKey, string> = {

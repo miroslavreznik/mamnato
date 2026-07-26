@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatMonths, yearWord, monthWord, formatNumber, czk, czkPerMonth, czkMonthly, percent, percentCompact } from '../../src/engine/format';
+import { formatMonths, yearWord, monthWord, formatNumber, czk, czkPerMonth, czkMonthly, percentCompact } from '../../src/engine/format';
 
 describe('skloňování', () => {
   it('roky podle českého vzoru', () => {
@@ -58,11 +58,6 @@ describe('formátování částek', () => {
     expect(czkMonthly(12345)).toBe(`${czk(12345)} měsíčně`);
   });
 
-  it('procenta píše s desetinnou čárkou', () => {
-    expect(percent(0.048)).toBe('4,8 %');
-    expect(percent(0.8, 0)).toBe('80 %');
-    expect(percent(0.0525, 2)).toBe('5,25 %');
-  });
 
   it('kompaktní procento nevnucuje desetinná místa', () => {
     expect(percentCompact(0.01)).toBe('1 %');

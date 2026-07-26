@@ -76,7 +76,17 @@ Klíčové moduly a jejich role:
 - `expenseBreakdown.ts`: `withExcludedExpenses()` / `withExcludedGoals()` pohánějí režim
   „co kdyby". Klíč s tečkou (`travel.abroad`) znamená položku podrobného rozpisu zbytných
   výdajů; vypnutím se snižuje i souhrnná položka `other`, aby se částka neodečetla dvakrát.
-- `format.ts`: skloňování času. Nikdy neskládej „1 let" ručně.
+- `readiness.ts` + `verdict.ts`: `summary.ts` jen skládá jejich výsledky. Hodnocení
+  jednotlivých cílů je v prvním, formulace odpovědi ve druhém.
+- `whatIf.ts`: režim „co kdyby". Porovnává verdikt před a po vypnutí položky
+  a vysvětluje, proč se nehnul.
+- `estimate.ts`: vzorec „appka to umí odhadnout, ale uživatel může přepsat".
+  Používá ho sazba, náklady na vlastnictví i dávky na rodičovské. Rozlišuje
+  přes `!= null`, takže zadaná nula je platná hodnota, ne „nevyplněno".
+- `format.ts`: **všechna** čísla, částky a časové údaje pro uživatele.
+  `czk()`, `czkPerMonth()` (do dlaždic), `czkMonthly()` (do vět), `formatRate()`,
+  `percentCompact()`, `formatMonths()`, `formatYears()`. Nikdy neskládej „1 let"
+  ani „12 345 Kč/měs." ručně a nedefinuj si vlastní `fmt`, bylo jich devět.
 
 **Reaktivita výsledků.** `ResultsDashboard` drží stav (`state`, `allocations`,
 `excludedExpenses`, `excludedGoals`) a odvozuje z něj `activeState` a `activeAllocations`.

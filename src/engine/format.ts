@@ -25,16 +25,6 @@ export function czkMonthly(value: number): string {
   return `${czk(value)} měsíčně`;
 }
 
-// Podíl zapsaný jako procento, např. 0,048 → „4,8 %".
-// `decimals` řídí, kolik desetinných míst se ukáže.
-export function percent(ratio: number, decimals = 1): string {
-  const value = ratio * 100;
-  return `${value.toLocaleString('cs-CZ', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  })} %`;
-}
-
 // Procento bez vnucených desetinných míst: 0,01 → „1 %", 0,048 → „4,8 %".
 export function percentCompact(ratio: number): string {
   const value = Math.round(ratio * 1000) / 10;

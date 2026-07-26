@@ -3,7 +3,7 @@ import type { WizardState } from '../types';
 // Zbytné (discretionary) výdaje, dají se v případě výpadku příjmů omezit.
 // Záměrně konzervativní: pouze kategorie „other" (zábava, dovolená, koníčky, předplatné).
 // Ostatní kategorie (nájem, energie, jídlo, doprava, …) považujeme za nezbytné.
-export const DISCRETIONARY_FIELDS = ['other'] as const;
+const DISCRETIONARY_FIELDS = ['other'] as const;
 
 export function totalMonthlyIncome(state: WizardState): number {
   return (state.income.person1NetMonthly ?? 0)

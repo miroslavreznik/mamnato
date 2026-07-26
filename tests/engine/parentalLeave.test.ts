@@ -1,10 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   evaluateParentalLeave,
-  defaultMonthlyBenefit,
   defaultCaringParent,
   parentalLeaveApplicable,
-  RODICOVSKA_POOL,
 } from '../../src/engine/parentalLeave';
 import type { WizardState } from '../../src/types';
 
@@ -24,9 +22,6 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
 }
 
 describe('parental leave helpers', () => {
-  it('default benefit spreads the rodičovská pool over the duration', () => {
-    expect(defaultMonthlyBenefit(36)).toBe(Math.round(RODICOVSKA_POOL / 36));
-  });
 
   it('default caring parent is the lower earner', () => {
     expect(defaultCaringParent(makeState())).toBe(2); // person2 earns less

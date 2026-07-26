@@ -3,6 +3,7 @@ import {
   evaluateParentalLeave,
   defaultCaringParent,
   parentSalary,
+  benefitEstimate,
   PPM_WEEKS,
 } from '../../engine/parentalLeave';
 import NumField from '../ui/NumField';
@@ -32,8 +33,10 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
 
   const changeDuration = (durationMonths: number) => update({ durationMonths });
 
-  // Odhad podle fází vs. ručně zadaná částka, stejný vzorec jako u sazby.
-  const benefitOverridden = pl?.monthlyBenefit != null;
+  // Odhad podle fází vs. ručně zadaná částka, stejný vzorec jako u sazby
+  // a nákladů na vlastnictví (viz engine/estimate.ts).
+  const benefit = benefitEstimate(state);
+  const benefitOverridden = benefit?.overridden ?? false;
   const resetBenefit = () => {
     if (pl) onChange({ enabled: pl.enabled, parent: pl.parent, durationMonths: pl.durationMonths });
   };
