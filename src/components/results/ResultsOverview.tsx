@@ -3,7 +3,8 @@ import type { GoalAllocations } from '../../engine/allocation';
 import { evaluateOverall } from '../../engine/summary';
 import type { GoalStatus, VerdictAnswer } from '../../engine/summary';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
-import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, monthsToSaveDownPayment, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
+import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
+import { monthsToSaveAtAllocation } from '../../engine/allocation';
 import { DEFAULTS } from '../../engine/defaults';
 import { formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
@@ -112,7 +113,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
         })(),
         (() => {
           const gap = downPaymentGap(state);
-          const months = monthsToSaveDownPayment(state);
+          const months = monthsToSaveAtAllocation(state, allocations.downPayment);
           const required = requiredDownPayment(state.property.targetPrice, downPaymentFraction(state));
           return {
             label: 'Chybějící akontace',
@@ -120,7 +121,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
             value: gap > 0 ? fmt(gap) : '0',
             unit: 'Kč',
             sub: gap > 0
-              ? (isFinite(months) ? `naspoříte za ${formatMonths(months, true)}` : 'při současném rozpočtu nenaspoříte')
+              ? (isFinite(months) ? `naspoříte za ${formatMonths(months, true)}` : 'zatím na ni nic neodkládáte')
               : 'akontaci máte pokrytou',
             tone: gap > 0 ? (isFinite(months) ? 'warn' : 'bad') : 'good',
             // Kolik z požadované akontace je už pokryto.

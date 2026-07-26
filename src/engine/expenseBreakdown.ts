@@ -115,9 +115,21 @@ export function breakdownSurplus(
   return income - spent;
 }
 
-// Spoření na cíle (měsíční toky). Nezahrnuje hypotéku, ta je výdajem v „Po koupi".
-function goalFlows(state: WizardState, allocations: GoalAllocations): GoalFlow[] {
+// Spoření na cíle (měsíční toky). Nezahrnuje splátku hypotéky, ta je výdajem
+// na bydlení ve sloupci „Po koupi".
+//
+// Odkládání na akontaci je naopak spoření jako každé jiné, ale jen do koupě:
+// ve sloupci „Po koupi" už akontace leží v nemovitosti a místo něj se platí
+// splátka. Kdyby tam zůstalo obojí, sloupec by ukazoval bydlení dvakrát.
+function goalFlows(
+  state: WizardState,
+  allocations: GoalAllocations,
+  afterPurchase: boolean
+): GoalFlow[] {
   const flows: GoalFlow[] = [];
+  if (!afterPurchase && state.goals.includes('property') && allocations.downPayment > 0) {
+    flows.push({ key: 'downPayment', label: 'Spoření na akontaci', amount: allocations.downPayment });
+  }
   if (state.goals.includes('retirement') && allocations.retirement > 0) {
     flows.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement });
   }
@@ -141,7 +153,7 @@ export function incomeFlow(
 ): IncomeFlow {
   const income = totalMonthlyIncome(state);
   const expenses = expenseCategories(state, afterPurchase);
-  const goals = goalFlows(state, allocations);
+  const goals = goalFlows(state, allocations, afterPurchase);
 
   const spentExpenses = expenses
     .filter((c) => !excludedKeys.has(c.key))

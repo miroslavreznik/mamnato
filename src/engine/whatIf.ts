@@ -3,7 +3,9 @@ import type { GoalAllocations } from './allocation';
 import { evaluateOverall, type Verdict } from './summary';
 import { withExcludedExpenses, withExcludedGoals } from './expenseBreakdown';
 import { evaluateScenario } from './scenarios';
-import { dsti, downPaymentGap, monthsToSaveDownPayment } from './mortgage';
+import { dsti, downPaymentGap } from './mortgage';
+import { monthsToSaveAtAllocation } from './allocation';
+import { monthlyDisposable } from './cashflow';
 import { formatMonths } from './format';
 
 /**
@@ -32,7 +34,7 @@ export function allocationsWithoutGoals(
   excludedGoals: Set<string>
 ): GoalAllocations {
   return {
-    mortgage: excludedGoals.has('property') ? 0 : allocations.mortgage,
+    downPayment: excludedGoals.has('property') ? 0 : allocations.downPayment,
     retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
     child: excludedGoals.has('child') ? 0 : allocations.child,
     custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
@@ -59,11 +61,16 @@ export function evaluateWhatIf(
     now: now.verdict,
     improved,
     worsened,
-    hint: buildHint(state, adjusted, improved),
+    hint: buildHint(state, adjusted, allocations, improved),
   };
 }
 
-function buildHint(state: WizardState, adjusted: WizardState, improved: boolean): string {
+function buildHint(
+  state: WizardState,
+  adjusted: WizardState,
+  allocations: GoalAllocations,
+  improved: boolean
+): string {
   const generic = 'Na celkovou odpověď to zatím nestačí. Zkuste vypnout i něco dalšího.';
   if (improved || !adjusted.goals.includes('property')) return generic;
 
@@ -75,10 +82,12 @@ function buildHint(state: WizardState, adjusted: WizardState, improved: boolean)
   }
 
   // Chybí akontace: verdikt se sice nehnul, ale úspora zkracuje čekání,
-  // což je konkrétní a měřitelný přínos.
+  // což je konkrétní a měřitelný přínos. Počítá se s tím, že ušetřené peníze
+  // půjdou právě na akontaci, tedy k tomu, co na ni uživatel odkládá už teď.
   if (downPaymentGap(adjusted) > 0) {
-    const before = monthsToSaveDownPayment(state);
-    const after = monthsToSaveDownPayment(adjusted);
+    const freed = Math.max(0, monthlyDisposable(adjusted) - monthlyDisposable(state));
+    const before = monthsToSaveAtAllocation(state, allocations.downPayment);
+    const after = monthsToSaveAtAllocation(adjusted, allocations.downPayment + freed);
     return after < before
       ? `Verdikt se zatím nezměnil, ale chybějící akontaci díky tomu naspoříte za ${formatMonths(after, true)} místo ${formatMonths(before, true)}.`
       : 'Zbývá naspořit akontaci. Na celkovou odpověď to zatím nestačí.';

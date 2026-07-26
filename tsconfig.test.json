@@ -1,0 +1,13 @@
+{
+  // Testy byly dlouho mimo typovou kontrolu: tsconfig.app.json zahrnuje jen
+  // `src`, takže přejmenování pole v enginu prošlo, aniž by si toho testy
+  // všimly (zůstal v nich starý klíč, který nic nedělal). Kontrolují se proto
+  // zvlášť, se stejnou přísností jako aplikace.
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.test.tsbuildinfo",
+    "types": ["vite/client", "node"],
+    "noEmit": true
+  },
+  "include": ["tests", "e2e"]
+}

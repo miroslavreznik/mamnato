@@ -88,7 +88,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
 
   // Vypnutý cíl nesmí dál ukrajovat z rozpočtu.
   const activeAllocations = useMemo<GoalAllocations>(() => ({
-    mortgage: excludedGoals.has('property') ? 0 : allocations.mortgage,
+    downPayment: excludedGoals.has('property') ? 0 : allocations.downPayment,
     retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
     child: excludedGoals.has('child') ? 0 : allocations.child,
     custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
@@ -266,6 +266,8 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
               state={activeState}
               onChangeDownPayment={handleChangeDownPayment}
               onChangeRate={handleChangeRate}
+              monthlySaving={allocations.downPayment}
+              onChangeMonthlySaving={(v) => handleChangeAllocation('downPayment', null, v)}
             />
             <DtiDstiIndicator state={activeState} />
             <MortgageVsRent state={activeState} />

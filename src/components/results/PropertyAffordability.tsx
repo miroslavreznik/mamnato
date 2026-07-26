@@ -3,7 +3,6 @@ import {
   requiredDownPayment,
   downPaymentGap,
   downPaymentFraction,
-  monthsToSaveDownPayment,
   effectiveDownPayment,
   mortgageRate,
   loanTermYears,
@@ -12,9 +11,11 @@ import {
   fixationYears as fixationYearsOf,
   totalProjectCost,
 } from '../../engine/mortgage';
+import { monthsToSaveAtAllocation } from '../../engine/allocation';
 import { formatMonths, formatYears, czk, czkPerMonth, formatRate } from '../../engine/format';
 import { Row } from './property/shared';
 import DownPaymentSlider from './property/DownPaymentSlider';
+import MonthlySavingSlider from './property/MonthlySavingSlider';
 import RateSlider from './property/RateSlider';
 import OneOffCosts from './property/OneOffCosts';
 
@@ -25,6 +26,10 @@ interface Props {
   onChangeDownPayment?: (value: number) => void;
   // Totéž pro úrokovou sazbu, druhá páka, která nejvíc hýbe splátkou.
   onChangeRate?: (value: number) => void;
+  // Měsíční odkládání na chybějící akontaci. Je to cíl jako každý jiný,
+  // proto se z něj počítá i čas na naspoření a ukusuje z rozpočtu.
+  monthlySaving?: number;
+  onChangeMonthlySaving?: (value: number) => void;
 }
 
 /**
@@ -34,13 +39,19 @@ interface Props {
  * v `./property/`. Každý si čísla dopočítá sám z enginu, takže se sem
  * neprotahují desítkami propů a jde je číst i upravovat samostatně.
  */
-export default function PropertyAffordability({ state, onChangeDownPayment, onChangeRate }: Props) {
+export default function PropertyAffordability({
+  state,
+  onChangeDownPayment,
+  onChangeRate,
+  monthlySaving = 0,
+  onChangeMonthlySaving,
+}: Props) {
   const projectCost = totalProjectCost(state);
   const dpFraction = downPaymentFraction(state);
   const dpPct = Math.round(dpFraction * 100);
   const dp = requiredDownPayment(projectCost, dpFraction);
   const gap = downPaymentGap(state);
-  const months = monthsToSaveDownPayment(state);
+  const months = monthsToSaveAtAllocation(state, monthlySaving);
   const fixationYears = fixationYearsOf(state);
 
   return (
@@ -71,6 +82,9 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
         />
 
         {onChangeDownPayment && <DownPaymentSlider state={state} onChange={onChangeDownPayment} />}
+        {onChangeMonthlySaving && (
+          <MonthlySavingSlider state={state} value={monthlySaving} onChange={onChangeMonthlySaving} />
+        )}
         {onChangeRate && <RateSlider state={state} onChange={onChangeRate} />}
 
         <div className="border-t dark:border-gray-600 pt-3" />
@@ -84,13 +98,20 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
         {gap > 0 && months !== Infinity && (
           <>
             <div className="border-t dark:border-gray-600 pt-3" />
-            <Row label="Čas na naspoření chybějící akontace" value={formatMonths(months)} />
+            <Row
+              label="Čas na naspoření chybějící akontace"
+              value={formatMonths(months)}
+              tooltip={`Chybějící akontace (${czk(gap)}) dělená tím, co na ni měsíčně odkládáte (${czkPerMonth(monthlySaving)}). Částku změníte posuvníkem výše.`}
+            />
           </>
         )}
         {months === Infinity && gap > 0 && (
           <>
             <div className="border-t dark:border-gray-600 pt-3" />
-            <p className="text-red-600 text-sm">Při současných příjmech a výdajích akontaci nelze naspořit.</p>
+            <p className="text-amber-600 dark:text-amber-400 text-sm">
+              Dokud na akontaci nic měsíčně neodkládáte, chybějících {czk(gap)} nenaspoříte.
+              Nastavte částku posuvníkem výše.
+            </p>
           </>
         )}
       </div>

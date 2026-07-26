@@ -1,6 +1,7 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
-import { dsti, monthsToSaveDownPayment } from './mortgage';
+import { dsti } from './mortgage';
+import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
@@ -24,9 +25,13 @@ export interface GoalReadiness {
 }
 
 // Připravenost cíle „nemovitost", z existujícího scénáře + čísel.
-export function propertyReadiness(state: WizardState): GoalReadiness {
+//
+// Čas na akontaci se počítá z toho, kolik na ni uživatel opravdu odkládá,
+// ne z celé disponibilní částky. Jinak by přehled sliboval termín, který
+// platí jen pro toho, kdo nespoří na nic jiného.
+export function propertyReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const scenario = evaluateScenario(state);
-  const months = monthsToSaveDownPayment(state);
+  const months = monthsToSaveAtAllocation(state, allocations.downPayment);
   const dstiPct = Math.round(dsti(state) * 100);
   const statusByScenario: Record<string, GoalStatus> = {
     cannot_afford_cashflow: 'warning',

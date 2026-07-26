@@ -47,22 +47,25 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   const rate = savingsRate(state);
 
   const goals: GoalReadiness[] = [];
-  if (state.goals.includes('property')) goals.push(propertyReadiness(state));
+  if (state.goals.includes('property')) goals.push(propertyReadiness(state, allocations));
   if (state.goals.includes('retirement')) goals.push(retirementReadiness(state, allocations));
   if (state.goals.includes('child')) goals.push(childReadiness(allocations));
   if (state.goals.includes('other')) goals.push(customReadiness(state, allocations));
   const leaveRow = leaveReadiness(state);
   if (leaveRow) goals.push(leaveRow); // schodek během volna → status se sám sníží (warning)
 
-  // Rozpočtový souhrn počítá jen skutečné měsíční spoření na cíle (důchod/dítě/vlastní).
-  // Hypotéka NENÍ „spoření", je to budoucí výdaj na bydlení, který nahradí nájem;
-  // dostupnost nemovitosti řeší připravenost cíle (DSTI / akontace), ne tento rozpočet.
-  const hasSavingGoals = state.goals.includes('retirement')
-    || state.goals.includes('child') || state.goals.includes('other');
-  const allocated = allocations.retirement + allocations.child
+  // Rozpočtový souhrn počítá měsíční odkládání na cíle, tedy i na akontaci.
+  // Splátka hypotéky v něm není: to není spoření, ale budoucí výdaj na bydlení,
+  // který nahradí nájem. Dostupnost samotné splátky řeší připravenost cíle
+  // (LTV, akontace, doporučení banky), ne tenhle rozpočet.
+  //
+  // Odkládání na akontaci se sem přidalo záměrně: dřív rozpočtová věta člověku,
+  // který si zvolil jen nemovitost, vůbec nesvítila, přestože i on každý měsíc
+  // odkládá a je to jeho největší závazek.
+  const allocated = allocations.downPayment + allocations.retirement + allocations.child
     + allocations.custom.reduce((s, v) => s + v, 0);
   const surplus = disposable - allocated;
-  const budget = hasSavingGoals
+  const budget = state.goals.length > 0
     ? { disposable, allocated, surplus, fits: surplus >= 0 }
     : null;
 

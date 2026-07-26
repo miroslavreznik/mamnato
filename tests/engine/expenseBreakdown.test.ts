@@ -69,7 +69,7 @@ describe('breakdownSurplus', () => {
 });
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  mortgage: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 describe('incomeFlow', () => {
@@ -90,8 +90,23 @@ describe('incomeFlow', () => {
 
   it('mortgage is not a goal flow (it is a housing expense after purchase)', () => {
     const state = makeState({ goals: ['property'] });
-    const flow = incomeFlow(state, allocs({ mortgage: 20000 }), true);
+    const flow = incomeFlow(state, allocs({ downPayment: 20000 }), true);
     expect(flow.goals.find((g) => g.key === 'mortgage')).toBeUndefined();
+  });
+
+  it('odkládání na akontaci je spoření na cíl, dokud se nekoupí', () => {
+    const state = makeState({ goals: ['property'] });
+    const flow = incomeFlow(state, allocs({ downPayment: 8000 }), false);
+    expect(flow.goals.find((g) => g.key === 'downPayment')?.amount).toBe(8000);
+    // free = 50000 − 29000 − 8000
+    expect(flow.free).toBe(13000);
+  });
+
+  it('po koupi už se na akontaci neodkládá, bydlení platí splátka', () => {
+    // Kdyby tam zůstalo obojí, sloupec „Po koupi" by účtoval bydlení dvakrát.
+    const state = makeState({ goals: ['property'] });
+    const flow = incomeFlow(state, allocs({ downPayment: 8000 }), true);
+    expect(flow.goals.find((g) => g.key === 'downPayment')).toBeUndefined();
   });
 });
 

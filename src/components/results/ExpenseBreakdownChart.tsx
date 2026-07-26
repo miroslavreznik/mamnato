@@ -28,9 +28,14 @@ interface Row {
 }
 
 interface GoalSegment {
+  /** Klíč segmentu v grafu. */
   key: string;
+  /** Klíč cíle ve `state.goals`, podle kterého se cíl vypíná. Liší se u akontace. */
+  goalKey: string;
   label: string;
   amount: number;
+  /** Kolik z něj zbyde po koupi. U akontace nic, ta je v tu chvíli zaplacená. */
+  amountAfter: number;
   color: string;
 }
 
@@ -46,10 +51,8 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     () => withExcludedGoals(withExcludedExpenses(state, excluded), excludedGoals),
     [state, excluded, excludedGoals]
   );
-  // Graf ukazuje splátku i u vypnuté nemovitosti, proto se hypotéka nechává
-  // beze změny; ve verdiktu se naopak vypnout musí (viz evaluateWhatIf).
   const adjustedAllocations = useMemo<GoalAllocations>(
-    () => ({ ...allocationsWithoutGoals(allocations, excludedGoals), mortgage: allocations.mortgage }),
+    () => allocationsWithoutGoals(allocations, excludedGoals),
     [allocations, excludedGoals]
   );
 
@@ -95,15 +98,22 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     const palette = colors.goalColors;
     const segs: GoalSegment[] = [];
     const nextColor = () => palette[segs.length % palette.length];
+    const add = (key: string, goalKey: string, label: string, raw: number, keepAfter = true) => {
+      const amount = excludedGoals.has(goalKey) ? 0 : raw;
+      segs.push({ key, goalKey, label, amount, amountAfter: keepAfter ? amount : 0, color: nextColor() });
+    };
+    if (state.goals.includes('property') && allocations.downPayment > 0) {
+      add('downPayment', 'property', 'Spoření na akontaci', allocations.downPayment, false);
+    }
     if (state.goals.includes('retirement') && allocations.retirement > 0) {
-      segs.push({ key: 'retirement', label: 'Spoření na důchod', amount: excludedGoals.has('retirement') ? 0 : allocations.retirement, color: nextColor() });
+      add('retirement', 'retirement', 'Spoření na důchod', allocations.retirement);
     }
     if (state.goals.includes('child') && allocations.child > 0) {
-      segs.push({ key: 'child', label: 'Rezerva na dítě', amount: excludedGoals.has('child') ? 0 : allocations.child, color: nextColor() });
+      add('child', 'child', 'Rezerva na dítě', allocations.child);
     }
     if (state.goals.includes('other')) {
       const total = allocations.custom.reduce((sum, v) => sum + v, 0);
-      if (total > 0) segs.push({ key: 'other', label: 'Vlastní cíle', amount: excludedGoals.has('other') ? 0 : total, color: nextColor() });
+      if (total > 0) add('other', 'other', 'Vlastní cíle', total);
     }
     return segs;
   }, [state.goals, allocations, excludedGoals, colors.goalColors]);
@@ -113,21 +123,23 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     [goalSegments]
   );
 
-  const buildRow = (name: string, expenses: ExpenseCategory[], free: number): Row => {
+  // Spoření na akontaci ve sloupci „Po koupi" chybí schválně: v tu chvíli už
+  // je akontace zaplacená a bydlení platí splátka.
+  const buildRow = (name: string, expenses: ExpenseCategory[], free: number, afterPurchase: boolean): Row => {
     const row: Row = { name, free: Math.max(0, free) };
     const byKey = Object.fromEntries(expenses.map((c) => [c.key, c.amount]));
     for (const key of orderedKeys) {
       row[key] = byKey[key] ?? 0;
     }
     for (const seg of goalSegments) {
-      row[seg.key] = seg.amount;
+      row[seg.key] = afterPurchase ? seg.amountAfter : seg.amount;
     }
     return row;
   };
 
-  const data: Row[] = [buildRow('Nyní', flowNow.expenses, flowNow.free)];
+  const data: Row[] = [buildRow('Nyní', flowNow.expenses, flowNow.free, false)];
   if (flowAfter) {
-    data.push(buildRow('Po koupi', flowAfter.expenses, flowAfter.free));
+    data.push(buildRow('Po koupi', flowAfter.expenses, flowAfter.free, true));
   }
 
   const freeColor = (v: number) => (v >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400');
@@ -282,8 +294,8 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
                   key={seg.key}
                   label={seg.label}
                   color={seg.color}
-                  off={excludedGoals.has(seg.key)}
-                  onClick={() => setExcludedGoals((prev) => toggle(prev, seg.key))}
+                  off={excludedGoals.has(seg.goalKey)}
+                  onClick={() => setExcludedGoals((prev) => toggle(prev, seg.goalKey))}
                   title="Cíl, zkuste ho vypnout a uvidíte, co to udělá s verdiktem"
                 />
               ))}
@@ -346,7 +358,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
                   <tr key={s.key} className="border-b border-gray-100 dark:border-gray-700/50">
                     <td className="py-1.5">−&nbsp;{s.label} <span className="text-[10px] text-gray-400">(spoření)</span></td>
                     <td className="text-right py-1.5">{fmtKc(s.amount)}</td>
-                    {flowAfter && <td className="text-right py-1.5">{fmtKc(s.amount)}</td>}
+                    {flowAfter && <td className="text-right py-1.5">{fmtKc(s.amountAfter)}</td>}
                   </tr>
                 ))}
                 <tr className="font-semibold">

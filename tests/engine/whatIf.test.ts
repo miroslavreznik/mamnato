@@ -4,7 +4,7 @@ import type { GoalAllocations } from '../../src/engine/allocation';
 import type { WizardState } from '../../src/types';
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  mortgage: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 function household(overrides: Partial<WizardState> = {}): WizardState {
@@ -36,10 +36,10 @@ describe('režim co kdyby', () => {
   });
 
   it('vypnutí cíle uvolní jeho částku', () => {
-    const a = allocs({ retirement: 5000, child: 2000, mortgage: 1000, custom: [500] });
+    const a = allocs({ retirement: 5000, child: 2000, downPayment: 1000, custom: [500] });
     expect(allocationsWithoutGoals(a, new Set(['retirement']))).toEqual({ ...a, retirement: 0 });
     expect(allocationsWithoutGoals(a, new Set(['other']))).toEqual({ ...a, custom: [0] });
-    expect(allocationsWithoutGoals(a, new Set(['property']))).toEqual({ ...a, mortgage: 0 });
+    expect(allocationsWithoutGoals(a, new Set(['property']))).toEqual({ ...a, downPayment: 0 });
     expect(allocationsWithoutGoals(a, new Set())).toEqual(a);
   });
 

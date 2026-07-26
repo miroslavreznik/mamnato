@@ -19,7 +19,7 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
 }
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  mortgage: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 describe('evaluateOverall', () => {
@@ -31,23 +31,24 @@ describe('evaluateOverall', () => {
   });
 
   it('returns not_yet when saving goals exceed disposable', () => {
-    // disposable = 60000 - 29000 = 31000; saving goals over that (mortgage is NOT a saving)
+    // disponibilní = 60 000 − 29 000 = 31 000, cíle chtějí víc
     const state = makeState({ goals: ['property', 'retirement'] });
-    const s = evaluateOverall(state, allocs({ mortgage: 25000, retirement: 35000 }));
+    const s = evaluateOverall(state, allocs({ downPayment: 25000, retirement: 35000 }));
     expect(s.status).toBe('not_yet');
     expect(s.budget?.fits).toBe(false);
   });
 
-  it('excludes mortgage from the budget (it is a housing expense, not a saving)', () => {
+  it('odkládání na akontaci je součástí rozpočtu, splátka ne', () => {
+    // Splátka hypotéky je výdaj na bydlení, ne cíl, a v alokacích proto vůbec
+    // není. Odkládání na akontaci naopak z rozpočtu ukusuje jako každý cíl.
     const state = makeState({ goals: ['property', 'retirement'] });
-    const s = evaluateOverall(state, allocs({ mortgage: 25000, retirement: 5000 }));
-    // allocated = retirement only = 5000, not 30000
-    expect(s.budget?.allocated).toBe(5000);
+    const s = evaluateOverall(state, allocs({ downPayment: 8000, retirement: 5000 }));
+    expect(s.budget?.allocated).toBe(13000);
   });
 
   it('produces a per-goal readiness entry for each active goal', () => {
     const state = makeState({ goals: ['property', 'retirement'] });
-    const s = evaluateOverall(state, allocs({ mortgage: 10000, retirement: 5000 }));
+    const s = evaluateOverall(state, allocs({ downPayment: 10000, retirement: 5000 }));
     expect(s.goals.map((g) => g.key).sort()).toEqual(['property', 'retirement']);
   });
 
@@ -59,11 +60,13 @@ describe('evaluateOverall', () => {
     expect(s.budget?.fits).toBe(true);
   });
 
-  it('has no budget block when there are no saving goals', () => {
-    // property alone → affordability judged separately, no saving budget
+  it('rozpočet vidí i ten, kdo chce jen nemovitost', () => {
+    // Odkládání na akontaci je taky závazek, takže rozpočtová věta dává smysl
+    // i bez důchodu a dalších cílů. Dřív se schovávala.
     const state = makeState({ goals: ['property'] });
-    const s = evaluateOverall(state, allocs({ mortgage: 20000 }));
-    expect(s.budget).toBeNull();
+    const s = evaluateOverall(state, allocs({ downPayment: 20000 }));
+    expect(s.budget).not.toBeNull();
+    expect(s.budget?.allocated).toBe(20000);
   });
 
   it('gives actionable tips even to non-property users with a comfortable budget', () => {
@@ -89,7 +92,7 @@ describe('evaluateOverall', () => {
       property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
     });
-    const s = evaluateOverall(state, allocs({ mortgage: 26000 }));
+    const s = evaluateOverall(state, allocs({ downPayment: 26000 }));
     const leave = s.goals.find((g) => g.key === 'leave');
     expect(leave?.status).toBe('caution');
     expect(s.status).not.toBe('good');
@@ -104,7 +107,7 @@ describe('evaluateOverall', () => {
       property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
     });
-    const s = evaluateOverall(state, allocs({ mortgage: 26000 }));
+    const s = evaluateOverall(state, allocs({ downPayment: 26000 }));
     expect(s.goals.find((g) => g.key === 'leave')?.status).toBe('warning');
     expect(s.status).toBe('not_yet');
   });
