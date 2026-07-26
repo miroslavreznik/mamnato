@@ -105,10 +105,11 @@ export function buildVerdict(
   hasGoals: boolean,
   disposable: number,
   leave: LeaveImpact | null,
+  budget: BudgetView | null = null,
   budgetAfter: BudgetView | null = null
 ): Verdict {
   return {
-    ...buildAnswer(status, goals, hasGoals, disposable, leave),
+    ...buildAnswer(status, goals, hasGoals, disposable, leave, budget, budgetAfter),
     questions: buildVerdictQuestions(goals, budgetAfter),
   };
 }
@@ -118,7 +119,9 @@ function buildAnswer(
   goals: GoalReadiness[],
   hasGoals: boolean,
   disposable: number,
-  leave: LeaveImpact | null
+  leave: LeaveImpact | null,
+  budget: BudgetView | null,
+  budgetAfter: BudgetView | null
 ): Omit<Verdict, 'questions'> {
   // Bez zvolených cílů není na co odpovídat, tak aspoň zhodnotíme rozpočet.
   if (!hasGoals) {
@@ -140,6 +143,9 @@ function buildAnswer(
   const weak = goals.filter((g) => g.status === 'warning').map((g) => g.label);
   const list = (labels: string[]) =>
     labels.length === 1 ? labels[0] : `${labels.slice(0, -1).join(', ')} a ${labels[labels.length - 1]}`;
+  // „na cíl Bydlení a Důchod" je dva cíle v jednotném čísle. Skloňuje se to
+  // podle počtu, ne podle toho, jak se věta psala.
+  const goalWord = (labels: string[]) => (labels.length === 1 ? 'cíl' : 'cíle');
 
   // Dočasný schodek během rodičovské krytý úsporami je vlastní příběh: je to
   // „ano, ale budete sahat do úspor", ne obecné „bude to napjaté".
@@ -177,12 +183,23 @@ function buildAnswer(
           reason: `Během volna vám bude chybět ${czkMonthly(leave.shortfallPerMonth)} a rezerva vydrží ${leave.monthsCovered ?? 0} z ${leave.durationMonths} měsíců. Pomůže došetřit, zkrátit volno nebo hledat levnější nemovitost.`,
         };
       }
+      // Rozpočet dnes vychází, ale po koupi ne. Bez tohohle rozlišení appka
+      // tvrdila „cíle se nevejdou do disponibilní částky" i tomu, komu se
+      // dnes vejdou pohodlně a problém nastane teprve se splátkou.
+      if (budget?.fits && budgetAfter && !budgetAfter.fits) {
+        return {
+          answer: 'no_but',
+          headline: 'Zatím na to nemáte',
+          qualifier: 'ale je to o koupi, ne o dnešku',
+          reason: `Dnes rozpočet vychází. Po koupi by ale na cíle chybělo ${czkMonthly(Math.abs(budgetAfter.surplus))}, protože splátka a náklady na bydlení jsou vyšší než dnešní nájem.`,
+        };
+      }
       return {
         answer: 'no_but',
         headline: 'Zatím na to nemáte',
         qualifier: 'ale máte kam sáhnout',
         reason: weak.length
-          ? `Naráží to na cíl ${list(weak)}. Úpravou částky, horizontu nebo výdajů se to dá dostat do zelené.`
+          ? `Naráží to na ${goalWord(weak)} ${list(weak)}. Úpravou částky, horizontu nebo výdajů se to dá dostat do zelené.`
           : 'Cíle se zatím nevejdou do disponibilní částky. Úpravou částek nebo horizontu se to dá srovnat.',
       };
     case 'fix_budget':
