@@ -62,7 +62,7 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
   const stepItems: StepItem[] = [
     ...BASE_STEPS,
     ...(hasProperty ? [{ step: 6, label: 'Vlastní bydlení' }] : []),
-    ...(hasOther ? [{ step: 7, label: 'Jiné cíle' }] : []),
+    ...(hasOther ? [{ step: 7, label: 'Vlastní cíle' }] : []),
   ];
 
   const handleStepClick = (step: number) => {

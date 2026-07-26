@@ -10,58 +10,56 @@ interface StepIndicatorProps {
   onStepClick: (step: number) => void;
 }
 
+/**
+ * Kde v průvodci jsem.
+ *
+ * Dřív to byla řada koleček s čísly, pod nimi popisky a vedle toho ještě
+ * „Krok 6 z 6", dohromady asi sto pixelů, které říkaly totéž třikrát.
+ * Na mobilu se popisky lámaly do dvou řádků („Vlastní bydlení").
+ *
+ * Zbyl proužek a počítadlo. Název kroku nese jeho vlastní nadpis hned pod
+ * tím, opakovat ho i tady by byla ta stejná chyba v malém.
+ *
+ * Proužek je rozdělený na dílky po krocích: hotové dílky jsou tlačítka, takže
+ * se pořád dá skočit zpět na už vyplněný krok, jen to nezabírá čtvrtinu
+ * obrazovky.
+ */
 export default function StepIndicator({ currentStep, steps, completedSteps, onStepClick }: StepIndicatorProps) {
   const total = steps.length;
   const currentIndex = steps.findIndex((s) => s.step === currentStep);
-  const currentLabel = currentIndex >= 0 ? steps[currentIndex].label : '';
   const position = currentIndex >= 0 ? currentIndex + 1 : currentStep;
 
   return (
-    <nav className="mb-8" aria-label="Kroky průvodce">
-      <div className="flex items-baseline justify-between mb-3">
-        <span className="text-sm font-semibold text-gray-900 dark:text-white">{currentLabel}</span>
-        <span className="text-xs text-gray-400 dark:text-gray-500">Krok {position} z {total}</span>
-      </div>
+    <nav className="mb-6" aria-label="Kroky průvodce">
+      <p className="text-xs text-gray-400 dark:text-gray-500 text-right mb-1.5">Krok {position} z {total}</p>
 
-      <ol className="flex items-start">
+      <ol className="flex gap-1">
         {steps.map((item, i) => {
-          const step = item.step;
-          const label = item.label;
-          const isCurrent = step === currentStep;
-          const isCompleted = completedSteps.includes(step) && !isCurrent;
-          const canJump = completedSteps.includes(step) || isCurrent;
-
-          const circleBase = 'relative z-10 flex items-center justify-center w-8 h-8 rounded-full text-sm font-semibold transition-all';
-          const circleCls = isCurrent
-            ? 'bg-white dark:bg-gray-800 text-blue-600 dark:text-blue-400 ring-2 ring-blue-600 dark:ring-blue-400'
-            : isCompleted
-            ? 'bg-blue-600 text-white hover:bg-blue-700 hover:scale-105'
-            : 'bg-gray-200 dark:bg-gray-700 text-gray-400 dark:text-gray-500';
-
-          const Circle = canJump ? 'button' : 'div';
+          const done = completedSteps.includes(item.step);
+          const isCurrent = item.step === currentStep;
+          const canJump = done && !isCurrent;
+          const fill = isCurrent || done
+            ? 'bg-blue-600 dark:bg-blue-500'
+            : 'bg-gray-200 dark:bg-gray-700';
 
           return (
-            <li key={step} className={`flex items-start ${i < total - 1 ? 'flex-1' : ''}`}>
-              <div className="flex flex-col items-center">
-                <Circle
-                  {...(canJump
-                    ? { type: 'button' as const, onClick: () => onStepClick(step), 'aria-current': isCurrent ? ('step' as const) : undefined }
-                    : {})}
-                  className={`${circleBase} ${circleCls} ${canJump && !isCurrent ? 'cursor-pointer' : 'cursor-default'}`}
-                  aria-label={canJump && !isCurrent ? `${label} (upravit)` : label}
+            <li key={item.step} className="flex-1">
+              {canJump ? (
+                <button
+                  type="button"
+                  onClick={() => onStepClick(item.step)}
+                  aria-label={`Zpět na krok ${i + 1}: ${item.label}`}
+                  // Proužek je tenký, ale sáhnout se na něj musí dát i prstem,
+                  // proto je kolem něj neviditelná výplň do 44 px.
+                  className="group block w-full py-3 -my-3 cursor-pointer"
                 >
-                  {isCompleted ? (
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 13l4 4L19 7" /></svg>
-                  ) : (
-                    i + 1
-                  )}
-                </Circle>
-                <span className={`hidden sm:block mt-1.5 text-[11px] leading-tight text-center max-w-[76px] ${isCurrent ? 'text-gray-900 dark:text-white font-medium' : 'text-gray-400 dark:text-gray-500'}`}>
-                  {label}
-                </span>
-              </div>
-              {i < total - 1 && (
-                <div className={`flex-1 h-0.5 mt-4 mx-1.5 rounded-full transition-colors ${completedSteps.includes(step) ? 'bg-blue-500' : 'bg-gray-200 dark:bg-gray-700'}`} />
+                  <span className={`block h-1.5 rounded-full transition-colors ${fill} group-hover:bg-blue-700 dark:group-hover:bg-blue-400`} />
+                </button>
+              ) : (
+                <span
+                  aria-current={isCurrent ? 'step' : undefined}
+                  className={`block h-1.5 rounded-full ${fill}`}
+                />
               )}
             </li>
           );

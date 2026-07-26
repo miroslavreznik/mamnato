@@ -1,12 +1,49 @@
+import type { ReactNode } from 'react';
 import { useWizard } from '../../../store/wizardStore';
 import type { FinancialGoal } from '../../../types';
 import StepNavigation from '../StepNavigation';
 
-const goalOptions: { value: FinancialGoal; label: string; icon: string }[] = [
-  { value: 'property', label: 'Vlastní bydlení', icon: '🏠' },
-  { value: 'child', label: 'Dítě / rodina', icon: '👶' },
-  { value: 'retirement', label: 'Důchod', icon: '🏖️' },
-  { value: 'other', label: 'Vlastní cíle', icon: '🎯' },
+// Obrysové ikony, ne emoji. Emoji se kreslí podle systému, takže vypadají
+// na každém zařízení jinak a vedle obrysových ikon ve zbytku appky působí
+// jako druhý vizuální jazyk.
+const goalOptions: { value: FinancialGoal; label: string; icon: ReactNode }[] = [
+  {
+    value: 'property',
+    label: 'Vlastní bydlení',
+    icon: <path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9.5 20v-5h5v5" />,
+  },
+  {
+    value: 'child',
+    label: 'Dítě / rodina',
+    icon: (
+      <>
+        <path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2" />
+        <circle cx="10" cy="7" r="4" />
+        <path d="M21 21v-2a4 4 0 0 0-3-3.87" />
+      </>
+    ),
+  },
+  {
+    value: 'retirement',
+    label: 'Důchod',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="4" />
+        <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+      </>
+    ),
+  },
+  {
+    value: 'other',
+    label: 'Vlastní cíle',
+    icon: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="12" cy="12" r="1" />
+      </>
+    ),
+  },
 ];
 
 export default function Step5Goals() {
@@ -57,7 +94,13 @@ export default function Step5Goals() {
                   : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 bg-white dark:bg-gray-700'
               }`}
             >
-              <span className="text-2xl">{g.icon}</span>
+              <svg
+                className={`w-7 h-7 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+              >
+                {g.icon}
+              </svg>
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{g.label}</span>
               {/* Viditelná značka i bez barvy, kvůli tisku a přístupnosti. */}
               <span className={`text-xs ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-transparent'}`}>
