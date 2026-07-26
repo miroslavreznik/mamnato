@@ -2,15 +2,14 @@ import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
 import { incomeFlow, expenseCategories, withExcludedExpenses, withExcludedGoals } from '../../engine/expenseBreakdown';
-import { evaluateOverall } from '../../engine/summary';
-import { evaluateScenario } from '../../engine/scenarios';
-import { downPaymentGap, monthsToSaveDownPayment, dsti } from '../../engine/mortgage';
-import { formatMonths } from '../../engine/format';
+import { evaluateWhatIf, allocationsWithoutGoals } from '../../engine/whatIf';
 import type { ExpenseCategory } from '../../engine/expenseBreakdown';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
 import { discretionaryGroupTotals, hasDiscretionaryBreakdown } from '../../engine/discretionary';
 import HelpTip from '../ui/Tooltip';
+import { Chip } from './budget/Chip';
+import { toggle } from './budget/toggle';
 
 interface Props {
   state: WizardState;
@@ -35,43 +34,6 @@ interface GoalSegment {
   color: string;
 }
 
-// Jednotný přepínač pro výdaj, položku rozpisu i cíl.
-function Chip({ label, color, off, onClick, note, title }: {
-  label: string;
-  color: string;
-  off: boolean;
-  onClick: () => void;
-  note?: string;
-  title?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      title={title}
-      aria-pressed={!off}
-      className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
-        off
-          ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
-          : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
-      }`}
-    >
-      <span
-        className="w-2.5 h-2.5 rounded-full shrink-0"
-        style={{ backgroundColor: off ? 'transparent' : color, border: off ? `1px solid ${color}` : 'none' }}
-      />
-      {label}
-      {note && <span className="text-[10px] text-amber-600 dark:text-amber-400">{note}</span>}
-    </button>
-  );
-}
-
-function toggle(prev: Set<string>, key: string): Set<string> {
-  const next = new Set(prev);
-  if (next.has(key)) next.delete(key); else next.add(key);
-  return next;
-}
-
 export default function ExpenseBreakdownChart({ state, allocations, excluded, setExcluded, excludedGoals, setExcludedGoals }: Props) {
   const colors = useChartColors();
   const [showTable, setShowTable] = useState(false);
@@ -84,12 +46,12 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     () => withExcludedGoals(withExcludedExpenses(state, excluded), excludedGoals),
     [state, excluded, excludedGoals]
   );
-  const adjustedAllocations = useMemo<GoalAllocations>(() => ({
-    mortgage: allocations.mortgage,
-    retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
-    child: excludedGoals.has('child') ? 0 : allocations.child,
-    custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
-  }), [allocations, excludedGoals]);
+  // Graf ukazuje splátku i u vypnuté nemovitosti, proto se hypotéka nechává
+  // beze změny; ve verdiktu se naopak vypnout musí (viz evaluateWhatIf).
+  const adjustedAllocations = useMemo<GoalAllocations>(
+    () => ({ ...allocationsWithoutGoals(allocations, excludedGoals), mortgage: allocations.mortgage }),
+    [allocations, excludedGoals]
+  );
 
   const flowNow = useMemo(() => incomeFlow(adjustedState, adjustedAllocations, false), [adjustedState, adjustedAllocations]);
   const flowAfter = useMemo(
@@ -181,45 +143,12 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
       .sort((a, b) => b.amount - a.amount);
   }, [state.expenses.discretionaryBreakdown]);
 
-  // Jádro téhle sekce: co udělá vypnutí položky s odpovědí „Mám na to?".
-  // Porovnáváme verdikt beze změn s verdiktem po vypnutí.
-  const anythingOff = excluded.size > 0 || excludedGoals.size > 0;
-  const whatIf = useMemo(() => {
-    if (!anythingOff) return null;
-    const baseline = evaluateOverall(state, allocations);
-    const adjusted = withExcludedGoals(withExcludedExpenses(state, excluded), excludedGoals);
-    const adjustedAllocations = {
-      mortgage: excludedGoals.has('property') ? 0 : allocations.mortgage,
-      retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
-      child: excludedGoals.has('child') ? 0 : allocations.child,
-      custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
-    };
-    const now = evaluateOverall(adjusted, adjustedAllocations);
-    const rank = { no: 0, no_but: 1, yes_but: 2, yes: 3 } as const;
-    const improved = rank[now.verdict.answer] > rank[baseline.verdict.answer];
-    const worsened = rank[now.verdict.answer] < rank[baseline.verdict.answer];
-
-    // Když se verdikt nehnul, je potřeba říct proč. Některé překážky
-    // (hlavně vysoká splátka vůči příjmu) se škrtáním výdajů spravit nedají
-    // a uživatel by jinak zbytečně vypínal další a další položky.
-    let hint = 'Na celkovou odpověď to zatím nestačí. Zkuste vypnout i něco dalšího.';
-    if (!improved && adjusted.goals.includes('property')) {
-      const scenario = evaluateScenario(adjusted);
-      const dstiPct = Math.round(dsti(adjusted) * 100);
-      const gap = downPaymentGap(adjusted);
-      if (scenario.id === 'cannot_afford_dsti') {
-        hint = `Splátka by zabrala ${dstiPct} % čistého příjmu, což je nad tím, co banky obvykle schválí. Tohle škrtáním výdajů nespravíte: pomohla by levnější nemovitost, vyšší akontace, delší splatnost nebo vyšší příjem.`;
-      } else if (gap > 0) {
-        const before = monthsToSaveDownPayment(state);
-        const after = monthsToSaveDownPayment(adjusted);
-        hint = after < before
-          ? `Verdikt se zatím nezměnil, ale chybějící akontaci díky tomu naspoříte za ${formatMonths(after, true)} místo ${formatMonths(before, true)}.`
-          : 'Zbývá naspořit akontaci. Na celkovou odpověď to zatím nestačí.';
-      }
-    }
-
-    return { baseline: baseline.verdict, now: now.verdict, improved, worsened, hint };
-  }, [anythingOff, state, allocations, excluded, excludedGoals]);
+  // Co udělá vypnutí položky s odpovědí „Mám na to?". Logika i formulace
+  // sedí v enginu, tady se jen zobrazuje.
+  const whatIf = useMemo(
+    () => evaluateWhatIf(state, allocations, excluded, excludedGoals),
+    [state, allocations, excluded, excludedGoals]
+  );
 
 
   return (
@@ -367,7 +296,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.categorical.surplus }} />
             Volná rezerva
           </span>
-          {anythingOff && (
+          {(excluded.size > 0 || excludedGoals.size > 0) && (
             <button
               onClick={() => { setExcluded(new Set()); setExcludedGoals(new Set()); }}
               className="py-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
