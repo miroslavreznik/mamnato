@@ -82,11 +82,15 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     };
     merge(baseNow);
     merge(baseAfter);
-    // Podle výše, ale zbytné vždy poslední: je to jediná položka, kterou jde
-    // reálně omezit, takže patří na konec jako „co ještě můžu ubrat".
+    // Pevné pořadí, ne podle výše. Barvy se přiřazují slotům palety a ta je
+    // ověřená právě pro tuhle posloupnost sousedních dvojic; kdyby se pořadí
+    // měnilo podle částek, sousedily by ve sloupci pokaždé jiné odstíny.
+    // Zbytné je až na konci, je to jediná položka, kterou jde reálně omezit.
+    const ORDER = ['housing', 'food', 'transport', 'insurance', 'children', 'other', 'existingLoans'];
     const keys = Object.keys(labels).sort((a, b) => {
-      if (a === 'other') return 1;
-      if (b === 'other') return -1;
+      const ia = ORDER.indexOf(a);
+      const ib = ORDER.indexOf(b);
+      if (ia !== ib) return (ia < 0 ? ORDER.length : ia) - (ib < 0 ? ORDER.length : ib);
       return amountForSort[b] - amountForSort[a];
     });
     return { orderedKeys: keys, labelMap: labels, necessaryMap: necessary };
@@ -95,12 +99,14 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
   // Jednotlivé cíle jako samostatné segmenty grafu (místo jedné souhrnné „cíle").
   // Součet částek odpovídá spoření na cíle z incomeFlow, takže sloupce sedí na příjem.
   const goalSegments = useMemo<GoalSegment[]>(() => {
-    const palette = colors.goalColors;
     const segs: GoalSegment[] = [];
-    const nextColor = () => palette[segs.length % palette.length];
     const add = (key: string, goalKey: string, label: string, raw: number, keepAfter = true) => {
       const amount = excludedGoals.has(goalKey) ? 0 : raw;
-      segs.push({ key, goalKey, label, amount, amountAfter: keepAfter ? amount : 0, color: nextColor() });
+      // Všechny cíle sdílejí jeden odstín. Jedenáct kategoriálních barev
+      // v jednom sloupci nejde udělat barvoslepě čitelně (ověřeno validátorem
+      // palety), a cíle jsou stejně jedna skupina: co z příjmu jde na cíle.
+      // Jednotlivé cíle rozliší popisky v legendě a tabulka s čísly.
+      segs.push({ key, goalKey, label, amount, amountAfter: keepAfter ? amount : 0, color: colors.categorical.goals });
     };
     if (state.goals.includes('property') && allocations.downPayment > 0) {
       add('downPayment', 'property', 'Spoření na akontaci', allocations.downPayment, false);
@@ -116,7 +122,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
       if (total > 0) add('other', 'other', 'Vlastní cíle', total);
     }
     return segs;
-  }, [state.goals, allocations, excludedGoals, colors.goalColors]);
+  }, [state.goals, allocations, excludedGoals, colors.categorical.goals]);
 
   const goalLabelByKey = useMemo(
     () => Object.fromEntries(goalSegments.map((s) => [s.key, s.label])),
@@ -142,7 +148,12 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     data.push(buildRow('Po koupi', flowAfter.expenses, flowAfter.free, true));
   }
 
-  const freeColor = (v: number) => (v >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400');
+  // Nula volných peněz není dobrý stav, ale ani schodek: je to hrana, na které
+  // rozhodí rozpočet první nečekaný výdaj. Zelená pro ni byla falešně uklidňující.
+  const freeColor = (v: number) =>
+    v > 0 ? 'text-emerald-600 dark:text-emerald-400'
+      : v < 0 ? 'text-red-600 dark:text-red-400'
+        : 'text-amber-600 dark:text-amber-400';
 
   // Jednotlivé zbytné položky nabízíme jen tomu, kdo si rozpis opravdu vyplnil.
   // Bez něj by tam byly prázdné kolonky, které nic neříkají.

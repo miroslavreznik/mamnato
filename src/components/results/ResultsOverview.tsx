@@ -98,7 +98,12 @@ export default function ResultsOverview({ state, allocations }: Props) {
   const hasProperty = state.goals.includes('property');
   const runway = hasProperty ? postPurchaseRunwayMonths(state) : emergencyRunwayMonths(state);
 
-  const runwayLabel = runway === Infinity ? '∞' : runway.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  // Desetinné místo dává smysl u „8,5 měs.", u nuly vypadá jako chyba měření.
+  const runwayLabel = runway === Infinity
+    ? '∞'
+    : runway < 0.05
+      ? '0'
+      : runway.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const runwayTone: Tone = runway >= 6 ? 'good' : runway >= 3 ? 'warn' : 'bad';
 
   // Dlaždice se liší podle toho, co uživatel řeší. U hypotéky jsou nejdůležitější

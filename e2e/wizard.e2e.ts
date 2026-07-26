@@ -123,7 +123,7 @@ test('odškrtnutí výdaje v grafu přepočítá celý souhrn (dynamické výsle
   // výchozí jednotlivec: příjem 39 500, výdaje 29 000 → disponibilní +10 500
   await expect(page.getByText(/\+10.500/).first()).toBeVisible()
   // odškrtnout zbytné výdaje (3 000) v grafu rozpočtu → disponibilní +13 500
-  await page.getByRole('button', { name: /Zbytné/ }).first().click()
+  await page.getByRole('button', { name: /Zábava, dovolená, koníčky/ }).first().click()
   await expect(page.getByText(/\+13.500/).first()).toBeVisible()
   // tabulková podoba rozpočtu (nahrazuje bývalou sekci „Podrobný rozpočet")
   await page.getByRole('button', { name: 'Zobrazit čísla v tabulce' }).click()

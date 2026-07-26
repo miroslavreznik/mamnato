@@ -50,7 +50,7 @@ export function expenseCategories(
     { key: 'insurance', label: 'Pojistky', amount: e.insurance, necessary: true },
     { key: 'existingLoans', label: 'Splátky úvěrů', amount: e.existingLoans, necessary: true },
     { key: 'children', label: 'Výdaje na děti', amount: e.children, necessary: true },
-    { key: 'other', label: 'Zbytné (zábava, dovolená…)', amount: e.other, necessary: false },
+    { key: 'other', label: 'Zábava, dovolená, koníčky', amount: e.other, necessary: false },
   ];
 
   return cats.filter((c) => c.amount > 0);

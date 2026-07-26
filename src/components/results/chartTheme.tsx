@@ -32,10 +32,18 @@ export interface ChartColors {
   axis: string; // osy a čáry baseline
   tick: string; // popisky os
   surface: string; // pozadí karty (pro mezery mezi segmenty)
-  // Kategoriální paleta pro rozpad výdajů (pevné pořadí slotů)
+  // Kategoriální paleta pro rozpad výdajů (pevné pořadí slotů).
+  //
+  // Osm odstínů v pevném pořadí: modrá, oranžová, akvamarín, žlutá, purpurová,
+  // fialová, červená, zelená. Sloty se přiřazují podle pořadí ve stohu, nikdy
+  // se necyklují. Ověřeno validátorem palety pro světlý i tmavý režim (sousední
+  // dvojice, CVD i kontrast); jediné dvě varování v pásmu 6–8 kryje sekundární
+  // kódování: 2px mezery mezi segmenty, popisky v legendě a tabulka s čísly.
+  //
+  // Dřív měly „jídlo" a „zbytné" dvě různé zelené, které při daltonismu
+  // splývaly (ΔE 3,2 protan proti dopravě), a zelená zároveň v celé appce
+  // znamená „v pořádku". Zelená teď patří jen skupině cílů, kam významem sedí.
   categorical: Record<string, string>;
-  // Paleta pro jednotlivé cíle (důchod, dítě, vlastní…), odlišná od výdajů
-  goalColors: string[];
   // Paleta pro skupiny zbytných výdajů (rozpad „za co utrácíte")
   discretionaryColors: string[];
 }
@@ -52,18 +60,17 @@ const LIGHT: ChartColors = {
   tick: '#898781',
   surface: '#ffffff',
   categorical: {
-    housing: '#2a78d6',
-    utilities: '#eda100',
-    food: '#1baf7a',
-    transport: '#eb6834',
-    insurance: '#4a3aa7',
-    existingLoans: '#e34948',
-    children: '#e87ba4',
-    other: '#008300',
-    goals: '#4f46e5',
+    housing: '#2a78d6',      // 1 modrá
+    food: '#eb6834',         // 2 oranžová
+    transport: '#1baf7a',    // 3 akvamarín
+    insurance: '#eda100',    // 4 žlutá
+    utilities: '#eda100',    // (v grafu splývá s bydlením, drženo kvůli typu)
+    children: '#e87ba4',     // 5 purpurová
+    other: '#4a3aa7',        // 6 fialová
+    existingLoans: '#e34948',// 7 červená
+    goals: '#008300',        // 8 zelená, celá skupina cílů
     surplus: '#c9c8c2',
   },
-  goalColors: ['#4f46e5', '#0891b2', '#c026d3', '#0d9488', '#7c3aed'],
   discretionaryColors: ['#e0651b', '#7c3aed', '#0ea5b7', '#db2777'],
 };
 
@@ -80,17 +87,16 @@ const DARK: ChartColors = {
   surface: '#1f2937', // tailwind gray-800 (pozadí karty v dark)
   categorical: {
     housing: '#3987e5',
+    food: '#d95926',
+    transport: '#199e70',
+    insurance: '#c98500',
     utilities: '#c98500',
-    food: '#199e70',
-    transport: '#d95926',
-    insurance: '#9085e9',
-    existingLoans: '#e66767',
     children: '#d55181',
-    other: '#008300',
-    goals: '#818cf8',
+    other: '#9085e9',
+    existingLoans: '#e66767',
+    goals: '#008300',
     surplus: '#6b7280',
   },
-  goalColors: ['#818cf8', '#22d3ee', '#e879f9', '#2dd4bf', '#a78bfa'],
   discretionaryColors: ['#f97316', '#a78bfa', '#22d3ee', '#f472b6'],
 };
 
