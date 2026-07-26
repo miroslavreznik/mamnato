@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
-import { dsti } from './mortgage';
+import { dsti, downPaymentGap } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
@@ -26,12 +26,18 @@ export interface GoalReadiness {
 
 // Připravenost cíle „nemovitost", z existujícího scénáře + čísel.
 //
+// Bydlení je mezi cíli jako každý jiný, i když má navíc vlastní sekci
+// s podrobnostmi. Dřív se ze seznamu vyřazovalo, protože se jeho čísla
+// opakovala v dlaždicích nad ním; místo skrývání teď věta odpovídá na to,
+// co dlaždice neříkají, tedy jestli cíl jako celek vychází.
+//
 // Čas na akontaci se počítá z toho, kolik na ni uživatel opravdu odkládá,
 // ne z celé disponibilní částky. Jinak by přehled sliboval termín, který
 // platí jen pro toho, kdo nespoří na nic jiného.
 export function propertyReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const scenario = evaluateScenario(state);
   const months = monthsToSaveAtAllocation(state, allocations.downPayment);
+  const gap = downPaymentGap(state);
   const dstiPct = Math.round(dsti(state) * 100);
   const statusByScenario: Record<string, GoalStatus> = {
     cannot_afford_cashflow: 'warning',
@@ -43,12 +49,23 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
     very_comfortable: 'good',
   };
   const status = statusByScenario[scenario.id] ?? 'caution';
-  const dstiPart = isFinite(dstiPct) ? ` · DSTI ${dstiPct} %` : '';
-  const headline =
-    scenario.id === 'cannot_afford_dsti'
-      ? `Splátka nad obvyklý limit bank${dstiPart}`
-      : `Na akontaci ${formatMonths(months, true)}${dstiPart}`;
-  return { key: 'property', label: 'Nemovitost', status, headline };
+  const payment = isFinite(dstiPct)
+    ? `splátka by zabrala ${dstiPct} % čistého příjmu`
+    : 'splátku ale zatím není z čeho platit';
+
+  let headline: string;
+  if (scenario.id === 'cannot_afford_cashflow') {
+    headline = 'Rozpočet dnes nevychází, takže na splátku hypotéky není z čeho.';
+  } else if (scenario.id === 'cannot_afford_dsti') {
+    headline = `Splátka by zabrala ${dstiPct} % čistého příjmu, což je nad tím, co banky obvykle schválí.`;
+  } else if (gap <= 0) {
+    headline = `Akontaci máte pokrytou z úspor, ${payment}.`;
+  } else if (isFinite(months)) {
+    headline = `Chybějící akontaci naspoříte za ${formatMonths(months)}, ${payment}.`;
+  } else {
+    headline = `Na akontaci zatím nic neodkládáte, chybí ${czk(gap)}.`;
+  }
+  return { key: 'property', label: 'Vlastní bydlení', status, headline };
 }
 
 export function retirementReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {

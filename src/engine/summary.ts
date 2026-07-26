@@ -136,6 +136,6 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
     ];
   }
 
-  const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable, leave);
+  const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable, leave, budgetAfter);
   return { status, icon: OVERALL_ICON[status], verdict, tips, goals, budget, budgetAfter };
 }

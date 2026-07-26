@@ -164,11 +164,11 @@ export default function ResultsOverview({ state, allocations }: Props) {
         },
       ];
 
-  // Nemovitost mají dlaždice pokrytou (splátka, akontace, rezerva), takže by
-  // se v připravenosti cílů opakovala se stejnými čísly.
-  const readinessGoals = hasProperty
-    ? summary.goals.filter((g) => g.key !== 'property')
-    : summary.goals;
+  // Bydlení patří mezi cíle jako každý jiný. Dřív se odsud vyřazovalo,
+  // protože ho pokrývají dlaždice nad tím, jenže ty ukazují jen čísla
+  // (splátka, akontace, rezerva). Odpověď „vychází ten cíl, nebo ne?"
+  // v přehledu chyběla, přestože je to ten největší závazek ze všech.
+  const readinessGoals = summary.goals;
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -193,6 +193,25 @@ export default function ResultsOverview({ state, allocations }: Props) {
             {summary.verdict.reason}
           </p>
         </div>
+
+        {/* U vlastního bydlení jsou otázky ve skutečnosti dvě: jestli na něj
+            dosáhnete a jestli po něm zbyde na zbytek. Jedna nálepka je slučuje
+            a uživatel pak nepozná, která z nich ho brzdí. */}
+        {summary.verdict.questions.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 space-y-2">
+            {summary.verdict.questions.map((q) => (
+              <div key={q.question} className="flex items-start gap-2.5">
+                <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-medium ${goalBadge[q.status].className}`}>
+                  {goalBadge[q.status].label}
+                </span>
+                <p className="text-sm text-gray-700 dark:text-gray-200 min-w-0">
+                  <span className="font-semibold">{q.question}</span>{' '}
+                  <span className="text-gray-600 dark:text-gray-400">{q.answer}</span>
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Čísla, na kterých verdikt stojí */}
