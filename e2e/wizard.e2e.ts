@@ -571,3 +571,29 @@ test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ bro
   await senderCtx.close()
   await recipientCtx.close()
 })
+
+test('graf koupě vs. nájem vysvětlí čáry i závěr', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await page.locator('input[inputmode="decimal"]').first().fill('1500000')
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
+
+  // Všechny tři čáry jsou vysvětlené, ne jen pojmenované v legendě.
+  await expect(page.getByText(/Koupě vs\. nájem: vývoj čistého jmění/)).toBeVisible()
+  await expect(page.getByText(/Nájem bez investování:/)).toBeVisible()
+  await expect(page.getByText(/ušetřený rozdíl se utratí/)).toBeVisible()
+
+  // A pod grafem je závěr slovy, ne jen tři čáry k luštění.
+  await expect(page.getByText(/Za 30 let:/)).toBeVisible()
+  await expect(page.getByText(/vychází o .* líp než|vycházejí zhruba nastejno/)).toBeVisible()
+
+  // Parametry mají srozumitelné popisky bez žargonu.
+  await expect(page.getByRole('textbox', { name: 'Výnos investic', exact: true })).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'O kolik ročně poroste nájem', exact: true })).toBeVisible()
+})
