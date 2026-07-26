@@ -91,9 +91,16 @@ export function buildVerdictQuestions(
     warning: 'Zatím ne. Co konkrétně chybí, najdete u cíle níže.',
   };
 
+  // Když se na bydlení zatím nedosáhne, druhá otázka mluví o rozpočtu po
+  // koupi, která by takhle neproběhla. Bez té podmínky vedle sebe stojí
+  // „Zatím ne" a „Ano", což vypadá, že si appka odporuje.
+  const second = property.status === 'warning'
+    ? `Kdyby na bydlení došlo: ${answer.charAt(0).toLowerCase()}${answer.slice(1)}`
+    : answer;
+
   return [
     { question: 'Dosáhnete na vlastní bydlení?', answer: reachable[property.status], status: property.status },
-    { question: 'Zbyde vám pak na zbytek?', answer, status },
+    { question: 'Zbyde vám pak na zbytek?', answer: second, status },
   ];
 }
 

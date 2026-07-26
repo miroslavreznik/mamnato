@@ -54,7 +54,23 @@ describe('rady pod verdiktem', () => {
 
   it('rad není víc, než kolik jich někdo přečte', () => {
     const s = evaluateOverall(makeState({ goals: ['property', 'retirement', 'child', 'other'] }), allocs());
-    expect(s.tips.length).toBeLessThanOrEqual(4);
+    expect(s.tips.length).toBeLessThanOrEqual(5);
+  });
+
+  it('rada k cíli nevypadne kvůli radám k bydlení', () => {
+    // Rodině, které nevychází bydlení ani důchod, vytlačily rady k hypotéce
+    // tu jedinou radu k důchodu. Cíle si proto drží místo na konci seznamu.
+    const state = makeState({
+      mode: 'family',
+      income: { person1NetMonthly: 41000, person2NetMonthly: 29000 },
+      expenses: { rent: 16000, existingLoans: 6000, insurance: 2200, food: 14000, transport: 5000, children: 7000, utilities: 5500, other: 4000 },
+      savings: { totalSavings: 240000 },
+      property: { targetPrice: 6500000, mortgageRate: 0.052, loanTermYears: 30 },
+    });
+    const s = evaluateOverall(state, allocs({ downPayment: 10300 }));
+    expect(s.goals.find((g) => g.key === 'retirement')?.status).toBe('warning');
+    expect(s.tips.some((t) => t.includes('Na důchod zatím nejde nic'))).toBe(true);
+    expect(s.tips.some((t) => t.includes('nezbyla rezerva'))).toBe(true);
   });
 
   it('u záporného rozpočtu se radí jen s rozpočtem', () => {

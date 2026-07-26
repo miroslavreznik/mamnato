@@ -68,12 +68,12 @@ export default function MonthlySavingSlider({ state, value, onChange }: {
 
       {value > disposable && disposable > 0 && (
         <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-          Odkládáte víc, než kolik vám měsíčně zbývá ({czkPerMonth(disposable)}). Na ostatní cíle by nezbylo nic.
+          Odkládáte víc, než kolik vám měsíčně zbývá ({czk(disposable)}). Na ostatní cíle by nezbylo nic.
         </p>
       )}
       {value <= disposable && value > 0 && disposable > 0 && (
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          To je {Math.round(share)} % z toho, co vám měsíčně zbývá po výdajích ({czkPerMonth(disposable)}).
+          To je {Math.round(share)} % z toho, co vám měsíčně zbývá po výdajích ({czk(disposable)}).
           Zbytek zůstává na ostatní cíle a volnou rezervu.
         </p>
       )}

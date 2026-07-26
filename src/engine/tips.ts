@@ -20,7 +20,12 @@ import { czk } from './format';
  */
 
 // Kolik rad má smysl ukázat. Víc už nikdo nečte a ty důležité v tom zapadnou.
-const MAX_TIPS = 4;
+const MAX_TIPS = 5;
+
+// Kolik míst si drží rady ke konkrétním cílům a k rodičovské. Bez téhle
+// rezervace je vytlačí rady k bydlení, kterých je vždycky několik, a cíl
+// „na důchod nespoříte nic" zůstane bez odpovědi.
+const RESERVED_FOR_GOALS = 2;
 
 const BUDGET_TIPS = [
   'Projděte výdaje po kategoriích a hledejte, kde se dá ubrat. Nejčastěji předplatná, pojistky, doprava.',
@@ -82,13 +87,10 @@ export function buildTips(
   }
 
   // 4. Cíle, které nevycházejí. Bez tohohle kroku zůstal cíl bez rady.
-  for (const goal of goals) {
-    const tip = goalTip(goal);
-    if (tip) tips.push(tip);
-  }
+  const goalTips = goals.map(goalTip).filter((t): t is string => t !== null);
 
   // 5. Když nic nedrhne, radí se, co s volným prostorem.
-  if (tips.length === 0) {
+  if (tips.length === 0 && goalTips.length === 0) {
     tips.push(
       status === 'good'
         ? 'Máte prostor: zvažte navýšení spoření nebo investování volné rezervy pro rychlejší růst.'
@@ -101,8 +103,8 @@ export function buildTips(
   // Radit „počítejte s rezervou" někomu, komu rezerva schodek pokryje třikrát,
   // vypadá, že jsme si vlastní čísla nepřečetli.
   //
-  // Drží si vlastní místo na konci seznamu. Kdyby se ořezávala spolu s ostatními,
-  // vypadla by komukoli s nemovitostí, protože scénář bydlení přidá tři rady.
+  // Drží si vlastní místo na konci seznamu spolu s radami k cílům. Kdyby se
+  // ořezávala spolu s ostatními, vypadla by komukoli s nemovitostí.
   const leaveTips: string[] = [];
   if (leave && leave.shortfallPerMonth > 0) {
     leaveTips.push(
@@ -112,5 +114,6 @@ export function buildTips(
     );
   }
 
-  return [...tips.slice(0, MAX_TIPS - leaveTips.length), ...leaveTips];
+  const mustKeep = [...goalTips, ...leaveTips].slice(0, RESERVED_FOR_GOALS);
+  return [...tips.slice(0, MAX_TIPS - mustKeep.length), ...mustKeep];
 }

@@ -5,7 +5,7 @@ import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
-import { formatMonths, czk, czkMonthly, czkPerMonth } from './format';
+import { formatMonths, czk, czkMonthly } from './format';
 
 /**
  * Připravenost jednotlivých cílů.
@@ -103,8 +103,8 @@ export function retirementReadiness(state: WizardState, allocations: GoalAllocat
     label: 'Důchod',
     status: modest ? 'caution' : 'good',
     headline: modest
-      ? `Spoříte ${czkPerMonth(monthly)}, v důchodu to vyjde zhruba na ${czkPerMonth(monthlyRent)}. Zatím spíš doplněk než plnohodnotný příjem.`
-      : `Spoříte ${czkPerMonth(monthly)}, v důchodu to vyjde zhruba na ${czkPerMonth(monthlyRent)}.`,
+      ? `Spoříte ${czkMonthly(monthly)}, v důchodu to vyjde zhruba na ${czkMonthly(monthlyRent)}. Zatím spíš doplněk než plnohodnotný příjem.`
+      : `Spoříte ${czkMonthly(monthly)}, v důchodu to vyjde zhruba na ${czkMonthly(monthlyRent)}.`,
   };
 }
 
@@ -170,7 +170,7 @@ export function childReadiness(allocations: GoalAllocations): GoalReadiness {
     label: 'Dítě / rodina',
     status: monthly > 0 ? 'good' : 'caution',
     headline: monthly > 0
-      ? `Odkládáte ${czkPerMonth(monthly)} na náklady spojené s dítětem.`
+      ? `Odkládáte ${czkMonthly(monthly)} na náklady spojené s dítětem.`
       : 'Zatím neodkládáte nic na náklady spojené s dítětem.',
   };
 }

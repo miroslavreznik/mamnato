@@ -103,7 +103,7 @@ export default function PropertyAffordability({
             <Row
               label="Čas na naspoření chybějící akontace"
               value={formatMonths(months)}
-              tooltip={`Chybějící akontace (${czk(gap)}) dělená tím, co na ni měsíčně odkládáte (${czkPerMonth(monthlySaving)}).`}
+              tooltip={`Chybějící akontace (${czk(gap)}) dělená tím, co na ni měsíčně odkládáte (${czk(monthlySaving)}).`}
             />
           </>
         )}

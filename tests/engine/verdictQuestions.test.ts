@@ -58,3 +58,28 @@ describe('verdikt jako dvě otázky', () => {
     expect(v.questions[1].answer).toMatch(/Další cíle zatím nemáte zvolené/);
   });
 });
+
+describe('druhá otázka u nedosažitelného bydlení', () => {
+  it('se ptá podmíněně, aby si odpovědi neodporovaly', () => {
+    // „Dosáhnete? Zatím ne" a hned pod tím „Zbyde vám pak? Ano" vypadalo,
+    // jako by si appka protiřečila. Druhá otázka mluví o rozpočtu po koupi,
+    // ke které by takhle nedošlo.
+    const state = makeState({
+      goals: ['property', 'retirement'],
+      income: { person1NetMonthly: 44000 },
+      expenses: { rent: 14000, existingLoans: 0, insurance: 800, food: 6500, transport: 1500, children: 0, utilities: 3200, other: 5000 },
+      savings: { totalSavings: 380000 },
+      property: { targetPrice: 4200000, mortgageRate: 0.052, loanTermYears: 30 },
+      person1Age: 29,
+    });
+    const v = evaluateOverall(state, allocs({ downPayment: 6500, retirement: 3000 })).verdict;
+    expect(v.questions[0].status).toBe('warning');
+    expect(v.questions[1].answer).toMatch(/^Kdyby na bydlení došlo: /);
+  });
+
+  it('u dosažitelného bydlení odpovídá rovnou', () => {
+    const v = evaluateOverall(makeState(), allocs({ retirement: 5000 })).verdict;
+    expect(v.questions[0].status).not.toBe('warning');
+    expect(v.questions[1].answer).not.toMatch(/Kdyby na bydlení došlo/);
+  });
+});

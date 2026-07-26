@@ -1,5 +1,5 @@
 import type { BudgetView } from '../../engine/summary';
-import { czkPerMonth } from '../../engine/format';
+import { czk } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 
 /**
@@ -42,19 +42,24 @@ function Line({ budget, period, afterPurchase }: {
       {period && <span className="block text-xs font-semibold uppercase tracking-wide opacity-70 mb-0.5">{period}</span>}
       {budget.fits ? (
         <>
-          Zbývá vám <strong>{czkPerMonth(budget.disposable)}</strong>
-          {afterPurchase ? ' po splátce a nákladech na bydlení' : ' po všech výdajích'}, cíle z toho
-          vyžadují <strong>{czkPerMonth(budget.allocated)}</strong> a volných zůstává{' '}
-          <strong>{czkPerMonth(budget.surplus)}</strong>.
+          {afterPurchase ? 'Po splátce a nákladech na bydlení' : 'Po všech výdajích'} vám měsíčně
+          zbývá <strong>{czk(budget.disposable)}</strong>, cíle z toho vezmou{' '}
+          <strong>{czk(budget.allocated)}</strong> a volných zůstává <strong>{czk(budget.surplus)}</strong>.
           {afterPurchase && ' Na akontaci už se neodkládá, je zaplacená.'}
+        </>
+      ) : budget.disposable < 0 ? (
+        // Schodek nevzniká z cílů, ale z toho, že samotné bydlení přeroste
+        // příjem. Věta o tom, že „cíle vyžadují 0 Kč", by tu byla nesmysl.
+        <>
+          Splátka a náklady na bydlení by přerostly příjem o{' '}
+          <strong>{czk(Math.abs(budget.disposable))}</strong> měsíčně. Na cíle by nezbylo nic.
+          Pomohla by levnější nemovitost, vyšší akontace nebo delší splatnost.
         </>
       ) : (
         <>
-          {afterPurchase
-            ? <>Po splátce a nákladech na bydlení by vám zbylo <strong>{czkPerMonth(budget.disposable)}</strong></>
-            : <>Po všech výdajích vám zbývá <strong>{czkPerMonth(budget.disposable)}</strong></>}
-          , ale cíle vyžadují <strong>{czkPerMonth(budget.allocated)}</strong>. Chybí{' '}
-          <strong>{czkPerMonth(Math.abs(budget.surplus))}</strong>.
+          {afterPurchase ? 'Po splátce a nákladech na bydlení' : 'Po všech výdajích'} by vám měsíčně
+          zbylo <strong>{czk(budget.disposable)}</strong>, ale cíle vyžadují{' '}
+          <strong>{czk(budget.allocated)}</strong>. Chybí <strong>{czk(Math.abs(budget.surplus))}</strong>.
           {afterPurchase
             ? ' Pomohla by levnější nemovitost, vyšší akontace nebo delší splatnost.'
             : ' Upravte částky u cílů níže.'}
