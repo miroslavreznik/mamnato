@@ -261,7 +261,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         {/* Bydlení a hypotéka */}
         {hasProperty && (
           <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Největší položka plánu: akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
-            <SavingsChart state={activeState} />
+            <SavingsChart state={activeState} monthlySaving={activeAllocations.downPayment} />
             <PropertyAffordability
               state={activeState}
               onChangeDownPayment={handleChangeDownPayment}

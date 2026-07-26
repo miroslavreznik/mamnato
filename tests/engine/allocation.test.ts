@@ -30,11 +30,29 @@ describe('calculateDefaultAllocations', () => {
     expect(a.downPayment + a.retirement).toBeLessThanOrEqual(monthlyDisposable(state));
   });
 
-  it('odkládání na akontaci rozloží chybějící částku nejvýš na pět let', () => {
+  it('velká chybějící akontace se stihne do pěti let, když na to rozpočet má', () => {
     const state = makeState({ savings: { totalSavings: 0 } });
     const a = calculateDefaultAllocations(state);
-    expect(a.downPayment).toBeLessThanOrEqual(Math.ceil(downPaymentGap(state) / 60));
-    expect(a.downPayment).toBeGreaterThan(0);
+    expect(monthsToSaveAtAllocation(state, a.downPayment)).toBeLessThanOrEqual(60);
+    expect(a.downPayment).toBeLessThanOrEqual(monthlyDisposable(state));
+  });
+
+  it('malá chybějící akontace se neroztahuje na pět let', () => {
+    // Pět let je strop, ne cíl. Komu chybí 40 000 Kč, tomu appka nabízela
+    // 667 Kč měsíčně a termín „za 5 let", což je nesmysl.
+    const state = makeState({ savings: { totalSavings: 760000 } });
+    const gap = downPaymentGap(state);
+    expect(gap).toBeGreaterThan(0);
+    expect(gap).toBeLessThan(100000);
+    const a = calculateDefaultAllocations(state);
+    expect(monthsToSaveAtAllocation(state, a.downPayment)).toBeLessThanOrEqual(12);
+  });
+
+  it('na akontaci nejde všechno, na ostatní cíle zbývá', () => {
+    const state = makeState({ savings: { totalSavings: 760000 } });
+    const a = calculateDefaultAllocations(state);
+    expect(a.downPayment).toBeLessThan(monthlyDisposable(state));
+    expect(a.retirement).toBeGreaterThan(0);
   });
 
   it('bez cíle nemovitost se na akontaci neodkládá nic', () => {

@@ -23,8 +23,14 @@ export interface GoalAllocations {
   custom: number[];
 }
 
-// Nejdelší doba, přes kterou se rozkládá spoření na akontaci. Delší horizont
-// už neodpovídá tomu, jak lidé o koupi přemýšlejí.
+// Kolik z volných peněz jde ve výchozím stavu na akontaci. Půlka je rozumný
+// kompromis: koupě se posouvá, a zároveň zbývá na ostatní cíle.
+const DOWN_PAYMENT_SHARE = 0.5;
+
+// Doba, do které by měla být akontace naspořená. Není to cíl, ale strop:
+// když by půlka volných peněz nestačila stihnout to za pět let, odkládá se
+// víc. Dřív se tenhle strop používal jako cíl, takže komu chybělo 40 000 Kč,
+// tomu appka nabídla 667 Kč měsíčně a termín „za 5 let".
 const MAX_DOWN_PAYMENT_YEARS = 5;
 
 export function calculateDefaultAllocations(state: WizardState): GoalAllocations {
@@ -45,13 +51,15 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
   }
 
   // Akontace má přednost před dlouhodobými cíli, protože bez ní koupě není.
-  // Rozkládá se nejvýš na pět let a nikdy si nevezme víc, než co zbývá.
+  // Odkládá se půlka volných peněz, a když by to trvalo přes pět let, tak víc.
+  // Nikdy si ale nevezme víc, než co zbývá.
   if (state.goals.includes('property')) {
     const gap = downPaymentGap(state);
     if (gap > 0) {
       const afterChild = Math.max(0, disposable - allocs.child);
+      const share = afterChild * DOWN_PAYMENT_SHARE;
       const overMaxHorizon = gap / (MAX_DOWN_PAYMENT_YEARS * 12);
-      allocs.downPayment = Math.round(Math.min(afterChild, overMaxHorizon));
+      allocs.downPayment = Math.round(Math.min(afterChild, Math.max(share, overMaxHorizon)));
     }
   }
 

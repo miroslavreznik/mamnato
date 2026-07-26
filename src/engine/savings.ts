@@ -81,15 +81,23 @@ export interface RetirementProjectionPoint {
   portfolioValue: number;
 }
 
+/**
+ * Růst úspor určených na akontaci.
+ *
+ * `monthly` je to, co na ni uživatel opravdu odkládá. Bez něj se počítá
+ * s celou disponibilní částkou, což je teoretické maximum pro toho, kdo
+ * nespoří na nic jiného; jako slíbený termín by to lhalo.
+ */
 export function savingsProjection(
   state: WizardState,
-  months: number = 120
+  months: number = 120,
+  monthly?: number
 ): Array<{ month: number; savings: number }> {
-  const disposable = monthlyDisposable(state);
+  const perMonth = monthly ?? monthlyDisposable(state);
   const initial = effectiveDownPayment(state);
   return Array.from({ length: months + 1 }, (_, i) => ({
     month: i,
-    savings: initial + disposable * i,
+    savings: initial + perMonth * i,
   }));
 }
 

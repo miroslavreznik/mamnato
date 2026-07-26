@@ -2,15 +2,20 @@ import type { WizardState } from '../../types';
 import { savingsProjection } from '../../engine/savings';
 import { requiredDownPayment, downPaymentGap, downPaymentFraction } from '../../engine/mortgage';
 import { monthlyDisposable } from '../../engine/cashflow';
+import { formatMonths, czkPerMonth } from '../../engine/format';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import Alert from '../ui/Alert';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 
 interface Props {
   state: WizardState;
+  // Kolik se měsíčně odkládá na akontaci. Ze stejného čísla počítá dlaždice
+  // v souhrnu i posuvník v kartě nemovitosti; kdyby si graf počítal vlastní,
+  // hlásila by jedna stránka tři různé termíny.
+  monthlySaving: number;
 }
 
-export default function SavingsChart({ state }: Props) {
+export default function SavingsChart({ state, monthlySaving }: Props) {
   const colors = useChartColors();
   const gap = downPaymentGap(state);
 
@@ -31,7 +36,7 @@ export default function SavingsChart({ state }: Props) {
     );
   }
 
-  const projection = savingsProjection(state, 120);
+  const projection = savingsProjection(state, 120, monthlySaving);
   const intersectMonth = projection.find((p) => p.savings >= downPayment)?.month;
 
   const chartData = projection
@@ -46,12 +51,14 @@ export default function SavingsChart({ state }: Props) {
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Vývoj úspor v čase</h3>
       {intersectMonth !== undefined && intersectMonth > 0 && (
         <p className="text-sm text-green-600 mb-4">
-          Na akontaci dosáhnete za {Math.floor(intersectMonth / 12)} let a {intersectMonth % 12} měsíců.
+          Při odkládání {czkPerMonth(monthlySaving)} na akontaci dosáhnete za {formatMonths(intersectMonth)}.
         </p>
       )}
       {intersectMonth === undefined && (
         <p className="text-sm text-yellow-600 mb-4">
-          Za 10 let na akontaci nedosáhnete při současném tempu spoření.
+          {monthlySaving > 0
+            ? `Při odkládání ${czkPerMonth(monthlySaving)} na akontaci do 10 let nedosáhnete. Zkuste částku zvýšit posuvníkem v kalkulačce níže.`
+            : 'Dokud na akontaci nic měsíčně neodkládáte, nenaspoříte ji. Částku nastavíte posuvníkem v kalkulačce níže.'}
         </p>
       )}
 
