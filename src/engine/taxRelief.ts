@@ -1,5 +1,6 @@
 import type { WizardState } from '../types';
 import { loanAmount, mortgageRate, loanTermYears, monthlyMortgagePayment } from './mortgage';
+import { czk } from './format';
 
 /**
  * Daňové úlevy spojené s hypotékou a dětmi.
@@ -81,7 +82,6 @@ export interface TaxRelief {
 
 export function evaluateTaxRelief(state: WizardState): TaxRelief | null {
   const items: TaxReliefItem[] = [];
-  const czk = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
   if (state.goals.includes('property') && loanAmount(state) > 0) {
     const interest = firstYearInterest(state);
@@ -92,8 +92,8 @@ export function evaluateTaxRelief(state: WizardState): TaxRelief | null {
       yearly,
       monthly: Math.round(yearly / 12),
       how: interest > INTEREST_DEDUCTION_CAP
-        ? `V prvním roce zaplatíte na úrocích ${czk(interest)} Kč, odečíst jde ale nejvýš ${czk(INTEREST_DEDUCTION_CAP)} Kč ročně. Úspora je 15 % z toho. S klesající jistinou bude úleva každý rok o něco nižší.`
-        : `V prvním roce zaplatíte na úrocích ${czk(interest)} Kč a celé je lze odečíst od základu daně (limit je ${czk(INTEREST_DEDUCTION_CAP)} Kč ročně). Úspora je 15 % z odečtené částky. S klesající jistinou bude úleva každý rok o něco nižší.`,
+        ? `V prvním roce zaplatíte na úrocích ${czk(interest)}, odečíst jde ale nejvýš ${czk(INTEREST_DEDUCTION_CAP)} ročně. Úspora je 15 % z toho. S klesající jistinou bude úleva každý rok o něco nižší.`
+        : `V prvním roce zaplatíte na úrocích ${czk(interest)} a celé je lze odečíst od základu daně (limit je ${czk(INTEREST_DEDUCTION_CAP)} ročně). Úspora je 15 % z odečtené částky. S klesající jistinou bude úleva každý rok o něco nižší.`,
     });
   }
 
@@ -110,7 +110,7 @@ export function evaluateTaxRelief(state: WizardState): TaxRelief | null {
       label: childrenForCredit === 1 ? 'Daňové zvýhodnění na dítě' : `Daňové zvýhodnění na ${childrenForCredit} děti`,
       yearly,
       monthly: Math.round(yearly / 12),
-      how: `Na první dítě ${czk(CHILD_TAX_CREDIT[0])} Kč ročně, na druhé ${czk(CHILD_TAX_CREDIT[1])} Kč a na třetí a další ${czk(CHILD_TAX_CREDIT[2])} Kč. Na rozdíl od odpočtu úroků se odečítá rovnou od daně, ne od základu.`,
+      how: `Na první dítě ${czk(CHILD_TAX_CREDIT[0])} ročně, na druhé ${czk(CHILD_TAX_CREDIT[1])} a na třetí a další ${czk(CHILD_TAX_CREDIT[2])}. Na rozdíl od odpočtu úroků se odečítá rovnou od daně, ne od základu.`,
     });
   }
 

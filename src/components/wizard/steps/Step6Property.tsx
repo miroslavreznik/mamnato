@@ -219,7 +219,7 @@ export default function Step6Property() {
               <span>
                 Během rekonstrukce budu dál platit současné bydlení
                 <span className="block text-xs text-gray-500 dark:text-gray-400">
-                  Nájem i energie ({(state.expenses.rent + state.expenses.utilities).toLocaleString('cs-CZ')} Kč/měs) poběží
+                  Nájem i energie ({(state.expenses.rent + state.expenses.utilities).toLocaleString('cs-CZ')} Kč/měs.) poběží
                   souběžně s hypotékou. Odškrtněte, pokud budete bydlet zadarmo, třeba u rodiny.
                 </span>
               </span>

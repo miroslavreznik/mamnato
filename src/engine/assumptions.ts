@@ -14,7 +14,7 @@ import {
   downPaymentFraction,
 } from './mortgage';
 import { evaluateParentalLeave } from './parentalLeave';
-import { formatMonths, formatYears } from './format';
+import { formatMonths, formatYears, czk, czkMonthly, percentCompact } from './format';
 
 /**
  * Předpoklady, ze kterých přehled počítá.
@@ -35,9 +35,6 @@ export interface Assumption {
   source: 'user' | 'estimate';
   note?: string;
 }
-
-const czk = (n: number) => `${Math.round(n).toLocaleString('cs-CZ')} Kč`;
-const pct = (r: number) => `${(Math.round(r * 1000) / 10).toLocaleString('cs-CZ')} %`;
 
 export function buildAssumptions(state: WizardState): Assumption[] {
   const rows: Assumption[] = [];
@@ -71,18 +68,18 @@ export function buildAssumptions(state: WizardState): Assumption[] {
 
     rows.push({
       label: 'Akontace z vlastních peněz',
-      value: `${czk(effectiveDownPayment(state))} (${pct(effectiveDownPayment(state) / Math.max(1, totalProjectCost(state)))} z investice)`,
+      value: `${czk(effectiveDownPayment(state))} (${percentCompact(effectiveDownPayment(state) / Math.max(1, totalProjectCost(state)))} z investice)`,
       source: state.savings.downPaymentFromSavings != null ? 'user' : 'estimate',
       note: state.savings.downPaymentFromSavings != null
         ? undefined
-        : `Bez vlastního nastavení počítáme s povinným minimem ${pct(downPaymentFraction(state))}, zbytek úspor zůstává jako rezerva.`,
+        : `Bez vlastního nastavení počítáme s povinným minimem ${percentCompact(downPaymentFraction(state))}, zbytek úspor zůstává jako rezerva.`,
     });
 
     rows.push({ label: 'Výše hypotéky', value: czk(loanAmount(state)), source: 'estimate' });
 
     rows.push({
       label: 'Úroková sazba',
-      value: `${pct(mortgageRate(state))} ročně`,
+      value: `${percentCompact(mortgageRate(state))} ročně`,
       source: isRateOverridden(state) ? 'user' : 'estimate',
       note: isRateOverridden(state)
         ? 'Zadali jste ji ručně, takže se podle fixace nemění.'
@@ -94,7 +91,7 @@ export function buildAssumptions(state: WizardState): Assumption[] {
 
     rows.push({
       label: 'Náklady na vlastnictví',
-      value: `${czk(ownershipCosts(state))} měsíčně`,
+      value: czkMonthly(ownershipCosts(state)),
       source: isOwnershipCostsOverridden(state) ? 'user' : 'estimate',
       note: isOwnershipCostsOverridden(state)
         ? 'Zadali jste je ručně, s cenou nemovitosti se nemění.'
@@ -106,7 +103,7 @@ export function buildAssumptions(state: WizardState): Assumption[] {
   if (leave) {
     rows.push({
       label: 'Na rodičovské zůstane',
-      value: `Osoba ${leave.parent} (příjem ${czk(leave.lostSalary)} měsíčně)`,
+      value: `Osoba ${leave.parent} (příjem ${czkMonthly(leave.lostSalary)})`,
       source: 'user',
       note: 'Právě tenhle příjem během volna vypadne. U druhé osoby by výsledek vypadal jinak.',
     });
@@ -116,7 +113,7 @@ export function buildAssumptions(state: WizardState): Assumption[] {
     rows.push({
       label: 'Dávky během volna',
       value: manualBenefit
-        ? `${czk(leave.monthlyBenefit)} měsíčně po celou dobu`
+        ? `${czkMonthly(leave.monthlyBenefit)} po celou dobu`
         : leave.phases.map((p) => `${p.label}: ${czk(p.monthlyBenefit)}`).join('; '),
       source: manualBenefit ? 'user' : 'estimate',
       note: manualBenefit

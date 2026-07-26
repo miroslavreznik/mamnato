@@ -55,7 +55,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
 
       {isFamily && (
         <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-amber-700 dark:text-amber-400">
-          Vaše aktuální výdaje na děti ({state.expenses.children.toLocaleString('cs-CZ')} Kč/měs) jsou již zahrnuty ve výpočtu cashflow. Níže zobrazené náklady představují odhad pro plánované/budoucí dítě.
+          Vaše aktuální výdaje na děti ({state.expenses.children.toLocaleString('cs-CZ')} Kč/měs.) jsou již zahrnuty ve výpočtu cashflow. Níže zobrazené náklady představují odhad pro plánované/budoucí dítě.
         </div>
       )}
 
@@ -106,7 +106,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left py-2 text-gray-500 dark:text-gray-400">Věk</th>
-                <th className="text-right py-2 text-gray-500 dark:text-gray-400">Kč/měsíc (1 dítě)</th>
+                <th className="text-right py-2 text-gray-500 dark:text-gray-400">Kč/měs. (1 dítě)</th>
               </tr>
             </thead>
             <tbody>
@@ -133,7 +133,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <span className="text-sm text-gray-500 dark:text-gray-400">Průměrné měsíční náklady</span>
           <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
-            {result.monthlyAverage.toLocaleString('cs-CZ')} Kč/měs
+            {result.monthlyAverage.toLocaleString('cs-CZ')} Kč/měs.
           </p>
         </div>
         <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
@@ -158,7 +158,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             <XAxis dataKey="year" {...axisProps(colors)} label={{ value: 'Věk dítěte', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
             <YAxis tickFormatter={(n) => `${(n / 1000).toFixed(0)}k`} {...axisProps(colors)} />
             <Tooltip
-              formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč/měs`]}
+              formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč/měs.`]}
               labelFormatter={(label) => `Věk: ${label} let`}
               contentStyle={{ background: colors.surface, border: `1px solid ${colors.grid}`, borderRadius: 8, fontSize: 13 }}
             />

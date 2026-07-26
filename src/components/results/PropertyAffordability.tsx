@@ -15,7 +15,7 @@ import {
   fixationYears as fixationYearsOf,
 } from '../../engine/mortgage';
 import { necessaryMonthlyExpenses } from '../../engine/cashflow';
-import { formatMonths, formatYears } from '../../engine/format';
+import { formatMonths, formatYears, formatNumber as fmt } from '../../engine/format';
 import { ltvRateAdvice, paymentAtRate } from '../../engine/rateGuidance';
 import { purchaseOneOffCosts } from '../../engine/purchaseCosts';
 import Tooltip from '../ui/Tooltip';
@@ -91,7 +91,6 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
   // Jednorázové náklady koupě, které odejdou z rezervy hned na začátku.
   const oneOff = purchaseOneOffCosts(state);
 
-  const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
   // Sazba česky s desetinnou čárkou (5,2 místo 5.2).
   const fmtRate = (r: number) =>
     (r * 100).toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
@@ -190,7 +189,7 @@ export default function PropertyAffordability({ state, onChangeDownPayment, onCh
               {/* (1) Cena/přínos každých +100 000 Kč */}
               <p>
                 <span className="font-medium text-gray-700 dark:text-gray-300">Každých +100 000 Kč akontace:</span>{' '}
-                splátka −{fmt(paymentDelta)} Kč/měs a na úrocích za {term} let ušetříte ~{fmt(interestDelta)} Kč, jistý efekt ve výši úrokové sazby ({fmtRate(rate)} %).
+                splátka −{fmt(paymentDelta)} Kč/měs. a na úrocích za {term} let ušetříte ~{fmt(interestDelta)} Kč, jistý efekt ve výši úrokové sazby ({fmtRate(rate)} %).
               </p>
               {/* (3) Alternativa: investovat zbytek místo vyšší akontace */}
               {reserve > 0 && loanAmount > 0 && (

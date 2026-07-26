@@ -7,13 +7,13 @@ import {
 } from '../../engine/parentalLeave';
 import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
+import { formatNumber as fmt } from '../../engine/format';
 
 interface Props {
   state: WizardState;
   onChange: (v: ParentalLeave | undefined) => void;
 }
 
-const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
 export default function ParentalLeavePlanner({ state, onChange }: Props) {
   const pl = state.parentalLeave;
@@ -68,7 +68,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           {opts?.tooltip && <Tooltip text={opts.tooltip} />}
         </span>
         <p className={`text-xl font-bold ${bad ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-white'}`}>
-          {value >= 0 ? '' : '−'}{fmt(Math.abs(value))} <span className="text-sm font-normal text-gray-400">Kč/měs</span>
+          {value >= 0 ? '' : '−'}{fmt(Math.abs(value))} <span className="text-sm font-normal text-gray-400">Kč/měs.</span>
         </p>
       </div>
     );
@@ -162,7 +162,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
                 <span className="text-gray-600 dark:text-gray-400">
                   {phase.label} <span className="text-gray-400">({Math.round(phase.months)} měs.)</span>
                 </span>
-                <span className="font-semibold text-gray-900 dark:text-white">{fmt(phase.monthlyBenefit)} Kč/měs</span>
+                <span className="font-semibold text-gray-900 dark:text-white">{fmt(phase.monthlyBenefit)} Kč/měs.</span>
               </div>
             ))}
           </div>
@@ -185,7 +185,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         <div className={`p-3 rounded-lg mb-3 text-sm ${afterNeg ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300'}`}>
           {afterNeg ? (
             <>
-              Po koupi byste během rodičovské byli <strong>−{fmt(Math.abs(afterPurchase))} Kč/měs v mínusu</strong>, splátku hypotéky a nezbytné výdaje byste z běžného příjmu neutáhli.{' '}
+              Po koupi byste během rodičovské byli <strong>−{fmt(Math.abs(afterPurchase))} Kč/měs. v mínusu</strong>, splátku hypotéky a nezbytné výdaje byste z běžného příjmu neutáhli.{' '}
               {impact.reserveAfter <= 0 ? (
                 <>Po zaplacení akontace vám přitom <strong>nezbude žádná rezerva</strong>, ze které byste schodek kryli. Počítejte s došetřením, levnější nemovitostí nebo kratším volnem.</>
               ) : impact.monthsCovered !== null && impact.monthsCovered >= impact.durationMonths ? (
@@ -195,14 +195,14 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
               )}
             </>
           ) : (
-            <>I po koupi byste během rodičovské měli <strong>+{fmt(afterPurchase)} Kč/měs</strong> po zaplacení splátky a nezbytných výdajů. Rozpočet volno ustojí.</>
+            <>I po koupi byste během rodičovské měli <strong>+{fmt(afterPurchase)} Kč/měs.</strong> po zaplacení splátky a nezbytných výdajů. Rozpočet volno ustojí.</>
           )}
         </div>
       )}
 
       {leaveNeg && !hasProperty && (
         <div className="p-3 rounded-lg mb-3 text-sm bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
-          Během rodičovské by výdaje převýšily příjem o <strong>{fmt(Math.abs(impact.disposableDuringLeave))} Kč/měs</strong>.{' '}
+          Během rodičovské by výdaje převýšily příjem o <strong>{fmt(Math.abs(impact.disposableDuringLeave))} Kč/měs.</strong>.{' '}
           {impact.reserveAfter > 0 && impact.monthsCovered !== null ? (
             impact.monthsCovered >= impact.durationMonths ? (
               <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) schodek za celé volno ({fmt(impact.shortfallTotal)} Kč) pokryjí.</>

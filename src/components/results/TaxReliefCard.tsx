@@ -1,8 +1,8 @@
 import type { WizardState } from '../../types';
 import { evaluateTaxRelief } from '../../engine/taxRelief';
 import Tooltip from '../ui/Tooltip';
+import { formatNumber as fmt } from '../../engine/format';
 
-const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
 /**
  * Daňové úlevy, o kterých se u hypotéky často zapomíná.
@@ -48,7 +48,7 @@ export default function TaxReliefCard({ state }: { state: WizardState }) {
           <Tooltip text="Součet ročních úlev přepočtený na měsíc. Uplatní se jen do výše daně, kterou skutečně platíte: odpočet úroků nemůže vrátit víc, než kolik jste na dani odvedli. Zvýhodnění na dítě se naopak může změnit v daňový bonus a vyplatit se i nad rámec daně." />
         </span>
         <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">
-          {fmt(relief.monthly)} Kč/měs
+          {fmt(relief.monthly)} Kč/měs.
         </span>
       </div>
 

@@ -6,6 +6,7 @@ import NumberInput from '../../ui/NumberInput';
 import NumField from '../../ui/NumField';
 import Alert from '../../ui/Alert';
 import StepNavigation from '../StepNavigation';
+import { formatNumber as fmt } from '../../../engine/format';
 
 const categories: { field: string; label: string; tooltip: string; step: number; familyOnly?: boolean }[] = [
   { field: 'rent', label: 'Nájem (bez energií a poplatků)', tooltip: 'Zadejte čistou výši nájmu, tedy částku, kterou platíte pronajímateli za byt. Energie a zálohy zadejte do pole níže.', step: 1000 },
@@ -50,7 +51,6 @@ export default function Step3Expenses() {
 
   const visibleCategories = categories.filter((c) => !c.familyOnly || isFamily);
 
-  const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
   return (
     <div>
@@ -128,7 +128,7 @@ export default function Step3Expenses() {
 
           <div className="flex justify-between pt-2 border-t dark:border-gray-600 text-sm">
             <span className="text-gray-600 dark:text-gray-300 font-medium">Zbytné výdaje celkem</span>
-            <span className="font-semibold text-gray-900 dark:text-white">{fmt(state.expenses.other)} Kč/měsíc</span>
+            <span className="font-semibold text-gray-900 dark:text-white">{fmt(state.expenses.other)} Kč/měs.</span>
           </div>
         </div>
       )}
@@ -151,7 +151,7 @@ export default function Step3Expenses() {
       <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm text-gray-600 space-y-1">
         <div className="flex justify-between">
           <span>Celkem výdaje:</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{fmt(expenses)} Kč/měsíc</span>
+          <span className="font-semibold text-gray-900 dark:text-white">{fmt(expenses)} Kč/měs.</span>
         </div>
         <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
           <span>z toho nezbytné</span>

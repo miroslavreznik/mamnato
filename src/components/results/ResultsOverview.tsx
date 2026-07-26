@@ -5,7 +5,7 @@ import type { GoalStatus, VerdictAnswer } from '../../engine/summary';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
 import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, monthsToSaveDownPayment, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
 import { DEFAULTS } from '../../engine/defaults';
-import { formatMonths } from '../../engine/format';
+import { formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 
 interface Props {
@@ -88,7 +88,6 @@ export default function ResultsOverview({ state, allocations }: Props) {
   const hasProperty = state.goals.includes('property');
   const runway = hasProperty ? postPurchaseRunwayMonths(state) : emergencyRunwayMonths(state);
 
-  const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
   const runwayLabel = runway === Infinity ? '∞' : runway.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const runwayTone: Tone = runway >= 6 ? 'good' : runway >= 3 ? 'warn' : 'bad';
 
@@ -104,7 +103,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
             label: 'Měsíční splátka',
             tooltip: 'Odhadovaná splátka hypotéky při zadané ceně, akontaci, sazbě a délce splácení. Kolik z příjmu ukrojí, ukazuje řádek pod částkou (DSTI).',
             value: fmt(payment),
-            unit: 'Kč/měs',
+            unit: 'Kč/měs.',
             sub: isFinite(dstiPct) ? `${Math.round(dstiPct * 100)} % čistého příjmu` : undefined,
             tone: !isFinite(dstiPct) || dstiPct > DEFAULTS.dstiLimit ? 'bad' : dstiPct > DEFAULTS.dstiLimit * 0.85 ? 'warn' : 'plain',
             // Proužek vůči obvyklému bankovnímu stropu DSTI.
@@ -142,7 +141,7 @@ export default function ResultsOverview({ state, allocations }: Props) {
           label: 'Disponibilní částka',
           tooltip: 'Kolik vám měsíčně zbyde po odečtení všech výdajů od čistých příjmů (příjmy − výdaje). Z této částky spoříte na cíle a tvoříte rezervu.',
           value: `${disposable >= 0 ? '+' : ''}${fmt(disposable)}`,
-          unit: 'Kč/měs',
+          unit: 'Kč/měs.',
           tone: disposable >= 0 ? 'plain' : 'bad',
         },
         {
@@ -243,9 +242,9 @@ export default function ResultsOverview({ state, allocations }: Props) {
       {summary.budget && (
         <div className={`p-3 rounded-lg mb-5 text-sm ${summary.budget.fits ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'}`}>
           {summary.budget.fits ? (
-            <>Cíle vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs</strong> z <strong>{fmt(summary.budget.disposable)} Kč/měs</strong> disponibilních, zbývá vám ještě <strong>{fmt(summary.budget.surplus)} Kč/měs</strong> volných.</>
+            <>Cíle vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs.</strong> z <strong>{fmt(summary.budget.disposable)} Kč/měs.</strong> disponibilních, zbývá vám ještě <strong>{fmt(summary.budget.surplus)} Kč/měs.</strong> volných.</>
           ) : (
-            <>Cíle dohromady vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs</strong>, ale máte <strong>{fmt(summary.budget.disposable)} Kč/měs</strong>, chybí <strong>{fmt(Math.abs(summary.budget.surplus))} Kč/měs</strong>. Upravte částky u cílů níže.</>
+            <>Cíle dohromady vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs.</strong>, ale máte <strong>{fmt(summary.budget.disposable)} Kč/měs.</strong>, chybí <strong>{fmt(Math.abs(summary.budget.surplus))} Kč/měs.</strong>. Upravte částky u cílů níže.</>
           )}
         </div>
       )}

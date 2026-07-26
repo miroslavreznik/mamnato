@@ -1,5 +1,6 @@
 import type { WizardState } from '../../types';
 import { mortgageRate, loanAmount as loanAmountOf, mortgagePayment, ownershipCosts as ownershipCostsOf } from '../../engine/mortgage';
+import { formatNumber as fmt } from '../../engine/format';
 
 interface Props {
   state: WizardState;
@@ -23,7 +24,6 @@ export default function MortgageVsRent({ state }: Props) {
   const diff = Math.round(totalOwnership - totalRent);
   // „Reálný" náklad navíc po odečtení jistiny (ta se vám vrací do majetku).
   const effectiveDiff = Math.round(totalOwnership - firstPrincipal - totalRent);
-  const fmt = (n: number) => Math.round(n).toLocaleString('cs-CZ');
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">

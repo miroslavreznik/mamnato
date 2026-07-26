@@ -95,7 +95,7 @@ export default function Step2Income() {
             (state.income.person2NetMonthly ?? 0) +
             (state.income.parentalAllowance ?? 0)
           ).toLocaleString('cs-CZ')}{' '}
-          Kč/měsíc
+          Kč/měs.
         </span>
       </div>
 

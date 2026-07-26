@@ -47,22 +47,22 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
       <div className="grid grid-cols-3 gap-4 text-sm">
         <div>
           <span className="text-gray-500 dark:text-gray-400">Disponibilní celkem</span>
-          <p className="font-semibold text-gray-900 dark:text-white">{disposable.toLocaleString('cs-CZ')} Kč/měs</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
         <div>
           <span className="text-gray-500 dark:text-gray-400">Alokováno na cíle</span>
-          <p className="font-semibold text-gray-900 dark:text-white">{totalAllocated.toLocaleString('cs-CZ')} Kč/měs</p>
+          <p className="font-semibold text-gray-900 dark:text-white">{totalAllocated.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
         <div>
           <span className="text-gray-500 dark:text-gray-400">Zbývá volných</span>
           <p className={`font-semibold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {remaining.toLocaleString('cs-CZ')} Kč/měs
+            {remaining.toLocaleString('cs-CZ')} Kč/měs.
           </p>
         </div>
       </div>
       {totalNeeded > disposable && (
         <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-sm text-red-700 dark:text-red-400">
-          Tvoje cíle dohromady potřebují o {(totalNeeded - disposable).toLocaleString('cs-CZ')} Kč/měs více, než máš k dispozici. Uprav cíle nebo jejich horizont.
+          Tvoje cíle dohromady potřebují o {(totalNeeded - disposable).toLocaleString('cs-CZ')} Kč/měs. více, než máš k dispozici. Uprav cíle nebo jejich horizont.
         </div>
       )}
     </div>
@@ -257,19 +257,19 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Potřebná měsíční úspora:</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
-                      {requiredMonthly.toLocaleString('cs-CZ')} Kč/měs
+                      {requiredMonthly.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Na tento cíl odkládáš:</span>
                     <span className={`font-semibold ${alloc.achievable ? 'text-green-600' : alloc.monthlyAllocation > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
-                      {alloc.monthlyAllocation.toLocaleString('cs-CZ')} Kč/měs
+                      {alloc.monthlyAllocation.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Zbývá ti po tomto cíli:</span>
                     <span className="font-semibold text-gray-900 dark:text-white">
-                      {alloc.remainingAfter.toLocaleString('cs-CZ')} Kč/měs
+                      {alloc.remainingAfter.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
 

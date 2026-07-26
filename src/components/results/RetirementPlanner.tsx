@@ -97,7 +97,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             suffix="Kč"
             className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
-          <p className="mt-1 text-xs text-gray-400">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs</p>
+          <p className="mt-1 text-xs text-gray-400">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
