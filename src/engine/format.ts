@@ -41,6 +41,13 @@ export function percentCompact(ratio: number): string {
   return `${value.toLocaleString('cs-CZ')} %`;
 }
 
+// Úroková sazba: vždy aspoň jedno desetinné místo, nejvýš dvě. Sazby se
+// běžně uvádějí jako „4,8 %" i „5,25 %", zaokrouhlení na jedno místo by
+// druhý tvar znehodnotilo.
+export function formatRate(ratio: number): string {
+  return (ratio * 100).toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+}
+
 // Formátování časových údajů s českým skloňováním. Bez toho vznikají tvary
 // jako „1 let" nebo „1 měsíců", které v textu okamžitě bijí do očí.
 

@@ -166,7 +166,8 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   await page.getByRole('slider', { name: 'Akontace z úspor' }).fill('200000')
   await expect(page.getByText(/5\s?300\s?000 Kč/).first()).toBeVisible()
   // rozhodovací nápovědy u posuvníku
-  await expect(page.getByText(/Každých \+100 000 Kč akontace/)).toBeVisible()
+  // Oddělovač tisíců je nezlomitelná mezera, proto \s a ne obyčejná mezera.
+  await expect(page.getByText(/Každých \+100\s000\s?Kč akontace/)).toBeVisible()
   await expect(page.getByText(/Alternativa:/)).toBeVisible()
   await expect(page.getByText(/Bezpečné maximum|za bezpečnou hranicí|6měsíční rezervu/).first()).toBeVisible()
 })

@@ -1,12 +1,12 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
 import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRateForFixation, ownershipCostsEstimate, mortgageRateEstimate, totalProjectCost } from '../../../engine/mortgage';
-import { formatYears, formatMonths, czk, czkMonthly, percentCompact } from '../../../engine/format';
-import { evaluateRenovation, renovationWithOverrun } from '../../../engine/renovation';
+import { formatYears, czk, czkMonthly, percentCompact } from '../../../engine/format';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
 import EstimateNote from '../../ui/EstimateNote';
 import StepNavigation from '../StepNavigation';
+import RenovationSection from './RenovationSection';
 
 // Fixace, které banky běžně nabízejí.
 const FIXATION_CHOICES = [1, 3, 5, 7, 10];
@@ -29,8 +29,6 @@ export default function Step6Property() {
   const rateEstimate = mortgageRateEstimate(state);
   const ownershipEstimate = ownershipCostsEstimate(state);
   const fixationDiff = rateEstimate.suggested - suggestedRateForFixation(5);
-  const renovation = state.property.renovation;
-  const renovationPhase = evaluateRenovation(state);
   const dpFraction = downPaymentFraction(state);
   const reqDpPct = Math.round(dpFraction * 100);
   // Akontace i úvěr se počítají z celé investice (cena + rekonstrukce),
@@ -162,96 +160,7 @@ export default function Step6Property() {
         onRevert={() => dispatch({ type: 'CLEAR_PROPERTY_ESTIMATE', field: 'ownershipCosts' })}
       />
 
-      {/* Rekonstrukce je nepovinná. Dokud se nezapne, průvodce vypadá stejně
-          jako dřív a nikdo se nemusí prokousávat poli, která ho netrápí. */}
-      <div className="mb-6">
-        {!renovation ? (
-          <button
-            type="button"
-            onClick={() => dispatch({ type: 'SET_RENOVATION', value: { cost: 0, months: 6, payingRentMeanwhile: true } })}
-            className="text-sm text-blue-600 dark:text-blue-400 hover:underline min-h-[44px]"
-          >
-            + Budu rekonstruovat
-          </button>
-        ) : (
-          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-            <div className="flex items-start justify-between gap-2 mb-1">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Rekonstrukce po koupi</h3>
-              <button
-                type="button"
-                onClick={() => dispatch({ type: 'SET_RENOVATION', value: undefined })}
-                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0"
-              >
-                Zrušit
-              </button>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-              Rozpočet na rekonstrukci se přičítá k ceně, protože banka půjčuje proti hodnotě
-              nemovitosti po rekonstrukci. Zvyšuje se tím i potřebná akontace.
-            </p>
-
-            <NumberInput
-              label="Rozpočet na rekonstrukci"
-              value={renovation.cost}
-              onChange={(v) => dispatch({ type: 'SET_RENOVATION', value: { ...renovation, cost: v } })}
-              tooltip="Materiál i práce. Stavební práce se běžně prodraží o 15 až 20 %, počítejte s tím i v rezervě."
-              step={50000}
-            />
-            <NumberInput
-              label="Jak dlouho potrvá"
-              value={renovation.months}
-              onChange={(v) => dispatch({ type: 'SET_RENOVATION', value: { ...renovation, months: Math.max(1, v) } })}
-              tooltip="Po tuhle dobu se do nemovitosti nedá nastěhovat. Hypotéka se zatím čerpá postupně, takže se platí jen úrok z vyčerpané části."
-              suffix="měs."
-              min={1}
-              max={48}
-              step={1}
-            />
-
-            <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300 min-h-[44px] cursor-pointer">
-              <input
-                type="checkbox"
-                checked={renovation.payingRentMeanwhile}
-                onChange={(e) => dispatch({ type: 'SET_RENOVATION', value: { ...renovation, payingRentMeanwhile: e.target.checked } })}
-                className="mt-1 w-5 h-5 accent-blue-600 shrink-0"
-              />
-              <span>
-                Během rekonstrukce budu dál platit současné bydlení
-                <span className="block text-xs text-gray-500 dark:text-gray-400">
-                  Nájem i energie ({(state.expenses.rent + state.expenses.utilities).toLocaleString('cs-CZ')} Kč/měs.) poběží
-                  souběžně s hypotékou. Odškrtněte, pokud budete bydlet zadarmo, třeba u rodiny.
-                </span>
-              </span>
-            </label>
-
-            {renovationPhase && (
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                <p>
-                  <span className="font-medium text-gray-700 dark:text-gray-300">Během rekonstrukce zaplatíte bance míň.</span>{' '}
-                  Hypotéka se čerpá postupně a z nevyčerpané části se neplatí nic, takže místo plné splátky{' '}
-                  {Math.round(renovationPhase.fullPayment).toLocaleString('cs-CZ')} Kč jde jen o úrok:
-                  na začátku {Math.round(renovationPhase.interestOnlyStart).toLocaleString('cs-CZ')} Kč,
-                  na konci {Math.round(renovationPhase.interestOnlyEnd).toLocaleString('cs-CZ')} Kč měsíčně.
-                </p>
-                {renovation.payingRentMeanwhile && (
-                  <p>
-                    Se současným bydlením to dělá zhruba{' '}
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {Math.round(renovationPhase.housingDuringRenovation).toLocaleString('cs-CZ')} Kč měsíčně
-                    </span>{' '}
-                    po dobu {formatMonths(renovation.months)}. Volných vám při současných příjmech zbyde{' '}
-                    {Math.round(renovationPhase.disposableDuringRenovation).toLocaleString('cs-CZ')} Kč.
-                  </p>
-                )}
-                <p className="text-amber-600 dark:text-amber-400">
-                  Počítejte s rezervou na prodražení. Při obvyklých 20 % navíc by rekonstrukce vyšla na{' '}
-                  {renovationWithOverrun(state).toLocaleString('cs-CZ')} Kč a rozdíl se doplácí z vlastních peněz.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
+      <RenovationSection />
 
       <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">Parametry hypotéky</h3>
       <NumberInput
