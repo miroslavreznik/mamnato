@@ -85,14 +85,43 @@ describe('investmentComparison', () => {
     expect(data[0].propertyNetWorth).toBe(500000);
   });
 
-  it('sp500 portfolio starts at down payment', () => {
+  it('všechny tři varianty startují na stejné částce', () => {
+    // Bez společného startu by se čáry nedaly porovnávat: vlastník dá akontaci
+    // do nemovitosti, nájemník ji investuje, třetí ji nechá ležet.
     const data = investmentComparison(makeState(), 0.03, 0.07, 0.03, 30);
-    expect(data[0].sp500NetWorth).toBe(500000);
+    expect(data[0].rentInvestNetWorth).toBe(500000);
+    expect(data[0].rentNoInvestNetWorth).toBe(500000);
+    expect(data[0].propertyNetWorth).toBe(500000);
   });
 
-  it('renting cost starts at 0', () => {
+  it('kdo rozdíl neinvestuje, tomu jmění neroste', () => {
     const data = investmentComparison(makeState(), 0.03, 0.07, 0.03, 30);
-    expect(data[0].rentingCost).toBeCloseTo(0);
+    expect(data[30].rentNoInvestNetWorth).toBe(data[0].rentNoInvestNetWorth);
+  });
+
+  it('náklady na vlastnictví se vlastníkovi počítají', () => {
+    // Bez nich by srovnání nadržovalo koupi: nájemník platí celý nájem,
+    // ale vlastníkovi by fond oprav, pojištění a daň nikdo neúčtoval.
+    const withCosts = investmentComparison(makeState({
+      property: { targetPrice: 5500000, mortgageRate: 0.05, loanTermYears: 30, ownershipCosts: 8000 },
+    }), 0.03, 0.07, 0.03, 30);
+    const withoutCosts = investmentComparison(makeState({
+      property: { targetPrice: 5500000, mortgageRate: 0.05, loanTermYears: 30, ownershipCosts: 0 },
+    }), 0.03, 0.07, 0.03, 30);
+    // Vyšší náklady na vlastnictví → nájemník investuje víc.
+    expect(withCosts[30].rentInvestNetWorth).toBeGreaterThan(withoutCosts[30].rentInvestNetWorth);
+  });
+
+  it('po splacení hypotéky začne spořit vlastník', () => {
+    // Kratší hypotéka než horizont: posledních 15 let už vlastník splátku
+    // neplatí, takže mu přebytek roste. Dřív se kvůli reziduu z plovoucí
+    // čárky „splácelo" i po splacení a vlastníkovi nepřibývalo nic.
+    const short = makeState({
+      property: { targetPrice: 5500000, mortgageRate: 0.05, loanTermYears: 15, ownershipCosts: 4000 },
+    });
+    const data = investmentComparison(short, 0.03, 0.07, 0.03, 30);
+    const propertyOnly = 5500000 * Math.pow(1.03, 30);
+    expect(data[30].propertyNetWorth).toBeGreaterThan(propertyOnly);
   });
 
   it('property net worth grows over time', () => {

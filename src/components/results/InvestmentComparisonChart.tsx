@@ -28,8 +28,16 @@ export default function InvestmentComparisonChart({ state }: Props) {
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Koupě vs. nájem: vývoj čistého jmění</h3>
       <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        Jak roste vaše čisté jmění, když koupíte nemovitost, versus když zůstanete v nájmu a rozdíl investujete. Nájem bez investic je pro srovnání jako čistý náklad.
+        Všechny tři čáry ukazují <span className="text-gray-600 dark:text-gray-300">čisté jmění</span>, tedy co byste měli, kdybyste
+        všechno prodali a doplatili dluhy. Startují na stejné částce: vlastník ji dá do akontace, nájemník ji investuje.
       </p>
+
+      {/* Bez tohohle vysvětlení nešlo poznat, co která čára znamená. */}
+      <ul className="mb-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+        <li><span className="font-medium text-gray-700 dark:text-gray-300">Koupě nemovitosti:</span> hodnota bytu minus zbytek hypotéky. Když vyjde vlastnictví levněji než nájem, rozdíl se investuje.</li>
+        <li><span className="font-medium text-gray-700 dark:text-gray-300">Nájem a investování rozdílu:</span> nájemník investuje akontaci i to, oč měsíčně platí míň než vlastník.</li>
+        <li><span className="font-medium text-gray-700 dark:text-gray-300">Nájem bez investování:</span> ušetřený rozdíl se utratí, takže jmění neroste. Nejčastější varianta v praxi.</li>
+      </ul>
 
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
@@ -43,8 +51,8 @@ export default function InvestmentComparisonChart({ state }: Props) {
                 nameFormatter={(name) => {
                   const labels: Record<string, string> = {
                     propertyNetWorth: 'Koupě nemovitosti',
-                    sp500NetWorth: 'Nájem + investice SP500',
-                    rentingCost: 'Nájem bez investic',
+                    rentInvestNetWorth: 'Nájem a investování rozdílu',
+                    rentNoInvestNetWorth: 'Nájem bez investování',
                   };
                   return labels[name] ?? name;
                 }}
@@ -55,15 +63,15 @@ export default function InvestmentComparisonChart({ state }: Props) {
             formatter={(value) => {
               const labels: Record<string, string> = {
                 propertyNetWorth: 'Koupě nemovitosti',
-                sp500NetWorth: 'Nájem + investice SP500',
-                rentingCost: 'Nájem bez investic',
+                rentInvestNetWorth: 'Nájem a investování rozdílu',
+                rentNoInvestNetWorth: 'Nájem bez investování',
               };
               return labels[value] ?? value;
             }}
           />
           <Line type="monotone" dataKey="propertyNetWorth" stroke={colors.positive} strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="sp500NetWorth" stroke={colors.primary} strokeWidth={2} dot={false} />
-          <Line type="monotone" dataKey="rentingCost" stroke={colors.negative} strokeWidth={2} dot={false} strokeDasharray="5 5" />
+          <Line type="monotone" dataKey="rentInvestNetWorth" stroke={colors.primary} strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="rentNoInvestNetWorth" stroke={colors.negative} strokeWidth={2} dot={false} strokeDasharray="5 5" />
         </LineChart>
       </ResponsiveContainer>
 

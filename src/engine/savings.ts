@@ -9,6 +9,7 @@ import {
   mortgagePayment,
   expensesAfterPurchase,
   totalProjectCost,
+  ownershipCosts,
 } from './mortgage';
 
 export interface GoalAllocation {
@@ -67,9 +68,12 @@ export function allocateGoals(
 
 export interface InvestmentProjectionPoint {
   year: number;
+  /** Hodnota nemovitosti minus zbytek úvěru plus investovaný přebytek. */
   propertyNetWorth: number;
-  sp500NetWorth: number;
-  rentingCost: number;
+  /** Portfolio nájemníka, který rozdíl v nákladech investuje. */
+  rentInvestNetWorth: number;
+  /** Jmění nájemníka, který rozdíl neinvestuje: zůstane mu jen to, co měl. */
+  rentNoInvestNetWorth: number;
 }
 
 export interface RetirementProjectionPoint {
@@ -110,6 +114,22 @@ export function cashFlowAfterPurchase(
   }));
 }
 
+/**
+ * Srovnání čistého jmění: koupě versus nájem.
+ *
+ * Všechny tři čáry jsou **čisté jmění**, aby se daly porovnávat. Dřív byla
+ * třetí čára kumulativní útrata za nájem, tedy záporné číslo klesající
+ * k milionům, což se na grafu o jmění nedalo číst.
+ *
+ * Model drží obě strany symetricky:
+ *  - startují se stejnou částkou (vlastník ji dá do akontace, nájemník investuje),
+ *  - každý měsíc platí vlastník splátku a náklady na vlastnictví, nájemník nájem,
+ *  - kdo má ten měsíc nižší náklady, ten rozdíl investuje.
+ *
+ * Bez té symetrie graf zvýhodňoval vlastnictví: náklady na vlastnictví se
+ * nepočítaly vůbec, a když nájem přerostl splátku, nájemníkovi se z portfolia
+ * ubíralo, ale vlastníkovi se odpovídající úspora nikam nepřipisovala.
+ */
 export function investmentComparison(
   state: WizardState,
   propertyAppreciation: number = 0.03,
@@ -123,48 +143,57 @@ export function investmentComparison(
   const term = loanTermYears(state);
   const loan = loanAmount(state);
   const payment = mortgagePayment(state);
+  const ownership = ownershipCosts(state);
   const monthlyRent = state.expenses.rent + state.expenses.utilities;
+
   const monthlyR = rate / 12;
+  const monthlyReturn = sp500Return / 12;
   const totalMonths = term * 12;
 
-  const monthlySpReturn = sp500Return / 12;
-  const result: InvestmentProjectionPoint[] = [];
-
-  let sp500Portfolio = downPayment;
-  let cumulativeRent = 0;
+  // Vlastník i nájemník mohou mít přebytek, podle toho, kdo zrovna platí míň.
+  let ownerPortfolio = 0;
+  let renterPortfolio = downPayment;
   let remainingLoan = loan;
+
+  const result: InvestmentProjectionPoint[] = [];
 
   for (let year = 0; year <= years; year++) {
     const propertyValue = price * Math.pow(1 + propertyAppreciation, year);
-    const propertyNetWorth = propertyValue - remainingLoan;
 
     result.push({
       year,
-      propertyNetWorth: Math.round(propertyNetWorth),
-      sp500NetWorth: Math.round(sp500Portfolio),
-      rentingCost: Math.round(-cumulativeRent),
+      propertyNetWorth: Math.round(propertyValue - remainingLoan + ownerPortfolio),
+      rentInvestNetWorth: Math.round(renterPortfolio),
+      // Kdo rozdíl neinvestuje, tomu zůstane jen to, s čím začínal.
+      rentNoInvestNetWorth: Math.round(downPayment),
     });
 
-    // Simulate 12 months
     for (let m = 0; m < 12; m++) {
       const monthIndex = year * 12 + m;
       if (monthIndex >= years * 12) break;
+      // Splaceno se pozná podle počtu měsíců, ne podle zůstatku: po poslední
+      // splátce zbývá kvůli plovoucí čárce pár miliardtin koruny, takže
+      // podmínka „zůstatek > 0" by platila napořád a vlastník by splácel
+      // i po splacení hypotéky.
+      const repaid = monthIndex >= totalMonths;
+      if (repaid) remainingLoan = 0;
 
-      // Rent grows annually
-      const currentRent = monthlyRent * Math.pow(1 + rentGrowth, year);
+      // Nájem i náklady na vlastnictví rostou stejně: obojí je běžný výdaj
+      // na bydlení. Kdyby rostl jen nájem, srovnání by nadržovalo vlastnictví.
+      const inflation = Math.pow(1 + rentGrowth, year);
+      const currentRent = monthlyRent * inflation;
+      // Po splacení hypotéky vlastník splátku neplatí. Dřív se s ní počítalo
+      // i po splacení, takže u kratší hypotéky nájemník „investoval" rozdíl
+      // proti splátce, která už neexistovala.
+      const currentOwnerCost = (repaid ? 0 : payment) + ownership * inflation;
 
-      // SP500: invest the difference (mortgage - rent) if positive, else deduct
-      const monthlyDiff = payment - currentRent;
-      sp500Portfolio = sp500Portfolio * (1 + monthlySpReturn) + monthlyDiff;
+      const diff = currentOwnerCost - currentRent;
+      ownerPortfolio = ownerPortfolio * (1 + monthlyReturn) + (diff < 0 ? -diff : 0);
+      renterPortfolio = renterPortfolio * (1 + monthlyReturn) + (diff > 0 ? diff : 0);
 
-      // Cumulative rent
-      cumulativeRent += currentRent;
-
-      // Amortize loan
-      if (remainingLoan > 0 && monthIndex < totalMonths) {
+      if (!repaid) {
         const interest = remainingLoan * monthlyR;
-        const principal = payment - interest;
-        remainingLoan = Math.max(0, remainingLoan - principal);
+        remainingLoan = Math.max(0, remainingLoan - (payment - interest));
       }
     }
   }
