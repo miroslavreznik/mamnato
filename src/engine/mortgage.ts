@@ -1,5 +1,6 @@
 import type { WizardState } from '../types';
 import { DEFAULTS } from './defaults';
+import { estimate, type Estimate } from './estimate';
 import { totalMonthlyIncome, monthlyDisposable, necessaryMonthlyExpenses, totalMonthlyExpenses } from './cashflow';
 
 export function monthlyMortgagePayment(
@@ -59,16 +60,24 @@ export function suggestedRate(state: WizardState): number {
   return suggestedRateForFixation(fixationYears(state));
 }
 
-// Zadal uživatel sazbu ručně? Pak má jeho číslo přednost před odhadem podle
-// fixace, protože nejspíš vychází z konkrétní nabídky banky.
-export function isRateOverridden(state: WizardState): boolean {
-  return state.property.mortgageRate != null;
+/**
+ * Úroková sazba jako odhad, který jde přepsat.
+ *
+ * Dokud uživatel nic nezadá, řídí se délkou fixace. Jeho vlastní číslo má
+ * přednost, protože nejspíš vychází z konkrétní nabídky banky.
+ */
+export function mortgageRateEstimate(state: WizardState): Estimate<number> {
+  return estimate(state.property.mortgageRate, suggestedRate(state));
 }
 
 // Sdílené parametry hypotéky se zálohou na výchozí hodnoty, jediný zdroj pravdy
 // pro všechny výpočty (splátka, DSTI, cash flow po koupi, časová osa jmění…).
 export function mortgageRate(state: WizardState): number {
-  return state.property.mortgageRate ?? suggestedRate(state);
+  return mortgageRateEstimate(state).value;
+}
+
+export function isRateOverridden(state: WizardState): boolean {
+  return mortgageRateEstimate(state).overridden;
 }
 
 export function loanTermYears(state: WizardState): number {
@@ -82,14 +91,18 @@ export function suggestedOwnershipCosts(price: number): number {
   return Math.round((price * DEFAULTS.ownershipCostRate) / 12 / 100) * 100;
 }
 
-export function ownershipCosts(state: WizardState): number {
-  return state.property.ownershipCosts ?? suggestedOwnershipCosts(totalProjectCost(state));
+// Náklady na vlastnictví: stejný vzorec jako u sazby, jen se odhad odvozuje
+// od ceny nemovitosti místo od fixace.
+export function ownershipCostsEstimate(state: WizardState): Estimate<number> {
+  return estimate(state.property.ownershipCosts, suggestedOwnershipCosts(totalProjectCost(state)));
 }
 
-// Zadal uživatel náklady na vlastnictví ručně? Stejná logika jako u sazby:
-// dokud ne, drží se odhadu a mění se s cenou nemovitosti.
+export function ownershipCosts(state: WizardState): number {
+  return ownershipCostsEstimate(state).value;
+}
+
 export function isOwnershipCostsOverridden(state: WizardState): boolean {
-  return state.property.ownershipCosts != null;
+  return ownershipCostsEstimate(state).overridden;
 }
 
 // Výše hypotéky = cena nemovitosti minus akontace (nikdy záporná).

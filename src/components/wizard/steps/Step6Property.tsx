@@ -1,10 +1,11 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
-import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRate, suggestedRateForFixation, isRateOverridden, ownershipCosts as ownershipCostsOf, suggestedOwnershipCosts, isOwnershipCostsOverridden, totalProjectCost } from '../../../engine/mortgage';
-import { formatYears, formatMonths } from '../../../engine/format';
+import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRateForFixation, ownershipCostsEstimate, mortgageRateEstimate, totalProjectCost } from '../../../engine/mortgage';
+import { formatYears, formatMonths, czk, czkMonthly, percentCompact } from '../../../engine/format';
 import { evaluateRenovation, renovationWithOverrun } from '../../../engine/renovation';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
+import EstimateNote from '../../ui/EstimateNote';
 import StepNavigation from '../StepNavigation';
 
 // Fixace, které banky běžně nabízejí.
@@ -25,11 +26,9 @@ export default function Step6Property() {
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
   const fixation = fixationYears(state);
-  const rateOverridden = isRateOverridden(state);
-  const suggestedForCurrentFixation = suggestedRate(state);
-  const fixationDiff = suggestedForCurrentFixation - suggestedRateForFixation(5);
-  const ownership = ownershipCostsOf(state);
-  const ownershipOverridden = isOwnershipCostsOverridden(state);
+  const rateEstimate = mortgageRateEstimate(state);
+  const ownershipEstimate = ownershipCostsEstimate(state);
+  const fixationDiff = rateEstimate.suggested - suggestedRateForFixation(5);
   const renovation = state.property.renovation;
   const renovationPhase = evaluateRenovation(state);
   const dpFraction = downPaymentFraction(state);
@@ -137,31 +136,31 @@ export default function Step6Property() {
 
       <NumberInput
         label="Odhadované náklady na bydlení při vlastnictví"
-        value={ownership}
+        value={ownershipEstimate.value}
         onChange={(v) => dispatch({ type: 'UPDATE_PROPERTY', field: 'ownershipCosts', value: v })}
         tooltip={`Fond oprav, opravy a údržba, pojištění nemovitosti a daň z nemovitých věcí. Energie sem nepatří, ty platíte stejně jako v nájmu a máte je zadané v kroku Výdaje. Odhadujeme ${ownershipPct()} % z ceny nemovitosti ročně, což je běžné pravidlo pro údržbu a opravy. Skutečnost závisí hlavně na stáří domu a výši fondu oprav, klidně částku přepište.`}
         step={500}
       />
 
-      {ownershipOverridden ? (
-        <p className="-mt-2 mb-6 text-xs text-gray-500 dark:text-gray-400">
-          Částku máte zadanou ručně, s cenou nemovitosti se proto nemění. Odhad by pro tuhle cenu vycházel
-          na {suggestedOwnershipCosts(price).toLocaleString('cs-CZ')} Kč.{' '}
-          <button
-            type="button"
-            onClick={() => dispatch({ type: 'RESET_OWNERSHIP_COSTS' })}
-            className="underline underline-offset-2 hover:text-gray-700 dark:hover:text-gray-200"
-          >
-            Vrátit odhad podle ceny
-          </button>
-        </p>
-      ) : (
-        <p className="-mt-2 mb-6 text-xs text-gray-500 dark:text-gray-400">
-          Odhad: {ownershipPct()} % z ceny {price.toLocaleString('cs-CZ')} Kč za rok, tedy{' '}
-          {ownership.toLocaleString('cs-CZ')} Kč měsíčně. Zahrnuje fond oprav, údržbu, pojištění a daň
-          z nemovitých věcí, ne energie.
-        </p>
-      )}
+      <EstimateNote
+        overridden={ownershipEstimate.overridden}
+        className="-mt-2 mb-6 text-xs text-gray-500 dark:text-gray-400"
+        explanation={
+          <>
+            Odhad: {ownershipPct()} % z ceny {czk(projectCost)} za rok, tedy{' '}
+            {czkMonthly(ownershipEstimate.value)}. Zahrnuje fond oprav, údržbu, pojištění a daň
+            z nemovitých věcí, ne energie.
+          </>
+        }
+        suggestion={
+          <>
+            Částku máte zadanou ručně, s cenou nemovitosti se proto nemění. Odhad by pro tuhle cenu
+            vycházel na {czk(ownershipEstimate.suggested)}.
+          </>
+        }
+        revertLabel="Vrátit odhad podle ceny"
+        onRevert={() => dispatch({ type: 'CLEAR_PROPERTY_ESTIMATE', field: 'ownershipCosts' })}
+      />
 
       {/* Rekonstrukce je nepovinná. Dokud se nezapne, průvodce vypadá stejně
           jako dřív a nikdo se nemusí prokousávat poli, která ho netrápí. */}
@@ -266,23 +265,19 @@ export default function Step6Property() {
         step={0.1}
       />
 
-      {rateOverridden ? (
-        <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
-          Sazbu máte zadanou ručně, délka fixace s ní proto nehýbe. Pro fixaci na {formatYears(fixation)}{' '}
-          by orientačně vycházela {pct(suggestedForCurrentFixation)} %.{' '}
-          <button
-            type="button"
-            onClick={() => dispatch({ type: 'RESET_MORTGAGE_RATE' })}
-            className="underline underline-offset-2 hover:text-gray-700 dark:hover:text-gray-200"
-          >
-            Vrátit odhad podle fixace
-          </button>
-        </p>
-      ) : (
-        <p className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400">
-          Sazba se odvozuje od zvolené fixace. Jakmile ji přepíšete, zůstane vaše hodnota.
-        </p>
-      )}
+      <EstimateNote
+        overridden={rateEstimate.overridden}
+        className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400"
+        explanation="Sazba se odvozuje od zvolené fixace. Jakmile ji přepíšete, zůstane vaše hodnota."
+        suggestion={
+          <>
+            Sazbu máte zadanou ručně, délka fixace s ní proto nehýbe. Pro fixaci na{' '}
+            {formatYears(fixation)} by orientačně vycházela {percentCompact(rateEstimate.suggested)}.
+          </>
+        }
+        revertLabel="Vrátit odhad podle fixace"
+        onRevert={() => dispatch({ type: 'CLEAR_PROPERTY_ESTIMATE', field: 'mortgageRate' })}
+      />
 
       <div className="mb-4">
         <label htmlFor="loan-term" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Délka hypotéky</label>
@@ -317,7 +312,7 @@ export default function Step6Property() {
               vypadá volba jako kosmetika, přitom mění splátku. */}
           {FIXATION_CHOICES.map((y) => (
             <option key={y} value={y}>
-              {formatYears(y)}{rateOverridden ? '' : ` (odhad ${pct(suggestedRateForFixation(y))} %)`}
+              {formatYears(y)}{rateEstimate.overridden ? '' : ` (odhad ${pct(suggestedRateForFixation(y))} %)`}
             </option>
           ))}
         </select>
@@ -326,7 +321,7 @@ export default function Step6Property() {
           Delší fixace znamená jistotu, kterou si banka nechá zaplatit vyšší sazbou, kratší je levnější, ale dřív vás
           vystaví tomu, jaké budou sazby potom.
         </p>
-        {!rateOverridden && fixationDiff !== 0 && (
+        {!rateEstimate.overridden && fixationDiff !== 0 && (
           <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
             Oproti nejběžnější pětileté fixaci je to o {pct(Math.abs(fixationDiff))} p. b.{' '}
             {fixationDiff > 0 ? 'dráž' : 'levněji'}, splátka je {fixationDiff > 0 ? 'vyšší' : 'nižší'} zhruba

@@ -7,6 +7,7 @@ import {
 } from '../../engine/parentalLeave';
 import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
+import EstimateNote from '../ui/EstimateNote';
 import { formatNumber as fmt } from '../../engine/format';
 
 interface Props {
@@ -133,18 +134,14 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             suffix="Kč"
             className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
-          <p className="mt-1 text-[10px] text-gray-400">
-            {benefitOverridden ? (
-              <>
-                Zadáno ručně, platí po celé volno.{' '}
-                <button type="button" onClick={resetBenefit} className="underline underline-offset-2">
-                  Vrátit odhad
-                </button>
-              </>
-            ) : (
-              'Průměr za celé volno. Skutečný průběh je rozepsaný níže.'
-            )}
-          </p>
+          <EstimateNote
+            overridden={benefitOverridden}
+            className="mt-1 text-[10px] text-gray-400"
+            explanation="Průměr za celé volno. Skutečný průběh je rozepsaný níže."
+            suggestion="Zadáno ručně, platí po celé volno."
+            revertLabel="Vrátit odhad"
+            onRevert={resetBenefit}
+          />
         </div>
       </div>
 

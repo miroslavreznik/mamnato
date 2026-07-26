@@ -1,6 +1,7 @@
 import type { WizardState } from '../types';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
 import { effectiveDownPayment, expensesAfterPurchase } from './mortgage';
+import { estimate, type Estimate } from './estimate';
 
 // Rodičovský příspěvek na jedno dítě (od 2024), celkový balík na celou dobu.
 export const RODICOVSKA_POOL = 350000;
@@ -68,20 +69,28 @@ export interface LeavePhase {
   monthlyBenefit: number;
 }
 
-export function leavePhases(state: WizardState): LeavePhase[] {
+/**
+ * Dávka během volna jako odhad, který jde přepsat. Stejný vzorec jako
+ * u sazby a nákladů na vlastnictví; odhad tady vychází z příjmu pečujícího
+ * rodiče. Vrací průměr za celé volno, rozpad po fázích je v `leavePhases`.
+ */
+export function benefitEstimate(state: WizardState): Estimate<number> | null {
+  const pl = state.parentalLeave;
+  if (!pl) return null;
+  const phases = suggestedPhases(state);
+  const months = phases.reduce((s, p) => s + p.months, 0) || 1;
+  const suggested = Math.round(phases.reduce((s, p) => s + p.monthlyBenefit * p.months, 0) / months);
+  return estimate(pl.monthlyBenefit, suggested);
+}
+
+// Fáze podle odhadu, bez ohledu na ruční zadání.
+function suggestedPhases(state: WizardState): LeavePhase[] {
   const pl = state.parentalLeave;
   if (!pl) return [];
   const duration = Math.max(1, pl.durationMonths);
-
-  // Ručně zadaná dávka vypne odhad: uživatel ví víc než my.
-  if (pl.monthlyBenefit != null) {
-    return [{ key: 'rodicovska', label: 'Dávky během volna', months: duration, monthlyBenefit: pl.monthlyBenefit }];
-  }
-
   const ppmMonths = Math.min(PPM_MONTHS, duration);
-  const ppm = ppmMonthly(parentSalary(state, pl.parent));
   const phases: LeavePhase[] = [
-    { key: 'ppm', label: `Mateřská (prvních ${PPM_WEEKS} týdnů)`, months: ppmMonths, monthlyBenefit: ppm },
+    { key: 'ppm', label: `Mateřská (prvních ${PPM_WEEKS} týdnů)`, months: ppmMonths, monthlyBenefit: ppmMonthly(parentSalary(state, pl.parent)) },
   ];
   if (duration > ppmMonths) {
     phases.push({
@@ -92,6 +101,19 @@ export function leavePhases(state: WizardState): LeavePhase[] {
     });
   }
   return phases;
+}
+
+export function leavePhases(state: WizardState): LeavePhase[] {
+  const pl = state.parentalLeave;
+  if (!pl) return [];
+  const duration = Math.max(1, pl.durationMonths);
+
+  // Ručně zadaná dávka vypne odhad: uživatel ví víc než my.
+  if (pl.monthlyBenefit != null) {
+    return [{ key: 'rodicovska', label: 'Dávky během volna', months: duration, monthlyBenefit: pl.monthlyBenefit }];
+  }
+
+  return suggestedPhases(state);
 }
 
 /**

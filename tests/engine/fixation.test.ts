@@ -10,7 +10,10 @@ import {
   ownershipCosts,
   suggestedOwnershipCosts,
   isOwnershipCostsOverridden,
+  mortgageRateEstimate,
+  ownershipCostsEstimate,
 } from '../../src/engine/mortgage';
+import { estimate } from '../../src/engine/estimate';
 import { DEFAULTS } from '../../src/engine/defaults';
 import { createInitialState } from '../../src/store/wizardStore';
 import type { WizardState } from '../../src/types';
@@ -98,5 +101,35 @@ describe('náklady na vlastnictví', () => {
     const own = { ...base, property: { ...base.property, targetPrice: 12500000, ownershipCosts: 3000 } };
     expect(isOwnershipCostsOverridden(own)).toBe(true);
     expect(ownershipCosts(own)).toBe(3000);
+  });
+});
+
+describe('odhad vs. ruční zadání', () => {
+  it('společný pomocník rozliší obojí', () => {
+    const auto = estimate(undefined, 42);
+    expect(auto).toEqual({ value: 42, suggested: 42, overridden: false });
+
+    const manual = estimate(10, 42);
+    expect(manual).toEqual({ value: 10, suggested: 42, overridden: true });
+  });
+
+  it('nula je platné ruční zadání, ne chybějící hodnota', () => {
+    // `??` by nulu propustil dál jako „nezadáno", což je klasická past.
+    expect(estimate(0, 42)).toEqual({ value: 0, suggested: 42, overridden: true });
+  });
+
+  it('sazba i náklady na vlastnictví používají stejný vzorec', () => {
+    const base = createInitialState();
+    expect(mortgageRateEstimate(base).overridden).toBe(false);
+    expect(ownershipCostsEstimate(base).overridden).toBe(false);
+
+    const manual = { ...base, property: { ...base.property, mortgageRate: 0.031, ownershipCosts: 3000 } };
+    expect(mortgageRateEstimate(manual)).toEqual({
+      value: 0.031, suggested: suggestedRateForFixation(5), overridden: true,
+    });
+    expect(ownershipCostsEstimate(manual).value).toBe(3000);
+    expect(ownershipCostsEstimate(manual).overridden).toBe(true);
+    // Odhad zůstává k dispozici i u ručně zadané hodnoty, kvůli srovnání v UI.
+    expect(ownershipCostsEstimate(manual).suggested).toBe(suggestedOwnershipCosts(base.property.targetPrice));
   });
 });
