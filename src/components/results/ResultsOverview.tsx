@@ -8,6 +8,7 @@ import { monthsToSaveAtAllocation } from '../../engine/allocation';
 import { DEFAULTS } from '../../engine/defaults';
 import { formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
+import BudgetSummary from './BudgetSummary';
 
 interface Props {
   state: WizardState;
@@ -239,16 +240,8 @@ export default function ResultsOverview({ state, allocations }: Props) {
         </div>
       )}
 
-      {/* Rozpočtový souhrn */}
-      {summary.budget && (
-        <div className={`p-3 rounded-lg mb-5 text-sm ${summary.budget.fits ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300' : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'}`}>
-          {summary.budget.fits ? (
-            <>Cíle vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs.</strong> z <strong>{fmt(summary.budget.disposable)} Kč/měs.</strong> disponibilních, zbývá vám ještě <strong>{fmt(summary.budget.surplus)} Kč/měs.</strong> volných.</>
-          ) : (
-            <>Cíle dohromady vyžadují <strong>{fmt(summary.budget.allocated)} Kč/měs.</strong>, ale máte <strong>{fmt(summary.budget.disposable)} Kč/měs.</strong>, chybí <strong>{fmt(Math.abs(summary.budget.surplus))} Kč/měs.</strong>. Upravte částky u cílů níže.</>
-          )}
-        </div>
-      )}
+      {/* Rozpočtový souhrn: dnes a po koupi */}
+      {summary.budget && <BudgetSummary now={summary.budget} after={summary.budgetAfter} />}
 
       {/* Tipy */}
       {summary.tips.length > 0 && (

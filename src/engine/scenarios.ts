@@ -52,7 +52,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       icon: '\uD83D\uDC22',
       title: 'Na akontaci budete spořit více než 5 let',
       description:
-        'Při aktuálním tempu spoření by trvalo více než 5 let, než naspoříte potřebnou akontaci. To není konec světa, ale je to signál, že je potřeba buď zrychlit spoření, nebo přehodnotit cílovou nemovitost.',
+        'I kdybyste na akontaci odkládali všechno, co vám měsíčně zbývá, trvalo by víc než 5 let, než ji naspoříte. To není konec světa, ale je to signál, že je potřeba buď zrychlit spoření, nebo přehodnotit cílovou nemovitost.',
       tips: [
         'Zkuste v průvodci snížit cenu cílové nemovitosti. Menší nebo vzdálenější nemovitost může být rozumným mezikrokem.',
         'Každý měsíc navíc odkládaný stranou zkrátí čekání. Zvyšte měsíční úspory o 2 000–5 000 Kč a sledujte, jak se horizont mění.',

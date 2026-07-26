@@ -13,6 +13,7 @@ import {
   type GoalReadiness,
 } from './readiness';
 import { buildVerdict, type Verdict, type OverallStatusKey } from './verdict';
+import { budgetNow, budgetAfterPurchase, type BudgetView } from './budget';
 
 /**
  * Celkové vyhodnocení přehledu: verdikt, stav cílů, rozpočet a tipy.
@@ -24,6 +25,7 @@ import { buildVerdict, type Verdict, type OverallStatusKey } from './verdict';
 // Zachováno kvůli zpětné kompatibilitě importů napříč aplikací.
 export type { GoalReadiness, GoalStatus } from './readiness';
 export type { Verdict, VerdictAnswer, OverallStatusKey } from './verdict';
+export type { BudgetView } from './budget';
 
 export interface OverallSummary {
   status: OverallStatusKey;
@@ -31,7 +33,10 @@ export interface OverallSummary {
   verdict: Verdict;
   tips: string[];
   goals: GoalReadiness[];
-  budget: { disposable: number; allocated: number; surplus: number; fits: boolean } | null;
+  /** Rozpočet dnes. Null, když si uživatel nezvolil žádný cíl. */
+  budget: BudgetView | null;
+  /** Rozpočet po koupi. Null, když nemovitost mezi cíli není. */
+  budgetAfter: BudgetView | null;
 }
 
 const OVERALL_ICON: Record<OverallStatusKey, string> = {
@@ -54,19 +59,11 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   const leaveRow = leaveReadiness(state);
   if (leaveRow) goals.push(leaveRow); // schodek během volna → status se sám sníží (warning)
 
-  // Rozpočtový souhrn počítá měsíční odkládání na cíle, tedy i na akontaci.
-  // Splátka hypotéky v něm není: to není spoření, ale budoucí výdaj na bydlení,
-  // který nahradí nájem. Dostupnost samotné splátky řeší připravenost cíle
-  // (LTV, akontace, doporučení banky), ne tenhle rozpočet.
-  //
-  // Odkládání na akontaci se sem přidalo záměrně: dřív rozpočtová věta člověku,
-  // který si zvolil jen nemovitost, vůbec nesvítila, přestože i on každý měsíc
-  // odkládá a je to jeho největší závazek.
-  const allocated = allocations.downPayment + allocations.retirement + allocations.child
-    + allocations.custom.reduce((s, v) => s + v, 0);
-  const surplus = disposable - allocated;
-  const budget = state.goals.length > 0
-    ? { disposable, allocated, surplus, fits: surplus >= 0 }
+  // Rozpočet ve dvou obdobích, protože koupě ho přepne: nájem vystřídá splátka
+  // a odkládání na akontaci skončí. Podrobnosti viz `budget.ts`.
+  const budget = state.goals.length > 0 ? budgetNow(state, allocations) : null;
+  const budgetAfter = state.goals.includes('property')
+    ? budgetAfterPurchase(state, allocations)
     : null;
 
   // Celkový status
@@ -84,6 +81,15 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
     tips = [
       'Upravte částky u cílů níže, nebo prodlužte jejich horizont.',
       'Zvažte, které cíle jsou prioritní teď a které mohou počkat.',
+    ];
+  } else if (budgetAfter && !budgetAfter.fits) {
+    // Rozpočet dnes vychází, ale po koupi už ne. Dřív to nikdo nehlídal:
+    // splátka se posuzovala jen vůči příjmu (DSTI), takže domácnost s vysokými
+    // ostatními výdaji dostala zelenou, přestože by po koupi byla v mínusu.
+    status = 'not_yet';
+    tips = [
+      'Po koupi by rozpočet nevyšel. Zkuste levnější nemovitost, vyšší akontaci nebo delší splatnost.',
+      'Projděte výdaje, které po koupi zůstanou. Splátku a náklady na vlastnictví neomezíte, ostatní ano.',
     ];
   } else {
     // Rozpočet vychází, status podle nejslabšího cíle a rezervy
@@ -131,5 +137,5 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   }
 
   const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable, leave);
-  return { status, icon: OVERALL_ICON[status], verdict, tips, goals, budget };
+  return { status, icon: OVERALL_ICON[status], verdict, tips, goals, budget, budgetAfter };
 }

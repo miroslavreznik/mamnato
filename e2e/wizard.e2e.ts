@@ -146,7 +146,7 @@ test('částka na cíl se nastavuje v kartě cíle a promítne se do rozpočtu',
   // Rozpočet to musí zohlednit: 39 500 − 29 000 − 5 000 = 5 500 volných
   await page.getByRole('navigation').getByRole('button', { name: 'Souhrn', exact: true }).click()
   await expect
-    .poll(async () => /zbývá vám ještě\s*5.500/.test(await page.locator('#souhrn').innerText()), { timeout: 10_000 })
+    .poll(async () => /volných zůstává\s*5.500/.test(await page.locator('#souhrn').innerText()), { timeout: 10_000 })
     .toBe(true)
 })
 
@@ -170,6 +170,41 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   await expect(page.getByText(/Každých \+100\s000\s?Kč akontace/)).toBeVisible()
   await expect(page.getByText(/Alternativa:/)).toBeVisible()
   await expect(page.getByText(/Bezpečné maximum|za bezpečnou hranicí|6měsíční rezervu/).first()).toBeVisible()
+})
+
+test('souhrn ukáže rozpočet dnes i po koupi a odkládání na akontaci', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
+
+  // Rozpočtová věta svítí i tomu, kdo si zvolil jen nemovitost, a má dvě období.
+  // „Po koupi" je i v grafu rozpočtu, proto se míří jen do téhle kartičky.
+  const rozpocet = page.locator('#souhrn').getByText('Měsíční rozpočet').locator('xpath=..')
+  await expect(rozpocet).toBeVisible()
+  await expect(rozpocet.getByText('Dnes', { exact: true })).toBeVisible()
+  await expect(rozpocet.getByText('Po koupi', { exact: true })).toBeVisible()
+  await expect(rozpocet.getByText(/Na akontaci už se neodkládá|Pomohla by levnější nemovitost/)).toBeVisible()
+
+  // Po koupi zbývá míň než dnes: nájem vystřídá vyšší splátka s náklady na
+  // vlastnictví. Záporná částka má české minus (U+2212), ne spojovník.
+  const disposableIn = async (period: string) => {
+    const text = await rozpocet.getByText(period, { exact: true }).locator('xpath=..').innerText()
+    const match = text.match(/(−?[\d\s]+)\s*Kč/)
+    const digits = Number((match?.[1] ?? '').replace(/\D/g, ''))
+    return match?.[1].startsWith('−') ? -digits : digits
+  }
+  expect(await disposableIn('Po koupi')).toBeLessThan(await disposableIn('Dnes'))
+
+  // Odkládání na akontaci je cíl s vlastním posuvníkem a termínem.
+  await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
+  const saving = page.getByRole('slider', { name: 'Měsíční odkládání na akontaci' })
+  await saving.fill('10000')
+  await expect(page.getByText(/naspoříte za/).first()).toBeVisible()
 })
 
 test('sazbou jde hýbat ve výsledcích a radí podle LTV', async ({ page }) => {
