@@ -61,7 +61,7 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
   const hasOther = state.goals.includes('other');
   const stepItems: StepItem[] = [
     ...BASE_STEPS,
-    ...(hasProperty ? [{ step: 6, label: 'Nemovitost' }] : []),
+    ...(hasProperty ? [{ step: 6, label: 'Vlastní bydlení' }] : []),
     ...(hasOther ? [{ step: 7, label: 'Jiné cíle' }] : []),
   ];
 

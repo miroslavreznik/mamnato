@@ -32,9 +32,9 @@ async function goToGoals(page: Page) {
 
 test('projde průvodcem a zobrazí výsledky', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
-  await expect(page.getByText('Váš finanční přehled')).toBeVisible()
+  await expect(page.getByText('Váš finanční plán')).toBeVisible()
 })
 
 test('věk do 36 let sníží povinnou akontaci na 10 %', async ({ page }) => {
@@ -45,14 +45,14 @@ test('věk do 36 let sníží povinnou akontaci na 10 %', async ({ page }) => {
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
   await expect(page.getByText(/Doporučená akontace \(10 %\)/)).toBeVisible()
 })
 
 test('výběr „Jiné" přidá krok vlastních cílů a název dorazí do výsledků', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Jiné/ }).first().click()
+  await page.getByRole('button', { name: /Vlastní cíle/ }).first().click()
   await next(page) // → krok Vlastní cíle
   await expect(page.getByText('Vaše vlastní cíle')).toBeVisible()
   await page.getByPlaceholder(/Auto, dovolená, rezerva/).fill('Dovolená')
@@ -80,11 +80,11 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await next(page) // → Úspory
   await next(page) // → Cíle
   await page.getByRole('button', { name: /Dítě \/ rodina/ }).first().click()
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   // sekce „Cíle" je ve výchozím stavu sbalená → otevřít přes horní navigaci
-  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Ostatní cíle', exact: true }).click()
   await expect(page.getByText('Rodičovská: co udělá s rozpočtem')).toBeVisible()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await expect(page.getByText('Volná rezerva během volna')).toBeVisible()
@@ -106,10 +106,10 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
 
 test('výsledky jsou v sekcích, „Bydlení" je sbalené a otevře se z navigace', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
-  await expect(page.getByText('Váš finanční přehled')).toBeVisible()
+  await expect(page.getByText('Váš finanční plán')).toBeVisible()
   // Souhrn je otevřený, detail bydlení sbalený
   await expect(page.getByRole('heading', { name: 'Kalkulačka nemovitosti' })).toBeHidden()
   await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
@@ -118,7 +118,7 @@ test('výsledky jsou v sekcích, „Bydlení" je sbalené a otevře se z navigac
 
 test('odškrtnutí výdaje v grafu přepočítá celý souhrn (dynamické výsledky)', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   // výchozí jednotlivec: příjem 39 500, výdaje 29 000 → disponibilní +10 500
   await expect(page.getByText(/\+10.500/).first()).toBeVisible()
@@ -132,11 +132,11 @@ test('odškrtnutí výdaje v grafu přepočítá celý souhrn (dynamické výsle
 
 test('částka na cíl se nastavuje v kartě cíle a promítne se do rozpočtu', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   // Částka patří ke svému cíli, ne do rozpočtu
-  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Ostatní cíle', exact: true }).click()
   const amount = page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true })
   await amount.fill('5000')
   // Nejdřív ověřit, že se hodnota opravdu zapsala, jinak by následná kontrola
@@ -158,8 +158,8 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   const savings = page.locator('input[inputmode="decimal"]').first()
   await savings.fill('1000000')
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
   // posuvník akontace ve výsledcích → hypotéka = 5 500 000 − 200 000
@@ -178,8 +178,8 @@ test('souhrn ukáže rozpočet dnes i po koupi a odkládání na akontaci', asyn
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   // Rozpočtová věta svítí i tomu, kdo si zvolil jen nemovitost, a má dvě období.
@@ -215,8 +215,8 @@ test('sazbou jde hýbat ve výsledcích a radí podle LTV', async ({ page }) => 
   const savings = page.locator('input[inputmode="decimal"]').first()
   await savings.fill('1500000')
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
 
@@ -242,12 +242,12 @@ test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   // Krokování částky na cíl v jeho vlastní kartě (krok 500 Kč).
   // Porovnáváme čísla, ne řetězce: oddělovač tisíců je úzká nezlomitelná mezera.
-  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Ostatní cíle', exact: true }).click()
   const budget = page.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true })
   await budget.scrollIntoViewIfNeeded()
   const amount = async () => Number((await budget.inputValue()).replace(/[^\d]/g, ''))
@@ -273,7 +273,7 @@ test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async
 
 test('výsledky začínají přímou odpovědí Máte na to', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   // Odpověď musí být první a nejvýraznější věc v souhrnu
@@ -309,7 +309,7 @@ test('rozpočet umí co kdyby: vypnutí cíle změní celkovou odpověď', async
 
 test('bez podrobného rozpisu se jednotlivé zbytné položky nenabízejí', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   await expect(page.getByText('Z toho zbytné podrobně')).toBeHidden()
 })
@@ -322,7 +322,7 @@ test('s podrobným rozpisem jde vypnout jedna zbytná položka', async ({ page }
   await page.getByLabel('Zahraniční rekreace').fill('4000')
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   await expect(page.getByText('Z toho zbytné podrobně')).toBeVisible()
@@ -341,8 +341,8 @@ test('s podrobným rozpisem jde vypnout jedna zbytná položka', async ({ page }
 
 test('výsledky obsahují právní upozornění včetně rozbalitelných podmínek', async ({ page }) => {
   await goToGoals(page)
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   // Jádro upozornění musí být vidět bez rozklikávání
@@ -396,7 +396,7 @@ test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ 
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await page.getByRole('button', { name: /Důchod/ }).first().click()
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   await page.getByRole('button', { name: /Sdílet přehled/ }).click()
   await expect(page.getByText('Odkaz zkopírován')).toBeVisible()
@@ -406,7 +406,7 @@ test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ 
   const ctx2 = await browser.newContext()
   const page2 = await ctx2.newPage()
   await page2.goto(url)
-  await expect(page2.getByText('Váš finanční přehled')).toBeVisible()
+  await expect(page2.getByText('Váš finanční plán')).toBeVisible()
   await expect(page2.getByText(/54\s?321/).first()).toBeVisible()
   await ctx1.close()
   await ctx2.close()
@@ -418,8 +418,8 @@ test('kurzor zůstane tam, kde uživatel maže, a nespadne za poslední nulu', a
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
 
   const price = page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true })
   await price.fill('12000000')
@@ -441,8 +441,8 @@ test('délka fixace mění nabízenou sazbu i splátku', async ({ page }) => {
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
 
   const fixation = page.getByLabel('Doba fixace úrokové sazby')
   const rate = page.getByRole('textbox', { name: 'Úroková sazba hypotéky', exact: true })
@@ -479,15 +479,15 @@ test('schodek na rodičovské krytý úsporami neshodí verdikt', async ({ page 
   await next(page) // → Úspory
   await page.locator('input[inputmode="decimal"]').first().fill('4800000')
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
   await page.getByRole('button', { name: /Dítě \/ rodina/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('12500000')
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   // Doma zůstane ten s vyšším příjmem → během volna vzniká měsíční schodek,
   // rezerva po akontaci ho ale pokryje. Verdikt to musí zohlednit.
-  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Ostatní cíle', exact: true }).click()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await page.getByRole('button', { name: /Osoba 2/ }).click()
 
@@ -503,8 +503,8 @@ test('rekonstrukce se přičte k investici a během ní se platí jen úrok', as
   await next(page) // → Úspory
   await page.locator('input[inputmode="decimal"]').first().fill('3000000')
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
 
   await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('10000000')
   const requiredDp = async () =>
@@ -529,13 +529,13 @@ test('report uvádí předpoklady výpočtu včetně toho, kdo jde na rodičovsk
   await next(page) // → Výdaje
   await next(page) // → Úspory
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
   await page.getByRole('button', { name: /Dítě \/ rodina/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
 
   // Vybraná volba nesmí být poznat jen podle barvy, kvůli tisku i odečítači.
-  await page.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await page.getByRole('navigation').getByRole('button', { name: 'Ostatní cíle', exact: true }).click()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await expect(page.getByRole('button', { name: /Osoba 1/ })).toHaveAttribute('aria-pressed', 'true')
 
@@ -567,7 +567,7 @@ test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ bro
   await next(sender) // → Výdaje
   await next(sender) // → Úspory
   await next(sender) // → Cíle
-  await sender.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await sender.getByRole('button', { name: /Důchod/ }).first().click()
   await sender.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   await sender.getByRole('button', { name: /Sdílet přehled/ }).click()
   const sharedUrl = await sender.evaluate(() => navigator.clipboard.readText())
@@ -581,7 +581,7 @@ test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ bro
   await next(recipient) // → Výdaje
   await next(recipient) // → Úspory
   await next(recipient) // → Cíle
-  await recipient.getByRole('button', { name: /Důchod \/ stáří/ }).first().click()
+  await recipient.getByRole('button', { name: /Důchod/ }).first().click()
   await recipient.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   const saved = () => recipient.evaluate(() => localStorage.getItem('mamnato_wizard_v1'))
   expect(await saved()).toContain('12345')
@@ -595,7 +595,7 @@ test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ bro
   expect(await saved()).toContain('12345')
 
   // Ani úprava hodnot v cizím přehledu nesmí jeho data přepsat.
-  await recipient.getByRole('navigation').getByRole('button', { name: 'Cíle', exact: true }).click()
+  await recipient.getByRole('navigation').getByRole('button', { name: 'Ostatní cíle', exact: true }).click()
   await recipient.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true }).fill('4321')
   expect(await saved()).toContain('12345')
 
@@ -614,8 +614,8 @@ test('graf koupě vs. nájem vysvětlí čáry i závěr', async ({ page }) => {
   await next(page) // → Úspory
   await page.locator('input[inputmode="decimal"]').first().fill('1500000')
   await next(page) // → Cíle
-  await page.getByRole('button', { name: /Nemovitost/ }).first().click()
-  await next(page) // → krok Nemovitost
+  await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
+  await next(page) // → krok Vlastní bydlení
   await page.getByRole('button', { name: /Zobrazit výsledky/ }).click()
   await page.getByRole('navigation').getByRole('button', { name: 'Bydlení', exact: true }).click()
 

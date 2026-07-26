@@ -95,23 +95,16 @@ export default function PropertyAffordability({
         <Row label="Délka hypotéky" value={`${loanTermYears(state)} let`} />
         <Row label="Fixace sazby" value={formatYears(fixationYears)} />
 
-        {gap > 0 && months !== Infinity && (
+        {/* Termín naspoření hlásí posuvník rovnou u sebe. Bez posuvníku (režim
+            jen ke čtení) by ale chyběl úplně, proto ten řádek zbývá tady. */}
+        {!onChangeMonthlySaving && gap > 0 && months !== Infinity && (
           <>
             <div className="border-t dark:border-gray-600 pt-3" />
             <Row
               label="Čas na naspoření chybějící akontace"
               value={formatMonths(months)}
-              tooltip={`Chybějící akontace (${czk(gap)}) dělená tím, co na ni měsíčně odkládáte (${czkPerMonth(monthlySaving)}). Částku změníte posuvníkem výše.`}
+              tooltip={`Chybějící akontace (${czk(gap)}) dělená tím, co na ni měsíčně odkládáte (${czkPerMonth(monthlySaving)}).`}
             />
-          </>
-        )}
-        {months === Infinity && gap > 0 && (
-          <>
-            <div className="border-t dark:border-gray-600 pt-3" />
-            <p className="text-amber-600 dark:text-amber-400 text-sm">
-              Dokud na akontaci nic měsíčně neodkládáte, chybějících {czk(gap)} nenaspoříte.
-              Nastavte částku posuvníkem výše.
-            </p>
           </>
         )}
       </div>

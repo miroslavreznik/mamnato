@@ -44,7 +44,7 @@ describe('verdikt jako dvě otázky', () => {
     });
     const v = evaluateOverall(state, allocs({ retirement: 2000 })).verdict;
     expect(v.questions[1].status).toBe('warning');
-    expect(v.questions[1].answer).toMatch(/chybělo/);
+    expect(v.questions[1].answer).toMatch(/nezbylo/);
   });
 
   it('první otázka odpovídá ano/ne, čísla nechává cíli níž', () => {

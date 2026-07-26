@@ -24,22 +24,34 @@ const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
 });
 
 describe('propertyReadiness', () => {
-  it('pokrytou akontaci pozná a mluví jen o splátce', () => {
+  it('pokrytou akontaci pozná', () => {
     const r = propertyReadiness(makeState(), allocs());
     expect(r.headline).toMatch(/Akontaci máte pokrytou/);
-    expect(r.headline).toMatch(/% čistého příjmu/);
   });
 
-  it('u chybějící akontace řekne termín podle toho, co se odkládá', () => {
+  it('neopakuje čísla z dlaždic nad sebou', () => {
+    // Splátka, DSTI i termín naspoření jsou v dlaždicích. Věta u cíle říká,
+    // co z nich plyne, ne je znovu vypisuje.
+    const cases = [
+      propertyReadiness(makeState(), allocs()),
+      propertyReadiness(makeState({ savings: { totalSavings: 0 } }), allocs({ downPayment: 10000 })),
+      propertyReadiness(makeState({ savings: { totalSavings: 0 } }), allocs()),
+    ];
+    for (const r of cases) {
+      expect(r.headline).not.toMatch(/\d/);
+    }
+  });
+
+  it('u chybějící akontace řekne, že se ještě dospořuje', () => {
     const state = makeState({ savings: { totalSavings: 0 } });
     const r = propertyReadiness(state, allocs({ downPayment: 10000 }));
-    expect(r.headline).toMatch(/Chybějící akontaci naspoříte za/);
+    expect(r.headline).toMatch(/dospoř/);
   });
 
   it('nulové odkládání nesmí slibovat termín', () => {
     const state = makeState({ savings: { totalSavings: 0 } });
     const r = propertyReadiness(state, allocs({ downPayment: 0 }));
-    expect(r.headline).toMatch(/zatím nic neodkládáte/);
+    expect(r.headline).toMatch(/zatím na ni nic neodkládáte/);
     expect(r.headline).not.toMatch(/naspoříte za/);
   });
 

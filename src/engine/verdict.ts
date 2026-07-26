@@ -1,7 +1,7 @@
 import type { LeaveImpact } from './parentalLeave';
 import type { GoalReadiness, GoalStatus } from './readiness';
 import type { BudgetView } from './budget';
-import { czk, czkMonthly, czkPerMonth } from './format';
+import { czk, czkMonthly } from './format';
 
 /**
  * Přímá odpověď na otázku z názvu appky.
@@ -61,28 +61,34 @@ export function buildVerdictQuestions(
   const rest = goals.filter((g) => g.key !== 'property');
   const restStatus = worstOf(rest.map((g) => g.status));
 
+  // Přesné částky jsou hned pod tím v rozpočtu „dnes / po koupi". Tady jde
+  // o odpověď, ne o čísla; opakovat je dvakrát pod sebou je vata.
   let answer: string;
   let status: GoalStatus;
-  if (!budgetAfter.fits) {
+  if (!budgetAfter.fits || budgetAfter.disposable <= 0) {
     status = 'warning';
-    answer = `Po splátce a nákladech na bydlení by na cíle chybělo ${czkMonthly(Math.abs(budgetAfter.surplus))}.`;
-  } else if (budgetAfter.disposable <= 0) {
-    status = 'warning';
-    answer = 'Splátka a náklady na bydlení by spolykaly celý příjem.';
+    answer = 'Ne, po splátce a nákladech na bydlení by na cíle nezbylo.';
   } else if (rest.length === 0) {
     status = budgetAfter.surplus > 0 ? 'good' : 'caution';
-    answer = `Po splátce a nákladech na bydlení vám zůstane ${czkPerMonth(budgetAfter.surplus)} volných. Další cíle zatím nemáte zvolené.`;
+    answer = budgetAfter.surplus > 0
+      ? 'Ano, něco volného vám zbyde. Další cíle zatím nemáte zvolené.'
+      : 'Nezbyde nic navíc. Další cíle zatím nemáte zvolené.';
   } else {
     status = restStatus === 'good' && budgetAfter.surplus <= 0 ? 'caution' : restStatus;
-    answer = `Cíle si po koupi vezmou ${czkPerMonth(budgetAfter.allocated)} a volných zůstane ${czkPerMonth(budgetAfter.surplus)}.`;
+    const byStatus: Record<GoalStatus, string> = {
+      good: 'Ano, ostatní cíle se do rozpočtu po koupi vejdou.',
+      caution: 'Ano, ale bez polštáře. Ostatní cíle rozpočet po koupi vyčerpají.',
+      warning: 'Ne na všechno. Který cíl to je, poznáte podle nálepek níže.',
+    };
+    answer = byStatus[status];
   }
 
   // První otázka odpovídá ano/ne. Konkrétní čísla (akontace, splátka, DSTI)
-  // jsou o kus níž u samotného cíle, opakovat je tady by byla vata.
+  // jsou v dlaždicích hned pod tím, opakovat je tady by byla vata.
   const reachable: Record<GoalStatus, string> = {
     good: 'Ano, na akontaci i splátku dosáhnete.',
-    caution: 'Ano, ale je to na hraně. Podrobnosti u cíle níže.',
-    warning: 'Zatím ne. Co konkrétně chybí, je u cíle níže.',
+    caution: 'Ano, ale je to na hraně. Podrobnosti najdete u cíle níže.',
+    warning: 'Zatím ne. Co konkrétně chybí, najdete u cíle níže.',
   };
 
   return [

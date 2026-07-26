@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
-import { dsti, downPaymentGap } from './mortgage';
+import { downPaymentGap } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
@@ -38,7 +38,6 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
   const scenario = evaluateScenario(state);
   const months = monthsToSaveAtAllocation(state, allocations.downPayment);
   const gap = downPaymentGap(state);
-  const dstiPct = Math.round(dsti(state) * 100);
   const statusByScenario: Record<string, GoalStatus> = {
     cannot_afford_cashflow: 'warning',
     cannot_afford_dsti: 'warning',
@@ -49,21 +48,25 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
     very_comfortable: 'good',
   };
   const status = statusByScenario[scenario.id] ?? 'caution';
-  const payment = isFinite(dstiPct)
-    ? `splátka by zabrala ${dstiPct} % čistého příjmu`
-    : 'splátku ale zatím není z čeho platit';
 
+  // Konkrétní čísla (splátka, DSTI, chybějící akontace, termín) jsou
+  // v dlaždicích nad tímhle seznamem. Věta u cíle na ně nesahá a odpovídá
+  // na to, co dlaždice neříkají: co z těch čísel plyne pro samotný cíl.
   let headline: string;
   if (scenario.id === 'cannot_afford_cashflow') {
-    headline = 'Rozpočet dnes nevychází, takže na splátku hypotéky není z čeho.';
+    headline = 'Rozpočet nevychází už dnes, takže na splátku hypotéky by nebylo z čeho.';
   } else if (scenario.id === 'cannot_afford_dsti') {
-    headline = `Splátka by zabrala ${dstiPct} % čistého příjmu, což je nad tím, co banky obvykle schválí.`;
-  } else if (gap <= 0) {
-    headline = `Akontaci máte pokrytou z úspor, ${payment}.`;
-  } else if (isFinite(months)) {
-    headline = `Chybějící akontaci naspoříte za ${formatMonths(months)}, ${payment}.`;
+    headline = 'Splátka je nad tím, co banky obvykle schválí. Pomůže levnější nemovitost, delší splatnost nebo vyšší akontace.';
+  } else if (gap > 0 && !isFinite(months)) {
+    headline = 'Akontace ještě chybí a zatím na ni nic neodkládáte. Nastavte si měsíční částku v sekci Bydlení.';
+  } else if (gap > 0) {
+    headline = status === 'good'
+      ? 'Akontaci ještě dospořujete, splátku byste ale unesli.'
+      : 'Než na koupi dosáhnete, je potřeba dospořit akontaci.';
   } else {
-    headline = `Na akontaci zatím nic neodkládáte, chybí ${czk(gap)}.`;
+    headline = status === 'good'
+      ? 'Akontaci máte pokrytou a splátku unesete.'
+      : 'Akontaci máte pokrytou, ale splátka je na hraně toho, co rozpočet unese.';
   }
   return { key: 'property', label: 'Vlastní bydlení', status, headline };
 }

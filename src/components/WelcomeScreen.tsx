@@ -8,7 +8,7 @@ interface Props {
 const features = [
   {
     title: 'Co si můžu dovolit',
-    desc: 'Uvidíte, jestli na vlastní bydlení dosáhnete a co vám k tomu chybí.',
+    desc: 'Uvidíte, jestli na vlastní bydlení dosáhnete a co vám po něm zbyde na ostatní cíle.',
     icon: (
       <path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9.5 20v-5h5v5" />
     ),
@@ -42,11 +42,11 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
         </span>
 
         <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-white mb-4 text-balance">
-          Mám na to vlastní bydlení?
+          Mám na vlastní bydlení a na své cíle?
         </h1>
 
         <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-8 max-w-xl mx-auto">
-          Zadejte příjmy, výdaje a cíle. Za pár minut uvidíte jasný přehled: jestli na hypotéku dosáhnete, kolik můžete spořit a kam vaše peníze plynou.
+          Zadejte příjmy, výdaje a cíle. Za pár minut uvidíte základní finanční plán: jestli na vlastní bydlení dosáhnete, co vám po splátce zbyde na ostatní cíle a kam vaše peníze plynou.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">

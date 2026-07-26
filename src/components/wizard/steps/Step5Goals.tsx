@@ -3,10 +3,10 @@ import type { FinancialGoal } from '../../../types';
 import StepNavigation from '../StepNavigation';
 
 const goalOptions: { value: FinancialGoal; label: string; icon: string }[] = [
-  { value: 'property', label: 'Nemovitost', icon: '🏠' },
+  { value: 'property', label: 'Vlastní bydlení', icon: '🏠' },
   { value: 'child', label: 'Dítě / rodina', icon: '👶' },
-  { value: 'retirement', label: 'Důchod / stáří', icon: '🏖️' },
-  { value: 'other', label: 'Jiné', icon: '🎯' },
+  { value: 'retirement', label: 'Důchod', icon: '🏖️' },
+  { value: 'other', label: 'Vlastní cíle', icon: '🎯' },
 ];
 
 export default function Step5Goals() {
@@ -37,7 +37,10 @@ export default function Step5Goals() {
   return (
     <div>
       <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vaše finanční cíle</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">Na co šetříte? Vyberte jeden nebo více cílů.</p>
+      <p className="text-gray-500 dark:text-gray-400 mb-6">
+        Na co šetříte? Vyberte jeden nebo více cílů. Čím víc jich zadáte, tím líp uvidíte,
+        jestli se vejdou do jednoho rozpočtu vedle sebe.
+      </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {goalOptions.map((g) => {

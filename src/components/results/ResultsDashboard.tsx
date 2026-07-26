@@ -54,7 +54,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   const sectionDefs = [
     { id: 'souhrn', label: 'Souhrn' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
-    ...(hasGoalPlanners ? [{ id: 'cile', label: 'Cíle' }] : []),
+    ...(hasGoalPlanners ? [{ id: 'cile', label: 'Ostatní cíle' }] : []),
     { id: 'slovnicek', label: 'Slovníček' },
   ];
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set(['souhrn']));
@@ -175,7 +175,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
       </div>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-3">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Váš finanční přehled</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Váš finanční plán</h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">Režim: {modeLabels[state.mode]}</p>
         </div>
         <div className="no-print flex flex-wrap gap-2">
@@ -260,7 +260,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
 
         {/* Bydlení a hypotéka */}
         {hasProperty && (
-          <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
+          <ResultsSection id="bydleni" title="Bydlení a hypotéka" subtitle="Největší položka plánu: akontace, splátka, limity a srovnání s nájmem" open={isOpen('bydleni')} onToggle={() => toggleSection('bydleni')}>
             <SavingsChart state={activeState} />
             <PropertyAffordability
               state={activeState}
@@ -279,7 +279,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
 
         {/* Cíle */}
         {hasGoalPlanners && (
-          <ResultsSection id="cile" title="Cíle" subtitle="Důchod, dítě, rodičovská a vlastní cíle" open={isOpen('cile')} onToggle={() => toggleSection('cile')}>
+          <ResultsSection id="cile" title="Ostatní cíle" subtitle="Důchod, dítě, rodičovská a vlastní cíle" open={isOpen('cile')} onToggle={() => toggleSection('cile')}>
             {hasRetirement && (
               <RetirementPlanner
                 state={activeState}
