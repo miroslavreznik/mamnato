@@ -261,7 +261,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         )}
 
         {/* Slovníček */}
-        <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Finanční pojmy jednoduše" active={isVisible('slovnicek')}>
+        <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Co která zkratka a číslo v přehledu znamená" active={isVisible('slovnicek')}>
           <EducationalGlossary />
         </ResultsSection>
       </div>

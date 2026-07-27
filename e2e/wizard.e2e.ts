@@ -288,8 +288,9 @@ test('výsledky začínají přímou odpovědí Máte na to', async ({ page }) =
   const verdict = page.getByText(/^(Máte na to|Zatím na to nemáte|Rozpočet)/).first()
   await expect(verdict).toBeVisible()
 
-  // Až za odpovědí následuje rozbor
-  await expect(page.getByText(/Disponibilní částka/)).toBeVisible()
+  // Až za odpovědí následuje rozbor. Stejný pojem je i ve slovníčku,
+  // proto se míří do souhrnu.
+  await expect(page.locator('#souhrn').getByText(/Disponibilní částka/)).toBeVisible()
 })
 
 test('rozpočet umí co kdyby: vypnutí cíle změní celkovou odpověď', async ({ page }) => {
