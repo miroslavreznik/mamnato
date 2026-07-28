@@ -80,8 +80,8 @@ function App() {
             aria-label="Domů"
           >
             <BrandMark className="w-9 h-9" />
-            <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-white">
-              MámNaTo<span className="text-blue-600 dark:text-blue-400">?</span>
+            <span className="text-lg font-bold tracking-tight text-ink">
+              MámNaTo<span className="text-brand">?</span>
             </span>
           </button>
           <ThemeToggle />

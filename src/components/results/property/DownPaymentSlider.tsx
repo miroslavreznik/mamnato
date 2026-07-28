@@ -78,7 +78,7 @@ export default function DownPaymentSlider({ state, onChange }: {
   return (
     <SliderCard>
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Kolik dát z úspor na akontaci</span>
+        <span className="text-sm font-medium text-ink-label">Kolik dát z úspor na akontaci</span>
         <span className={`text-xs ${dpOfPrice >= dpPct ? 'text-green-600' : 'text-amber-600'}`}>
           {dpOfPrice.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} % z ceny
         </span>
@@ -117,38 +117,38 @@ export default function DownPaymentSlider({ state, onChange }: {
 
       <div className="flex flex-wrap justify-between gap-x-2 text-sm mt-1.5">
         <span className="text-gray-600 dark:text-gray-400">Zbývající rezerva po akontaci:</span>
-        <span className={`font-semibold ${reserve <= 0 ? 'text-red-600' : reserveMonths < MIN_RESERVE_MONTHS ? 'text-amber-600' : 'text-gray-900 dark:text-white'}`}>
+        <span className={`font-semibold ${reserve <= 0 ? 'text-red-600' : reserveMonths < MIN_RESERVE_MONTHS ? 'text-amber-600' : 'text-ink'}`}>
           {czk(reserve)}{reserve > 0 && isFinite(reserveMonths) ? ` (~${reserveMonths.toFixed(1)} měs. výdajů)` : ''}
         </span>
       </div>
 
       {safeMax > 0 ? (
-        <p className={`mt-1.5 text-xs ${dpValue > safeMax ? 'text-amber-600 dark:text-amber-400' : 'text-gray-500 dark:text-gray-400'}`}>
+        <p className={`mt-1.5 text-xs ${dpValue > safeMax ? 'text-caution' : 'text-ink-muted'}`}>
           {dpValue > safeMax
             ? `Jste za bezpečnou hranicí. Nad ${czk(safeMax)} akontace zbyde rezerva na méně než ${MIN_RESERVE_MONTHS} měsíců výdajů.`
             : `Bezpečné maximum: ${czk(safeMax)} (zelená zóna), víc by nechalo rezervu pod ${MIN_RESERVE_MONTHS} měsíci výdajů po koupi.`}
         </p>
       ) : (
-        <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mt-1.5 text-xs text-caution">
           Úspory zatím nestačí na akontaci a zároveň {MIN_RESERVE_MONTHS}měsíční rezervu. Jakákoli akontace rezervu ukrojí.
         </p>
       )}
 
-      <div className="mt-2.5 pt-2.5 border-t border-gray-200 dark:border-gray-600 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
+      <div className="mt-2.5 pt-2.5 border-t border-gray-200 dark:border-gray-600 space-y-1.5 text-xs text-ink-muted">
         <p>
-          <span className="font-medium text-gray-700 dark:text-gray-300">Každých +{fmt(COMPARISON_STEP)} Kč akontace:</span>{' '}
+          <span className="font-medium text-ink-label">Každých +{fmt(COMPARISON_STEP)} Kč akontace:</span>{' '}
           splátka −{czkPerMonth(paymentDelta)} a na úrocích za {term} let ušetříte ~{czk(interestDelta)},
           jistý efekt ve výši úrokové sazby ({formatRate(rate)} %).
         </p>
         {reserve > 0 && loanAmount > 0 && (
           <p>
-            <span className="font-medium text-gray-700 dark:text-gray-300">Alternativa:</span>{' '}
+            <span className="font-medium text-ink-label">Alternativa:</span>{' '}
             zbylých {czk(reserve)} mimo akontaci by v akciích (~{Math.round(STOCK_RETURN * 100)} % ročně)
             mohlo za {term} let vyrůst na ~{czk(stockValue)} (bez záruky). Stejná částka v akontaci by
             ušetřila jistých ~{czk(interestSavedByReserve)} na úrocích.
           </p>
         )}
-        <p className="text-gray-400 dark:text-gray-500">
+        <p className="text-ink-faint">
           Vyšší akontace = nižší splátka a DSTI, ale menší rezerva. Vše níže i v Souhrnu se přepočítává živě.
         </p>
       </div>

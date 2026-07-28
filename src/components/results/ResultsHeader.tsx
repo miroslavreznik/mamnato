@@ -31,8 +31,8 @@ function Action({ label, onClick, icon, tone = 'plain', title, alwaysLabel = fal
   alwaysLabel?: boolean;
 }) {
   const styles = tone === 'danger'
-    ? 'text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
-    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white';
+    ? 'text-danger hover:bg-red-50 dark:hover:bg-red-900/20'
+    : 'text-ink-body hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white';
 
   return (
     <button
@@ -64,17 +64,17 @@ export default function ResultsHeader({ mode, shareCopied, onShare, onPrint, onE
   onReset: () => void;
 }) {
   return (
-    <div className="mb-4 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+    <div className="mb-4 rounded-2xl border border-line bg-card px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div className="flex items-center gap-2.5 min-w-0">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">Váš finanční plán</h2>
-        <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+        <h2 className="text-xl font-semibold text-ink truncate">Váš finanční plán</h2>
+        <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-ink-body">
           {MODE_LABELS[mode]}
         </span>
       </div>
 
       <div className="no-print flex items-center gap-0.5">
         {shareCopied ? (
-          <span className="inline-flex items-center gap-1.5 min-h-[44px] px-2.5 sm:px-3 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          <span className="inline-flex items-center gap-1.5 min-h-[44px] px-2.5 sm:px-3 text-sm font-medium text-good">
             <Icon path="M20 6 9 17l-5-5" />
             <span className="hidden sm:inline">Odkaz zkopírován</span>
           </span>

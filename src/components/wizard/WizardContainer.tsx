@@ -73,7 +73,7 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
 
   return (
     <WizardContext.Provider value={{ state, dispatch }}>
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm ring-1 ring-gray-200/70 dark:ring-gray-700/70 border border-transparent p-6 sm:p-8">
+      <div className="bg-card rounded-2xl shadow-sm ring-1 ring-gray-200/70 dark:ring-gray-700/70 border border-transparent p-6 sm:p-8">
         <StepIndicator
           currentStep={state.currentStep}
           steps={stepItems}

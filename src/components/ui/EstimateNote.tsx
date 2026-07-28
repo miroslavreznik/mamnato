@@ -30,7 +30,7 @@ export default function EstimateNote({
   suggestion,
   revertLabel,
   onRevert,
-  className = 'text-xs text-gray-500 dark:text-gray-400',
+  className = 'text-xs text-ink-muted',
 }: Props) {
   if (!overridden) return <p className={className}>{explanation}</p>;
 

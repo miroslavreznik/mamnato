@@ -31,7 +31,7 @@ export default function StepIndicator({ currentStep, steps, completedSteps, onSt
 
   return (
     <nav className="mb-6" aria-label="Kroky průvodce">
-      <p className="text-xs text-gray-400 dark:text-gray-500 text-right mb-1.5">Krok {position} z {total}</p>
+      <p className="text-xs text-ink-faint text-right mb-1.5">Krok {position} z {total}</p>
 
       <ol className="flex gap-1">
         {steps.map((item, i) => {

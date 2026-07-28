@@ -81,12 +81,12 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
   const tableProjections = showInflation && realProjections ? realProjections : nominalProjections;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Plán spoření na důchod</h3>
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-4">Plán spoření na důchod</h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-ink-label mb-1">
             Měsíční částka k investování
           </label>
           <NumField
@@ -95,12 +95,12 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             ariaLabel="Měsíční částka k investování"
             step={500}
             suffix="Kč"
-            className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-full px-3 py-2.5 pr-9 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
           <p className="mt-1 text-xs text-gray-400">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-ink-label mb-1">
             Počet let do důchodu
           </label>
           <NumField
@@ -109,7 +109,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             min={1} max={50}
             ariaLabel="Počet let do důchodu"
             step={1}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
       <div className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="flex-1">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center">
+            <label className="block text-sm font-medium text-ink-label mb-1 flex items-center">
               Požadovaná měsíční renta
               <button
                 onClick={() => setShowRentInfo(!showRentInfo)}
@@ -132,11 +132,11 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
               ariaLabel="Požadovaná měsíční renta"
               step={1000}
               suffix="Kč"
-              className="w-full px-3 py-2.5 pr-9 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+              className="w-full px-3 py-2.5 pr-9 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
             />
           </div>
           <div className="flex-1 sm:text-right">
-            <p className="text-sm text-gray-500 dark:text-gray-400">Potřebná hodnota portfolia</p>
+            <p className="text-sm text-ink-muted">Potřebná hodnota portfolia</p>
             <p className="text-xl sm:text-2xl font-bold whitespace-nowrap text-emerald-700 dark:text-emerald-400">
               {targetPortfolio === Infinity ? '–' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}
             </p>
@@ -166,7 +166,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           >
             <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${showInflation ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
           </div>
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Započítat inflaci</span>
+          <span className="text-sm font-medium text-ink-label">Započítat inflaci</span>
         </label>
         <button
           onClick={() => setShowInflationInfo(!showInflationInfo)}
@@ -252,20 +252,20 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
       </ResponsiveContainer>
 
       <div className="mt-6">
-        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+        <h4 className="text-sm font-semibold text-ink-label mb-3">
           Výsledná hodnota portfolia{showInflation ? ' (reálná kupní síla)' : ''}
         </h4>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2 text-gray-500 dark:text-gray-400">Nástroj</th>
-                <th className="text-right py-2 text-gray-500 dark:text-gray-400">Výnos % / rok</th>
-                <th className="text-right py-2 text-gray-500 dark:text-gray-400">Hodnota</th>
-                <th className="text-right py-2 text-gray-500 dark:text-gray-400">
+              <tr className="border-b border-line">
+                <th className="text-left py-2 text-ink-muted">Nástroj</th>
+                <th className="text-right py-2 text-ink-muted">Výnos % / rok</th>
+                <th className="text-right py-2 text-ink-muted">Hodnota</th>
+                <th className="text-right py-2 text-ink-muted">
                   {showInflation ? 'Reálný zisk' : 'Složené úroky'}
                 </th>
-                <th className="text-right py-2 text-gray-500 dark:text-gray-400">Cíl renty</th>
+                <th className="text-right py-2 text-ink-muted">Cíl renty</th>
               </tr>
             </thead>
             <tbody>
@@ -277,11 +277,11 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                   : null;
                 return (
                   <tr key={p.key} className="border-b border-gray-100 dark:border-gray-700/50">
-                    <td className="py-2 text-gray-900 dark:text-white">
+                    <td className="py-2 text-ink">
                       <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: p.color }} />
                       {p.label}
                     </td>
-                    <td className="text-right py-2 text-gray-600 dark:text-gray-300">
+                    <td className="text-right py-2 text-ink-body">
                       <NumField
                         value={rates[p.key]}
                         onChange={(v) => setRates({ ...rates, [p.key]: v })}
@@ -290,7 +290,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                       />
                       <span className="ml-1">%</span>
                     </td>
-                    <td className="text-right py-2 font-semibold text-gray-900 dark:text-white">
+                    <td className="text-right py-2 font-semibold text-ink">
                       {finalValue.toLocaleString('cs-CZ')} Kč
                     </td>
                     <td className={`text-right py-2 font-semibold ${compoundInterest >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -300,7 +300,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                       {reachedYear !== null ? (
                         <span className="text-green-600 font-medium">za {reachedYear} {reachedYear === 1 ? 'rok' : reachedYear < 5 ? 'roky' : 'let'}</span>
                       ) : (
-                        <span className="text-gray-400 dark:text-gray-500">nedosaženo</span>
+                        <span className="text-ink-faint">nedosaženo</span>
                       )}
                     </td>
                   </tr>
@@ -308,7 +308,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
               })}
             </tbody>
             <tfoot>
-              <tr className="border-t-2 border-gray-300 dark:border-gray-600">
+              <tr className="border-t-2 border-line-strong">
                 <td colSpan={2} className="py-2 text-gray-600 dark:text-gray-400 text-sm">
                   Celkové vklady: {totalContributions.toLocaleString('cs-CZ')} Kč
                 </td>
@@ -319,7 +319,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
         </div>
       </div>
 
-      <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+      <p className="mt-4 text-xs text-ink-faint">
         Výnosy jsou historické průměry. Skutečné výsledky se mohou lišit.
         {showInflation && ` Inflace: ${(INFLATION * 100).toFixed(0)} % ročně (dlouhodobý průměr ČNB).`}
       </p>

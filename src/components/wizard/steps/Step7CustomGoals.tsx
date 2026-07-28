@@ -45,8 +45,8 @@ export default function Step7CustomGoals() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vaše vlastní cíle</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">
+      <h2 className="text-xl font-semibold text-ink mb-2">Vaše vlastní cíle</h2>
+      <p className="text-ink-muted mb-6">
         Na co dalšího šetříte? Zadejte, co chcete, kolik na to potřebujete a za jak dlouho to chcete mít.
       </p>
 
@@ -60,7 +60,7 @@ export default function Step7CustomGoals() {
             className={`px-3 py-1 text-sm rounded-lg ${
               timeUnit === unit
                 ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
-                : 'text-gray-500 dark:text-gray-400'
+                : 'text-ink-muted'
             }`}
           >
             {unit === 'months' ? 'Měsících' : 'Letech'}
@@ -73,9 +73,9 @@ export default function Step7CustomGoals() {
           const months = goal.targetMonths;
           const requiredMonthly = months > 0 ? Math.ceil(goal.targetAmount / months) : 0;
           return (
-            <div key={goal.id} className="border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+            <div key={goal.id} className="border border-line rounded-xl p-4">
               <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Cíl #{index + 1}</span>
+                <span className="text-sm font-medium text-ink-label">Cíl #{index + 1}</span>
                 {goals.length > 1 && (
                   <button
                     type="button"
@@ -89,26 +89,26 @@ export default function Step7CustomGoals() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Co chci (název)</label>
+                  <label className="block text-xs text-ink-muted mb-1">Co chci (název)</label>
                   <input
                     type="text"
                     value={goal.name}
                     onChange={(e) => update(goal.id, 'name', e.target.value)}
                     placeholder="např. Auto, dovolená, rezerva…"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Kolik potřebuji (Kč)</label>
+                  <label className="block text-xs text-ink-muted mb-1">Kolik potřebuji (Kč)</label>
                   <NumField
                     value={goal.targetAmount}
                     onChange={(v) => update(goal.id, 'targetAmount', v)}
                     ariaLabel="Kolik potřebuji"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  <label className="block text-xs text-ink-muted mb-1">
                     Za jak dlouho ({timeUnit === 'months' ? 'měsíců' : 'let'})
                   </label>
                   <NumField
@@ -116,7 +116,7 @@ export default function Step7CustomGoals() {
                     onChange={(v) => update(goal.id, 'targetMonths', fromDisplay(v))}
                     min={1}
                     ariaLabel="Za jak dlouho"
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>
               </div>
@@ -124,7 +124,7 @@ export default function Step7CustomGoals() {
               {requiredMonthly > 0 && (
                 <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
                   Odpovídá spoření{' '}
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                  <span className="font-semibold text-ink">
                     {requiredMonthly.toLocaleString('cs-CZ')} Kč/měs.
                   </span>
                 </p>
@@ -137,23 +137,23 @@ export default function Step7CustomGoals() {
       <button
         type="button"
         onClick={addGoal}
-        className="mt-4 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[44px]"
+        className="mt-4 px-4 py-2 text-sm text-brand border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[44px]"
       >
         + Přidat další cíl
       </button>
 
       {goals.length > 0 && (
-        <div className="mt-5 p-4 rounded-xl bg-gray-50 dark:bg-gray-700/50 text-sm">
+        <div className="mt-5 p-4 rounded-xl bg-sunken text-sm">
           <div className="flex justify-between">
             <span className="text-gray-600 dark:text-gray-400">Celkem potřeba měsíčně na cíle:</span>
-            <span className="font-semibold text-gray-900 dark:text-white">{totalNeeded.toLocaleString('cs-CZ')} Kč/měs.</span>
+            <span className="font-semibold text-ink">{totalNeeded.toLocaleString('cs-CZ')} Kč/měs.</span>
           </div>
           <div className="flex justify-between mt-1">
             <span className="text-gray-600 dark:text-gray-400">Máte k dispozici:</span>
-            <span className="font-semibold text-gray-900 dark:text-white">{Math.round(disposable).toLocaleString('cs-CZ')} Kč/měs.</span>
+            <span className="font-semibold text-ink">{Math.round(disposable).toLocaleString('cs-CZ')} Kč/měs.</span>
           </div>
           {overBudget && (
-            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+            <p className="mt-2 text-xs text-caution">
               Cíle dohromady potřebují víc, než máte k dispozici. Nevadí, ve výsledcích uvidíte, na které dosáhnete a jak upravit horizont.
             </p>
           )}

@@ -25,9 +25,9 @@ export default function CashFlowAfterChart({ state }: Props) {
     }));
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Výhled: vývoj úspor s koupí vs. bez</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-1">Výhled: vývoj úspor s koupí vs. bez</h3>
+      <p className="text-sm text-ink-muted mb-4">
         Jak by rostly (nebo klesaly) vaše úspory v čase, kdybyste nemovitost koupili, nebo zůstali v nájmu.
       </p>
 

@@ -32,9 +32,9 @@ export default function DiscretionaryBreakdownChart({ state }: Props) {
   const labelByKey = Object.fromEntries(groups.map((g) => [g.key, g.label]));
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Zbytné výdaje: za co utrácíte</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-1">Zbytné výdaje: za co utrácíte</h3>
+      <p className="text-sm text-ink-muted mb-4">
         Podrobný rozpis zbytných výdajů ({fmtKc(total)}/měs., {shareOfIncome.toFixed(0)} % příjmu). Tohle jsou výdaje, které lze při výpadku příjmů nejsnáz omezit.
       </p>
 
@@ -71,13 +71,13 @@ export default function DiscretionaryBreakdownChart({ state }: Props) {
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: colorFor(i) }} />
                 <span className="mr-0.5">{g.icon}</span>
                 <span className="text-gray-700 dark:text-gray-200">{g.label}</span>
-                <span className="ml-auto font-semibold text-gray-900 dark:text-white">{fmtKc(g.amount)}</span>
+                <span className="ml-auto font-semibold text-ink">{fmtKc(g.amount)}</span>
                 <span className="text-xs text-gray-400 w-10 text-right">{pct.toFixed(0)} %</span>
               </div>
               {showItems && (
                 <div className="mt-1 ml-6 space-y-0.5">
                   {g.items.filter((it) => it.amount > 0).map((it) => (
-                    <div key={it.key} className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                    <div key={it.key} className="flex justify-between text-xs text-ink-muted">
                       <span>{it.label}</span>
                       <span>{fmtKc(it.amount)}</span>
                     </div>
@@ -91,7 +91,7 @@ export default function DiscretionaryBreakdownChart({ state }: Props) {
 
       <button
         onClick={() => setShowItems((v) => !v)}
-        className="mt-3 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+        className="mt-3 text-xs text-brand hover:underline"
       >
         {showItems ? 'Skrýt jednotlivé položky' : 'Zobrazit jednotlivé položky'}
       </button>

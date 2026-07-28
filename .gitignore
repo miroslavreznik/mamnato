@@ -13,6 +13,9 @@ dist-ssr
 *.local
 
 # Playwright
+# Otisky vizuálního porovnání: závisí na sestavení prohlížeče, takže otisk
+# z jednoho stroje hlásí v CI rozdíly, které nikdo neudělal. Viz e2e/visual.e2e.ts.
+/e2e/*-snapshots/
 /test-results/
 /playwright-report/
 /blob-report/

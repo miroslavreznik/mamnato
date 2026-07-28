@@ -32,12 +32,12 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
   );
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
       <div className="flex items-start gap-3 mb-4">
         <span className="text-3xl">👶</span>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Náklady na dítě</h3>
+            <h3 className="text-lg font-semibold text-ink">Náklady na dítě</h3>
             <button
               onClick={() => setShowInfo(!showInfo)}
               className="text-blue-500 hover:text-blue-700 text-sm"
@@ -61,28 +61,28 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Počet dětí</label>
+          <label className="block text-sm font-medium text-ink-label mb-1">Počet dětí</label>
           <NumField
             value={numberOfChildren}
             onChange={setNumberOfChildren}
             min={1} max={5}
             ariaLabel="Počet dětí"
             step={1}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
           {numberOfChildren > 1 && (
             <p className="mt-1 text-xs text-gray-400">U druhého a dalšího dítěte mohou být náklady nižší díky zděděnému vybavení.</p>
           )}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horizont (roky)</label>
+          <label className="block text-sm font-medium text-ink-label mb-1">Horizont (roky)</label>
           <NumField
             value={horizonYears}
             onChange={setHorizonYears}
             min={1} max={26}
             ariaLabel="Horizont v letech"
             step={1}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
         <div className="flex items-end">
@@ -93,26 +93,26 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
               onChange={(e) => setIncludeUni(e.target.checked)}
               className="w-4 h-4 rounded border-gray-300"
             />
-            <span className="text-sm text-gray-700 dark:text-gray-300">Zahrnout VŠ (19–26 let)</span>
+            <span className="text-sm text-ink-label">Zahrnout VŠ (19–26 let)</span>
           </label>
         </div>
       </div>
 
       {/* Editable cost table */}
       <div className="mb-6">
-        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Měsíční náklady dle věku</h4>
+        <h4 className="text-sm font-semibold text-ink-label mb-2">Měsíční náklady dle věku</h4>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2 text-gray-500 dark:text-gray-400">Věk</th>
-                <th className="text-right py-2 text-gray-500 dark:text-gray-400">Kč/měs. (1 dítě)</th>
+              <tr className="border-b border-line">
+                <th className="text-left py-2 text-ink-muted">Věk</th>
+                <th className="text-right py-2 text-ink-muted">Kč/měs. (1 dítě)</th>
               </tr>
             </thead>
             <tbody>
               {CHILD_COSTS_CZ.filter((r) => includeUni || r.to <= 18).map((range) => (
                 <tr key={range.label} className="border-b border-gray-100 dark:border-gray-700/50">
-                  <td className="py-2 text-gray-900 dark:text-white">{range.label}</td>
+                  <td className="py-2 text-ink">{range.label}</td>
                   <td className="text-right py-2">
                     <NumField
                       value={customCosts[range.label]}
@@ -131,13 +131,13 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Průměrné měsíční náklady</span>
+          <span className="text-sm text-ink-muted">Průměrné měsíční náklady</span>
           <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
             {result.monthlyAverage.toLocaleString('cs-CZ')} Kč/měs.
           </p>
         </div>
         <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-          <span className="text-sm text-gray-500 dark:text-gray-400">Celkové náklady</span>
+          <span className="text-sm text-ink-muted">Celkové náklady</span>
           <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
             {(result.totalCost / 1_000_000).toFixed(1)} mil. Kč
           </p>
@@ -167,7 +167,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
         </ResponsiveContainer>
       )}
 
-      <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+      <p className="mt-4 text-xs text-ink-faint">
         Zdroj: ČSÚ, průměr pro rok 2024. Částky jsou orientační a zahrnují běžné výdaje bez jednorázových položek.
       </p>
       <GoalAllocationField

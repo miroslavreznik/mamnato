@@ -48,14 +48,14 @@ export default class ErrorBoundary extends Component<Props, State> {
 
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-md w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl shadow-sm p-6 text-center">
+        <div className="max-w-md w-full bg-card border border-line rounded-2xl shadow-sm p-6 text-center">
           <div className="text-4xl mb-3" aria-hidden="true">
             😕
           </div>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-lg font-bold text-ink mb-2">
             Něco se pokazilo
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-300 mb-5">
+          <p className="text-sm text-ink-body mb-5">
             Omlouváme se, ale aplikace narazila na neočekávanou chybu. Vaše data
             zůstala ve vašem prohlížeči a nikam se neodeslala.
           </p>
@@ -70,7 +70,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={this.handleReset}
-              className="px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-xl border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-xl border border-line-strong text-ink-label hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
               Smazat data a začít znovu
             </button>

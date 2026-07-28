@@ -23,14 +23,14 @@ export default function RenovationSection() {
         <button
           type="button"
           onClick={() => dispatch({ type: 'SET_RENOVATION', value: { cost: 0, months: 6, payingRentMeanwhile: true } })}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline min-h-[44px]"
+          className="text-sm text-brand hover:underline min-h-[44px]"
         >
           + Budu rekonstruovat
         </button>
       ) : (
-        <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+        <div className="p-4 bg-sunken rounded-xl">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Rekonstrukce po koupi</h3>
+            <h3 className="text-sm font-semibold text-ink-label">Rekonstrukce po koupi</h3>
             <button
               type="button"
               onClick={() => dispatch({ type: 'SET_RENOVATION', value: undefined })}
@@ -39,7 +39,7 @@ export default function RenovationSection() {
               Zrušit
             </button>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+          <p className="text-xs text-ink-muted mb-3">
             Rozpočet na rekonstrukci se přičítá k ceně, protože banka půjčuje proti hodnotě
             nemovitosti po rekonstrukci. Zvyšuje se tím i potřebná akontace.
           </p>
@@ -62,7 +62,7 @@ export default function RenovationSection() {
             step={1}
           />
 
-          <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300 min-h-[44px] cursor-pointer">
+          <label className="flex items-start gap-2 text-sm text-ink-label min-h-[44px] cursor-pointer">
             <input
               type="checkbox"
               checked={renovation.payingRentMeanwhile}
@@ -71,7 +71,7 @@ export default function RenovationSection() {
             />
             <span>
               Během rekonstrukce budu dál platit současné bydlení
-              <span className="block text-xs text-gray-500 dark:text-gray-400">
+              <span className="block text-xs text-ink-muted">
                 Nájem i energie ({czkPerMonth(state.expenses.rent + state.expenses.utilities)}) poběží
                 souběžně s hypotékou. Odškrtněte, pokud budete bydlet zadarmo, třeba u rodiny.
               </span>
@@ -81,7 +81,7 @@ export default function RenovationSection() {
           {renovationPhase && (
             <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-400 space-y-1">
               <p>
-                <span className="font-medium text-gray-700 dark:text-gray-300">Během rekonstrukce zaplatíte bance míň.</span>{' '}
+                <span className="font-medium text-ink-label">Během rekonstrukce zaplatíte bance míň.</span>{' '}
                 Hypotéka se čerpá postupně a z nevyčerpané části se neplatí nic, takže místo plné splátky{' '}
                 {czk(renovationPhase.fullPayment)} jde jen o úrok:
                 na začátku {czk(renovationPhase.interestOnlyStart)},
@@ -90,14 +90,14 @@ export default function RenovationSection() {
               {renovation.payingRentMeanwhile && (
                 <p>
                   Se současným bydlením to dělá zhruba{' '}
-                  <span className="font-semibold text-gray-900 dark:text-white">
+                  <span className="font-semibold text-ink">
                     {czkPerMonth(renovationPhase.housingDuringRenovation)}
                   </span>{' '}
                   po dobu {formatMonths(renovation.months)}. Volných vám při současných příjmech zbyde{' '}
                   {czk(renovationPhase.disposableDuringRenovation)}.
                 </p>
               )}
-              <p className="text-amber-600 dark:text-amber-400">
+              <p className="text-caution">
                 Počítejte s rezervou na prodražení. Při obvyklých 20 % navíc by rekonstrukce vyšla na{' '}
                 {czk(renovationWithOverrun(state))} a rozdíl se doplácí z vlastních peněz.
               </p>

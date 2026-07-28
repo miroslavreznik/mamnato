@@ -22,13 +22,13 @@ const categories: { field: string; label: string; tooltip: string; step: number;
 function ItemInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div className="flex items-center justify-between gap-2 py-1">
-      <label className="text-sm text-gray-600 dark:text-gray-300">{label}</label>
+      <label className="text-sm text-ink-body">{label}</label>
       <div className="relative shrink-0">
         <NumField
           value={value}
           onChange={onChange}
           ariaLabel={label}
-          className="w-24 text-right pr-7 pl-2 py-1 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+          className="w-24 text-right pr-7 pl-2 py-1 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-sm"
         />
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">Kč</span>
       </div>
@@ -54,10 +54,10 @@ export default function Step3Expenses() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vaše výdaje</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">Zadejte měsíční výdaje po kategoriích. Hodnoty jsou předvyplněny průměrem ČR.</p>
+      <h2 className="text-xl font-semibold text-ink mb-2">Vaše výdaje</h2>
+      <p className="text-ink-muted mb-6">Zadejte měsíční výdaje po kategoriích. Hodnoty jsou předvyplněny průměrem ČR.</p>
 
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Nezbytné výdaje</h3>
+      <h3 className="text-sm font-semibold text-ink-label mb-3">Nezbytné výdaje</h3>
       {visibleCategories.map((cat) => (
         <NumberInput
           key={cat.field}
@@ -70,7 +70,7 @@ export default function Step3Expenses() {
       ))}
 
       {/* Zbytné výdaje, buď jedním polem, nebo podrobným rozpisem do skupin */}
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">Zbytné výdaje</h3>
+      <h3 className="text-sm font-semibold text-ink-label mb-3 mt-6 pt-6 border-t border-line">Zbytné výdaje</h3>
       <NumberInput
         label="Zbytné výdaje (zábava, dovolená, koníčky, předplatné)"
         value={state.expenses.other}
@@ -87,15 +87,15 @@ export default function Step3Expenses() {
             if (showBreakdown) dispatch({ type: 'CLEAR_DISCRETIONARY_BREAKDOWN' });
             setShowBreakdown((v) => !v);
           }}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-sm text-brand hover:underline"
         >
           {showBreakdown ? '− Skrýt podrobný rozpis' : '+ Rozepsat zbytné výdaje (volitelné)'}
         </button>
       </div>
 
       {showBreakdown && (
-        <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-4">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-3 p-4 bg-sunken rounded-xl space-y-4">
+          <p className="text-xs text-ink-muted">
             Rozepsáním po skupinách si líp uvědomíte, za co vlastně platíte. Zbytné výdaje se dopočítají jako součet.
           </p>
 
@@ -107,7 +107,7 @@ export default function Step3Expenses() {
                   <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                     <span className="mr-1.5">{g.icon}</span>{g.label}
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400">{fmt(groupTotal.amount)} Kč</span>
+                  <span className="text-xs text-ink-muted">{fmt(groupTotal.amount)} Kč</span>
                 </div>
                 <div className="pl-1 divide-y divide-gray-200/70 dark:divide-gray-600/50">
                   {g.items.map((it) => {
@@ -127,16 +127,16 @@ export default function Step3Expenses() {
           })}
 
           <div className="flex justify-between pt-2 border-t dark:border-gray-600 text-sm">
-            <span className="text-gray-600 dark:text-gray-300 font-medium">Zbytné výdaje celkem</span>
-            <span className="font-semibold text-gray-900 dark:text-white">{fmt(state.expenses.other)} Kč/měs.</span>
+            <span className="text-ink-body font-medium">Zbytné výdaje celkem</span>
+            <span className="font-semibold text-ink">{fmt(state.expenses.other)} Kč/měs.</span>
           </div>
         </div>
       )}
 
       {/* Zbývající dluhy, zůstatek (ne měsíční výdaj), pro výpočet DTI */}
-      <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Zbývající dluhy (nepovinné)</h3>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+      <div className="mt-6 pt-6 border-t border-line">
+        <h3 className="text-sm font-semibold text-ink-label mb-1">Zbývající dluhy (nepovinné)</h3>
+        <p className="text-xs text-ink-muted mb-3">
           Tohle není měsíční splátka, ale celkový <span className="font-medium">zůstatek</span> k doplacení. Slouží k výpočtu ukazatele DTI (poměr dluhu k příjmu).
         </p>
         <NumberInput
@@ -151,13 +151,13 @@ export default function Step3Expenses() {
       <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm text-gray-600 space-y-1">
         <div className="flex justify-between">
           <span>Celkem výdaje:</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{fmt(expenses)} Kč/měs.</span>
+          <span className="font-semibold text-ink">{fmt(expenses)} Kč/měs.</span>
         </div>
-        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex justify-between text-xs text-ink-muted">
           <span>z toho nezbytné</span>
           <span>{fmt(necessary)} Kč</span>
         </div>
-        <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+        <div className="flex justify-between text-xs text-ink-muted">
           <span>z toho zbytné</span>
           <span>{fmt(discretionary)} Kč</span>
         </div>

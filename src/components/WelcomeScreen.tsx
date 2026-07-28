@@ -41,11 +41,11 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
           Zdarma · Bez registrace · Hotovo za 3 minuty
         </span>
 
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-gray-900 dark:text-white mb-4 text-balance">
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-ink mb-4 text-balance">
           Mám na vlastní bydlení a na své cíle?
         </h1>
 
-        <p className="text-lg text-gray-600 dark:text-gray-300 leading-relaxed mb-8 max-w-xl mx-auto">
+        <p className="text-lg text-ink-body leading-relaxed mb-8 max-w-xl mx-auto">
           Zadejte příjmy, výdaje a cíle. Za pár minut uvidíte základní finanční plán: jestli na vlastní bydlení dosáhnete, co vám po splátce zbyde na ostatní cíle a kam vaše peníze plynou.
         </p>
 
@@ -74,15 +74,15 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
         {features.map((f) => (
           <div
             key={f.title}
-            className="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-white dark:bg-gray-800/70 p-5 text-left"
+            className="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-card/70 p-5 text-left"
           >
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-3">
-              <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg className="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 {f.icon}
               </svg>
             </div>
-            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">{f.title}</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
+            <h3 className="font-semibold text-ink mb-1">{f.title}</h3>
+            <p className="text-sm text-ink-muted leading-relaxed">{f.desc}</p>
           </div>
         ))}
       </div>

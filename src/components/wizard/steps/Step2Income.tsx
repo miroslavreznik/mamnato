@@ -14,7 +14,7 @@ function AgeField({ label, value, onChange, tooltip }: {
 }) {
   return (
     <div className="mb-4">
-      <label className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <label className="flex items-center text-sm font-medium text-ink-label mb-1">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </label>
@@ -29,7 +29,7 @@ function AgeField({ label, value, onChange, tooltip }: {
         suffix="let"
         placeholder="např. 34"
         ariaLabel={label}
-        className="w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="w-full px-3 py-2.5 pr-10 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>
   );
@@ -42,8 +42,8 @@ export default function Step2Income() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vaše příjmy</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">Zadejte čisté měsíční příjmy domácnosti. Věk je nepovinný, ale zpřesní výpočty.</p>
+      <h2 className="text-xl font-semibold text-ink mb-2">Vaše příjmy</h2>
+      <p className="text-ink-muted mb-6">Zadejte čisté měsíční příjmy domácnosti. Věk je nepovinný, ale zpřesní výpočty.</p>
 
       <NumberInput
         label={isCouple ? 'Čistý měsíční příjem: osoba 1' : 'Můj čistý měsíční příjem'}
@@ -89,7 +89,7 @@ export default function Step2Income() {
 
       <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm text-gray-600">
         Celkový příjem domácnosti:{' '}
-        <span className="font-semibold text-gray-900 dark:text-white">
+        <span className="font-semibold text-ink">
           {(
             (state.income.person1NetMonthly ?? 0) +
             (state.income.person2NetMonthly ?? 0) +

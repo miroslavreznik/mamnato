@@ -43,18 +43,18 @@ function StatusBadge({ alloc }: { alloc: GoalAllocation }) {
 function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposable: number; totalAllocated: number; totalNeeded: number }) {
   const remaining = disposable - totalAllocated;
   return (
-    <div className="p-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 mb-4">
+    <div className="p-4 rounded-xl border border-line bg-gray-50 dark:bg-gray-800/50 mb-4">
       <div className="grid grid-cols-3 gap-4 text-sm">
         <div>
-          <span className="text-gray-500 dark:text-gray-400">Disponibilní celkem</span>
-          <p className="font-semibold text-gray-900 dark:text-white">{disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
+          <span className="text-ink-muted">Disponibilní celkem</span>
+          <p className="font-semibold text-ink">{disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
         <div>
-          <span className="text-gray-500 dark:text-gray-400">Alokováno na cíle</span>
-          <p className="font-semibold text-gray-900 dark:text-white">{totalAllocated.toLocaleString('cs-CZ')} Kč/měs.</p>
+          <span className="text-ink-muted">Alokováno na cíle</span>
+          <p className="font-semibold text-ink">{totalAllocated.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
         <div>
-          <span className="text-gray-500 dark:text-gray-400">Zbývá volných</span>
+          <span className="text-ink-muted">Zbývá volných</span>
           <p className={`font-semibold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {remaining.toLocaleString('cs-CZ')} Kč/měs.
           </p>
@@ -136,9 +136,9 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Vlastní finanční cíle</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-2">Vlastní finanční cíle</h3>
+      <p className="text-sm text-ink-muted mb-4">
         Seřaď cíle podle důležitosti. Začneme od nejvyššího a uvidíme, na které ještě zbývá.
       </p>
 
@@ -150,7 +150,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
           <button
             key={unit}
             onClick={() => setTimeUnit(unit)}
-            className={`px-3 py-1 text-sm rounded-lg ${timeUnit === unit ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'text-gray-500 dark:text-gray-400'}`}
+            className={`px-3 py-1 text-sm rounded-lg ${timeUnit === unit ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'text-ink-muted'}`}
           >
             {unit === 'months' ? 'Měsících' : 'Letech'}
           </button>
@@ -169,7 +169,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
           return (
             <div
               key={goal.id}
-              className={`border rounded-xl p-4 ${isDeferred ? 'opacity-50 border-dashed border-gray-300 dark:border-gray-600' : 'border-gray-200 dark:border-gray-700'}`}
+              className={`border rounded-xl p-4 ${isDeferred ? 'opacity-50 border-dashed border-line-strong' : 'border-line'}`}
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">
@@ -187,10 +187,10 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                       aria-label="Posunout dolů"
                     >▼</button>
                   </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">#{index + 1}</span>
+                  <span className="text-sm font-medium text-ink-label">#{index + 1}</span>
                   {!isDeferred && alloc && <StatusBadge alloc={alloc} />}
                   {isDeferred && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-ink-muted">
                       Odložený
                     </span>
                   )}
@@ -198,7 +198,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setDeferredIds((prev) => toggleInSet(prev, goal.id))}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    className="text-xs text-brand hover:underline"
                   >
                     {isDeferred ? 'Obnovit cíl' : 'Co kdybych odložil tento cíl?'}
                   </button>
@@ -212,27 +212,27 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Název cíle</label>
+                  <label className="block text-xs text-ink-muted mb-1">Název cíle</label>
                   <input
                     type="text"
                     value={goal.name}
                     onChange={(e) => updateGoal(goal.id, 'name', e.target.value)}
                     placeholder="např. Auto, dovolená..."
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                    className="w-full px-3 py-2 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-sm"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">Cílová částka (Kč)</label>
+                  <label className="block text-xs text-ink-muted mb-1">Cílová částka (Kč)</label>
                   <NumField
                     value={goal.targetAmount}
                     onChange={(v) => updateGoal(goal.id, 'targetAmount', v)}
                     ariaLabel="Cílová částka"
                     step={10000}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+                    className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                  <label className="block text-xs text-ink-muted mb-1">
                     Za kolik {timeUnit === 'months' ? 'měsíců' : 'let'}
                   </label>
                   <NumField
@@ -241,7 +241,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     min={1}
                     ariaLabel="Za kolik měsíců/let"
                     step={1}
-                    className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+                    className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
                   />
                 </div>
               </div>
@@ -256,7 +256,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Potřebná měsíční úspora:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="font-semibold text-ink">
                       {requiredMonthly.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
@@ -268,7 +268,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600 dark:text-gray-400">Zbývá ti po tomto cíli:</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
+                    <span className="font-semibold text-ink">
                       {alloc.remainingAfter.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
@@ -293,7 +293,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     <div>
                       <button
                         onClick={() => setExpandedTips((prev) => toggleInSet(prev, goal.id))}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                        className="text-sm text-brand hover:underline"
                       >
                         {expandedTips.has(goal.id) ? 'Skrýt doporučení' : 'Co s tím?'}
                       </button>
@@ -318,7 +318,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                   )}
 
                   <div className="text-sm text-gray-600 dark:text-gray-400">
-                    Doporučený nástroj: <span className="font-medium text-gray-900 dark:text-white">{recommendInstrument(months)}</span>
+                    Doporučený nástroj: <span className="font-medium text-ink">{recommendInstrument(months)}</span>
                   </div>
                 </div>
               )}
@@ -352,7 +352,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
 
       <button
         onClick={addGoal}
-        className="mt-4 px-4 py-2 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[44px]"
+        className="mt-4 px-4 py-2 text-sm text-brand border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[44px]"
       >
         + Přidat další cíl
       </button>

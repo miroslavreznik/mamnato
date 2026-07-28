@@ -18,7 +18,7 @@ export default function BudgetSummary({ now, after }: {
 
   return (
     <div className="mb-5 space-y-2">
-      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center">
+      <h4 className="text-sm font-semibold text-ink-label flex items-center">
         Měsíční rozpočet
         <Tooltip text="Co vám zbyde po výdajích a kolik z toho spolknou cíle. Koupě rozpočet mění: skončí nájem i odkládání na akontaci a začne splátka s náklady na vlastnictví, proto jsou období dvě." />
       </h4>

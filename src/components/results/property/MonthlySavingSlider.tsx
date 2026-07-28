@@ -32,8 +32,8 @@ export default function MonthlySavingSlider({ state, value, onChange }: {
   return (
     <SliderCard>
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Kolik měsíčně odkládat na akontaci</span>
-        <span className="shrink-0 text-sm font-bold text-gray-900 dark:text-white whitespace-nowrap">{czkPerMonth(value)}</span>
+        <span className="text-sm font-medium text-ink-label">Kolik měsíčně odkládat na akontaci</span>
+        <span className="shrink-0 text-sm font-bold text-ink whitespace-nowrap">{czkPerMonth(value)}</span>
       </div>
 
       <div className="flex items-center gap-2">
@@ -60,19 +60,19 @@ export default function MonthlySavingSlider({ state, value, onChange }: {
         <span>{czk(max)}</span>
       </div>
 
-      <p className="mt-1.5 text-sm text-gray-600 dark:text-gray-300">
+      <p className="mt-1.5 text-sm text-ink-body">
         {value > 0
-          ? <>Chybějících {czk(gap)} takhle naspoříte za <span className="font-semibold text-gray-900 dark:text-white">{formatMonths(months)}</span>.</>
+          ? <>Chybějících {czk(gap)} takhle naspoříte za <span className="font-semibold text-ink">{formatMonths(months)}</span>.</>
           : <>Dokud na akontaci nic neodkládáte, chybějících {czk(gap)} nenaspoříte.</>}
       </p>
 
       {value > disposable && disposable > 0 && (
-        <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mt-1 text-xs text-caution">
           Odkládáte víc, než kolik vám měsíčně zbývá ({czk(disposable)}). Na ostatní cíle by nezbylo nic.
         </p>
       )}
       {value <= disposable && value > 0 && disposable > 0 && (
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-1 text-xs text-ink-muted">
           To je {Math.round(share)} % z toho, co vám měsíčně zbývá po výdajích ({czk(disposable)}).
           Zbytek zůstává na ostatní cíle a volnou rezervu.
         </p>

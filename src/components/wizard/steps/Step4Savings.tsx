@@ -24,8 +24,8 @@ export default function Step4Savings() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vaše úspory</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">
+      <h2 className="text-xl font-semibold text-ink mb-2">Vaše úspory</h2>
+      <p className="text-ink-muted mb-6">
         Zadejte celkovou částku, kterou máte odloženou na spořicím účtu, termínovaném vkladu nebo v hotovosti.
         Nemusí to být vše, co máte, jen to, s čím můžete pracovat.
       </p>
@@ -43,15 +43,15 @@ export default function Step4Savings() {
         <button
           type="button"
           onClick={() => setShowBreakdown((v) => !v)}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          className="text-sm text-brand hover:underline"
         >
           {showBreakdown ? '− Skrýt rozdělení úspor' : '+ Rozdělit úspory (volitelné)'}
         </button>
       </div>
 
       {showBreakdown && (
-        <div className="mt-3 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <div className="mt-3 p-4 bg-sunken rounded-xl">
+          <p className="text-xs text-ink-muted mb-3">
             Rozdělením úspor zjistíte, kolik peněz zbytečně leží bez zhodnocení. Celkové úspory se dopočítají automaticky.
           </p>
 
@@ -79,11 +79,11 @@ export default function Step4Savings() {
 
           <div className="flex justify-between text-sm pt-2 border-t dark:border-gray-600">
             <span className="text-gray-600 dark:text-gray-400">Celkem</span>
-            <span className="font-semibold text-gray-900 dark:text-white">{breakdownTotal.toLocaleString('cs-CZ')} Kč</span>
+            <span className="font-semibold text-ink">{breakdownTotal.toLocaleString('cs-CZ')} Kč</span>
           </div>
 
           {idleCashWarning && (
-            <p className="mt-3 text-xs text-amber-600 dark:text-amber-400">
+            <p className="mt-3 text-xs text-caution">
               Více než polovina úspor leží na běžném účtu ({current.toLocaleString('cs-CZ')} Kč), kde je inflace postupně znehodnocuje.
               Zvažte přesun částky, kterou nepotřebujete okamžitě, na spořicí účet nebo do investic.
             </p>

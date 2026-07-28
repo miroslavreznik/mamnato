@@ -173,8 +173,8 @@ function GlossaryRow({ item }: { item: GlossaryItem }) {
         aria-expanded={open}
         className="flex justify-between items-center gap-3 w-full text-left py-3 min-h-[44px]"
       >
-        <span className="font-medium text-gray-900 dark:text-white">{item.term}</span>
-        <span className="text-gray-400 dark:text-gray-500 flex-shrink-0" aria-hidden="true">{open ? '−' : '+'}</span>
+        <span className="font-medium text-ink">{item.term}</span>
+        <span className="text-ink-faint flex-shrink-0" aria-hidden="true">{open ? '−' : '+'}</span>
       </button>
       {open && (
         <p className="pb-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.explanation}</p>
@@ -185,15 +185,15 @@ function GlossaryRow({ item }: { item: GlossaryItem }) {
 
 export default function EducationalGlossary() {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <p className="text-sm text-ink-muted mb-4">
         Pojmy, které appka ve výsledcích používá, vysvětlené normálně a s příklady.
         Nemusíte je znát dopředu; jsou tu pro chvíli, kdy na některý narazíte.
       </p>
       <div className="space-y-6">
         {groups.map((group) => (
           <div key={group.title}>
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-ink-faint mb-1">
               {group.title}
             </h4>
             <div>

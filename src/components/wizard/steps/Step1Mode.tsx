@@ -17,11 +17,11 @@ export default function Step1Mode() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Kdo plánuje?</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-2">
+      <h2 className="text-xl font-semibold text-ink mb-2">Kdo plánuje?</h2>
+      <p className="text-ink-muted mb-2">
         Vyberte, jak žijete <span className="font-medium">teď</span>, ne co plánujete.
       </p>
-      <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+      <p className="text-sm text-ink-faint mb-6">
         Dítě, které teprve plánujete, si přidáte jako cíl v kroku <span className="font-medium">Cíle</span>.
         Tady jde o vaši dnešní situaci, aby výpočet vycházel z toho, co skutečně platíte.
       </p>
@@ -41,13 +41,13 @@ export default function Step1Mode() {
           >
             <span className="text-2xl">{m.icon}</span>
             <div className="flex-1">
-              <div className="font-medium text-gray-900 dark:text-white">
+              <div className="font-medium text-ink">
                 {m.label}
                 {/* Značka, ne jen barva: v tisku se pozadí běžně nevytiskne
                     a z reportu pak nejde poznat, co bylo vybrané. */}
-                {state.mode === m.value && <span className="ml-2 text-blue-600 dark:text-blue-400">✓ vybráno</span>}
+                {state.mode === m.value && <span className="ml-2 text-brand">✓ vybráno</span>}
               </div>
-              <div className="text-sm text-gray-500 dark:text-gray-400">{m.description}</div>
+              <div className="text-sm text-ink-muted">{m.description}</div>
             </div>
           </button>
         ))}
@@ -55,13 +55,13 @@ export default function Step1Mode() {
 
       {state.mode === 'family' && (
         <div className="mt-4">
-          <label htmlFor="children-count" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Počet dětí</label>
+          <label htmlFor="children-count" className="block text-sm font-medium text-ink-label mb-1">Počet dětí</label>
           <select
             id="children-count"
             aria-label="Počet dětí"
             value={state.numberOfChildren ?? 1}
             onChange={(e) => dispatch({ type: 'SET_NUMBER_OF_CHILDREN', count: parseInt(e.target.value) })}
-            className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"
+            className="w-full px-3 py-2.5 border border-line-strong rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"
           >
             {[1, 2, 3, 4, 5].map((n) => (
               <option key={n} value={n}>{n}</option>

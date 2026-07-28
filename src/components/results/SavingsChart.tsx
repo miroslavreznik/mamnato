@@ -29,8 +29,8 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
 
   if (disposable <= 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Vývoj úspor v čase</h3>
+      <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+        <h3 className="text-lg font-semibold text-ink mb-4">Vývoj úspor v čase</h3>
         <Alert type="warning">Při záporné disponibilní částce nelze zobrazit projekci úspor.</Alert>
       </div>
     );
@@ -47,8 +47,8 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
     }));
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Vývoj úspor v čase</h3>
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-1">Vývoj úspor v čase</h3>
       {intersectMonth !== undefined && intersectMonth > 0 && (
         <p className="text-sm text-green-600 mb-4">
           Při odkládání {czkPerMonth(monthlySaving)} na akontaci dosáhnete za {formatMonths(intersectMonth)}.

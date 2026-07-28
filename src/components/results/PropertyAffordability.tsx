@@ -55,8 +55,8 @@ export default function PropertyAffordability({
   const fixationYears = fixationYearsOf(state);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Kalkulačka nemovitosti</h3>
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-4">Kalkulačka nemovitosti</h3>
 
       <div className="space-y-3 text-sm">
         <Row label="Cena nemovitosti" value={czk(state.property.targetPrice)} />

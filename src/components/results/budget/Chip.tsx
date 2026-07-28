@@ -19,8 +19,8 @@ export function Chip({ label, color, off, onClick, note, title }: {
       aria-pressed={!off}
       className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
         off
-          ? 'border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 line-through'
-          : 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+          ? 'border-line text-ink-faint line-through'
+          : 'border-line-strong text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
       }`}
     >
       <span
@@ -28,7 +28,7 @@ export function Chip({ label, color, off, onClick, note, title }: {
         style={{ backgroundColor: off ? 'transparent' : color, border: off ? `1px solid ${color}` : 'none' }}
       />
       {label}
-      {note && <span className="text-[10px] text-amber-600 dark:text-amber-400">{note}</span>}
+      {note && <span className="text-[10px] text-caution">{note}</span>}
     </button>
   );
 }

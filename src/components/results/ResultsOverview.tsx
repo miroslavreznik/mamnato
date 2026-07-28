@@ -54,10 +54,10 @@ interface Kpi {
 }
 
 const toneClass: Record<Tone, string> = {
-  good: 'text-emerald-600 dark:text-emerald-400',
-  warn: 'text-amber-600 dark:text-amber-400',
-  bad: 'text-red-600 dark:text-red-400',
-  plain: 'text-gray-900 dark:text-white',
+  good: 'text-good',
+  warn: 'text-caution',
+  bad: 'text-danger',
+  plain: 'text-ink',
 };
 
 const meterBar: Record<Tone, string> = {
@@ -187,7 +187,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   const readinessGoals = summary.goals;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
       {/* Odpověď na otázku z názvu appky i její rozbor. Jedna karta, aby se
           totéž neříkalo dvakrát za sebou. */}
       <div className={`rounded-xl border p-5 sm:p-6 mb-5 ${verdictStyles[summary.verdict.answer].box}`}>
@@ -198,7 +198,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             {summary.verdict.qualifier && (
               <>
                 <span className={verdictStyles[summary.verdict.answer].text}>,</span>{' '}
-                <span className="text-gray-500 dark:text-gray-400 font-bold">{summary.verdict.qualifier}</span>
+                <span className="text-ink-muted font-bold">{summary.verdict.qualifier}</span>
               </>
             )}
             <span className={verdictStyles[summary.verdict.answer].text}>
@@ -222,7 +222,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
                   <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
                     {badge.label}
                   </span>
-                  <p className={`text-sm min-w-0 ${q.conditional ? 'text-gray-500 dark:text-gray-400' : 'text-gray-700 dark:text-gray-200'}`}>
+                  <p className={`text-sm min-w-0 ${q.conditional ? 'text-ink-muted' : 'text-gray-700 dark:text-gray-200'}`}>
                     <span className="font-semibold">{q.question}</span>{' '}
                     <span className="text-gray-600 dark:text-gray-400">{q.answer}</span>
                   </p>
@@ -236,8 +236,8 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
       {/* Čísla, na kterých verdikt stojí */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         {kpis.map((k) => (
-          <div key={k.label} className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-            <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+          <div key={k.label} className="p-3 rounded-lg bg-sunken">
+            <span className="text-xs text-ink-muted inline-flex items-center">
               {k.label}
               <Tooltip text={k.tooltip} />
             </span>
@@ -253,7 +253,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
                 />
               </div>
             )}
-            {k.sub && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{k.sub}</p>}
+            {k.sub && <p className="text-xs text-ink-faint mt-1">{k.sub}</p>}
           </div>
         ))}
       </div>
@@ -261,17 +261,17 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
       {/* Stav jednotlivých cílů */}
       {readinessGoals.length > 0 && (
         <div className="mb-5">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Jak jste na tom s cíli</h4>
+          <h4 className="text-sm font-semibold text-ink-label mb-2">Jak jste na tom s cíli</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {readinessGoals.map((g) => (
-              <div key={g.key} className="p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+              <div key={g.key} className="p-3 rounded-lg border border-line">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-semibold text-gray-900 dark:text-white">{g.label}</span>
+                  <span className="text-sm font-semibold text-ink">{g.label}</span>
                   <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${goalBadge[g.status].className}`}>
                     {goalBadge[g.status].label}
                   </span>
                 </div>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{g.headline}</p>
+                <p className="mt-1 text-sm text-ink-muted">{g.headline}</p>
               </div>
             ))}
           </div>
@@ -284,7 +284,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
       {/* Tipy */}
       {summary.tips.length > 0 && (
         <div className="mb-4">
-          <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Co můžete udělat:</h4>
+          <h4 className="text-sm font-semibold text-ink-label mb-2">Co můžete udělat:</h4>
           <ul className="space-y-1.5">
             {summary.tips.map((tip, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -297,7 +297,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
                       <button
                         type="button"
                         onClick={() => onOpenSection(tip.section!)}
-                        className="no-print inline-flex items-center gap-1 font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                        className="no-print inline-flex items-center gap-1 font-medium text-brand hover:underline"
                       >
                         {tip.actionLabel}
                         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>

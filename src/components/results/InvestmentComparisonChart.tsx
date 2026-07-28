@@ -44,18 +44,18 @@ export default function InvestmentComparisonChart({ state }: Props) {
       : `nájem s investováním rozdílu vychází o ${czk(gap)} líp než koupě. Platí to ale jen tehdy, když ten rozdíl opravdu investujete.`;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Koupě vs. nájem: vývoj čistého jmění</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-        Všechny tři čáry ukazují <span className="text-gray-600 dark:text-gray-300">čisté jmění</span>, tedy co byste měli, kdybyste
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-1">Koupě vs. nájem: vývoj čistého jmění</h3>
+      <p className="text-sm text-ink-muted mb-4">
+        Všechny tři čáry ukazují <span className="text-ink-body">čisté jmění</span>, tedy co byste měli, kdybyste
         všechno prodali a doplatili dluhy. Startují na stejné částce: vlastník ji dá do akontace, nájemník ji investuje.
       </p>
 
       {/* Bez tohohle vysvětlení nešlo poznat, co která čára znamená. */}
-      <ul className="mb-4 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-        <li><span className="font-medium text-gray-700 dark:text-gray-300">Koupě nemovitosti:</span> hodnota nemovitosti minus zbytek hypotéky. Když vyjde vlastnictví levněji než nájem, rozdíl se investuje.</li>
-        <li><span className="font-medium text-gray-700 dark:text-gray-300">Nájem a investování rozdílu:</span> nájemník investuje akontaci i to, oč měsíčně platí míň než vlastník.</li>
-        <li><span className="font-medium text-gray-700 dark:text-gray-300">Nájem bez investování:</span> ušetřený rozdíl se utratí, takže jmění neroste. Nejčastější varianta v praxi.</li>
+      <ul className="mb-4 space-y-1 text-xs text-ink-muted">
+        <li><span className="font-medium text-ink-label">Koupě nemovitosti:</span> hodnota nemovitosti minus zbytek hypotéky. Když vyjde vlastnictví levněji než nájem, rozdíl se investuje.</li>
+        <li><span className="font-medium text-ink-label">Nájem a investování rozdílu:</span> nájemník investuje akontaci i to, oč měsíčně platí míň než vlastník.</li>
+        <li><span className="font-medium text-ink-label">Nájem bez investování:</span> ušetřený rozdíl se utratí, takže jmění neroste. Nejčastější varianta v praxi.</li>
       </ul>
 
       <ResponsiveContainer width="100%" height={350}>
@@ -96,7 +96,7 @@ export default function InvestmentComparisonChart({ state }: Props) {
 
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-ink-muted mb-1">
             O kolik ročně zdraží nemovitost
             <HelpTip text="O kolik procent ročně poroste cena vaší nemovitosti. Dlouhodobě se ceny bydlení v Česku pohybovaly kolem inflace, tedy zhruba 3 % ročně, ale po delší období se to výrazně lišilo. Zkuste si dosadit i nižší číslo a uvidíte, jak citlivý výsledek je." />
           </label>
@@ -107,11 +107,11 @@ export default function InvestmentComparisonChart({ state }: Props) {
             ariaLabel="O kolik ročně zdraží nemovitost"
             step={0.5}
             suffix="%"
-            className="w-full px-3 py-2.5 pr-8 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-full px-3 py-2.5 pr-8 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-ink-muted mb-1">
             Výnos investic
             <HelpTip text="Kolik ročně vynese investovaná částka. Sedm procent je dlouhodobý průměr širokého akciového indexu (například S&P 500) po odečtení inflace. Jednotlivé roky jsou přitom klidně −30 % i +30 %, průměr platí až na desítkách let." />
           </label>
@@ -122,11 +122,11 @@ export default function InvestmentComparisonChart({ state }: Props) {
             ariaLabel="Výnos investic"
             step={0.5}
             suffix="%"
-            className="w-full px-3 py-2.5 pr-8 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-full px-3 py-2.5 pr-8 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
         <div>
-          <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+          <label className="block text-xs text-ink-muted mb-1">
             O kolik ročně poroste nájem
             <HelpTip text="Nájem se obvykle zvyšuje o inflaci, tedy zhruba 3 % ročně. Stejným tempem tu rostou i náklady na vlastnictví (fond oprav, pojištění, daň), aby srovnání nenadržovalo jedné straně." />
           </label>
@@ -137,22 +137,22 @@ export default function InvestmentComparisonChart({ state }: Props) {
             ariaLabel="O kolik ročně poroste nájem"
             step={0.5}
             suffix="%"
-            className="w-full px-3 py-2.5 pr-8 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-full px-3 py-2.5 pr-8 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
         </div>
       </div>
 
-      <div className="mt-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-        <p className="text-sm text-gray-700 dark:text-gray-300">
+      <div className="mt-4 p-3 rounded-lg bg-sunken">
+        <p className="text-sm text-ink-label">
           <span className="font-semibold">Za {HORIZON} let:</span> {takeaway}
         </p>
-        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-2 text-xs text-ink-muted">
           Rozdíl mezi čarami je citlivý na tři čísla nahoře. Zkuste si je změnit, pořadí se často otočí.
           Výnosy jsou dlouhodobé průměry, ne záruka.
         </p>
       </div>
 
-      <p className="mt-3 text-xs text-gray-400 dark:text-gray-500">
+      <p className="mt-3 text-xs text-ink-faint">
         Do srovnání nevstupuje jistota vlastního bydlení (nájem se dá vypovědět, hypotéka ne),
         jednorázové náklady koupě ani odpočet úroků z daní. Počítá se s tím, že nájemník rozdíl
         opravdu každý měsíc investuje a nesáhne na něj, což se v praxi povede málokomu.

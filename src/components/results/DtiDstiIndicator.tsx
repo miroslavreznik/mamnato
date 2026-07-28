@@ -34,8 +34,8 @@ export default function DtiDstiIndicator({ state }: Props) {
   const overLimit = dtiColor === 'red' || dstiColor === 'red';
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ukazatele zadluženosti (DTI a DSTI)</h3>
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-4">Ukazatele zadluženosti (DTI a DSTI)</h3>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className={`p-4 rounded-lg border ${colorClasses[dtiColor]}`}>
@@ -67,7 +67,7 @@ export default function DtiDstiIndicator({ state }: Props) {
         </div>
       )}
 
-      <p className="mt-4 text-xs text-gray-400 dark:text-gray-500">
+      <p className="mt-4 text-xs text-ink-faint">
         Závazný je dnes už jen limit LTV (výše hypotéky vůči ceně): max 80 %, u žadatelů do 36 let 90 %. Horní limity DTI a DSTI ČNB závazně nevyžaduje, banky je ale posuzují jako interní vodítko.
       </p>
     </div>

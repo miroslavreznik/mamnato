@@ -20,7 +20,7 @@ export function StepButton({ onClick, disabled, label, children }: {
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+      className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong bg-white dark:bg-gray-700 text-ink-body text-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -35,10 +35,10 @@ export function Row({ label, value, highlight, bold, tooltip }: {
   bold?: boolean;
   tooltip?: string;
 }) {
-  const valueColor = highlight === 'red' ? 'text-red-600' : highlight === 'green' ? 'text-green-600' : 'text-gray-900 dark:text-white';
+  const valueColor = highlight === 'red' ? 'text-red-600' : highlight === 'green' ? 'text-green-600' : 'text-ink';
   return (
     <div className="flex justify-between items-center gap-3">
-      <span className="text-gray-600 dark:text-gray-300 flex items-center min-w-0">
+      <span className="text-ink-body flex items-center min-w-0">
         {label}
         {tooltip && <Tooltip text={tooltip} />}
       </span>
@@ -52,5 +52,5 @@ export function Row({ label, value, highlight, bold, tooltip }: {
 
 /** Obal posuvníku se šedým pozadím, aby všechny vypadaly stejně. */
 export function SliderCard({ children }: { children: ReactNode }) {
-  return <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">{children}</div>;
+  return <div className="p-3 rounded-lg bg-sunken">{children}</div>;
 }

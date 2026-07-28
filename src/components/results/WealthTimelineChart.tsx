@@ -35,18 +35,18 @@ export default function WealthTimelineChart({ state }: Props) {
   ].filter((e): e is { month: number; label: string } => e !== null);
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-1 flex items-center">
         Vývoj jmění v čase
         <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Bez výnosů z investic a inflace, konzervativní odhad." />
       </h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+      <p className="text-sm text-ink-muted mb-4">
         Jak se vaše úspory vyvinou přes plánované události: spoření, koupi, dítě i rodičovskou. Nejde o předpověď, ale o kontrolu, jestli plán projde bez pádu pod nulu.
       </p>
 
       {hasChild && (
         <div className="flex items-center gap-2 mb-4">
-          <label className="text-sm text-gray-600 dark:text-gray-300">Dítě čekáme za</label>
+          <label className="text-sm text-ink-body">Dítě čekáme za</label>
           <NumField
             value={childOffset}
             onChange={setChildOffset}
@@ -54,9 +54,9 @@ export default function WealthTimelineChart({ state }: Props) {
             max={96}
             ariaLabel="Za kolik měsíců čekáte dítě"
             step={1}
-            className="w-16 text-right px-2 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className="w-16 text-right px-2 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
           />
-          <span className="text-sm text-gray-500 dark:text-gray-400">měsíců</span>
+          <span className="text-sm text-ink-muted">měsíců</span>
         </div>
       )}
 
@@ -110,12 +110,12 @@ export default function WealthTimelineChart({ state }: Props) {
       )}
 
       {state.goals.includes('property') && tl.purchaseMonth === null && (
-        <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+        <p className="mt-2 text-xs text-caution">
           Na akontaci v horizontu 10 let nedosáhnete, takže se koupě na časové ose nekoná.
         </p>
       )}
 
-      <p className="mt-2 text-xs text-gray-400 dark:text-gray-500">
+      <p className="mt-2 text-xs text-ink-faint">
         Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace. Spoření na cíle zůstává součástí jmění.
       </p>
     </div>

@@ -73,8 +73,8 @@ export default function Step5Goals() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vaše finanční cíle</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">
+      <h2 className="text-xl font-semibold text-ink mb-2">Vaše finanční cíle</h2>
+      <p className="text-ink-muted mb-6">
         Na co šetříte? Vyberte jeden nebo více cílů. Čím víc jich zadáte, tím líp uvidíte,
         jestli se vejdou do jednoho rozpočtu vedle sebe.
       </p>
@@ -95,15 +95,15 @@ export default function Step5Goals() {
               }`}
             >
               <svg
-                className={`w-7 h-7 ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-gray-500'}`}
+                className={`w-7 h-7 ${selected ? 'text-brand' : 'text-ink-faint'}`}
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
                 strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
               >
                 {g.icon}
               </svg>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{g.label}</span>
+              <span className="text-sm font-medium text-ink-label">{g.label}</span>
               {/* Viditelná značka i bez barvy, kvůli tisku a přístupnosti. */}
-              <span className={`text-xs ${selected ? 'text-blue-600 dark:text-blue-400' : 'text-transparent'}`}>
+              <span className={`text-xs ${selected ? 'text-brand' : 'text-transparent'}`}>
                 {selected ? '✓ vybráno' : 'nevybráno'}
               </span>
             </button>

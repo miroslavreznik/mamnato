@@ -125,7 +125,7 @@ export default function NumField({
 
   const btn =
     'flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 ' +
-    'dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-lg font-bold ' +
+    'dark:border-gray-600 bg-white dark:bg-gray-700 text-ink-body text-lg font-bold ' +
     'hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (

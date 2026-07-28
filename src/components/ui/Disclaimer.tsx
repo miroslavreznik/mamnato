@@ -18,8 +18,8 @@ export default function Disclaimer() {
   const dataDate = formatDataDate(DEFAULTS_DATE);
 
   return (
-    <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-      <p className="font-semibold text-gray-700 dark:text-gray-300 mb-1">Upozornění</p>
+    <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 border border-line rounded-lg text-xs text-ink-muted leading-relaxed">
+      <p className="font-semibold text-ink-label mb-1">Upozornění</p>
       <p>
         MámNaTo? je bezplatný informační a vzdělávací nástroj. Výsledky jsou{' '}
         <strong className="font-semibold">orientační modelové výpočty</strong> vycházející výhradně
@@ -32,7 +32,7 @@ export default function Disclaimer() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="no-print mt-2 inline-block py-2 text-blue-600 dark:text-blue-400 hover:underline"
+        className="no-print mt-2 inline-block py-2 text-brand hover:underline"
       >
         {open ? 'Skrýt podrobné podmínky' : 'Zobrazit podrobné podmínky'}
       </button>
@@ -40,7 +40,7 @@ export default function Disclaimer() {
       <div className={open ? 'block' : 'hidden print:block'}>
         <dl className="mt-1 space-y-2.5">
           <div>
-            <dt className="font-semibold text-gray-600 dark:text-gray-300">1. Povaha služby</dt>
+            <dt className="font-semibold text-ink-body">1. Povaha služby</dt>
             <dd>
               Nástroj slouží k orientačnímu propočtu domácího rozpočtu a dostupnosti bydlení.
               Výstupy jsou zjednodušené modely, nikoli individualizované doporučení ani analýza
@@ -50,7 +50,7 @@ export default function Disclaimer() {
           </div>
 
           <div>
-            <dt className="font-semibold text-gray-600 dark:text-gray-300">
+            <dt className="font-semibold text-ink-body">
               2. Není poradenství ani zprostředkování
             </dt>
             <dd>
@@ -64,7 +64,7 @@ export default function Disclaimer() {
           </div>
 
           <div>
-            <dt className="font-semibold text-gray-600 dark:text-gray-300">
+            <dt className="font-semibold text-ink-body">
               3. Přesnost a aktuálnost údajů
             </dt>
             <dd>
@@ -79,7 +79,7 @@ export default function Disclaimer() {
           </div>
 
           <div>
-            <dt className="font-semibold text-gray-600 dark:text-gray-300">4. Odpovědnost</dt>
+            <dt className="font-semibold text-ink-body">4. Odpovědnost</dt>
             <dd>
               Nástroj je poskytován zdarma a „tak, jak je", bez jakékoli záruky za správnost,
               úplnost či nepřetržitou dostupnost. Rozhodnutí učiněná na základě výsledků jsou
@@ -89,7 +89,7 @@ export default function Disclaimer() {
           </div>
 
           <div>
-            <dt className="font-semibold text-gray-600 dark:text-gray-300">5. Soukromí</dt>
+            <dt className="font-semibold text-ink-body">5. Soukromí</dt>
             <dd>
               Zadané údaje zůstávají ve vašem prohlížeči, neodesílají se na žádný server a
               provozovatel k nim nemá přístup.{' '}
@@ -100,7 +100,7 @@ export default function Disclaimer() {
           </div>
 
           <div>
-            <dt className="font-semibold text-gray-600 dark:text-gray-300">6. Doporučení</dt>
+            <dt className="font-semibold text-ink-body">6. Doporučení</dt>
             <dd>
               Před uzavřením hypotéky, investicí nebo jiným zásadním finančním rozhodnutím
               konzultujte svou situaci s licencovaným odborníkem: hypotečním specialistou banky,

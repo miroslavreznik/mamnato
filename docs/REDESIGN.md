@@ -140,25 +140,40 @@ Předchozí paleta měla dvojici s ΔE 3,2 při protanopii, tedy k nerozeznání
 Tohle je odpověď na otázku „co bude na redesignu bolet". Čísla jsou skutečná,
 změřená v repozitáři.
 
-### Neexistuje vrstva návrhových proměnných
+### ~~Neexistuje vrstva návrhových proměnných~~ (hotovo)
 
-48 komponent, 6 543 řádků, a barvy jsou v nich napsané natvrdo jako
-tailwindové třídy:
+Barvy byly napsané natvrdo jako dvojice „světlá dark:tmavá", 412 výskytů ve
+48 souborech. Změna palety znamenala projít celou appku.
 
-| Vzor | Výskytů |
-|---|---|
-| `text-gray-400` | 163 |
-| `text-gray-500` | 114 |
-| `text-gray-300` | 87 |
-| … dohromady barevných tříd | přes 1 000 |
+Teď je každá barva pojmenovaná podle role v `src/index.css` a tmavý režim se
+řeší tam, ne v každé třídě zvlášť:
 
-Rádiusy jsou tři a míchají se bez pravidla: `rounded-lg` 80×, `rounded-xl` 40×,
-`rounded-2xl` 5×.
+| Role | Třída | Bylo |
+|---|---|---|
+| pozadí stránky | `bg-page` | `bg-gray-50` / `gray-900` |
+| pozadí karty | `bg-card` | `bg-white dark:bg-gray-800` |
+| výplň uvnitř karty | `bg-sunken` | `bg-gray-50 dark:bg-gray-700/50` |
+| nadpisy a částky | `text-ink` | `text-gray-900 dark:text-white` |
+| popisky polí | `text-ink-label` | `text-gray-700 dark:text-gray-300` |
+| běžný text | `text-ink-body` | `text-gray-600 dark:text-gray-300` |
+| doplňky | `text-ink-muted` | `text-gray-500 dark:text-gray-400` |
+| nejtišší popisky | `text-ink-faint` | `text-gray-400 dark:text-gray-500` |
+| obrys karty | `border-line` | `border-gray-200 dark:border-gray-700` |
+| obrys pole | `border-line-strong` | `border-gray-300 dark:border-gray-600` |
+| značka | `text-brand` | `text-blue-600 dark:text-blue-400` |
+| stavy | `text-good`, `text-caution`, `text-danger` | emerald / amber / red |
 
-**Důsledek:** změna palety nebo tvarosloví dnes znamená projít 48 souborů.
-Tailwind 4 na to má `@theme` v CSS (`src/index.css`); sémantické proměnné
-(`--color-surface`, `--color-ink-muted`, `--radius-card`) by z toho udělaly
-jeden soubor.
+**Nový vzhled se dosadí do `:root` a `.dark` v `src/index.css`.** Komponenty
+se nemusí měnit a `dark:` variantu k barvám už nepotřebují.
+
+Hodnoty zůstaly stejné jako předtím, takže se zavedením proměnných nezměnil
+ani jeden pixel; ověřeno pixelovým porovnáním dvanácti snímků ve světlém,
+tmavém i mobilním zobrazení.
+
+Co zbývá: **tónované podklady stavů** (`bg-blue-50 dark:bg-blue-900/30` a
+podobné, asi 66 výskytů) a **hover stavy**. Jsou nepravidelné a většina z nich
+zmizí sama, až vzniknou primitiva (`Card`, `Callout`). Rádiusy jsou pořád tři
+bez pravidla: `rounded-lg` 80×, `rounded-xl` 40×, `rounded-2xl` 5×.
 
 ### Chrome karty je zkopírovaná devatenáctkrát
 
@@ -236,22 +251,36 @@ Výšky po záložkách na mobilu (390 px), pro představu o objemu obsahu:
 Souhrn 2 862 px, Rozpočet 2 507 px, Bydlení 6 558 px, Ostatní cíle 2 417 px,
 Slovníček 2 341 px.
 
-## 5. Doporučené pořadí prací
+## 5. Pořadí prací
 
-1. **Kotvy pro testy.** `data-testid` na nosné prvky a e2e přepsané na ně,
-   ještě než se sáhne na vzhled. Bez toho se nedá poznat, jestli redesign
-   něco rozbil.
-2. **Vrstva proměnných.** Sémantické tokeny v `@theme` se současnými
-   hodnotami. Vizuálně se nic nezmění, ale vznikne místo, kam nový design
-   dosadí.
-3. **Primitiva.** `Card`, `Section`, `Badge`, `Button`, `Field`. Nahradit
-   devatenáct kopií chrome karty.
+1. ~~**Vrstva proměnných.**~~ Hotovo, viz výše.
+2. **Primitiva.** `Card`, `Section`, `Badge`, `Button`, `Field`. Nahradit
+   devatenáct kopií chrome karty. Zároveň se tím uklidí tónované podklady
+   stavů a hover, které tokeny zatím nepokryly.
+3. **Kotvy pro testy.** `data-testid` na nosné prvky a e2e přepsané na ně.
+   Až po primitivech, protože pak stačí kotvu přidat na jednom místě.
 4. **Překreslení.** Nejdřív průvodce (jednodušší, čistě vizuální), pak
    výsledky.
 5. **Kontrola.** Validátor palety na nové barvy, průchod personami,
-   screenshoty ve světlém i tmavém režimu na 390 a 1280 px, tisk do PDF.
+   pixelové porovnání (níže), tisk do PDF.
 
-Kroky 1 až 3 se dají udělat dřív, než je návrh hotový, a nic nepředjímají.
+Kroky 1 až 3 nic nepředjímají a dají se udělat, než je návrh hotový.
+
+### Pixelové porovnání
+
+`e2e/visual.e2e.ts` pořídí otisk osmi obrazovek ve světlém, tmavém i mobilním
+zobrazení. Běží jen s `VISUAL=1`, jinak se přeskočí, a otisky se nekomitují.
+
+```
+# před zásahem
+VISUAL=1 npx playwright test --project=chromium visual --update-snapshots
+# po zásahu
+VISUAL=1 npx playwright test --project=chromium visual
+```
+
+Práh je nula rozdílných pixelů, což jde: dva běhy nezměněného kódu se shodly,
+jakmile se vypnuly animace. Plné znění příkazu i s obejitím proxy je v
+CLAUDE.md.
 
 ## 6. Věci, které redesign může rovnou vyřešit
 

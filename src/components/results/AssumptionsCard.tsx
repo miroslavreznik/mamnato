@@ -17,14 +17,14 @@ export default function AssumptionsCard({ state }: { state: WizardState }) {
     <dl className="space-y-2.5">
       {rows.map((row) => (
         <div key={row.label} className="grid sm:grid-cols-[minmax(0,14rem)_1fr] gap-x-4 gap-y-0.5">
-          <dt className="text-sm text-gray-500 dark:text-gray-400">{row.label}</dt>
+          <dt className="text-sm text-ink-muted">{row.label}</dt>
           <dd>
-            <span className="text-sm font-medium text-gray-900 dark:text-white">{row.value}</span>
+            <span className="text-sm font-medium text-ink">{row.value}</span>
             {row.source === 'estimate' && (
-              <span className="ml-2 text-xs text-amber-600 dark:text-amber-400">odhad</span>
+              <span className="ml-2 text-xs text-caution">odhad</span>
             )}
             {row.note && (
-              <span className="block text-xs text-gray-500 dark:text-gray-400">{row.note}</span>
+              <span className="block text-xs text-ink-muted">{row.note}</span>
             )}
           </dd>
         </div>
@@ -33,11 +33,11 @@ export default function AssumptionsCard({ state }: { state: WizardState }) {
   );
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
       <details className="no-print">
         <summary className="cursor-pointer list-none">
-          <span className="text-lg font-semibold text-gray-900 dark:text-white">Z čeho přehled počítá</span>
-          <span className="block text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-lg font-semibold text-ink">Z čeho přehled počítá</span>
+          <span className="block text-sm text-ink-muted">
             Všechny předpoklady na jednom místě. Co jste zadali vy a co jsme odhadli.
           </span>
         </summary>

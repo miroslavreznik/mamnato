@@ -151,9 +151,9 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
   // Nula volných peněz není dobrý stav, ale ani schodek: je to hrana, na které
   // rozhodí rozpočet první nečekaný výdaj. Zelená pro ni byla falešně uklidňující.
   const freeColor = (v: number) =>
-    v > 0 ? 'text-emerald-600 dark:text-emerald-400'
-      : v < 0 ? 'text-red-600 dark:text-red-400'
-        : 'text-amber-600 dark:text-amber-400';
+    v > 0 ? 'text-good'
+      : v < 0 ? 'text-danger'
+        : 'text-caution';
 
   // Jednotlivé zbytné položky nabízíme jen tomu, kdo si rozpis opravdu vyplnil.
   // Bez něj by tam byly prázdné kolonky, které nic neříkají.
@@ -175,11 +175,11 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
 
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">Co kdyby: kam jde váš příjem</h3>
-      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+      <h3 className="text-lg font-semibold text-ink mb-1">Co kdyby: kam jde váš příjem</h3>
+      <p className="text-sm text-ink-muted mb-4">
         Celý měsíční příjem ({fmtKc(income)}) rozdělený na výdaje, cíle a volnou rezervu.{' '}
-        <span className="text-gray-600 dark:text-gray-300">Klepnutím na položku ji vypnete</span> a hned uvidíte, jestli by vám pak na zbytek vyšlo. Zkuste třeba vypnout dovolenou nebo dítě.
+        <span className="text-ink-body">Klepnutím na položku ji vypnete</span> a hned uvidíte, jestli by vám pak na zbytek vyšlo. Zkuste třeba vypnout dovolenou nebo dítě.
       </p>
 
       {/* Výsledek pokusu: změnila se odpověď „Mám na to?" */}
@@ -189,7 +189,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
             ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
             : whatIf.worsened
               ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-              : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-700'
+              : 'bg-sunken border-line'
         }`}>
           <p className="text-gray-800 dark:text-gray-100">
             <span className="font-semibold">Bez vypnutých položek: {whatIf.now.headline}
@@ -210,8 +210,8 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
       {/* Stat tiles: volná rezerva */}
       {/* Na mobilu dlaždice pod sebe: vedle sebe se částka i s „/měs" nevejde. */}
       <div className={`grid gap-3 mb-5 ${flowAfter ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-        <div className="p-3 rounded-lg bg-gray-50 dark:bg-gray-700/50">
-          <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+        <div className="p-3 rounded-lg bg-sunken">
+          <span className="text-xs text-ink-muted inline-flex items-center">
             Volná rezerva nyní
             <HelpTip text="Co z příjmu zbyde po zaplacení výdajů a spoření na cíle (příjem − výdaje − spoření). Volné peníze na nečekané situace." />
           </span>
@@ -221,7 +221,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
         </div>
         {flowAfter && (
           <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
-            <span className="text-xs text-gray-500 dark:text-gray-400 inline-flex items-center">
+            <span className="text-xs text-ink-muted inline-flex items-center">
               Volná rezerva po koupi
               <HelpTip text="Totéž po koupi nemovitosti: místo nájmu a energií platíte splátku hypotéky a náklady vlastnictví. Záporné číslo = rozpočet po koupi nevyjde." />
             </span>
@@ -259,7 +259,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
       {/* Přepínače ve skupinách, ať je jasné, co je výdaj a co cíl */}
       <div className="mt-4 space-y-3">
         <div>
-          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Výdaje</p>
+          <p className="text-xs font-medium text-ink-muted mb-1.5">Výdaje</p>
           <div className="flex flex-wrap gap-2">
             {orderedKeys.map((key) => (
               <Chip
@@ -278,7 +278,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
         {/* Jednotlivé zbytné položky jen tomu, kdo si je opravdu rozepsal */}
         {discretionaryItems.length > 0 && !excluded.has('other') && (
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">
+            <p className="text-xs font-medium text-ink-muted mb-1.5">
               Z toho zbytné podrobně
             </p>
             <div className="flex flex-wrap gap-2">
@@ -298,7 +298,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
 
         {goalSegments.length > 0 && (
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5">Cíle</p>
+            <p className="text-xs font-medium text-ink-muted mb-1.5">Cíle</p>
             <div className="flex flex-wrap gap-2">
               {goalSegments.map((seg) => (
                 <Chip
@@ -315,14 +315,14 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <span className="inline-flex items-center gap-1.5 text-xs text-ink-muted">
             <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: colors.categorical.surplus }} />
             Volná rezerva
           </span>
           {(excluded.size > 0 || excludedGoals.size > 0) && (
             <button
               onClick={() => { setExcluded(new Set()); setExcludedGoals(new Set()); }}
-              className="py-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              className="py-2 text-xs text-brand hover:underline"
             >
               Vrátit vše zpět
             </button>
@@ -334,7 +334,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
       <div className="mt-3">
         <button
           onClick={() => setShowTable((v) => !v)}
-          className="inline-block py-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+          className="inline-block py-2 text-xs text-brand hover:underline"
         >
         {showTable ? 'Skrýt tabulku' : 'Zobrazit čísla v tabulce'}
         </button>
@@ -342,14 +342,14 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
           <div className="mt-2 overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+                <tr className="border-b border-line text-xs text-ink-muted">
                   <th className="text-left py-1.5 font-normal">Položka</th>
                   <th className="text-right py-1.5 font-normal">Nyní</th>
                   {flowAfter && <th className="text-right py-1.5 font-normal">Po koupi</th>}
                 </tr>
               </thead>
-              <tbody className="text-gray-700 dark:text-gray-300">
-                <tr className="border-b border-gray-100 dark:border-gray-700/50 font-medium text-gray-900 dark:text-white">
+              <tbody className="text-ink-label">
+                <tr className="border-b border-gray-100 dark:border-gray-700/50 font-medium text-ink">
                   <td className="py-1.5">Příjem</td>
                   <td className="text-right py-1.5">{fmtKc(income)}</td>
                   {flowAfter && <td className="text-right py-1.5">{fmtKc(flowAfter.income)}</td>}
@@ -359,7 +359,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
                   const after = flowAfter ? (excluded.has(key) ? 0 : flowAfter.expenses.find((c) => c.key === key)?.amount ?? 0) : null;
                   return (
                     <tr key={key} className={`border-b border-gray-100 dark:border-gray-700/50 ${excluded.has(key) ? 'opacity-50 line-through' : ''}`}>
-                      <td className="py-1.5">−&nbsp;{labelMap[key]}{!necessaryMap[key] && <span className="ml-1 text-[10px] text-amber-600 dark:text-amber-400 no-underline">zbytné</span>}</td>
+                      <td className="py-1.5">−&nbsp;{labelMap[key]}{!necessaryMap[key] && <span className="ml-1 text-[10px] text-caution no-underline">zbytné</span>}</td>
                       <td className="text-right py-1.5">{fmtKc(now)}</td>
                       {after !== null && <td className="text-right py-1.5">{fmtKc(after)}</td>}
                     </tr>
@@ -373,7 +373,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
                   </tr>
                 ))}
                 <tr className="font-semibold">
-                  <td className="py-1.5 text-gray-900 dark:text-white">= Volná rezerva</td>
+                  <td className="py-1.5 text-ink">= Volná rezerva</td>
                   <td className={`text-right py-1.5 ${freeColor(flowNow.free)}`}>{fmtKc(flowNow.free)}</td>
                   {flowAfter && <td className={`text-right py-1.5 ${freeColor(flowAfter.free)}`}>{fmtKc(flowAfter.free)}</td>}
                 </tr>

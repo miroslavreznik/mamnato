@@ -61,10 +61,10 @@ export default function Step6Property() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Vlastní bydlení</h2>
-      <p className="text-gray-500 dark:text-gray-400 mb-6">Zadejte parametry nemovitosti, kterou chcete koupit, a hypotéky na ni.</p>
+      <h2 className="text-xl font-semibold text-ink mb-2">Vlastní bydlení</h2>
+      <p className="text-ink-muted mb-6">Zadejte parametry nemovitosti, kterou chcete koupit, a hypotéky na ni.</p>
 
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Nemovitost a úspory</h3>
+      <h3 className="text-sm font-semibold text-ink-label mb-3">Nemovitost a úspory</h3>
       <NumberInput
         label="Cílová cena nemovitosti"
         value={price}
@@ -77,26 +77,26 @@ export default function Step6Property() {
 
       {/* Akontace dle věku (ČNB: žadatelé do 36 let → LTV až 90 %) */}
       {youngest !== undefined ? (
-        <div className="mb-6 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mb-6 text-xs text-ink-muted">
           {youngest < 36
             ? `Nejmladšímu žadateli je ${youngest} let, díky vyššímu LTV (do 36 let) stačí akontace ${reqDpPct} % místo 20 %.`
             : `Nejmladšímu žadateli je ${youngest} let, povinná akontace je ${reqDpPct} % (LTV 80 %).`}
         </div>
       ) : (
-        <div className="mb-6 text-xs text-gray-500 dark:text-gray-400">
+        <div className="mb-6 text-xs text-ink-muted">
           Tip: zadejte věk v kroku <span className="font-medium">Příjmy</span>. Žadatelům do 36 let stačí díky vyššímu LTV akontace jen 10 %.
         </div>
       )}
 
       {/* Down payment allocation section */}
       {totalSavings > 0 && (
-        <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Jak rozdělíte své úspory?</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        <div className="mb-6 p-4 bg-sunken rounded-xl">
+          <h3 className="text-sm font-semibold text-ink-label mb-1">Jak rozdělíte své úspory?</h3>
+          <p className="text-xs text-ink-muted mb-3">
             Máte celkem {totalSavings.toLocaleString('cs-CZ')} Kč
           </p>
 
-          <label className="block text-sm text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm text-ink-label mb-2">
             Akontace: <span className="font-semibold">{dpValue.toLocaleString('cs-CZ')} Kč</span>
             {' '}
             <span className={`text-xs ${Number(dpPercent) >= reqDpPct ? 'text-green-600' : 'text-amber-600'}`}>
@@ -121,11 +121,11 @@ export default function Step6Property() {
 
           <div className="flex justify-between text-sm">
             <span className="text-gray-600 dark:text-gray-400">Zbývající rezerva:</span>
-            <span className="font-semibold text-gray-900 dark:text-white">{reserve.toLocaleString('cs-CZ')} Kč</span>
+            <span className="font-semibold text-ink">{reserve.toLocaleString('cs-CZ')} Kč</span>
           </div>
 
           {lowReserve && (
-            <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+            <p className="mt-2 text-xs text-caution">
               Rezerva je nízká. Doporučujeme mít stranou aspoň {recommendedReserve.toLocaleString('cs-CZ')} Kč (3 měsíce výdajů) pro nečekané situace.
             </p>
           )}
@@ -142,7 +142,7 @@ export default function Step6Property() {
 
       <EstimateNote
         overridden={ownershipEstimate.overridden}
-        className="-mt-2 mb-6 text-xs text-gray-500 dark:text-gray-400"
+        className="-mt-2 mb-6 text-xs text-ink-muted"
         explanation={
           <>
             Odhad: {ownershipPct()} % z ceny {czk(projectCost)} za rok, tedy{' '}
@@ -162,7 +162,7 @@ export default function Step6Property() {
 
       <RenovationSection />
 
-      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">Parametry hypotéky</h3>
+      <h3 className="text-sm font-semibold text-ink-label mb-3 mt-6 pt-6 border-t border-line">Parametry hypotéky</h3>
       <NumberInput
         label="Úroková sazba hypotéky"
         value={Math.round(rate * 1000) / 10}
@@ -176,7 +176,7 @@ export default function Step6Property() {
 
       <EstimateNote
         overridden={rateEstimate.overridden}
-        className="-mt-2 mb-4 text-xs text-gray-500 dark:text-gray-400"
+        className="-mt-2 mb-4 text-xs text-ink-muted"
         explanation="Sazba se odvozuje od zvolené fixace. Jakmile ji přepíšete, zůstane vaše hodnota."
         suggestion={
           <>
@@ -189,33 +189,33 @@ export default function Step6Property() {
       />
 
       <div className="mb-4">
-        <label htmlFor="loan-term" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Délka hypotéky</label>
+        <label htmlFor="loan-term" className="block text-sm font-medium text-ink-label mb-1">Délka hypotéky</label>
         <select
           id="loan-term"
           aria-label="Délka hypotéky"
           value={term}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'loanTermYears', value: parseInt(e.target.value) })}
-          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {[15, 20, 25, 30].map((y) => (
             <option key={y} value={y}>{y} let</option>
           ))}
         </select>
         {termTooLongForAge && (
-          <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+          <p className="mt-1.5 text-xs text-caution">
             Při délce {term} let by hypotéka byla doplacena ve věku {ageAtPayoff} let. Banky obvykle chtějí splacení do {DEFAULTS.mortgageMaxAge} let, počítejte s kratší dobou splácení (a vyšší splátkou), nebo mladším spolužadatelem.
           </p>
         )}
       </div>
 
       <div className="mb-4">
-        <label htmlFor="fixation-years" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Doba fixace úrokové sazby</label>
+        <label htmlFor="fixation-years" className="block text-sm font-medium text-ink-label mb-1">Doba fixace úrokové sazby</label>
         <select
           id="fixation-years"
           aria-label="Doba fixace úrokové sazby"
           value={fixation}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'fixationYears', value: parseInt(e.target.value) })}
-          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           {/* U každé fixace je rovnou vidět, na jakou sazbu vede. Bez toho
               vypadá volba jako kosmetika, přitom mění splátku. */}
@@ -231,7 +231,7 @@ export default function Step6Property() {
           vystaví tomu, jaké budou sazby potom.
         </p>
         {!rateEstimate.overridden && fixationDiff !== 0 && (
-          <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="mt-1.5 text-xs text-ink-muted">
             Oproti nejběžnější pětileté fixaci je to o {pct(Math.abs(fixationDiff))} p. b.{' '}
             {fixationDiff > 0 ? 'dráž' : 'levněji'}, splátka je {fixationDiff > 0 ? 'vyšší' : 'nižší'} zhruba
             o {Math.abs(Math.round(payment - paymentAtFiveYearFix)).toLocaleString('cs-CZ')} Kč měsíčně.
@@ -241,12 +241,12 @@ export default function Step6Property() {
 
       <div className="mt-4 space-y-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
         <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-300">Doporučená akontace ({reqDpPct} %):</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{reqDp.toLocaleString('cs-CZ')} Kč</span>
+          <span className="text-ink-body">Doporučená akontace ({reqDpPct} %):</span>
+          <span className="font-semibold text-ink">{reqDp.toLocaleString('cs-CZ')} Kč</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-gray-600 dark:text-gray-300">Odhadovaná měsíční splátka:</span>
-          <span className="font-semibold text-gray-900 dark:text-white">{Math.round(payment).toLocaleString('cs-CZ')} Kč</span>
+          <span className="text-ink-body">Odhadovaná měsíční splátka:</span>
+          <span className="font-semibold text-ink">{Math.round(payment).toLocaleString('cs-CZ')} Kč</span>
         </div>
       </div>
 
