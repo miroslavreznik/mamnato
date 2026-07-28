@@ -172,6 +172,18 @@ Vývoj probíhá na větvi `claude/czech-calculator-questions-8vxvvb`, odtud se 
 fast-forward merge do `main` a pushne se obojí. Commit messages jsou česky a popisují
 **proč**, ne jen co.
 
+## Závislosti
+
+`npm audit` hlásí pět zranitelností v `brace-expansion` pod ESLintem. Opravit
+je jde jen přes `npm audit fix --force`, což je breaking change na ESLintu.
+Nechává se to být schválně: je to ReDoS v porovnávání cest, ESLint se nikdy
+nepouští nad nedůvěryhodným vstupem a do prohlížeče se nic z toho nedostane.
+Kdyby počet vzrostl nebo přibylo něco mimo tenhle řetězec, je to nový nález,
+ne tenhle.
+
+Revidováno 2026-07, tehdy opraveno `npm audit fix` (Vite 8.0.3 → 8.1.5,
+postcss 8.5.8 → 8.5.24, js-yaml).
+
 ## Když si nejsi jistý
 
 `docs/` obsahuje poznámky k záměrům, které ještě nejsou hotové (například `PODPORA.md`
