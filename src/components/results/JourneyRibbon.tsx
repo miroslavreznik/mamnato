@@ -48,6 +48,13 @@ interface Props {
   onMoveChild?: (month: number) => void;
   /** Mez posunu dítěte v měsících. */
   childRange?: { min: number; max: number };
+  /**
+   * Původní scénář jako přerušovaný obrys pod živou stuhou.
+   *
+   * Bez něj nejde poznat, jestli si uživatel posuvníkem pomohl. Sám o sobě
+   * vypadá každý scénář rozumně; teprve proti čemu se rozdíl ukáže.
+   */
+  ghost?: Journey;
 }
 
 export default function JourneyRibbon({
@@ -55,6 +62,7 @@ export default function JourneyRibbon({
   animate = true,
   onMoveChild,
   childRange = { min: 0, max: 96 },
+  ghost,
 }: Props) {
   const uid = useId().replace(/:/g, '');
   const { points, tension, events, horizonMonths } = data;
@@ -115,7 +123,9 @@ export default function JourneyRibbon({
 
     // Osa Y se vztahuje k rozsahu dat, ale nula je vždy uvnitř: bez ní by
     // propad pod nulu vypadal jako mírný pokles.
-    const values = points.map((p) => p.cash);
+    const values = ghost
+      ? [...points.map((p) => p.cash), ...ghost.points.map((p) => p.cash)]
+      : points.map((p) => p.cash);
     const hi = Math.max(...values, 0);
     const lo = Math.min(...values, 0);
     const span = hi - lo || 1;
@@ -156,8 +166,17 @@ export default function JourneyRibbon({
       if (to > from) stops.push({ offset: to, tension: r.tension });
     });
 
-    return { xs, ys, path, fill, stops, lo };
-  }, [points, tension, horizonMonths]);
+    // Duch se kreslí ve stejné ose jako živá stuha. Vlastní měřítko by rozdíl
+    // schovalo: obě křivky by vyplnily plochu stejně a vypadaly by shodně.
+    const ghostPath = ghost
+      ? line<{ month: number; cash: number }>()
+        .x((p) => xs(p.month))
+        .y((p) => ys(p.cash))
+        .curve(curveMonotoneX)(ghost.points) ?? ''
+      : null;
+
+    return { xs, ys, path, fill, stops, lo, ghostPath };
+  }, [points, tension, horizonMonths, ghost]);
 
   // Roky na ose. U desetiletého horizontu po dvou letech, ať se popisky nelepí.
   const yearStep = horizonMonths > 60 ? 24 : 12;
@@ -209,6 +228,19 @@ export default function JourneyRibbon({
       ))}
 
       <path d={geom.fill} fill={`url(#under-${uid})`} />
+
+      {/* Duch původního scénáře. Kreslí se pod živou stuhou a bez barvy stavu:
+          je to referenční tvar, ne druhé sdělení. */}
+      {geom.ghostPath && (
+        <path
+          d={geom.ghostPath}
+          fill="none"
+          stroke="var(--line-strong)"
+          strokeWidth="6"
+          strokeLinecap="round"
+          strokeDasharray="8 8"
+        />
+      )}
 
       {/* Nula jen tehdy, když se pod ni opravdu klesá. Jinak je to čára,
           která nic neříká, a jen přidává hluk. */}

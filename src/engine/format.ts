@@ -76,3 +76,14 @@ export function formatMonths(months: number, short = false): string {
   const yPart = `${y} ${yearWord(y)}`;
   return m > 0 ? `${yPart} a ${mPart}` : yPart;
 }
+
+/**
+ * Ukončí větu tečkou, pokud už tečkou nekončí.
+ *
+ * České zkratky („měs.", „mil.", „např.") končí tečkou a ta zároveň slouží
+ * jako tečka větná; druhá se nepíše. Bez tohohle vznikaly věty typu
+ * „naspoříte za 8 let a 9 měs..", což vypadá jako překlep.
+ */
+export function endSentence(text: string): string {
+  return /[.!?…]$/.test(text.trimEnd()) ? text.trimEnd() : `${text.trimEnd()}.`;
+}

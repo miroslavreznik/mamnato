@@ -20,6 +20,8 @@ import EducationalGlossary from './EducationalGlossary';
 import ResultsSection from './ResultsSection';
 import ResultsHeader, { ModeChip } from './ResultsHeader';
 import AppBar from '../ui/AppBar';
+import WhatIfTab from './WhatIfTab';
+import { WhatIfProvider } from './WhatIfProvider';
 import ResultsTabs, { type TabDef } from './ResultsTabs';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
@@ -61,6 +63,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     { id: 'rozpocet', label: 'Rozpočet' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
     ...(hasGoalPlanners ? [{ id: 'cile', label: 'Ostatní cíle' }] : []),
+    { id: 'cokdyby', label: 'Co kdyby' },
     { id: 'slovnicek', label: 'Slovníček' },
   ];
   const [activeTab, setActiveTab] = useState('souhrn');
@@ -278,6 +281,19 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             )}
           </ResultsSection>
         )}
+
+        {/* Co kdyby: pískoviště na posuvníky. Vypnuté položky platí pro celý
+            přehled a bydlí v tomhle komponentu; posuvníky jen tady. */}
+        <ResultsSection
+          id="cokdyby"
+          title="Co kdyby"
+          subtitle="Zkuste s plánem pohnout a uvidíte, jestli to pomůže"
+          active={isVisible('cokdyby')}
+        >
+          <WhatIfProvider state={activeState} allocations={activeAllocations}>
+            <WhatIfTab />
+          </WhatIfProvider>
+        </ResultsSection>
 
         {/* Slovníček */}
         <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Co která zkratka a číslo v přehledu znamená" active={isVisible('slovnicek')}>

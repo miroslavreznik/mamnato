@@ -112,7 +112,7 @@ async function walk(page: Page, tag: string, width: number, height: number) {
   await expect(page.getByTestId('results')).toBeVisible()
   await shoot(page, `${tag}-souhrn.png`, width)
 
-  for (const tab of ['Rozpočet', 'Bydlení', 'Ostatní cíle', 'Slovníček']) {
+  for (const tab of ['Rozpočet', 'Bydlení', 'Ostatní cíle', 'Co kdyby', 'Slovníček']) {
     await reset()
     await page.getByRole('tab', { name: tab, exact: true }).click()
     await shoot(page, `${tag}-${tab}.png`, width)

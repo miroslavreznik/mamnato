@@ -6,7 +6,7 @@ import { evaluateScenario } from './scenarios';
 import { dsti, downPaymentGap } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { monthlyDisposable } from './cashflow';
-import { formatMonths } from './format';
+import { endSentence, formatMonths } from './format';
 
 /**
  * Režim „co kdyby": co udělá vypnutí výdaje nebo cíle s odpovědí „Mám na to?".
@@ -49,9 +49,29 @@ export function evaluateWhatIf(
 ): WhatIfResult | null {
   if (excluded.size === 0 && excludedGoals.size === 0) return null;
 
-  const baseline = evaluateOverall(state, allocations);
   const adjusted = withExcludedGoals(withExcludedExpenses(state, excluded), excludedGoals);
-  const now = evaluateOverall(adjusted, allocationsWithoutGoals(allocations, excludedGoals));
+  return compareScenarios(
+    state, allocations,
+    adjusted, allocationsWithoutGoals(allocations, excludedGoals)
+  );
+}
+
+/**
+ * Porovnání dvou hotových scénářů.
+ *
+ * Vypnuté položky nejsou jediný způsob, jak se dá plánem hýbat: záložka
+ * „Co kdyby" nabízí i posuvníky ceny, sazby a délky rodičovské, a ty mění
+ * samotný stav, ne jen výdaje. Porovnání proto pracuje se dvěma stavy, ne
+ * se seznamem toho, co se vyplo.
+ */
+export function compareScenarios(
+  baselineState: WizardState,
+  baselineAllocations: GoalAllocations,
+  currentState: WizardState,
+  currentAllocations: GoalAllocations
+): WhatIfResult {
+  const baseline = evaluateOverall(baselineState, baselineAllocations);
+  const now = evaluateOverall(currentState, currentAllocations);
 
   const improved = RANK[now.verdict.answer] > RANK[baseline.verdict.answer];
   const worsened = RANK[now.verdict.answer] < RANK[baseline.verdict.answer];
@@ -61,7 +81,7 @@ export function evaluateWhatIf(
     now: now.verdict,
     improved,
     worsened,
-    hint: buildHint(state, adjusted, allocations, improved),
+    hint: buildHint(baselineState, currentState, baselineAllocations, improved),
   };
 }
 
@@ -89,7 +109,7 @@ function buildHint(
     const before = monthsToSaveAtAllocation(state, allocations.downPayment);
     const after = monthsToSaveAtAllocation(adjusted, allocations.downPayment + freed);
     return after < before
-      ? `Verdikt se zatím nezměnil, ale chybějící akontaci díky tomu naspoříte za ${formatMonths(after, true)} místo ${formatMonths(before, true)}.`
+      ? endSentence(`Verdikt se zatím nezměnil, ale chybějící akontaci díky tomu naspoříte za ${formatMonths(after, true)} místo ${formatMonths(before, true)}`)
       : 'Zbývá naspořit akontaci. Na celkovou odpověď to zatím nestačí.';
   }
 

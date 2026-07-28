@@ -52,7 +52,10 @@ function Action({ label, onClick, icon, tone = 'plain', title, alwaysLabel = fal
       }`}
     >
       <Icon path={icon} />
-      <span className={alwaysLabel ? '' : 'hidden xl:inline'}>{label}</span>
+      {/* Popisek se ukazuje až od 2xl. S pěti záložkami se vešel i na 1280 px,
+          se šesti už ne a „Slovníček" se ořízl. Akce jsou doplňkové, popisek
+          nese `aria-label` i `title`, takže se ztratí jen text, ne význam. */}
+      <span className={alwaysLabel ? '' : 'hidden 2xl:inline'}>{label}</span>
     </button>
   );
 }
@@ -76,9 +79,13 @@ export default function ResultsHeader({ shareCopied, onShare, onPrint, onEdit, o
   return (
     <>
       {shareCopied ? (
-        <span className="inline-flex items-center gap-1.5 min-h-[44px] px-2 text-[13px] font-semibold text-good">
+        // Potvrzení má popisek vidět vždycky, na rozdíl od ostatních akcí.
+        // Zatržítko samo o sobě není zpětná vazba: uživatel právě klikl na
+        // sdílení a potřebuje vědět, že se něco stalo, ne hádat z ikony.
+        // Je to na chvíli, takže krátké přeskládání lišty za to stojí.
+        <span className="inline-flex items-center gap-1.5 min-h-[44px] px-2 text-[13px] font-semibold text-good whitespace-nowrap">
           <Icon path="M20 6 9 17l-5-5" />
-          <span className="hidden xl:inline">Odkaz zkopírován</span>
+          Odkaz zkopírován
         </span>
       ) : (
         <Action

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatMonths, yearWord, monthWord, formatNumber, czk, czkPerMonth, czkMonthly, percentCompact } from '../../src/engine/format';
+import { formatMonths, yearWord, monthWord, formatNumber, czk, czkPerMonth, czkMonthly, percentCompact, endSentence } from '../../src/engine/format';
 
 describe('skloňování', () => {
   it('roky podle českého vzoru', () => {
@@ -63,5 +63,20 @@ describe('formátování částek', () => {
     expect(percentCompact(0.01)).toBe('1 %');
     expect(percentCompact(0.048)).toBe('4,8 %');
     expect(percentCompact(0.2)).toBe('20 %');
+  });
+});
+
+describe('endSentence', () => {
+  it('nepřidá druhou tečku za zkratku', () => {
+    expect(endSentence('naspoříte za 8 let a 9 měs.')).toBe('naspoříte za 8 let a 9 měs.');
+  });
+
+  it('tečku doplní, když věta končí slovem', () => {
+    expect(endSentence('Rozpočet vychází')).toBe('Rozpočet vychází.');
+  });
+
+  it('nechá být výpustku i otazník', () => {
+    expect(endSentence('Zatím na to nemáte…')).toBe('Zatím na to nemáte…');
+    expect(endSentence('Mám na to?')).toBe('Mám na to?');
   });
 });

@@ -299,13 +299,37 @@ Slovníček 2 341 px.
    a záložka „Co kdyby" zůstávají na kroky 7 a 8, protože bez stuhy a bez
    obsahu by to byly prázdné sliby.
 7. ~~**Záložka Cesta.**~~ Hotovo, viz níže.
-8. **Záložka Co kdyby.** `whatIfState` + `baselineSnapshot`, duch původního
-   scénáře, delta karty.
+8. ~~**Záložka Co kdyby.**~~ Hotovo, viz níže.
 9. **Průvodce.** Průběžný náhled „zatím to vypadá takto".
 10. **Kontrola.** Validátor palety, průchod personami, pixelové porovnání,
     tisk do PDF.
 
 Kroky 1 až 3 nic nepředjímaly a byly hotové, ještě než návrh existoval.
+
+### Záložka Co kdyby (krok 8)
+
+**Rozdělení stavu je schválně nesymetrické.** Vypnuté položky (výdaje a cíle)
+drží `ResultsDashboard` a platí pro celý přehled: je to odpověď na otázku
+„co když tenhle výdaj mít nebudu" a má měnit i verdikt nahoře. Posuvníky
+(cena, sazba, délka rodičovské) drží `store/whatIfStore.ts` a platí jen uvnitř
+té záložky. Je to pískoviště; kdyby posuvníky měnily i Cestu, přestal by být
+poznat rozdíl mezi „takhle to mám" a „takhle bych to chtěl". Hlídá to test.
+
+**Duch původního scénáře** se kreslí ve stejné ose jako živá stuha. Vlastní
+měřítko by rozdíl schovalo: obě křivky by vyplnily plochu stejně a vypadaly
+by shodně. Osa se proto počítá z obou dohromady.
+
+**`evaluateWhatIf` se zobecnilo na `compareScenarios`.** Dosud uměl porovnat
+jen „před a po vypnutí položek", jenže posuvníky mění samotný stav. Porovnání
+proto pracuje se dvěma hotovými stavy, ne se seznamem toho, co se vyplo.
+
+**Posuvníky jsou tři a jsou to ty, které jde změnit rozhodnutím.** Příjem mezi
+nimi není: „co kdybych bral o deset tisíc víc" je hezká představa, ale plán
+se podle ní stavět nedá.
+
+**`format.endSentence()`** přibylo kvůli sazbě: české zkratky končí tečkou
+a ta slouží zároveň jako tečka větná. Bez toho vznikaly věty typu
+„naspoříte za 8 let a 9 měs..".
 
 ### Záložka Cesta (krok 7)
 
