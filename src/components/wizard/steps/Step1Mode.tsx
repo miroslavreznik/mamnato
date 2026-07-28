@@ -34,6 +34,7 @@ export default function Step1Mode() {
             type="button"
             onClick={() => dispatch({ type: 'SET_MODE', mode: m.value })}
             aria-pressed={state.mode === m.value}
+            data-testid={`mode-${m.value}`}
             className={`flex items-center gap-4 p-4 border-2 rounded-xl text-left transition-colors min-h-[44px] ${
               state.mode === m.value
                 ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'

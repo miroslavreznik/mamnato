@@ -277,17 +277,38 @@ Slovníček 2 341 px.
 ## 5. Pořadí prací
 
 1. ~~**Vrstva proměnných.**~~ Hotovo, viz výše.
-2. **Primitiva.** `Card`, `Section`, `Badge`, `Button`, `Field`. Nahradit
-   devatenáct kopií chrome karty. Zároveň se tím uklidí tónované podklady
-   stavů a hover, které tokeny zatím nepokryly.
-3. **Kotvy pro testy.** `data-testid` na nosné prvky a e2e přepsané na ně.
-   Až po primitivech, protože pak stačí kotvu přidat na jednom místě.
+2. ~~**Primitiva.**~~ Hotovo: `Card`, `Callout` a `fieldClass`. `Badge`
+   a `Button` se schválně nedělaly, viz níže.
+3. ~~**Kotvy pro testy.**~~ Hotovo, viz níže.
 4. **Překreslení.** Nejdřív průvodce (jednodušší, čistě vizuální), pak
    výsledky.
 5. **Kontrola.** Validátor palety na nové barvy, průchod personami,
    pixelové porovnání (níže), tisk do PDF.
 
-Kroky 1 až 3 nic nepředjímají a dají se udělat, než je návrh hotový.
+Kroky 1 až 3 nic nepředjímaly a jsou hotové, aniž by návrh existoval.
+Zbytek čeká na něj.
+
+### Proč nevzniklo `Badge` ani `Button`
+
+Sčítání ukázalo, že se neopakují. Nálepky stavů jsou tři a každá jiná,
+plnotučné tlačítko je v appce třikrát, pokaždé s jiným rádiusem i odsazením.
+Komponenta pro tři různá použití by byla jen další místo, kde se to hledá.
+Až redesign řekne, jak má tlačítko vypadat, vznikne z jednoho tvaru, ne
+z průniku tří.
+
+### Kotvy pro testy
+
+Nosné prvky mají `data-testid`, který nezávisí na popisku: `wizard-next`,
+`wizard-back`, `goal-<klíč>`, `mode-<klíč>`. Záložky výsledků kotví `id`,
+které stejně drží `aria-labelledby`.
+
+E2E z nich má pomocníky (`next`, `finish`, `pickGoal`, `openTab`) a přešlo
+na ně 71 volání. Tlačítko „Další" se na posledním kroku jmenuje „Zobrazit
+výsledky" a testy ho hledaly podle názvu na jednadvaceti místech; přejmenovat
+ho by dřív shodilo skoro celou sadu.
+
+Texty, které jsou samy předmětem testu (verdikt, varování, částky), zůstávají
+hledané podle znění. Tam je znění to, co se ověřuje, a kotva by test vyprázdnila.
 
 ### Pixelové porovnání
 

@@ -88,6 +88,7 @@ export default function Step5Goals() {
               type="button"
               onClick={() => toggleGoal(g.value)}
               aria-pressed={selected}
+              data-testid={`goal-${g.value}`}
               className={`flex flex-col items-center gap-2 p-4 border-2 rounded-xl transition-colors min-h-[44px] ${
                 selected
                   ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
