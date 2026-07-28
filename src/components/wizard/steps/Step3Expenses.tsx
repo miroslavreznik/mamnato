@@ -31,7 +31,7 @@ function ItemInput({ label, value, onChange }: { label: string; value: number; o
           ariaLabel={label}
           className={fieldClass('w-24 text-right pr-7 pl-2 py-1 text-sm')}
         />
-        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">Kč</span>
+        <span className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-faint text-xs pointer-events-none">Kč</span>
       </div>
     </div>
   );
@@ -105,12 +105,12 @@ export default function Step3Expenses() {
             return (
               <div key={g.key}>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
+                  <span className="text-sm font-semibold text-ink-label">
                     <span className="mr-1.5">{g.icon}</span>{g.label}
                   </span>
                   <span className="text-xs text-ink-muted">{fmt(groupTotal.amount)} Kč</span>
                 </div>
-                <div className="pl-1 divide-y divide-gray-200/70 dark:divide-gray-600/50">
+                <div className="pl-1 divide-y divide-line">
                   {g.items.map((it) => {
                     const key = itemKey(g.key, it.key);
                     return (
@@ -127,7 +127,7 @@ export default function Step3Expenses() {
             );
           })}
 
-          <div className="flex justify-between pt-2 border-t dark:border-gray-600 text-sm">
+          <div className="flex justify-between pt-2 border-t text-sm">
             <span className="text-ink-body font-medium">Zbytné výdaje celkem</span>
             <span className="font-semibold text-ink">{fmt(state.expenses.other)} Kč/měs.</span>
           </div>
@@ -149,7 +149,7 @@ export default function Step3Expenses() {
         />
       </div>
 
-      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm text-gray-600 space-y-1">
+      <div className="mt-4 p-3 bg-sunken-label rounded-lg text-sm text-ink-body space-y-1">
         <div className="flex justify-between">
           <span>Celkem výdaje:</span>
           <span className="font-semibold text-ink">{fmt(expenses)} Kč/měs.</span>

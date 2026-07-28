@@ -42,7 +42,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             <h3 className="text-lg font-semibold text-ink">Náklady na dítě</h3>
             <button
               onClick={() => setShowInfo(!showInfo)}
-              className="text-blue-500 hover:text-blue-700 text-sm"
+              className="text-brand hover:text-brand text-sm"
               aria-label="Informace"
             >ⓘ</button>
           </div>
@@ -50,13 +50,13 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
       </div>
 
       {showInfo && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+        <div className="mb-4 p-3 bg-tint-brand rounded-lg text-sm text-brand">
           Průměrné náklady na jedno dítě v ČR dle ČSÚ. Skutečné náklady se liší dle regionu, životního stylu a počtu dětí. Nezahrnují jednorázové výdaje (kočárek, autosedačka, nábytek).
         </div>
       )}
 
       {isFamily && (
-        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-sm text-amber-700 dark:text-amber-400">
+        <div className="mb-4 p-3 bg-tint-caution rounded-lg text-sm text-caution">
           Vaše aktuální výdaje na děti ({state.expenses.children.toLocaleString('cs-CZ')} Kč/měs.) jsou již zahrnuty ve výpočtu cashflow. Níže zobrazené náklady představují odhad pro plánované/budoucí dítě.
         </div>
       )}
@@ -73,7 +73,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
           {numberOfChildren > 1 && (
-            <p className="mt-1 text-xs text-gray-400">U druhého a dalšího dítěte mohou být náklady nižší díky zděděnému vybavení.</p>
+            <p className="mt-1 text-xs text-ink-faint">U druhého a dalšího dítěte mohou být náklady nižší díky zděděnému vybavení.</p>
           )}
         </div>
         <div>
@@ -93,7 +93,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
               type="checkbox"
               checked={includeUni}
               onChange={(e) => setIncludeUni(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300"
+              className="w-4 h-4 rounded border-line-strong"
             />
             <span className="text-sm text-ink-label">Zahrnout VŠ (19–26 let)</span>
           </label>
@@ -113,14 +113,14 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             </thead>
             <tbody>
               {CHILD_COSTS_CZ.filter((r) => includeUni || r.to <= 18).map((range) => (
-                <tr key={range.label} className="border-b border-gray-100 dark:border-gray-700/50">
+                <tr key={range.label} className="border-b border-line">
                   <td className="py-2 text-ink">{range.label}</td>
                   <td className="text-right py-2">
                     <NumField
                       value={customCosts[range.label]}
                       onChange={(v) => setCustomCosts({ ...customCosts, [range.label]: v })}
                       ariaLabel={`Náklady ${range.label}`}
-                      className="w-24 text-right px-2 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
+                      className="w-24 text-right px-2 py-2 border border-line  rounded text-sm"
                     />
                   </td>
                 </tr>
@@ -132,9 +132,9 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+        <div className="p-3 bg-tint-brand rounded-lg">
           <span className="text-sm text-ink-muted">Průměrné měsíční náklady</span>
-          <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+          <p className="text-lg font-bold text-brand">
             {result.monthlyAverage.toLocaleString('cs-CZ')} Kč/měs.
           </p>
         </div>

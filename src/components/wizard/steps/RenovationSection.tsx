@@ -34,7 +34,7 @@ export default function RenovationSection() {
             <button
               type="button"
               onClick={() => dispatch({ type: 'SET_RENOVATION', value: undefined })}
-              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0"
+              className="text-xs text-ink-faint hover:text-ink-body shrink-0"
             >
               Zrušit
             </button>
@@ -67,7 +67,7 @@ export default function RenovationSection() {
               type="checkbox"
               checked={renovation.payingRentMeanwhile}
               onChange={(e) => dispatch({ type: 'SET_RENOVATION', value: { ...renovation, payingRentMeanwhile: e.target.checked } })}
-              className="mt-1 w-5 h-5 accent-blue-600 shrink-0"
+              className="mt-1 w-5 h-5 accent-brand shrink-0"
             />
             <span>
               Během rekonstrukce budu dál platit současné bydlení
@@ -79,7 +79,7 @@ export default function RenovationSection() {
           </label>
 
           {renovationPhase && (
-            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-400 space-y-1">
+            <div className="mt-3 pt-3 border-t border-line text-xs text-ink-body space-y-1">
               <p>
                 <span className="font-medium text-ink-label">Během rekonstrukce zaplatíte bance míň.</span>{' '}
                 Hypotéka se čerpá postupně a z nevyčerpané části se neplatí nic, takže místo plné splátky{' '}

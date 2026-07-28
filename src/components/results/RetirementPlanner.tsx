@@ -97,7 +97,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             suffix="Kč"
             className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
           />
-          <p className="mt-1 text-xs text-gray-400">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
+          <p className="mt-1 text-xs text-ink-faint">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-ink-label mb-1">
@@ -115,14 +115,14 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
       </div>
 
       {/* 4% rule / renta target */}
-      <div className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
+      <div className="mb-4 p-4 bg-tint-good rounded-lg">
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-ink-label mb-1 flex items-center">
               Požadovaná měsíční renta
               <button
                 onClick={() => setShowRentInfo(!showRentInfo)}
-                className="ml-1 text-emerald-600 hover:text-emerald-800 text-sm"
+                className="ml-1 text-good hover:text-good text-sm"
                 aria-label="Informace o 4% pravidle"
               >ⓘ</button>
             </label>
@@ -137,20 +137,20 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           </div>
           <div className="flex-1 sm:text-right">
             <p className="text-sm text-ink-muted">Potřebná hodnota portfolia</p>
-            <p className="text-xl sm:text-2xl font-bold whitespace-nowrap text-emerald-700 dark:text-emerald-400">
+            <p className="text-xl sm:text-2xl font-bold whitespace-nowrap text-good">
               {targetPortfolio === Infinity ? '–' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}
             </p>
           </div>
         </div>
         {showRentInfo && (
-          <div className="mt-3 text-sm text-emerald-800 dark:text-emerald-300 space-y-2">
+          <div className="mt-3 text-sm text-good space-y-2">
             <p className="font-semibold">Co je „pravidlo 4 %"?</p>
             <p>
               Podle pravidla 4 % můžete každý rok bezpečně vybrat zhruba 4 % hodnoty svého portfolia, aniž byste ho vyčerpali.
               Pro rentu {monthlyRent.toLocaleString('cs-CZ')} Kč měsíčně (tj. {(monthlyRent * 12).toLocaleString('cs-CZ')} Kč ročně)
               tak potřebujete portfolio o hodnotě přibližně <strong>{targetPortfolio === Infinity ? '–' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}</strong> (renta × 300).
             </p>
-            <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80">
+            <p className="text-xs text-good">
               Jde o zjednodušený orientační výpočet. Skutečná bezpečná míra výběru závisí na délce renty, složení portfolia a vývoji trhů.
             </p>
           </div>
@@ -161,22 +161,22 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
       <div className="flex items-center gap-3 mb-4">
         <label className="flex items-center gap-2 cursor-pointer">
           <div
-            className={`relative w-10 h-6 rounded-full transition-colors ${showInflation ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'}`}
+            className={`relative w-10 h-6 rounded-full transition-colors ${showInflation ? 'bg-ink' : 'bg-shell'}`}
             onClick={() => setShowInflation(!showInflation)}
           >
-            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${showInflation ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${showInflation ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
           </div>
           <span className="text-sm font-medium text-ink-label">Započítat inflaci</span>
         </label>
         <button
           onClick={() => setShowInflationInfo(!showInflationInfo)}
-          className="text-blue-500 hover:text-blue-700 text-sm"
+          className="text-brand hover:text-brand text-sm"
           aria-label="Informace o inflaci"
         >ⓘ</button>
       </div>
 
       {showInflationInfo && (
-        <div className="mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300 space-y-2">
+        <div className="mb-4 p-4 bg-tint-brand rounded-lg text-sm text-brand space-y-2">
           <p className="font-semibold">Co znamená „započítat inflaci"?</p>
           <p>
             Inflace postupně snižuje kupní sílu peněz. 1 000 000 Kč dnes bude mít za 30 let reálnou hodnotu
@@ -276,7 +276,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                   ? yearOfReachingTarget(p.data, targetPortfolio)
                   : null;
                 return (
-                  <tr key={p.key} className="border-b border-gray-100 dark:border-gray-700/50">
+                  <tr key={p.key} className="border-b border-line">
                     <td className="py-2 text-ink">
                       <span className="inline-block w-3 h-3 rounded-full mr-2" style={{ backgroundColor: p.color }} />
                       {p.label}
@@ -286,19 +286,19 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                         value={rates[p.key]}
                         onChange={(v) => setRates({ ...rates, [p.key]: v })}
                         ariaLabel={`Výnos ${p.label}`}
-                        className="w-20 text-right px-2 py-2 border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded text-sm"
+                        className="w-20 text-right px-2 py-2 border border-line  rounded text-sm"
                       />
                       <span className="ml-1">%</span>
                     </td>
                     <td className="text-right py-2 font-semibold text-ink">
                       {finalValue.toLocaleString('cs-CZ')} Kč
                     </td>
-                    <td className={`text-right py-2 font-semibold ${compoundInterest >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <td className={`text-right py-2 font-semibold ${compoundInterest >= 0 ? 'text-good' : 'text-danger'}`}>
                       {compoundInterest >= 0 ? '+' : ''}{compoundInterest.toLocaleString('cs-CZ')} Kč
                     </td>
                     <td className="text-right py-2">
                       {reachedYear !== null ? (
-                        <span className="text-green-600 font-medium">za {reachedYear} {reachedYear === 1 ? 'rok' : reachedYear < 5 ? 'roky' : 'let'}</span>
+                        <span className="text-good font-medium">za {reachedYear} {reachedYear === 1 ? 'rok' : reachedYear < 5 ? 'roky' : 'let'}</span>
                       ) : (
                         <span className="text-ink-faint">nedosaženo</span>
                       )}
@@ -309,7 +309,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-line-strong">
-                <td colSpan={2} className="py-2 text-gray-600 dark:text-gray-400 text-sm">
+                <td colSpan={2} className="py-2 text-ink-body text-sm">
                   Celkové vklady: {totalContributions.toLocaleString('cs-CZ')} Kč
                 </td>
                 <td colSpan={3} />

@@ -23,20 +23,20 @@ interface Props {
 // s cestou ven, červená jasné ne.
 const verdictStyles: Record<VerdictAnswer, { box: string; text: string }> = {
   yes: {
-    box: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800',
-    text: 'text-emerald-700 dark:text-emerald-400',
+    box: 'bg-tint-good border-line',
+    text: 'text-good',
   },
   yes_but: {
-    box: 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800',
-    text: 'text-amber-700 dark:text-amber-400',
+    box: 'bg-tint-caution border-line',
+    text: 'text-caution',
   },
   no_but: {
-    box: 'bg-orange-50 dark:bg-orange-900/20 border-orange-200 dark:border-orange-800',
-    text: 'text-orange-700 dark:text-orange-400',
+    box: 'bg-tint-caution border-line',
+    text: 'text-caution',
   },
   no: {
-    box: 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800',
-    text: 'text-red-700 dark:text-red-400',
+    box: 'bg-tint-danger border-line',
+    text: 'text-danger',
   },
 };
 
@@ -62,10 +62,10 @@ const toneClass: Record<Tone, string> = {
 };
 
 const meterBar: Record<Tone, string> = {
-  good: 'bg-emerald-500',
-  warn: 'bg-amber-500',
-  bad: 'bg-red-500',
-  plain: 'bg-blue-500',
+  good: 'bg-good',
+  warn: 'bg-caution',
+  bad: 'bg-danger',
+  plain: 'bg-ink',
 };
 
 // Stav cíle slovem, ne jen barvou. Samotná tečka nešla bez legendy pochopit
@@ -73,15 +73,15 @@ const meterBar: Record<Tone, string> = {
 const goalBadge: Record<GoalStatus, { label: string; className: string }> = {
   good: {
     label: 'V pořádku',
-    className: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
+    className: 'bg-tint-good text-good',
   },
   caution: {
     label: 'Pozor',
-    className: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300',
+    className: 'bg-tint-caution text-caution',
   },
   warning: {
     label: 'Nevychází',
-    className: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
+    className: 'bg-tint-danger text-danger',
   },
 };
 
@@ -90,7 +90,7 @@ const goalBadge: Record<GoalStatus, { label: string; className: string }> = {
 // by si appka odporovala, i když každá odpověď mluví o něčem jiném.
 const conditionalBadge = {
   label: 'Podmíněně',
-  className: 'bg-gray-200 text-gray-600 dark:bg-gray-600/60 dark:text-gray-300',
+  className: 'bg-shell text-ink-body-label',
 };
 
 export default function ResultsOverview({ state, allocations, onOpenSection }: Props) {
@@ -206,7 +206,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
               {summary.verdict.answer === 'yes' || summary.verdict.answer === 'no' ? '.' : '…'}
             </span>
           </p>
-          <p className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-200 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-2 text-sm font-medium text-ink-label max-w-xl mx-auto leading-relaxed">
             {summary.verdict.reason}
           </p>
         </div>
@@ -215,7 +215,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             dosáhnete a jestli po něm zbyde na zbytek. Jedna nálepka je slučuje
             a uživatel pak nepozná, která z nich ho brzdí. */}
         {summary.verdict.questions.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-black/10 dark:border-white/10 space-y-2">
+          <div className="mt-4 pt-4 border-t border-line space-y-2">
             {summary.verdict.questions.map((q) => {
               const badge = q.conditional ? conditionalBadge : goalBadge[q.status];
               return (
@@ -223,9 +223,9 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
                   <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
                     {badge.label}
                   </span>
-                  <p className={`text-sm min-w-0 ${q.conditional ? 'text-ink-muted' : 'text-gray-700 dark:text-gray-200'}`}>
+                  <p className={`text-sm min-w-0 ${q.conditional ? 'text-ink-muted' : 'text-ink-label'}`}>
                     <span className="font-semibold">{q.question}</span>{' '}
-                    <span className="text-gray-600 dark:text-gray-400">{q.answer}</span>
+                    <span className="text-ink-body">{q.answer}</span>
                   </p>
                 </div>
               );
@@ -244,10 +244,10 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             </span>
             <p className={`text-xl font-bold whitespace-nowrap ${toneClass[k.tone]}`}>
               {k.value}
-              {k.unit && <span className="text-sm font-normal text-gray-400"> {k.unit}</span>}
+              {k.unit && <span className="text-sm font-normal text-ink-faint"> {k.unit}</span>}
             </p>
             {k.meter !== undefined && (
-              <div className="mt-1.5 h-1.5 rounded-full bg-gray-200 dark:bg-gray-600 overflow-hidden">
+              <div className="mt-1.5 h-1.5 rounded-full bg-shell overflow-hidden">
                 <div
                   className={`h-full rounded-full ${meterBar[k.tone]}`}
                   style={{ width: `${Math.max(4, Math.min(100, k.meter * 100))}%` }}
@@ -288,8 +288,8 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           <h4 className="text-sm font-semibold text-ink-label mb-2">Co můžete udělat:</h4>
           <ul className="space-y-1.5">
             {summary.tips.map((tip, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
-                <span className="text-blue-500 mt-0.5 flex-shrink-0">&#x2022;</span>
+              <li key={i} className="flex items-start gap-2 text-sm text-ink-body">
+                <span className="text-brand mt-0.5 flex-shrink-0">&#x2022;</span>
                 <span>
                   {tip.text}
                   {tip.section && tip.actionLabel && onOpenSection && (

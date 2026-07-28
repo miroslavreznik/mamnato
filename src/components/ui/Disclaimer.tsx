@@ -18,7 +18,7 @@ export default function Disclaimer() {
   const dataDate = formatDataDate(DEFAULTS_DATE);
 
   return (
-    <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 border border-line rounded-lg text-xs text-ink-muted leading-relaxed">
+    <div className="mt-8 p-4 bg-sunken border border-line rounded-lg text-xs text-ink-muted leading-relaxed">
       <p className="font-semibold text-ink-label mb-1">Upozornění</p>
       <p>
         MámNaTo? je bezplatný informační a vzdělávací nástroj. Výsledky jsou{' '}

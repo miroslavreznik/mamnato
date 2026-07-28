@@ -47,11 +47,11 @@ export default function AssumptionsCard({ state }: { state: WizardState }) {
 
       {/* V tisku se předpoklady ukazují vždy, bez nich se report nedá ověřit. */}
       <div className="hidden print:block">
-        <h3 className="text-lg font-semibold text-gray-900 mb-3">Z čeho přehled počítá</h3>
+        <h3 className="text-lg font-semibold text-ink mb-3">Z čeho přehled počítá</h3>
         {list}
       </div>
 
-      <p className="mt-4 text-xs text-gray-400">
+      <p className="mt-4 text-xs text-ink-faint">
         Položky označené jako odhad si appka dopočítala z ostatních hodnot, nezadávali jste je.
         Výchozí ekonomická data jsou z {DEFAULTS_DATE}. Jde o orientační model, ne o nabídku banky.
       </p>

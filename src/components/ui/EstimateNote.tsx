@@ -40,7 +40,7 @@ export default function EstimateNote({
       <button
         type="button"
         onClick={onRevert}
-        className="underline underline-offset-2 hover:text-gray-700 dark:hover:text-gray-200"
+        className="underline underline-offset-2 hover:text-ink-label"
       >
         {revertLabel}
       </button>

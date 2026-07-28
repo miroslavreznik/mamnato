@@ -48,7 +48,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
     return (
       <Card title="Rodičovská: co udělá s rozpočtem" subtitle="Když jeden z vás zůstane doma s dítětem, na čas klesne příjem (mateřská a rodičovská bývají nižší než mzda). Spočítejte si, jestli to rozpočet, a hlavně splátka hypotéky, během volna zvládne.">        <button
           onClick={enable}
-          className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white min-h-[44px]"
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-ink hover:opacity-90 text-page min-h-[44px]"
         >
           Spočítat dopad rodičovské
         </button>
@@ -70,7 +70,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           {opts?.tooltip && <Tooltip text={opts.tooltip} />}
         </span>
         <p className={`text-xl font-bold ${bad ? 'text-danger' : 'text-ink'}`}>
-          {value >= 0 ? '' : '−'}{fmt(Math.abs(value))} <span className="text-sm font-normal text-gray-400">Kč/měs.</span>
+          {value >= 0 ? '' : '−'}{fmt(Math.abs(value))} <span className="text-sm font-normal text-ink-faint">Kč/měs.</span>
         </p>
       </div>
     );
@@ -80,7 +80,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
     <Card>
       <div className="flex items-start justify-between gap-2 mb-1">
         <h3 className="text-lg font-semibold text-ink">Rodičovská: co udělá s rozpočtem</h3>
-        <button onClick={() => onChange(undefined)} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0">
+        <button onClick={() => onChange(undefined)} className="text-xs text-ink-faint hover:text-ink-body shrink-0">
           Skrýt
         </button>
       </div>
@@ -100,14 +100,14 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
                 aria-pressed={impact.parent === p}
                 className={`flex-1 px-2 py-2 text-sm rounded-lg border ${
                   impact.parent === p
-                    ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                    ? 'border-ink bg-tint-brand text-brand'
                     : 'border-line-strong text-ink-body'
                 }`}
               >
                 {/* „✓" je jediné, co v tisku spolehlivě přežije; podle barvy
                     pozadí nešlo z reportu poznat, kdo vlastně zůstane doma. */}
                 {impact.parent === p ? '✓ ' : ''}Osoba {p}
-                <span className="block text-[10px] text-gray-400">{fmt(parentSalary(state, p))} Kč</span>
+                <span className="block text-[10px] text-ink-faint">{fmt(parentSalary(state, p))} Kč</span>
               </button>
             ))}
           </div>
@@ -137,7 +137,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           />
           <EstimateNote
             overridden={benefitOverridden}
-            className="mt-1 text-[10px] text-gray-400"
+            className="mt-1 text-[10px] text-ink-faint"
             explanation="Průměr za celé volno. Skutečný průběh je rozepsaný níže."
             suggestion="Zadáno ručně, platí po celé volno."
             revertLabel="Vrátit odhad"
@@ -157,14 +157,14 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           <div className="space-y-1">
             {impact.phases.map((phase) => (
               <div key={phase.key} className="flex justify-between text-sm">
-                <span className="text-gray-600 dark:text-gray-400">
-                  {phase.label} <span className="text-gray-400">({Math.round(phase.months)} měs.)</span>
+                <span className="text-ink-body">
+                  {phase.label} <span className="text-ink-faint">({Math.round(phase.months)} měs.)</span>
                 </span>
                 <span className="font-semibold text-ink">{fmt(phase.monthlyBenefit)} Kč/měs.</span>
               </div>
             ))}
           </div>
-          <p className="mt-2 text-[11px] text-gray-400">
+          <p className="mt-2 text-[11px] text-ink-faint">
             Mateřská = 70 % z redukovaného denního základu vaší mzdy. Rodičovský příspěvek = 350 000 Kč
             dělených zbývajícími {Math.round(impact.phases[1]?.months ?? 0)} měsíci.
           </p>
@@ -213,7 +213,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         </Callout>
       )}
 
-      <p className="text-sm text-gray-600 dark:text-gray-400">
+      <p className="text-sm text-ink-body">
         Za celé volno ({impact.durationMonths} měs.) klesne příjem dohromady o{' '}
         <span className="font-semibold text-ink">{fmt(impact.savingsLostTotal)} Kč</span>
         {', o tolik méně naspoříte (nebo tolik budete potřebovat v rezervě).'}

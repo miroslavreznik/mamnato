@@ -186,18 +186,18 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
           border
           className="mb-4"
         >
-          <p className="text-gray-800 dark:text-gray-100">
+          <p className="text-ink">
             <span className="font-semibold">Bez vypnutých položek: {whatIf.now.headline}
               {whatIf.now.qualifier ? `, ${whatIf.now.qualifier}` : ''}.</span>
           </p>
           {whatIf.improved && (
-            <p className="mt-0.5 text-emerald-800 dark:text-emerald-300">
+            <p className="mt-0.5 text-good">
               Pomohlo to. Původně: {whatIf.baseline.headline.toLowerCase()}
               {whatIf.baseline.qualifier ? `, ${whatIf.baseline.qualifier}` : ''}.
             </p>
           )}
           {!whatIf.improved && (
-            <p className="mt-0.5 text-gray-600 dark:text-gray-400">{whatIf.hint}</p>
+            <p className="mt-0.5 text-ink-body">{whatIf.hint}</p>
           )}
         </Callout>
       )}
@@ -211,17 +211,17 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
             <HelpTip text="Co z příjmu zbyde po zaplacení výdajů a spoření na cíle (příjem − výdaje − spoření). Volné peníze na nečekané situace." />
           </span>
           <p className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${freeColor(flowNow.free)}`}>
-            {flowNow.free >= 0 ? '' : '−'}{fmtKc(Math.abs(flowNow.free))}<span className="text-sm font-normal text-gray-400">/měs</span>
+            {flowNow.free >= 0 ? '' : '−'}{fmtKc(Math.abs(flowNow.free))}<span className="text-sm font-normal text-ink-faint">/měs</span>
           </p>
         </div>
         {flowAfter && (
-          <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
+          <div className="p-3 rounded-lg bg-tint-brand">
             <span className="text-xs text-ink-muted inline-flex items-center">
               Volná rezerva po koupi
               <HelpTip text="Totéž po koupi nemovitosti: místo nájmu a energií platíte splátku hypotéky a náklady vlastnictví. Záporné číslo = rozpočet po koupi nevyjde." />
             </span>
             <p className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${freeColor(flowAfter.free)}`}>
-              {flowAfter.free >= 0 ? '' : '−'}{fmtKc(Math.abs(flowAfter.free))}<span className="text-sm font-normal text-gray-400">/měs</span>
+              {flowAfter.free >= 0 ? '' : '−'}{fmtKc(Math.abs(flowAfter.free))}<span className="text-sm font-normal text-ink-faint">/měs</span>
             </p>
           </div>
         )}
@@ -344,7 +344,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
                 </tr>
               </thead>
               <tbody className="text-ink-label">
-                <tr className="border-b border-gray-100 dark:border-gray-700/50 font-medium text-ink">
+                <tr className="border-b border-line font-medium text-ink">
                   <td className="py-1.5">Příjem</td>
                   <td className="text-right py-1.5">{fmtKc(income)}</td>
                   {flowAfter && <td className="text-right py-1.5">{fmtKc(flowAfter.income)}</td>}
@@ -353,7 +353,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
                   const now = excluded.has(key) ? 0 : flowNow.expenses.find((c) => c.key === key)?.amount ?? 0;
                   const after = flowAfter ? (excluded.has(key) ? 0 : flowAfter.expenses.find((c) => c.key === key)?.amount ?? 0) : null;
                   return (
-                    <tr key={key} className={`border-b border-gray-100 dark:border-gray-700/50 ${excluded.has(key) ? 'opacity-50 line-through' : ''}`}>
+                    <tr key={key} className={`border-b border-line ${excluded.has(key) ? 'opacity-50 line-through' : ''}`}>
                       <td className="py-1.5">−&nbsp;{labelMap[key]}{!necessaryMap[key] && <span className="ml-1 text-[10px] text-caution no-underline">zbytné</span>}</td>
                       <td className="text-right py-1.5">{fmtKc(now)}</td>
                       {after !== null && <td className="text-right py-1.5">{fmtKc(after)}</td>}
@@ -361,8 +361,8 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
                   );
                 })}
                 {goalSegments.map((s) => (
-                  <tr key={s.key} className="border-b border-gray-100 dark:border-gray-700/50">
-                    <td className="py-1.5">−&nbsp;{s.label} <span className="text-[10px] text-gray-400">(spoření)</span></td>
+                  <tr key={s.key} className="border-b border-line">
+                    <td className="py-1.5">−&nbsp;{s.label} <span className="text-[10px] text-ink-faint">(spoření)</span></td>
                     <td className="text-right py-1.5">{fmtKc(s.amount)}</td>
                     {flowAfter && <td className="text-right py-1.5">{fmtKc(s.amountAfter)}</td>}
                   </tr>

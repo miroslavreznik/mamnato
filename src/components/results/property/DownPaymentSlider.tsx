@@ -79,7 +79,7 @@ export default function DownPaymentSlider({ state, onChange }: {
     <SliderCard>
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-sm font-medium text-ink-label">Kolik dát z úspor na akontaci</span>
-        <span className={`text-xs ${dpOfPrice >= dpPct ? 'text-green-600' : 'text-amber-600'}`}>
+        <span className={`text-xs ${dpOfPrice >= dpPct ? 'text-good' : 'text-caution'}`}>
           {dpOfPrice.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} % z ceny
         </span>
       </div>
@@ -96,7 +96,7 @@ export default function DownPaymentSlider({ state, onChange }: {
           value={dpValue}
           onChange={(e) => onChange(Number(e.target.value))}
           aria-label="Akontace z úspor"
-          className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-blue-600"
+          className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-brand"
           style={{
             background: `linear-gradient(to right, rgba(16,185,129,0.45) 0%, rgba(16,185,129,0.45) ${safePct}%, rgba(245,158,11,0.5) ${safePct}%, rgba(245,158,11,0.5) 100%)`,
           }}
@@ -110,14 +110,14 @@ export default function DownPaymentSlider({ state, onChange }: {
         </StepButton>
       </div>
 
-      <div className="flex justify-between text-xs text-gray-400 mt-1">
+      <div className="flex justify-between text-xs text-ink-faint mt-1">
         <span>0 Kč</span>
         <span>{czk(totalSavings)}</span>
       </div>
 
       <div className="flex flex-wrap justify-between gap-x-2 text-sm mt-1.5">
-        <span className="text-gray-600 dark:text-gray-400">Zbývající rezerva po akontaci:</span>
-        <span className={`font-semibold ${reserve <= 0 ? 'text-red-600' : reserveMonths < MIN_RESERVE_MONTHS ? 'text-amber-600' : 'text-ink'}`}>
+        <span className="text-ink-body">Zbývající rezerva po akontaci:</span>
+        <span className={`font-semibold ${reserve <= 0 ? 'text-danger' : reserveMonths < MIN_RESERVE_MONTHS ? 'text-caution' : 'text-ink'}`}>
           {czk(reserve)}{reserve > 0 && isFinite(reserveMonths) ? ` (~${reserveMonths.toFixed(1)} měs. výdajů)` : ''}
         </span>
       </div>
@@ -134,7 +134,7 @@ export default function DownPaymentSlider({ state, onChange }: {
         </p>
       )}
 
-      <div className="mt-2.5 pt-2.5 border-t border-gray-200 dark:border-gray-600 space-y-1.5 text-xs text-ink-muted">
+      <div className="mt-2.5 pt-2.5 border-t border-line space-y-1.5 text-xs text-ink-muted">
         <p>
           <span className="font-medium text-ink-label">Každých +{fmt(COMPARISON_STEP)} Kč akontace:</span>{' '}
           splátka −{czkPerMonth(paymentDelta)} a na úrocích za {term} let ušetříte ~{czk(interestDelta)},

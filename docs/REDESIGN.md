@@ -4,7 +4,20 @@ Tenhle dokument je pro toho, kdo bude nový vzhled implementovat. Popisuje, co
 se v appce **může** změnit, co se změnit **nesmí**, a co v současném kódu
 redesignu půjde proti srsti.
 
-Stav ke commitu `ad984fc`.
+Návrh dorazil: směr **„Cesta"** (handoff `design_handoff_cesta_redesign`).
+Hrdinou výsledků je časová osa života nakreslená jako barevná stuha, „co kdyby"
+dostává vlastní záložku. Krok 1 (barvy a fonty) je hotový, viz níže.
+
+## 0. Rozhodnutí, která návrh nechal otevřená
+
+| Otázka | Rozhodnuto |
+| --- | --- |
+| Fonty z Google Fonts, nebo vlastní? | **Vlastní.** `<link>` na fonts.gstatic.com by poslal Googlu IP adresu každého návštěvníka a neprošel by ani přes CSP. Woff2 jsou v `public/fonts/`. |
+| `caution` 3,46:1 a `bad` 4,21:1 nesplňují AA | **Ztmaveno** na 4,5:1. Odstín zůstal, ubrala se světlost. |
+| „Ostatní cíle" sloučit do Cesty? | Odloženo na krok 4. Karty cílů mají editovatelné částky, do dlaždice se nevejdou. |
+| Má „Cesta" nahradit „Souhrn"? | Ano, ale textový odstavec pod verdiktem zůstává. |
+| Kolik událostí na stuze? | Čtyři: koupě, dítě, konec rodičovské, nejnižší bod. |
+| Víc scénářů „co kdyby" vedle sebe? | Ne, jeden proti původnímu. |
 
 ## 1. Co se nesmí ztratit
 
@@ -280,12 +293,45 @@ Slovníček 2 341 px.
 2. ~~**Primitiva.**~~ Hotovo: `Card`, `Callout` a `fieldClass`. `Badge`
    a `Button` se schválně nedělaly, viz níže.
 3. ~~**Kotvy pro testy.**~~ Hotovo, viz níže.
-4. **Překreslení.** Nejdřív průvodce (jednodušší, čistě vizuální), pak
-   výsledky.
-5. **Kontrola.** Validátor palety na nové barvy, průchod personami,
-   pixelové porovnání (níže), tisk do PDF.
+4. ~~**Barvy a fonty ze směru „Cesta".**~~ Hotovo, viz níže.
+5. **Sdílené prvky.** `BrandMark` (domeček pryč, otazník v zeleném čtverci),
+   sloučit `Alert` do `Callout`, `StatusBadge` (tvar + slovo), `HeroNumber`,
+   `MonthsMeter`. Teprve tady se nasadí displayový řez.
+6. **Skořápka.** `App.tsx` bez `max-w-3xl`, mřížka do 1280 px.
+   `ResultsTabs` na pilulky, „Souhrn" → „Cesta", přidat „Co kdyby".
+7. **Záložka Cesta.** `ResultsOverview` se rozpadne na `VerdictHeadline`,
+   `JourneyRibbon`, `TightestPoint`, `GoalStatusGrid`, `NextSteps`.
+   Největší kus, stuha ručně v SVG (ne Recharts).
+8. **Záložka Co kdyby.** `whatIfState` + `baselineSnapshot`, duch původního
+   scénáře, delta karty.
+9. **Průvodce.** Průběžný náhled „zatím to vypadá takto".
+10. **Kontrola.** Validátor palety, průchod personami, pixelové porovnání,
+    tisk do PDF.
 
-Kroky 1 až 3 nic nepředjímaly a jsou hotové, aniž by návrh existoval.
+Kroky 1 až 3 nic nepředjímaly a byly hotové, ještě než návrh existoval.
+
+### Barvy a fonty (krok 4)
+
+Hodnoty jsou v `src/index.css`, odchylky od handoffu popsané přímo tam.
+V komponentách nezůstala **ani jedna** přímá třída z Tailwind palety;
+bylo jich 549 a všechny teď jdou přes tokeny, takže další změna palety
+je zase jen jeden soubor.
+
+Přibyly tokeny, které handoff nepojmenoval, ale potřebuje je: `shell`
+a `raised` (podklad a aktivní pilulka přepínače záložek), pětice `tint-*`
+(tónované podklady sdělení) a čtveřice `ribbon-*` (gradient stuhy).
+
+Fonty jsou v `public/fonts/`, osm woff2 o 235 kB, jen subsety `latin`
+a `latin-ext`. Ověřeno proti všem znakům v appce: čeština je pokrytá celá,
+mimo subsety zůstávají jen emoji a čtyři symboly (→ ✓ ∞ ▲▼), které spadnou
+na systémový font. Test v e2e potvrdil, že stránka nedělá **žádný** požadavek
+mimo vlastní server.
+
+Co se **ještě nezměnilo**, ať to nepřekvapí: displayový řez zatím nikde není
+nasazený (žádná komponenta nepoužívá `font-display`), logo je pořád domeček
+v modrém čtverci a verdikt má pořád barvu podle stavu, ne `ink`. Všechno tři
+patří ke krokům 5 a 7. Po tomhle kroku je appka teplá a čitelná, ale ještě
+to není „Cesta".
 Zbytek čeká na něj.
 
 ### Proč nevzniklo `Badge` ani `Button`

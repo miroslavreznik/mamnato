@@ -47,7 +47,7 @@ export default class ErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-sunken">
         <div className="max-w-md w-full bg-card border border-line rounded-2xl shadow-sm p-6 text-center">
           <div className="text-4xl mb-3" aria-hidden="true">
             😕
@@ -63,19 +63,19 @@ export default class ErrorBoundary extends Component<Props, State> {
             <button
               type="button"
               onClick={this.handleReload}
-              className="px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-xl bg-ink text-page hover:opacity-90 transition-opacity"
             >
               Zkusit znovu
             </button>
             <button
               type="button"
               onClick={this.handleReset}
-              className="px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-xl border border-line-strong text-ink-label hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="px-4 py-2.5 min-h-[44px] text-sm font-medium rounded-xl border border-line-strong text-ink-label hover:bg-sunken transition-colors"
             >
               Smazat data a začít znovu
             </button>
           </div>
-          <p className="mt-4 text-xs text-gray-400">
+          <p className="mt-4 text-xs text-ink-faint">
             Když chyba přetrvává, pomůže obvykle druhá možnost. Nejčastěji za to může
             rozbitý rozpracovaný přehled uložený v prohlížeči.
           </p>

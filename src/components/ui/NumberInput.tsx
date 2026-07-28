@@ -167,7 +167,7 @@ export default function NumberInput({
             type="button"
             onClick={decrement}
             disabled={disabled}
-            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong bg-white dark:bg-gray-700 text-ink-body hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700"
+            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong bg-card text-ink-body hover:bg-sunken text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card"
             aria-label={`Snížit: ${label}`}
           >
             −
@@ -185,14 +185,14 @@ export default function NumberInput({
             onFocus={handleFocus}
             onBlur={handleBlur}
             disabled={disabled}
-            className={`w-full px-3 py-2.5 pr-12 border rounded-lg text-base focus:outline-none focus:ring-2 bg-white dark:bg-gray-700 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed ${
+            className={`w-full px-3 py-2.5 pr-12 border rounded-lg text-base focus:outline-none focus:ring-2 bg-card  disabled:opacity-60 disabled:cursor-not-allowed ${
               isInvalid
-                ? 'border-red-400 focus:ring-red-400'
-                : 'border-line-strong focus:ring-blue-500 focus:border-blue-500'
+                ? 'border-danger focus:ring-danger'
+                : 'border-line-strong focus:ring-ink focus:border-ink'
             }`}
             aria-invalid={isInvalid}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint text-sm pointer-events-none">
             {suffix}
           </span>
         </div>
@@ -201,16 +201,16 @@ export default function NumberInput({
             type="button"
             onClick={increment}
             disabled={disabled}
-            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong bg-white dark:bg-gray-700 text-ink-body hover:bg-gray-100 dark:hover:bg-gray-600 text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-gray-700"
+            className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong bg-card text-ink-body hover:bg-sunken text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card"
             aria-label={`Zvýšit: ${label}`}
           >
             +
           </button>
         )}
       </div>
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      {error && <p className="mt-1 text-sm text-danger">{error}</p>}
       {!error && value < min && (
-        <p className="mt-1 text-sm text-red-600">Hodnota musí být alespoň {formatForDisplay(min)}</p>
+        <p className="mt-1 text-sm text-danger">Hodnota musí být alespoň {formatForDisplay(min)}</p>
       )}
     </div>
   );

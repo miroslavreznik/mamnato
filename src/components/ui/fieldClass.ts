@@ -13,16 +13,15 @@
  * Pozor na `px-3 pr-9`: obě třídy musí zůstat. `pr-*` v Tailwindu přebíjí
  * `px-*`, takže vypuštění `px-3` by změnilo odsazení vlevo.
  *
- * Zjištěné nesrovnalosti, které se schválně neopravují teď (byla by to změna
- * vzhledu, ne úklid): fokusový prstenec má jen pět polí z třiadvaceti
- * a jedno pole si navíc vynucuje `bg-white`, zbytek podklad dědí.
+ * Zjištěná nesrovnalost, která se schválně neopravuje teď (byla by to změna
+ * vzhledu, ne úklid): fokusový prstenec má jen pět polí z třiadvaceti.
  *
  * Sem nepatří hlavní pole průvodce v `NumberInput.tsx`: barvu rámečku si
- * přepíná podle chyby (`border-red-400`), takže napevno zadaný
+ * přepíná podle chyby (`border-danger`), takže napevno zadaný
  * `border-line-strong` by mu chybový stav sebral. Při redesignu na něj
  * nezapomeň, je to nejvíc vidět ze všech polí.
  */
-export const FIELD = 'border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg';
+export const FIELD = 'border border-line-strong bg-card text-ink rounded-lg';
 
 export const fieldClass = (...extra: (string | false | undefined)[]) =>
   [FIELD, ...extra.filter(Boolean)].join(' ');

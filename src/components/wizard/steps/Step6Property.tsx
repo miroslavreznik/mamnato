@@ -100,7 +100,7 @@ export default function Step6Property() {
           <label className="block text-sm text-ink-label mb-2">
             Akontace: <span className="font-semibold">{dpValue.toLocaleString('cs-CZ')} Kč</span>
             {' '}
-            <span className={`text-xs ${Number(dpPercent) >= reqDpPct ? 'text-green-600' : 'text-amber-600'}`}>
+            <span className={`text-xs ${Number(dpPercent) >= reqDpPct ? 'text-good' : 'text-caution'}`}>
               ({dpPercent} % z celkové investice)
             </span>
           </label>
@@ -112,16 +112,16 @@ export default function Step6Property() {
             step={10000}
             value={dpValue}
             onChange={(e) => setDownPayment(Number(e.target.value))}
-            className="w-full h-2 bg-gray-200 dark:bg-gray-600 rounded-lg appearance-none cursor-pointer accent-blue-600"
+            className="w-full h-2 bg-shell rounded-lg appearance-none cursor-pointer accent-brand"
           />
 
-          <div className="flex justify-between text-xs text-gray-400 mt-1 mb-3">
+          <div className="flex justify-between text-xs text-ink-faint mt-1 mb-3">
             <span>0 Kč</span>
             <span>{totalSavings.toLocaleString('cs-CZ')} Kč</span>
           </div>
 
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600 dark:text-gray-400">Zbývající rezerva:</span>
+            <span className="text-ink-body">Zbývající rezerva:</span>
             <span className="font-semibold text-ink">{reserve.toLocaleString('cs-CZ')} Kč</span>
           </div>
 
@@ -196,7 +196,7 @@ export default function Step6Property() {
           aria-label="Délka hypotéky"
           value={term}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'loanTermYears', value: parseInt(e.target.value) })}
-          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500')}
+          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-ink')}
         >
           {[15, 20, 25, 30].map((y) => (
             <option key={y} value={y}>{y} let</option>
@@ -216,7 +216,7 @@ export default function Step6Property() {
           aria-label="Doba fixace úrokové sazby"
           value={fixation}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'fixationYears', value: parseInt(e.target.value) })}
-          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500')}
+          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-ink')}
         >
           {/* U každé fixace je rovnou vidět, na jakou sazbu vede. Bez toho
               vypadá volba jako kosmetika, přitom mění splátku. */}
@@ -226,7 +226,7 @@ export default function Step6Property() {
             </option>
           ))}
         </select>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-ink-faint">
           Po dobu fixace máte garantovanou úrokovou sazbu. Po jejím konci se sazba přepočítá dle aktuálních podmínek.
           Delší fixace znamená jistotu, kterou si banka nechá zaplatit vyšší sazbou, kratší je levnější, ale dřív vás
           vystaví tomu, jaké budou sazby potom.
@@ -240,7 +240,7 @@ export default function Step6Property() {
         )}
       </div>
 
-      <div className="mt-4 space-y-2 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg text-sm">
+      <div className="mt-4 space-y-2 p-4 bg-sunken rounded-lg text-sm">
         <div className="flex justify-between">
           <span className="text-ink-body">Doporučená akontace ({reqDpPct} %):</span>
           <span className="font-semibold text-ink">{reqDp.toLocaleString('cs-CZ')} Kč</span>

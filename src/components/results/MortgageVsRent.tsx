@@ -29,7 +29,7 @@ export default function MortgageVsRent({ state }: Props) {
   return (
     <Card title="Celkové náklady na bydlení">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-        <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <div className="p-4 bg-sunken rounded-lg">
           <div className="text-sm text-ink-muted mb-2 text-center">Nyní (nájem)</div>
           <div className="space-y-1 text-sm text-ink-body">
             <div className="flex justify-between">
@@ -41,13 +41,13 @@ export default function MortgageVsRent({ state }: Props) {
               <span>{fmt(utilities)} Kč</span>
             </div>
           </div>
-          <div className="border-t dark:border-gray-600 mt-2 pt-2 text-center">
+          <div className="border-t mt-2 pt-2 text-center">
             <div className="text-xl sm:text-2xl font-bold whitespace-nowrap text-ink">{fmt(totalRent)} Kč</div>
             <div className="text-xs text-ink-faint">celkem měsíčně</div>
           </div>
         </div>
 
-        <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
+        <div className="p-4 bg-tint-brand rounded-lg">
           <div className="text-sm text-ink-muted mb-2 text-center">Po koupi (vlastnictví)</div>
           <div className="space-y-1 text-sm text-ink-body">
             <div className="flex justify-between">
@@ -63,14 +63,14 @@ export default function MortgageVsRent({ state }: Props) {
               <span>{fmt(ownershipCosts)} Kč</span>
             </div>
           </div>
-          <div className="border-t dark:border-gray-600 mt-2 pt-2 text-center">
-            <div className="text-xl sm:text-2xl font-bold whitespace-nowrap text-blue-900 dark:text-blue-300">{fmt(totalOwnership)} Kč</div>
+          <div className="border-t mt-2 pt-2 text-center">
+            <div className="text-xl sm:text-2xl font-bold whitespace-nowrap text-brand">{fmt(totalOwnership)} Kč</div>
             <div className="text-xs text-ink-faint">celkem měsíčně</div>
           </div>
         </div>
       </div>
 
-      <div className={`text-center p-3 rounded-lg ${diff > 0 ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400' : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'}`}>
+      <div className={`text-center p-3 rounded-lg ${diff > 0 ? 'bg-tint-danger text-danger' : 'bg-tint-good text-good'}`}>
         <span className="font-semibold">
           Vlastnictví odčerpá z rozpočtu o {fmt(Math.abs(diff))} Kč {diff > 0 ? 'víc' : 'míň'} než nájem.
         </span>

@@ -37,7 +37,7 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
   return (
     <nav
       aria-label="Části přehledu"
-      className="no-print sticky top-16 z-30 mb-5 -mx-4 sm:mx-0 px-2 py-1.5 bg-white/90 dark:bg-gray-900/90 backdrop-blur border-y sm:border sm:rounded-2xl border-line"
+      className="no-print sticky top-16 z-30 mb-5 -mx-4 sm:mx-0 px-2 py-1.5 bg-card/90 backdrop-blur border-y sm:border sm:rounded-2xl border-line"
     >
       <div
         ref={listRef}
@@ -62,8 +62,8 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
               onClick={() => onSelect(tab.id)}
               className={`shrink-0 px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 text-sm font-medium rounded-xl transition-colors ${
                 selected
-                  ? 'bg-blue-600 text-white'
-                  : 'text-ink-body hover:bg-gray-100 dark:hover:bg-gray-700'
+                  ? 'bg-ink text-page'
+                  : 'text-ink-body hover:bg-sunken'
               }`}
             >
               {tab.label}

@@ -167,7 +167,7 @@ const groups: GlossaryGroup[] = [
 function GlossaryRow({ item }: { item: GlossaryItem }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="border-b border-gray-100 dark:border-gray-700/50 last:border-b-0">
+    <div className="border-b border-line last:border-b-0">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -178,7 +178,7 @@ function GlossaryRow({ item }: { item: GlossaryItem }) {
         <span className="text-ink-faint flex-shrink-0" aria-hidden="true">{open ? '−' : '+'}</span>
       </button>
       {open && (
-        <p className="pb-3 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.explanation}</p>
+        <p className="pb-3 text-sm text-ink-body leading-relaxed">{item.explanation}</p>
       )}
     </div>
   );

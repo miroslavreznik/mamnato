@@ -30,9 +30,9 @@ function toggleInSet(prev: Set<string>, id: string): Set<string> {
 
 function StatusBadge({ alloc }: { alloc: GoalAllocation }) {
   const configs = [
-    { show: alloc.monthlyAllocation <= 0, label: 'Nestačí prostředky', colors: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' },
-    { show: !alloc.achievable, label: 'Potřebuje více času', colors: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400' },
-    { show: true, label: 'Dosažitelný', colors: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' },
+    { show: alloc.monthlyAllocation <= 0, label: 'Nestačí prostředky', colors: 'bg-tint-danger text-danger' },
+    { show: !alloc.achievable, label: 'Potřebuje více času', colors: 'bg-tint-caution text-caution' },
+    { show: true, label: 'Dosažitelný', colors: 'bg-tint-good text-good' },
   ];
   const { label, colors } = configs.find((c) => c.show)!;
   return (
@@ -45,7 +45,7 @@ function StatusBadge({ alloc }: { alloc: GoalAllocation }) {
 function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposable: number; totalAllocated: number; totalNeeded: number }) {
   const remaining = disposable - totalAllocated;
   return (
-    <div className="p-4 rounded-xl border border-line bg-gray-50 dark:bg-gray-800/50 mb-4">
+    <div className="p-4 rounded-xl border border-line bg-sunken mb-4">
       <div className="grid grid-cols-3 gap-4 text-sm">
         <div>
           <span className="text-ink-muted">Disponibilní celkem</span>
@@ -57,13 +57,13 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
         </div>
         <div>
           <span className="text-ink-muted">Zbývá volných</span>
-          <p className={`font-semibold ${remaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+          <p className={`font-semibold ${remaining >= 0 ? 'text-good' : 'text-danger'}`}>
             {remaining.toLocaleString('cs-CZ')} Kč/měs.
           </p>
         </div>
       </div>
       {totalNeeded > disposable && (
-        <div className="mt-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg text-sm text-red-700 dark:text-red-400">
+        <div className="mt-3 p-3 bg-tint-danger rounded-lg text-sm text-danger">
           Tvoje cíle dohromady potřebují o {(totalNeeded - disposable).toLocaleString('cs-CZ')} Kč/měs. více, než máš k dispozici. Uprav cíle nebo jejich horizont.
         </div>
       )}
@@ -147,12 +147,12 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
       <GoalSummaryPanel disposable={disposable} totalAllocated={totalAllocated} totalNeeded={totalNeeded} />
 
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Časový horizont v:</span>
+        <span className="text-sm text-ink-body">Časový horizont v:</span>
         {(['months', 'years'] as const).map((unit) => (
           <button
             key={unit}
             onClick={() => setTimeUnit(unit)}
-            className={`px-3 py-1 text-sm rounded-lg ${timeUnit === unit ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300' : 'text-ink-muted'}`}
+            className={`px-3 py-1 text-sm rounded-lg ${timeUnit === unit ? 'bg-tint-brand text-brand' : 'text-ink-muted'}`}
           >
             {unit === 'months' ? 'Měsících' : 'Letech'}
           </button>
@@ -179,20 +179,20 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     <button
                       onClick={() => move(goal.id, -1)}
                       disabled={index === 0}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 text-xs leading-none p-0.5"
+                      className="text-ink-faint hover:text-ink-body disabled:opacity-30 text-xs leading-none p-0.5"
                       aria-label="Posunout nahoru"
                     >▲</button>
                     <button
                       onClick={() => move(goal.id, 1)}
                       disabled={index === goals.length - 1}
-                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-30 text-xs leading-none p-0.5"
+                      className="text-ink-faint hover:text-ink-body disabled:opacity-30 text-xs leading-none p-0.5"
                       aria-label="Posunout dolů"
                     >▼</button>
                   </div>
                   <span className="text-sm font-medium text-ink-label">#{index + 1}</span>
                   {!isDeferred && alloc && <StatusBadge alloc={alloc} />}
                   {isDeferred && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-ink-muted">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sunken text-ink-muted">
                       Odložený
                     </span>
                   )}
@@ -205,7 +205,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     {isDeferred ? 'Obnovit cíl' : 'Co kdybych odložil tento cíl?'}
                   </button>
                   {goals.length > 1 && (
-                    <button onClick={() => removeGoal(goal.id)} className="text-red-400 hover:text-red-600 text-sm">
+                    <button onClick={() => removeGoal(goal.id)} className="text-danger hover:text-danger text-sm">
                       Odebrat
                     </button>
                   )}
@@ -257,36 +257,36 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
               {!isDeferred && alloc && (
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Potřebná měsíční úspora:</span>
+                    <span className="text-ink-body">Potřebná měsíční úspora:</span>
                     <span className="font-semibold text-ink">
                       {requiredMonthly.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Na tento cíl odkládáš:</span>
-                    <span className={`font-semibold ${alloc.achievable ? 'text-green-600' : alloc.monthlyAllocation > 0 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    <span className="text-ink-body">Na tento cíl odkládáš:</span>
+                    <span className={`font-semibold ${alloc.achievable ? 'text-good' : alloc.monthlyAllocation > 0 ? 'text-caution' : 'text-danger'}`}>
                       {alloc.monthlyAllocation.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-400">Zbývá ti po tomto cíli:</span>
+                    <span className="text-ink-body">Zbývá ti po tomto cíli:</span>
                     <span className="font-semibold text-ink">
                       {alloc.remainingAfter.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
 
                   {alloc.achievable && (
-                    <div className="text-sm p-2 rounded-lg bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400">
+                    <div className="text-sm p-2 rounded-lg bg-tint-good text-good">
                       Na cíl dosáhneš v požadovaném čase.
                     </div>
                   )}
                   {!alloc.achievable && alloc.monthlyAllocation > 0 && (
-                    <div className="text-sm p-2 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400">
+                    <div className="text-sm p-2 rounded-lg bg-tint-caution text-caution">
                       Cíl potřebuje více času. Při aktuální alokaci dosáhneš za {alloc.monthsNeeded} měsíců místo {months}.
                     </div>
                   )}
                   {alloc.monthlyAllocation <= 0 && (
-                    <div className="text-sm p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400">
+                    <div className="text-sm p-2 rounded-lg bg-tint-danger text-danger">
                       Na tento cíl ti po předchozích cílech nezbývají žádné prostředky.
                     </div>
                   )}
@@ -300,18 +300,18 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                         {expandedTips.has(goal.id) ? 'Skrýt doporučení' : 'Co s tím?'}
                       </button>
                       {expandedTips.has(goal.id) && (
-                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm space-y-1.5">
+                        <div className="mt-2 p-3 bg-tint-brand rounded-lg text-sm space-y-1.5">
                           {alloc.suggestedMonths !== undefined && alloc.suggestedMonths !== Infinity && (
-                            <p className="text-blue-700 dark:text-blue-300">
+                            <p className="text-brand">
                               <strong>Prodlužte horizont:</strong> pro dosažení tohoto cíle by stačilo {alloc.suggestedMonths} měsíců místo {months}.
                             </p>
                           )}
                           {alloc.achievableAmount !== undefined && alloc.achievableAmount > 0 && (
-                            <p className="text-blue-700 dark:text-blue-300">
+                            <p className="text-brand">
                               <strong>Snižte cílovou částku:</strong> při tvém rozpočtu dosáhneš na {alloc.achievableAmount.toLocaleString('cs-CZ')} Kč v zadaném čase.
                             </p>
                           )}
-                          <p className="text-blue-700 dark:text-blue-300">
+                          <p className="text-brand">
                             <strong>Přesuňte cíl níže v prioritách:</strong> uvolní se prostředky z vyšších cílů.
                           </p>
                         </div>
@@ -319,7 +319,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     </div>
                   )}
 
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                  <div className="text-sm text-ink-body">
                     Doporučený nástroj: <span className="font-medium text-ink">{recommendInstrument(months)}</span>
                   </div>
                 </div>
@@ -354,7 +354,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
 
       <button
         onClick={addGoal}
-        className="mt-4 px-4 py-2 text-sm text-brand border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[44px]"
+        className="mt-4 px-4 py-2 text-sm text-brand border border-line rounded-lg hover:bg-tint-brand min-h-[44px]"
       >
         + Přidat další cíl
       </button>

@@ -27,17 +27,17 @@ export default function TaxReliefCard({ state }: { state: WizardState }) {
               <span className="text-sm font-medium text-ink-label">{item.label}</span>
               <span className="text-right shrink-0">
                 <span className="font-bold text-ink">{fmt(item.monthly)} Kč</span>
-                <span className="text-xs text-gray-400">/měs</span>
+                <span className="text-xs text-ink-faint">/měs</span>
               </span>
             </div>
             <p className="mt-1 text-xs text-ink-muted">{item.how}</p>
-            <p className="mt-1 text-xs text-gray-400">Ročně {fmt(item.yearly)} Kč.</p>
+            <p className="mt-1 text-xs text-ink-faint">Ročně {fmt(item.yearly)} Kč.</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-4 flex justify-between items-baseline border-t dark:border-gray-600 pt-3">
-        <span className="text-sm text-gray-600 dark:text-gray-400">
+      <div className="mt-4 flex justify-between items-baseline border-t pt-3">
+        <span className="text-sm text-ink-body">
           Dohromady
           <Tooltip text="Součet ročních úlev přepočtený na měsíc. Uplatní se jen do výše daně, kterou skutečně platíte: odpočet úroků nemůže vrátit víc, než kolik jste na dani odvedli. Zvýhodnění na dítě se naopak může změnit v daňový bonus a vyplatit se i nad rámec daně." />
         </span>

@@ -39,8 +39,8 @@ export default function StepIndicator({ currentStep, steps, completedSteps, onSt
           const isCurrent = item.step === currentStep;
           const canJump = done && !isCurrent;
           const fill = isCurrent || done
-            ? 'bg-blue-600 dark:bg-blue-500'
-            : 'bg-gray-200 dark:bg-gray-700';
+            ? 'bg-ink'
+            : 'bg-shell';
 
           return (
             <li key={item.step} className="flex-1">
@@ -53,7 +53,7 @@ export default function StepIndicator({ currentStep, steps, completedSteps, onSt
                   // proto je kolem něj neviditelná výplň do 44 px.
                   className="group block w-full py-3 -my-3 cursor-pointer"
                 >
-                  <span className={`block h-1.5 rounded-full transition-colors ${fill} group-hover:bg-blue-700 dark:group-hover:bg-blue-400`} />
+                  <span className={`block h-1.5 rounded-full transition-colors ${fill} group-hover:bg-ink`} />
                 </button>
               ) : (
                 <span

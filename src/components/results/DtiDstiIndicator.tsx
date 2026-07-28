@@ -16,15 +16,15 @@ function trafficLight(value: number, limit: number): 'green' | 'yellow' | 'red' 
 }
 
 const colorClasses = {
-  green: 'bg-green-100 text-green-800 border-green-300',
-  yellow: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  red: 'bg-red-100 text-red-800 border-red-300',
+  green: 'bg-tint-good text-good border-line',
+  yellow: 'bg-tint-caution text-caution border-line',
+  red: 'bg-tint-danger text-danger border-line',
 };
 
 const dotClasses = {
-  green: 'bg-green-500',
-  yellow: 'bg-yellow-500',
-  red: 'bg-red-500',
+  green: 'bg-good',
+  yellow: 'bg-caution',
+  red: 'bg-danger',
 };
 
 export default function DtiDstiIndicator({ state }: Props) {

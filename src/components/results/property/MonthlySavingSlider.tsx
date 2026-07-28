@@ -48,14 +48,14 @@ export default function MonthlySavingSlider({ state, value, onChange }: {
           value={Math.min(value, max)}
           onChange={(e) => onChange(Number(e.target.value))}
           aria-label="Měsíční odkládání na akontaci"
-          className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-blue-600 bg-gray-200 dark:bg-gray-600"
+          className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-brand bg-shell"
         />
         <StepButton onClick={() => onChange(Math.min(max, value + STEP))} disabled={value >= max} label="Zvýšit měsíční odkládání">
           +
         </StepButton>
       </div>
 
-      <div className="flex justify-between text-xs text-gray-400 mt-1">
+      <div className="flex justify-between text-xs text-ink-faint mt-1">
         <span>0 Kč</span>
         <span>{czk(max)}</span>
       </div>

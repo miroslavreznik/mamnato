@@ -71,8 +71,8 @@ function App() {
   const state = shared ?? loadState();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50/50 via-gray-50 to-gray-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-950 transition-colors">
-      <header className="no-print sticky top-0 z-40 backdrop-blur-md bg-white/70 dark:bg-gray-900/70 border-b border-gray-200/70 dark:border-gray-800/80">
+    <div className="min-h-screen bg-page transition-colors">
+      <header className="no-print sticky top-0 z-40 backdrop-blur-md bg-card/70 border-b border-line">
         <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
           <button
             onClick={() => setView('welcome')}
@@ -90,24 +90,24 @@ function App() {
 
       <main className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
         {sharedConflict && (
-          <div className="no-print mb-5 p-4 rounded-xl border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700">
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+          <div className="no-print mb-5 p-4 rounded-xl border border-line bg-tint-caution">
+            <p className="text-sm font-semibold text-caution">
               Tenhle přehled je z odkazu od někoho jiného.
             </p>
-            <p className="mt-1 text-sm text-amber-800 dark:text-amber-300">
+            <p className="mt-1 text-sm text-caution">
               Svůj vlastní uložený přehled máte pořád k dispozici, tenhle se zatím nikam neuložil.
               Dokud se nerozhodnete, žádná změna se neukládá.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 onClick={keepShared}
-                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-amber-600 hover:bg-amber-700 text-white"
+                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-caution hover:opacity-90 text-page"
               >
                 Uložit tenhle a přepsat svůj
               </button>
               <button
                 onClick={keepOwn}
-                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg border border-amber-400 text-amber-900 dark:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/40"
+                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg border border-caution text-caution hover:bg-tint-caution"
               >
                 Zpět na můj přehled
               </button>
@@ -125,7 +125,7 @@ function App() {
       </main>
 
       <footer className="no-print max-w-3xl mx-auto px-4 pb-8 pt-4 text-center">
-        <p className="text-xs text-gray-400 dark:text-gray-600">
+        <p className="text-xs text-ink-faint-body">
           MámNaTo? Orientační finanční přehled. Data zůstávají ve vašem prohlížeči.
         </p>
       </footer>

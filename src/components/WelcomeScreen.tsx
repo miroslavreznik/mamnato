@@ -36,8 +36,8 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
     <div className="py-6 sm:py-10">
       {/* Hero */}
       <div className="text-center max-w-2xl mx-auto">
-        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-blue-100 dark:border-blue-800 mb-6">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-tint-brand text-brand border border-line mb-6">
+          <span className="w-1.5 h-1.5 rounded-full bg-ink" />
           Zdarma · Bez registrace · Hotovo za 3 minuty
         </span>
 
@@ -52,7 +52,7 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
         <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
           <button
             onClick={onStart}
-            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-base font-semibold shadow-lg shadow-blue-600/20 transition-all active:scale-[0.98] min-h-[48px]"
+            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-3.5 rounded-xl bg-ink text-page text-base font-semibold hover:opacity-90 transition-all active:scale-[0.98] min-h-[48px]"
           >
             {hasSavedData ? 'Začít znovu' : 'Spustit přehled'}
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
@@ -61,7 +61,7 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
           {hasSavedData && (
             <button
               onClick={onResume}
-              className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 rounded-xl text-blue-700 dark:text-blue-300 font-medium border border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors min-h-[48px]"
+              className="inline-flex items-center justify-center w-full sm:w-auto px-6 py-3.5 rounded-xl text-brand font-medium border border-line hover:bg-tint-brand transition-colors min-h-[48px]"
             >
               Pokračovat tam, kde jste skončili
             </button>
@@ -74,9 +74,9 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
         {features.map((f) => (
           <div
             key={f.title}
-            className="rounded-2xl border border-gray-200/80 dark:border-gray-700/80 bg-card/70 p-5 text-left"
+            className="rounded-2xl border border-line bg-card/70 p-5 text-left"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center mb-3">
+            <div className="w-10 h-10 rounded-xl bg-tint-brand flex items-center justify-center mb-3">
               <svg className="w-5 h-5 text-brand" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 {f.icon}
               </svg>

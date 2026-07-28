@@ -61,7 +61,7 @@ export default function RateSlider({ state, onChange }: {
           value={Number((rate * 100).toFixed(2))}
           onChange={(e) => onChange(clampStep(Number(e.target.value) / 100))}
           aria-label="Úroková sazba"
-          className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-blue-600 bg-gradient-to-r from-green-400/50 to-red-400/50"
+          className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-brand bg-gradient-to-r from-ribbon-calm to-ribbon-deficit"
         />
         <StepButton
           onClick={() => onChange(clampStep(Math.min(RATE_MAX, rate + STEP)))}
@@ -72,7 +72,7 @@ export default function RateSlider({ state, onChange }: {
         </StepButton>
       </div>
 
-      <div className="flex justify-between text-xs text-gray-400 mt-1">
+      <div className="flex justify-between text-xs text-ink-faint mt-1">
         <span>{formatRate(RATE_MIN)} %</span>
         <span>{formatRate(RATE_MAX)} %</span>
       </div>
@@ -101,7 +101,7 @@ export default function RateSlider({ state, onChange }: {
           </p>
 
           {advice.nextBand && advice.extraDownPayment > 0 && advice.rateDrop > 0 && (
-            <p className={advice.affordable ? 'text-green-700 dark:text-green-400' : ''}>
+            <p className={advice.affordable ? 'text-good' : ''}>
               <span className="font-medium">Tip:</span>{' '}
               kdybyste do akontace dali o {czk(advice.extraDownPayment)} víc, dostanete se pod{' '}
               {Math.round(advice.nextBand.maxLtv * 100)} % LTV. Tam banky dávají sazbu zhruba o{' '}

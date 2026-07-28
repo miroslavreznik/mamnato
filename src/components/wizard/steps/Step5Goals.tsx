@@ -91,8 +91,8 @@ export default function Step5Goals() {
               data-testid={`goal-${g.value}`}
               className={`flex flex-col items-center gap-2 p-4 border-2 rounded-xl transition-colors min-h-[44px] ${
                 selected
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 bg-white dark:bg-gray-700'
+                  ? 'border-ink bg-tint-brand'
+                  : 'border-line hover:border-line-strong bg-card'
               }`}
             >
               <svg

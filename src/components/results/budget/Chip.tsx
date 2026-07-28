@@ -20,7 +20,7 @@ export function Chip({ label, color, off, onClick, note, title }: {
       className={`inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] rounded-full text-xs border transition-colors ${
         off
           ? 'border-line text-ink-faint line-through'
-          : 'border-line-strong text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700/50'
+          : 'border-line-strong text-ink-label hover:bg-sunken/50'
       }`}
     >
       <span

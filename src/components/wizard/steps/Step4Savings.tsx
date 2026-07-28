@@ -77,8 +77,8 @@ export default function Step4Savings() {
             step={10000}
           />
 
-          <div className="flex justify-between text-sm pt-2 border-t dark:border-gray-600">
-            <span className="text-gray-600 dark:text-gray-400">Celkem</span>
+          <div className="flex justify-between text-sm pt-2 border-t">
+            <span className="text-ink-body">Celkem</span>
             <span className="font-semibold text-ink">{breakdownTotal.toLocaleString('cs-CZ')} Kč</span>
           </div>
 
@@ -91,7 +91,7 @@ export default function Step4Savings() {
         </div>
       )}
 
-      <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300 rounded-lg text-sm text-blue-700">
+      <div className="mt-3 p-3 bg-tint-brand rounded-lg text-sm text-brand">
         Doporučená finanční rezerva (3 měsíce výdajů):{' '}
         <span className="font-semibold">{recommendedReserve.toLocaleString('cs-CZ')} Kč</span>
       </div>

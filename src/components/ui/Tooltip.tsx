@@ -35,7 +35,7 @@ export default function Tooltip({ text }: TooltipProps) {
     <span ref={wrapRef} className="relative inline-block ml-1 align-middle">
       <button
         type="button"
-        className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-200 text-xs font-bold inline-flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-400"
+        className="w-6 h-6 rounded-full bg-shell text-ink-body text-xs font-bold inline-flex items-center justify-center hover:bg-shell dark:hover:bg-sunken focus:outline-none focus:ring-2 focus:ring-ink"
         onClick={() => setPinned((v) => !v)}
         // Hover jen pro myš, dotyk jinak nápovědu otevře a zavře zároveň.
         onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHovered(true); }}
@@ -51,7 +51,7 @@ export default function Tooltip({ text }: TooltipProps) {
       {show && (
         <span
           role="tooltip"
-          className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 block w-64 max-w-[calc(100vw-2rem)] p-2 text-sm font-normal text-left normal-case tracking-normal text-white bg-gray-800 rounded-lg shadow-lg"
+          className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 block w-64 max-w-[calc(100vw-2rem)] p-2 text-sm font-normal text-left normal-case tracking-normal text-page bg-card rounded-lg shadow-lg"
         >
           {text}
           <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800" />

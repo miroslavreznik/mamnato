@@ -3,7 +3,106 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* --------------------------------------------------------------------------
-   Návrhové proměnné
+   Řezy
+   --------------------------------------------------------------------------
+   Fonty jsou v `public/fonts/`, ne z Google Fonts. Handoff navrhoval `<link>`
+   na fonts.googleapis.com, ale tím by IP adresa každého návštěvníka odešla
+   Googlu, což porušuje slib napsaný v UI i v právním upozornění a neprošlo by
+   to ani produkční CSP (`font-src 'self'`, `connect-src 'none'`).
+
+   Staženy jsou jen subsety `latin` a `latin-ext`; čeština potřebuje obojí
+   (á é í v prvním, č ě ř š ž ů ve druhém). Ověřeno proti všem znakům, které
+   se v appce vyskytují: chybí z nich jen emoji a čtyři symboly (→ ✓ ∞ ▲▼),
+   které spadnou na systémový font. U symbolů to není poznat, u emoji je to
+   správně, ty systémový font kreslí barevně.
+
+   IBM Plex Sans je variabilní (wght 100–700), takže čtyři řezy nese jeden
+   soubor. Celkem 235 kB v osmi souborech.
+   -------------------------------------------------------------------------- */
+
+/* Bricolage Grotesque · latin-ext */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/bricolage-grotesque-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* Bricolage Grotesque · latin */
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('/fonts/bricolage-grotesque-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* IBM Plex Mono · latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* IBM Plex Mono · latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* IBM Plex Mono · latin-ext */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-500-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* IBM Plex Mono · latin */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-500-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* IBM Plex Sans · latin-ext */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* IBM Plex Sans · latin */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+/* --------------------------------------------------------------------------
+   Návrhové proměnné, směr „Cesta"
    --------------------------------------------------------------------------
    Barvy byly napsané natvrdo v komponentách jako dvojice „světlá dark:tmavá",
    dohromady přes čtyři sta výskytů ve čtyřiceti osmi souborech. Změna palety
@@ -13,56 +112,99 @@
    se řeší tady, ne v každé třídě zvlášť. Komponenty píšou `bg-card`,
    `text-ink-muted`, `border-line`; `dark:` variantu k barvám nepotřebují.
 
-   Hodnoty odpovídají tomu, co v appce bylo předtím (tailwindové odstíny jsou
-   u nich v komentáři), aby se zavedením proměnných nic vizuálně nezměnilo.
-   Nový vzhled se dosadí sem.
+   Hodnoty jsou z designového handoffu (směr „Cesta"). Odchylky od něj jsou tři
+   a všechny jsou popsané u konkrétní proměnné:
+
+   1. `caution` a `danger` jsou ztmavené. Handoff je uvádí jako #b8792c a
+      #c05a3f, jenže se jimi sází slova „Pozor" a „Nevychází" ve 12 px, a to
+      dává 3,46:1 a 4,21:1, tedy pod hranicí AA. Odstín zůstal, ubrala se
+      světlost, dokud kontrast na `page` i `sunken` nepřelezl 4,5:1.
+   2. Tmavé hodnoty, které handoff neuvádí, jsou odvozené. Je u nich poznámka.
+   3. `ink-faint` splynul s `ink-muted`. Návrh má tři úrovně textu, appka měla
+      pět; proměnná zůstává, aby se nemusely přepisovat komponenty.
 
    Barvy grafů jsou zvlášť v `components/results/chartTheme.tsx`: potřebuje je
    Recharts jako hodnoty, ne jako třídy, a jsou ověřené validátorem palety.
+   Kategorickou paletu sérií handoff měnit nechce, jen plochy okolo.
    -------------------------------------------------------------------------- */
 
 :root {
-  /* Povrchy */
-  --page: #f9fafb;                    /* gray-50 */
-  --card: #ffffff;                    /* white */
-  --sunken: #f9fafb;                  /* gray-50, jemná výplň uvnitř karty */
+  /* Povrchy. Karta má nově stejnou barvu jako stránka a odlišuje se jen
+     linkou: dřív se vršily tři úrovně rámečků, každá stejné váhy. */
+  --page: #fbfaf7;                    /* paper */
+  --card: #fbfaf7;                    /* paper */
+  --sunken: #f3f2ea;                  /* vnitřní bloky, plochy grafů */
+  --shell: #efeee7;                   /* podklad přepínače záložek */
+  --raised: #fbfaf7;                  /* aktivní pilulka nad `shell` */
 
-  /* Text */
-  --ink: #111827;                     /* gray-900, nadpisy a částky */
-  --ink-label: #374151;               /* gray-700, popisky polí */
-  --ink-body: #4b5563;                /* gray-600, běžný text */
-  --ink-muted: #6b7280;               /* gray-500, doplňky a vysvětlivky */
-  --ink-faint: #9ca3af;               /* gray-400, nejtišší popisky */
+  /* Text. Návrh má tři úrovně, ne pět. */
+  --ink: #0f3b33;                     /* nadpisy, částky, primární plochy */
+  --ink-label: #0f3b33;               /* popisky polí, v návrhu plný ink */
+  --ink-body: #57604f;                /* běžný text */
+  --ink-muted: #6e6c63;               /* doplňky a vysvětlivky */
+  --ink-faint: #6e6c63;               /* splynulo s `muted`, viz hlavička */
 
   /* Linky */
-  --line: #e5e7eb;                    /* gray-200, obrys karty */
-  --line-strong: #d1d5db;             /* gray-300, obrys pole */
+  --line: #e6e4d8;                    /* obrys karty */
+  --line-strong: #d9d7ca;             /* obrys pole a sekundárního tlačítka */
 
-  /* Značka a stavy */
-  --brand: #2563eb;                   /* blue-600 */
-  --good: #059669;                    /* emerald-600 */
-  --caution: #d97706;                 /* amber-600 */
-  --danger: #dc2626;                  /* red-600 */
+  /* Značka a stavy. Akcent je zelený, plné plochy tlačítek jsou `ink`. */
+  --brand: #10715f;                   /* odkazy, vybraný stav, akcent */
+  --good: #10715f;                    /* „V pořádku", kolečko */
+  --caution: #946123;                 /* „Pozor", čtvereček; ztmaveno z #b8792c */
+  --danger: #ae5139;                  /* „Nevychází", čárka; ztmaveno z #c05a3f */
+  --neutral: #6e6c63;                 /* „Podmíněně", kolečko obrysem */
+
+  /* Tónované podklady sdělení. Handoff uvádí jen jeden (#e9f0ea u „proč to
+     pomohlo" a u odznaku na úvodu); zpětným výpočtem je to papír s 7,8 %
+     příslušné barvy stavu, takže zbylé tři jsou dopočítané stejným receptem.
+     Ověřeno, že text stavu na svém vlastním tintu drží nad 4,5:1. */
+  --tint-brand: #e9efeb;
+  --tint-good: #e9f0ea;
+  --tint-caution: #f3eee6;
+  --tint-danger: #f5ede8;
+  --tint-neutral: #f0efeb;
+
+  /* Stuha na záložce Cesta. Gradient podle napětí rozpočtu v čase.
+     Čistě grafické, na text se nepoužívají. */
+  --ribbon-calm: #8fc9a6;
+  --ribbon-tense: #e2a15b;
+  --ribbon-deficit: #e2725b;
+  --ribbon-recover: #10715f;
 }
 
 .dark {
-  --page: #111827;                    /* gray-900 */
-  --card: #1f2937;                    /* gray-800 */
-  --sunken: rgb(55 65 81 / 0.5);      /* gray-700/50 */
+  --page: #0d1a18;
+  --card: #132320;
+  --sunken: #132320;
+  --shell: #132320;
+  --raised: #1f322e;
 
-  --ink: #ffffff;
-  --ink-label: #d1d5db;               /* gray-300 */
-  --ink-body: #d1d5db;                /* gray-300 */
-  --ink-muted: #9ca3af;               /* gray-400 */
-  --ink-faint: #6b7280;               /* gray-500 */
+  --ink: #eef3ef;
+  --ink-label: #eef3ef;
+  --ink-body: #c3d0cb;                /* odvozeno: handoff tmavý `body` neuvádí */
+  --ink-muted: #93a49e;
+  --ink-faint: #93a49e;
 
-  --line: #374151;                    /* gray-700 */
-  --line-strong: #4b5563;             /* gray-600 */
+  --line: #1f322e;
+  --line-strong: #2b4640;             /* odvozeno: handoff tmavý `line-strong` neuvádí */
 
-  --brand: #60a5fa;                   /* blue-400 */
-  --good: #34d399;                    /* emerald-400 */
-  --caution: #fbbf24;                 /* amber-400 */
-  --danger: #f87171;                  /* red-400 */
+  --brand: #4fb99a;
+  --good: #4fb99a;
+  --caution: #e5b168;
+  --danger: #ea8168;
+  --neutral: #93a49e;
+
+  --tint-brand: #1e3e36;
+  --tint-good: #1e3e36;
+  --tint-caution: #393d2d;
+  --tint-danger: #3a342d;
+  --tint-neutral: #2a3a37;
+
+  --ribbon-calm: #7fd8b2;
+  --ribbon-tense: #e5b168;
+  --ribbon-deficit: #ea8168;
+  --ribbon-recover: #4fb99a;
 }
 
 /* `inline` je tu podstatné: Tailwind pak do tříd vloží odkaz na proměnnou,
@@ -71,6 +213,8 @@
   --color-page: var(--page);
   --color-card: var(--card);
   --color-sunken: var(--sunken);
+  --color-shell: var(--shell);
+  --color-raised: var(--raised);
 
   --color-ink: var(--ink);
   --color-ink-label: var(--ink-label);
@@ -85,6 +229,24 @@
   --color-good: var(--good);
   --color-caution: var(--caution);
   --color-danger: var(--danger);
+  --color-neutral: var(--neutral);
+
+  --color-tint-brand: var(--tint-brand);
+  --color-tint-good: var(--tint-good);
+  --color-tint-caution: var(--tint-caution);
+  --color-tint-danger: var(--tint-danger);
+  --color-tint-neutral: var(--tint-neutral);
+
+  --color-ribbon-calm: var(--ribbon-calm);
+  --color-ribbon-tense: var(--ribbon-tense);
+  --color-ribbon-deficit: var(--ribbon-deficit);
+  --color-ribbon-recover: var(--ribbon-recover);
+
+  /* Řezy. Display nese verdikt a čísla hrdinů, mono jen malé verzálkové
+     popisky. Víc řezů návrh nechce. */
+  --font-display: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
 html {
@@ -93,15 +255,32 @@ html {
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
 }
 
+/* Sazba odstavců a nadpisů: `pretty` nenechá na posledním řádku jedno slovo.
+   Nadpisy v novém vzhledu jsou dlouhé věty, kde je to nejvíc vidět. */
+p,
+h1,
+h2,
+h3,
+h4 {
+  text-wrap: pretty;
+}
+
+/* Číslice stejné šířky. Bez toho čísla při přepočtu „skáčou", protože se mění
+   šířka jedničky proti nule. Týká se všech částek a procent, tedy skoro všeho,
+   co je v appce vidět; proto je to plošně a ne po komponentách. */
+body {
+  font-variant-numeric: tabular-nums;
+}
+
 /* Jemný akcent výběru textu */
 ::selection {
-  background: rgba(79, 70, 229, 0.18);
+  background: rgb(16 113 95 / 0.18);
 }
 
 /* Klidnější číselné vstupy: skryté spinnery (máme vlastní +/−) */
@@ -139,8 +318,8 @@ input[type="range"]::-webkit-slider-thumb {
   width: 26px;
   height: 26px;
   border-radius: 9999px;
-  background: #2563eb;
-  border: 3px solid #fff;
+  background: var(--brand);
+  border: 3px solid var(--card);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   cursor: pointer;
 }
@@ -148,14 +327,14 @@ input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 9999px;
-  background: #2563eb;
-  border: 3px solid #fff;
+  background: var(--brand);
+  border: 3px solid var(--card);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   cursor: pointer;
-  border-color: #fff;
+  border-color: var(--card);
 }
 input[type="range"]:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #1d4ed8;
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 

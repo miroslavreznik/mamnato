@@ -49,12 +49,12 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
     <Card>
       <h3 className="text-lg font-semibold text-ink mb-1">Vývoj úspor v čase</h3>
       {intersectMonth !== undefined && intersectMonth > 0 && (
-        <p className="text-sm text-green-600 mb-4">
+        <p className="text-sm text-good mb-4">
           Při odkládání {czkPerMonth(monthlySaving)} na akontaci dosáhnete za {formatMonths(intersectMonth)}.
         </p>
       )}
       {intersectMonth === undefined && (
-        <p className="text-sm text-yellow-600 mb-4">
+        <p className="text-sm text-caution mb-4">
           {monthlySaving > 0
             ? `Při odkládání ${czkPerMonth(monthlySaving)} na akontaci do 10 let nedosáhnete. Zkuste částku zvýšit posuvníkem v kalkulačce níže.`
             : 'Dokud na akontaci nic měsíčně neodkládáte, nenaspoříte ji. Částku nastavíte posuvníkem v kalkulačce níže.'}

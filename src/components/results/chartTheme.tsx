@@ -55,10 +55,10 @@ const LIGHT: ChartColors = {
   accent: '#eda100',
   accent2: '#4a3aa7',
   neutral: '#c9c8c2',
-  grid: '#e1e0d9',
-  axis: '#c3c2b7',
-  tick: '#898781',
-  surface: '#ffffff',
+  grid: '#e6e4d8',      // line
+  axis: '#d9d7ca',      // line-strong
+  tick: '#6e6c63',      // ink-muted
+  surface: '#fbfaf7',   // paper
   categorical: {
     housing: '#2a78d6',      // 1 modrá
     food: '#eb6834',         // 2 oranžová
@@ -81,10 +81,10 @@ const DARK: ChartColors = {
   accent: '#c98500',
   accent2: '#9085e9',
   neutral: '#6b7280',
-  grid: '#2c2c2a',
-  axis: '#383835',
-  tick: '#a3a29c',
-  surface: '#1f2937', // tailwind gray-800 (pozadí karty v dark)
+  grid: '#1f322e',      // line
+  axis: '#2b4640',      // line-strong
+  tick: '#93a49e',      // ink-muted
+  surface: '#132320',   // card
   categorical: {
     housing: '#3987e5',
     food: '#d95926',

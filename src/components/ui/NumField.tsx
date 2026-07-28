@@ -104,7 +104,7 @@ export default function NumField({
   const field = suffix ? (
     <div className="relative flex-1 min-w-0">
       {input}
-      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">
+      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-ink-faint text-xs pointer-events-none">
         {suffix}
       </span>
     </div>
@@ -124,9 +124,9 @@ export default function NumField({
   };
 
   const btn =
-    'flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-gray-300 ' +
-    'dark:border-gray-600 bg-white dark:bg-gray-700 text-ink-body text-lg font-bold ' +
-    'hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed';
+    'flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong ' +
+    'dark:border-line bg-card text-ink-body text-lg font-bold ' +
+    'hover:bg-sunken disabled:opacity-40 disabled:cursor-not-allowed';
 
   return (
     <div className="flex items-center gap-1">

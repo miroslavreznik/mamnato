@@ -30,7 +30,7 @@ function AgeField({ label, value, onChange, tooltip }: {
         suffix="let"
         placeholder="např. 34"
         ariaLabel={label}
-        className={fieldClass('w-full px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-blue-500')}
+        className={fieldClass('w-full px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-ink')}
       />
     </div>
   );
@@ -88,7 +88,7 @@ export default function Step2Income() {
         />
       )}
 
-      <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-700 dark:text-gray-300 rounded-lg text-sm text-gray-600">
+      <div className="mt-4 p-3 bg-sunken-label rounded-lg text-sm text-ink-body">
         Celkový příjem domácnosti:{' '}
         <span className="font-semibold text-ink">
           {(

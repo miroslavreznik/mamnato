@@ -27,7 +27,7 @@ export default function OneOffCosts({ state }: { state: WizardState }) {
       <div className="space-y-1">
         {costs.items.map((item) => (
           <div key={item.key} className="flex justify-between gap-3 text-xs">
-            <span className="text-gray-600 dark:text-gray-400">{item.label}</span>
+            <span className="text-ink-body">{item.label}</span>
             <span className="text-ink-muted shrink-0">{czk(item.min)} až {czk(item.max)}</span>
           </div>
         ))}

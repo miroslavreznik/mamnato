@@ -31,8 +31,8 @@ function Action({ label, onClick, icon, tone = 'plain', title, alwaysLabel = fal
   alwaysLabel?: boolean;
 }) {
   const styles = tone === 'danger'
-    ? 'text-danger hover:bg-red-50 dark:hover:bg-red-900/20'
-    : 'text-ink-body hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white';
+    ? 'text-danger hover:bg-tint-danger'
+    : 'text-ink-body hover:bg-sunken hover:text-ink';
 
   return (
     <button
@@ -67,7 +67,7 @@ export default function ResultsHeader({ mode, shareCopied, onShare, onPrint, onE
     <div className="mb-4 rounded-2xl border border-line bg-card px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div className="flex items-center gap-2.5 min-w-0">
         <h2 className="text-xl font-semibold text-ink truncate">Váš finanční plán</h2>
-        <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-ink-body">
+        <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-sunken text-ink-body">
           {MODE_LABELS[mode]}
         </span>
       </div>
@@ -96,7 +96,7 @@ export default function ResultsHeader({ mode, shareCopied, onShare, onPrint, onE
           onClick={onEdit}
           icon={<Icon path="M11 4H4v16h16v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z" />}
         />
-        <span className="w-px h-6 mx-1 bg-gray-200 dark:bg-gray-700" aria-hidden="true" />
+        <span className="w-px h-6 mx-1 bg-shell" aria-hidden="true" />
         <Action
           label="Začít znovu"
           onClick={onReset}

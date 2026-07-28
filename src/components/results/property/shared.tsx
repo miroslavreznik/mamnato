@@ -20,7 +20,7 @@ export function StepButton({ onClick, disabled, label, children }: {
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong bg-white dark:bg-gray-700 text-ink-body text-lg font-bold hover:bg-gray-100 dark:hover:bg-gray-600 disabled:opacity-40 disabled:cursor-not-allowed"
+      className="flex-shrink-0 w-11 h-11 flex items-center justify-center rounded-lg border border-line-strong bg-card text-ink-body text-lg font-bold hover:bg-sunken disabled:opacity-40 disabled:cursor-not-allowed"
     >
       {children}
     </button>
@@ -35,7 +35,7 @@ export function Row({ label, value, highlight, bold, tooltip }: {
   bold?: boolean;
   tooltip?: string;
 }) {
-  const valueColor = highlight === 'red' ? 'text-red-600' : highlight === 'green' ? 'text-green-600' : 'text-ink';
+  const valueColor = highlight === 'red' ? 'text-danger' : highlight === 'green' ? 'text-good' : 'text-ink';
   return (
     <div className="flex justify-between items-center gap-3">
       <span className="text-ink-body flex items-center min-w-0">

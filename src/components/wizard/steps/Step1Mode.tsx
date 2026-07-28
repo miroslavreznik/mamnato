@@ -37,8 +37,8 @@ export default function Step1Mode() {
             data-testid={`mode-${m.value}`}
             className={`flex items-center gap-4 p-4 border-2 rounded-xl text-left transition-colors min-h-[44px] ${
               state.mode === m.value
-                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/30'
-                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 bg-white dark:bg-gray-700'
+                ? 'border-ink bg-tint-brand'
+                : 'border-line hover:border-line-strong bg-card'
             }`}
           >
             <span className="text-2xl">{m.icon}</span>
@@ -63,7 +63,7 @@ export default function Step1Mode() {
             aria-label="Počet dětí"
             value={state.numberOfChildren ?? 1}
             onChange={(e) => dispatch({ type: 'SET_NUMBER_OF_CHILDREN', count: parseInt(e.target.value) })}
-            className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white')}
+            className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-ink bg-card')}
           >
             {[1, 2, 3, 4, 5].map((n) => (
               <option key={n} value={n}>{n}</option>

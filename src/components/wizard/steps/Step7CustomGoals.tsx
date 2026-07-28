@@ -52,7 +52,7 @@ export default function Step7CustomGoals() {
       </p>
 
       <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm text-gray-600 dark:text-gray-400">Časový horizont v:</span>
+        <span className="text-sm text-ink-body">Časový horizont v:</span>
         {(['months', 'years'] as const).map((unit) => (
           <button
             key={unit}
@@ -60,7 +60,7 @@ export default function Step7CustomGoals() {
             onClick={() => setTimeUnit(unit)}
             className={`px-3 py-1 text-sm rounded-lg ${
               timeUnit === unit
-                ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                ? 'bg-tint-brand text-brand'
                 : 'text-ink-muted'
             }`}
           >
@@ -81,7 +81,7 @@ export default function Step7CustomGoals() {
                   <button
                     type="button"
                     onClick={() => removeGoal(goal.id)}
-                    className="text-red-400 hover:text-red-600 text-sm"
+                    className="text-danger hover:text-danger text-sm"
                   >
                     Odebrat
                   </button>
@@ -123,7 +123,7 @@ export default function Step7CustomGoals() {
               </div>
 
               {requiredMonthly > 0 && (
-                <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-3 text-sm text-ink-body">
                   Odpovídá spoření{' '}
                   <span className="font-semibold text-ink">
                     {requiredMonthly.toLocaleString('cs-CZ')} Kč/měs.
@@ -138,7 +138,7 @@ export default function Step7CustomGoals() {
       <button
         type="button"
         onClick={addGoal}
-        className="mt-4 px-4 py-2 text-sm text-brand border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 min-h-[44px]"
+        className="mt-4 px-4 py-2 text-sm text-brand border border-line rounded-lg hover:bg-tint-brand min-h-[44px]"
       >
         + Přidat další cíl
       </button>
@@ -146,11 +146,11 @@ export default function Step7CustomGoals() {
       {goals.length > 0 && (
         <div className="mt-5 p-4 rounded-xl bg-sunken text-sm">
           <div className="flex justify-between">
-            <span className="text-gray-600 dark:text-gray-400">Celkem potřeba měsíčně na cíle:</span>
+            <span className="text-ink-body">Celkem potřeba měsíčně na cíle:</span>
             <span className="font-semibold text-ink">{totalNeeded.toLocaleString('cs-CZ')} Kč/měs.</span>
           </div>
           <div className="flex justify-between mt-1">
-            <span className="text-gray-600 dark:text-gray-400">Máte k dispozici:</span>
+            <span className="text-ink-body">Máte k dispozici:</span>
             <span className="font-semibold text-ink">{Math.round(disposable).toLocaleString('cs-CZ')} Kč/měs.</span>
           </div>
           {overBudget && (

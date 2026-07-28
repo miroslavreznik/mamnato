@@ -3,44 +3,47 @@ import type { ReactNode } from 'react';
 /**
  * Tónovaný box se sdělením: zvládnuté, pozor, nevychází, poznámka.
  *
- * Podklady stavů byly rozepsané po komponentách jako čtveřice tříd
- * („bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300"),
- * v každé o kus jinak. Odstíny stavů teď drží jedno místo.
+ * Podklady stavů byly rozepsané po komponentách jako čtveřice tříd (světlá
+ * a tmavá výplň, světlý a tmavý text), v každé o kus jinak. Odstíny stavů
+ * teď drží jedno místo a tmavý režim řeší proměnná, ne druhá sada tříd.
  *
  * Rozestupy zůstávají na volajícím (`className`), protože se případ od případu
  * liší a sjednocovat je má smysl až s novým vzhledem, ne teď.
  *
- * Pozor: `ui/Alert.tsx` dělá totéž, ale s vlastní, o kousek jinou paletou
- * (žlutá místo jantarové, tmavší modrý text) a s emoji. Při redesignu je
- * potřeba je sloučit; teď by to znamenalo měnit vzhled, ne ho jen uklidit.
+ * Obrys je od nového vzhledu ve všech tónech neutrální. Návrh chce jednu
+ * úroveň ohraničení: vnitřní bloky se odlišují výplní, nikdy obrysem.
+ * Proto `border` u tónů nic nerozlišuje a při dalším kroku redesignu
+ * nejspíš zmizí úplně i s propem.
+ *
+ * Pozor: `ui/Alert.tsx` dělá totéž, ale s emoji a vlastní sadou tónů.
+ * Sloučit je patří k překreslení sdílených prvků, ne sem.
  *
  * Schválně sem zatím nepřešly:
- * - vybrané dlaždice (`border-blue-500 bg-blue-50 dark:bg-blue-900/30`) v kroku
- *   režimu, cílů a u rodičovské. To není sdělení, ale stav výběru, a má i jinou
- *   průhlednost v tmavém režimu.
- * - prázdný stav „vyberte si cíle" v `ResultsDashboard`, který je `rounded-xl`,
- *   `p-6` a na střed. Přepsat odsazení přes `className` by znamenalo spoléhat
- *   na pořadí tříd ve výsledném CSS, což není zaručené.
- * - verdikt v `ResultsOverview`, který má čtyři tóny odpovědi včetně oranžové.
+ * - vybrané dlaždice v kroku režimu, cílů a u rodičovské. To není sdělení,
+ *   ale stav výběru.
+ * - prázdný stav „vyberte si cíle" v `ResultsDashboard`, který má jinou
+ *   geometrii (větší rádius, větší odsazení, na střed). Přepsat ji přes
+ *   `className` by spoléhalo na pořadí tříd ve výsledném CSS.
+ * - verdikt v `ResultsOverview`, který má čtyři tóny odpovědi.
  */
 export type CalloutTone = 'brand' | 'good' | 'caution' | 'danger' | 'neutral';
 
 const TONES: Record<CalloutTone, { fill: string; edge: string }> = {
   brand: {
-    fill: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
-    edge: 'border-blue-200 dark:border-blue-800',
+    fill: 'bg-tint-brand text-brand',
+    edge: 'border-line',
   },
   good: {
-    fill: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300',
-    edge: 'border-emerald-200 dark:border-emerald-800',
+    fill: 'bg-tint-good text-good',
+    edge: 'border-line',
   },
   caution: {
-    fill: 'bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300',
-    edge: 'border-amber-200 dark:border-amber-700',
+    fill: 'bg-tint-caution text-caution',
+    edge: 'border-line',
   },
   danger: {
-    fill: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300',
-    edge: 'border-red-200 dark:border-red-800',
+    fill: 'bg-tint-danger text-danger',
+    edge: 'border-line',
   },
   neutral: {
     fill: 'bg-sunken text-ink-body',
