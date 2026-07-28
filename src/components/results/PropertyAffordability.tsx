@@ -18,6 +18,7 @@ import DownPaymentSlider from './property/DownPaymentSlider';
 import MonthlySavingSlider from './property/MonthlySavingSlider';
 import RateSlider from './property/RateSlider';
 import OneOffCosts from './property/OneOffCosts';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -55,9 +56,7 @@ export default function PropertyAffordability({
   const fixationYears = fixationYearsOf(state);
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-      <h3 className="text-lg font-semibold text-ink mb-4">Kalkulačka nemovitosti</h3>
-
+    <Card title="Kalkulačka nemovitosti">
       <div className="space-y-3 text-sm">
         <Row label="Cena nemovitosti" value={czk(state.property.targetPrice)} />
         <Row
@@ -116,6 +115,6 @@ export default function PropertyAffordability({
         Za {formatYears(fixationYears)} vám končí fixace úrokové sazby.
         Zhruba rok předem začněte porovnávat nabídky refinancování u jiných bank. Po skončení fixace lze hypotéku bez sankce přenést jinam.
       </div>
-    </div>
+    </Card>
   );
 }

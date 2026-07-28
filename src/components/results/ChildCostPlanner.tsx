@@ -6,6 +6,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -32,7 +33,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
   );
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       <div className="flex items-start gap-3 mb-4">
         <span className="text-3xl">👶</span>
         <div className="flex-1">
@@ -176,6 +177,6 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
         onChange={onChangeAllocation}
         hint="Částka se promítne do rozpočtu i do celkového verdiktu."
       />
-    </div>
+    </Card>
   );
 }

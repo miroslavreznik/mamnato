@@ -5,6 +5,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, 
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
 import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -35,7 +36,7 @@ export default function WealthTimelineChart({ state }: Props) {
   ].filter((e): e is { month: number; label: string } => e !== null);
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       <h3 className="text-lg font-semibold text-ink mb-1 flex items-center">
         Vývoj jmění v čase
         <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Bez výnosů z investic a inflace, konzervativní odhad." />
@@ -118,6 +119,6 @@ export default function WealthTimelineChart({ state }: Props) {
       <p className="mt-2 text-xs text-ink-faint">
         Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace. Spoření na cíle zůstává součástí jmění.
       </p>
-    </div>
+    </Card>
   );
 }

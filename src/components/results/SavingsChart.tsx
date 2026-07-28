@@ -6,6 +6,7 @@ import { formatMonths, czkPerMonth } from '../../engine/format';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import Alert from '../ui/Alert';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -29,10 +30,8 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
 
   if (disposable <= 0) {
     return (
-      <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-        <h3 className="text-lg font-semibold text-ink mb-4">Vývoj úspor v čase</h3>
-        <Alert type="warning">Při záporné disponibilní částce nelze zobrazit projekci úspor.</Alert>
-      </div>
+      <Card title="Vývoj úspor v čase">        <Alert type="warning">Při záporné disponibilní částce nelze zobrazit projekci úspor.</Alert>
+      </Card>
     );
   }
 
@@ -47,7 +46,7 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
     }));
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       <h3 className="text-lg font-semibold text-ink mb-1">Vývoj úspor v čase</h3>
       {intersectMonth !== undefined && intersectMonth > 0 && (
         <p className="text-sm text-green-600 mb-4">
@@ -87,6 +86,6 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
           <Area type="monotone" dataKey="savings" stroke={colors.primary} strokeWidth={2} fill="url(#savings-grad)" dot={false} />
         </AreaChart>
       </ResponsiveContainer>
-    </div>
+    </Card>
   );
 }

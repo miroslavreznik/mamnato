@@ -4,6 +4,7 @@ import { discretionaryGroupTotals } from '../../engine/discretionary';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, axisProps, fmtKcShort, fmtKc } from './chartTheme';
 import { totalMonthlyIncome } from '../../engine/cashflow';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -32,12 +33,7 @@ export default function DiscretionaryBreakdownChart({ state }: Props) {
   const labelByKey = Object.fromEntries(groups.map((g) => [g.key, g.label]));
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-      <h3 className="text-lg font-semibold text-ink mb-1">Zbytné výdaje: za co utrácíte</h3>
-      <p className="text-sm text-ink-muted mb-4">
-        Podrobný rozpis zbytných výdajů ({fmtKc(total)}/měs., {shareOfIncome.toFixed(0)} % příjmu). Tohle jsou výdaje, které lze při výpadku příjmů nejsnáz omezit.
-      </p>
-
+    <Card title="Zbytné výdaje: za co utrácíte" subtitle={<>Podrobný rozpis zbytných výdajů ({fmtKc(total)}/měs., {shareOfIncome.toFixed(0)} % příjmu). Tohle jsou výdaje, které lze při výpadku příjmů nejsnáz omezit.</>}>
       <ResponsiveContainer width="100%" height={70}>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 8, left: 8, bottom: 0 }}>
           <XAxis type="number" tickFormatter={fmtKcShort} {...axisProps(colors)} />
@@ -95,6 +91,6 @@ export default function DiscretionaryBreakdownChart({ state }: Props) {
       >
         {showItems ? 'Skrýt jednotlivé položky' : 'Zobrazit jednotlivé položky'}
       </button>
-    </div>
+    </Card>
   );
 }

@@ -18,10 +18,15 @@ import { test, expect, type Page } from '@playwright/test'
  * prohlížeče, takže otisk z tohohle kontejneru by v CI hlásil rozdíly, které
  * nikdo neudělal. Je to nástroj pro jedno sezení, ne test v CI.
  *
- * Práh je nula rozdílných pixelů. Ověřeno, že to jde: dva běhy nezměněného
- * kódu se shodly, jakmile se vypnuly animace. Bez toho se snímky lišily
- * i samy se sebou, protože grafy dojíždějí.
+ * Práh je nula rozdílných pixelů. Ověřeno, že to jde, ale chce to dvě věci:
+ * vypnout CSS animace a počkat, až dojedou grafy. Recharts animuje z
+ * JavaScriptu, ne CSS, takže `animation: none` na něj nestačí a snímek
+ * pořízený moc brzy se lišil i sám se sebou (u sloupcového grafu o dvacet
+ * pět tisíc pixelů). Výchozí animace Rechartu trvá 1500 ms, čeká se déle.
  */
+
+// Kolik počkat, než graf dojede. Recharts má výchozí animaci 1500 ms.
+const CHART_SETTLE = 2500
 
 const enabled = !!process.env.VISUAL
 test.skip(!enabled, 'Vizuální porovnání běží jen s VISUAL=1')
@@ -54,14 +59,13 @@ async function walk(page: Page, tag: string) {
   await next(page)
   await next(page)
   await expect(page.getByText('Váš finanční plán')).toBeVisible()
-  // Grafy potřebují čas na dokreslení, jinak se otisk pořizuje uprostřed animace.
-  await page.waitForTimeout(1200)
+  await page.waitForTimeout(CHART_SETTLE)
   await freeze(page)
   await expect(page).toHaveScreenshot(`${tag}-souhrn.png`, { fullPage: true, maxDiffPixels: 0 })
 
   for (const tab of ['Rozpočet', 'Bydlení', 'Ostatní cíle', 'Slovníček']) {
     await page.getByRole('tab', { name: tab, exact: true }).click()
-    await page.waitForTimeout(900)
+    await page.waitForTimeout(CHART_SETTLE)
     await freeze(page)
     await expect(page).toHaveScreenshot(`${tag}-${tab}.png`, { fullPage: true, maxDiffPixels: 0 })
   }

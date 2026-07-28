@@ -8,6 +8,7 @@ import NumField from '../ui/NumField';
 import HelpTip from '../ui/Tooltip';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import { czk } from '../../engine/format';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -44,13 +45,8 @@ export default function InvestmentComparisonChart({ state }: Props) {
       : `nájem s investováním rozdílu vychází o ${czk(gap)} líp než koupě. Platí to ale jen tehdy, když ten rozdíl opravdu investujete.`;
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-      <h3 className="text-lg font-semibold text-ink mb-1">Koupě vs. nájem: vývoj čistého jmění</h3>
-      <p className="text-sm text-ink-muted mb-4">
-        Všechny tři čáry ukazují <span className="text-ink-body">čisté jmění</span>, tedy co byste měli, kdybyste
-        všechno prodali a doplatili dluhy. Startují na stejné částce: vlastník ji dá do akontace, nájemník ji investuje.
-      </p>
-
+    <Card title="Koupě vs. nájem: vývoj čistého jmění" subtitle={<>Všechny tři čáry ukazují <span className="text-ink-body">čisté jmění</span>, tedy co byste měli, kdybyste
+        všechno prodali a doplatili dluhy. Startují na stejné částce: vlastník ji dá do akontace, nájemník ji investuje.</>}>
       {/* Bez tohohle vysvětlení nešlo poznat, co která čára znamená. */}
       <ul className="mb-4 space-y-1 text-xs text-ink-muted">
         <li><span className="font-medium text-ink-label">Koupě nemovitosti:</span> hodnota nemovitosti minus zbytek hypotéky. Když vyjde vlastnictví levněji než nájem, rozdíl se investuje.</li>
@@ -157,6 +153,6 @@ export default function InvestmentComparisonChart({ state }: Props) {
         jednorázové náklady koupě ani odpočet úroků z daní. Počítá se s tím, že nájemník rozdíl
         opravdu každý měsíc investuje a nesáhne na něj, což se v praxi povede málokomu.
       </p>
-    </div>
+    </Card>
   );
 }

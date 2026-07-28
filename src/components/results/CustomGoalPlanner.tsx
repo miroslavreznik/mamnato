@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -136,7 +137,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
   };
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       <h3 className="text-lg font-semibold text-ink mb-2">Vlastní finanční cíle</h3>
       <p className="text-sm text-ink-muted mb-4">
         Seřaď cíle podle důležitosti. Začneme od nejvyššího a uvidíme, na které ještě zbývá.
@@ -356,6 +357,6 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
       >
         + Přidat další cíl
       </button>
-    </div>
+    </Card>
   );
 }

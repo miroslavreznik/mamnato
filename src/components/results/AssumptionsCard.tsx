@@ -1,6 +1,7 @@
 import type { WizardState } from '../../types';
 import { buildAssumptions } from '../../engine/assumptions';
 import { DEFAULTS_DATE } from '../../engine/defaults';
+import Card from '../ui/Card';
 
 /**
  * Předpoklady výpočtu.
@@ -33,7 +34,7 @@ export default function AssumptionsCard({ state }: { state: WizardState }) {
   );
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       <details className="no-print">
         <summary className="cursor-pointer list-none">
           <span className="text-lg font-semibold text-ink">Z čeho přehled počítá</span>
@@ -54,6 +55,6 @@ export default function AssumptionsCard({ state }: { state: WizardState }) {
         Položky označené jako odhad si appka dopočítala z ostatních hodnot, nezadávali jste je.
         Výchozí ekonomická data jsou z {DEFAULTS_DATE}. Jde o orientační model, ne o nabídku banky.
       </p>
-    </div>
+    </Card>
   );
 }

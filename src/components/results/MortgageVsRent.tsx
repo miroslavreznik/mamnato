@@ -1,6 +1,7 @@
 import type { WizardState } from '../../types';
 import { mortgageRate, loanAmount as loanAmountOf, mortgagePayment, ownershipCosts as ownershipCostsOf } from '../../engine/mortgage';
 import { formatNumber as fmt } from '../../engine/format';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -26,9 +27,7 @@ export default function MortgageVsRent({ state }: Props) {
   const effectiveDiff = Math.round(totalOwnership - firstPrincipal - totalRent);
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-      <h3 className="text-lg font-semibold text-ink mb-4">Celkové náklady na bydlení</h3>
-
+    <Card title="Celkové náklady na bydlení">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div className="text-sm text-ink-muted mb-2 text-center">Nyní (nájem)</div>
@@ -81,6 +80,6 @@ export default function MortgageVsRent({ state }: Props) {
         Zpočátku ale ~{fmt(firstPrincipal)} Kč ze splátky spoříte do vlastní nemovitosti (jistina), takže „čistý náklad navíc" oproti nájmu je jen zhruba{' '}
         <span className="font-medium text-ink-label">{effectiveDiff > 0 ? `${fmt(effectiveDiff)} Kč` : '0 Kč (vlastnictví vychází levněji)'}</span>. Celkový dopad na majetek ukazuje graf níže.
       </p>
-    </div>
+    </Card>
   );
 }

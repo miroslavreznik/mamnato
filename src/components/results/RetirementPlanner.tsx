@@ -7,6 +7,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import SortedTooltip from '../ui/SortedTooltip';
 import NumField from '../ui/NumField';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
+import Card from '../ui/Card';
 
 const INFLATION = DEFAULTS.averageCzInflation;
 
@@ -81,9 +82,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
   const tableProjections = showInflation && realProjections ? realProjections : nominalProjections;
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-      <h3 className="text-lg font-semibold text-ink mb-4">Plán spoření na důchod</h3>
-
+    <Card title="Plán spoření na důchod">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
         <div>
           <label className="block text-sm font-medium text-ink-label mb-1">
@@ -323,6 +322,6 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
         Výnosy jsou historické průměry. Skutečné výsledky se mohou lišit.
         {showInflation && ` Inflace: ${(INFLATION * 100).toFixed(0)} % ročně (dlouhodobý průměr ČNB).`}
       </p>
-    </div>
+    </Card>
   );
 }

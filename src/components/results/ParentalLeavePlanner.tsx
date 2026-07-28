@@ -10,6 +10,7 @@ import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
 import EstimateNote from '../ui/EstimateNote';
 import { formatNumber as fmt } from '../../engine/format';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -43,18 +44,13 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
 
   if (!enabled || !impact) {
     return (
-      <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-        <h3 className="text-lg font-semibold text-ink mb-1">Rodičovská: co udělá s rozpočtem</h3>
-        <p className="text-sm text-ink-muted mb-4">
-          Když jeden z vás zůstane doma s dítětem, na čas klesne příjem (mateřská a rodičovská bývají nižší než mzda). Spočítejte si, jestli to rozpočet, a hlavně splátka hypotéky, během volna zvládne.
-        </p>
-        <button
+      <Card title="Rodičovská: co udělá s rozpočtem" subtitle="Když jeden z vás zůstane doma s dítětem, na čas klesne příjem (mateřská a rodičovská bývají nižší než mzda). Spočítejte si, jestli to rozpočet, a hlavně splátka hypotéky, během volna zvládne.">        <button
           onClick={enable}
           className="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white min-h-[44px]"
         >
           Spočítat dopad rodičovské
         </button>
-      </div>
+      </Card>
     );
   }
 
@@ -79,7 +75,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
   };
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       <div className="flex items-start justify-between gap-2 mb-1">
         <h3 className="text-lg font-semibold text-ink">Rodičovská: co udělá s rozpočtem</h3>
         <button onClick={() => onChange(undefined)} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0">
@@ -220,6 +216,6 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         <span className="font-semibold text-ink">{fmt(impact.savingsLostTotal)} Kč</span>
         {', o tolik méně naspoříte (nebo tolik budete potřebovat v rezervě).'}
       </p>
-    </div>
+    </Card>
   );
 }

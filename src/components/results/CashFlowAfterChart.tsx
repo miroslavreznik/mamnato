@@ -4,6 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import SortedTooltip from '../ui/SortedTooltip';
 import Alert from '../ui/Alert';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -25,12 +26,7 @@ export default function CashFlowAfterChart({ state }: Props) {
     }));
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-      <h3 className="text-lg font-semibold text-ink mb-1">Výhled: vývoj úspor s koupí vs. bez</h3>
-      <p className="text-sm text-ink-muted mb-4">
-        Jak by rostly (nebo klesaly) vaše úspory v čase, kdybyste nemovitost koupili, nebo zůstali v nájmu.
-      </p>
-
+    <Card title="Výhled: vývoj úspor s koupí vs. bez" subtitle="Jak by rostly (nebo klesaly) vaše úspory v čase, kdybyste nemovitost koupili, nebo zůstali v nájmu.">
       {permanentlyNegative && (
         <div className="mb-4">
           <Alert type="warning">Po koupi nemovitosti by vaše úspory postupně klesaly. Měsíční výdaje by převýšily příjem.</Alert>
@@ -65,6 +61,6 @@ export default function CashFlowAfterChart({ state }: Props) {
           <Area type="monotone" dataKey="afterPurchase" stroke={colors.positive} strokeWidth={2} fill="url(#cf-after)" dot={false} />
         </AreaChart>
       </ResponsiveContainer>
-    </div>
+    </Card>
   );
 }

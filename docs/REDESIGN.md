@@ -175,18 +175,29 @@ podobné, asi 66 výskytů) a **hover stavy**. Jsou nepravidelné a většina z 
 zmizí sama, až vzniknou primitiva (`Card`, `Callout`). Rádiusy jsou pořád tři
 bez pravidla: `rounded-lg` 80×, `rounded-xl` 40×, `rounded-2xl` 5×.
 
-### Chrome karty je zkopírovaná devatenáctkrát
+### ~~Chrome karty je zkopírovaná devatenáctkrát~~ (hotovo)
+
+Tenhle řetězec byl v sedmnácti souborech:
 
 ```
 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6
 ```
 
-Tenhle řetězec (nebo jeho varianta) je v 17 souborech. Neexistuje `<Card>`,
-`<Section>`, `<Badge>` ani `<Button>`. Existují jen tři primitiva:
-`Tooltip`, `NumberInput`/`NumField` a `Alert`.
+Nahradila ho `ui/Card.tsx`:
 
-**Důsledek:** jakákoli změna vzhledu karty se dělá devatenáctkrát a jedno
-místo se zapomene.
+```tsx
+<Card title="Kalkulačka nemovitosti">…</Card>
+<Card title="Daňové úlevy" subtitle="…">…</Card>
+```
+
+Hlavička má dvě podoby a obě se do komponenty vešly beze změny rozestupů:
+samotný nadpis (`mb-4`), nebo nadpis těsně nad podnadpisem (`mb-1` a `mb-4`).
+Ověřeno pixelovým porovnáním: nula rozdílných pixelů ve dvaceti čtyřech
+snímcích.
+
+**Zbývá:** `Badge` (nálepky stavů), `Callout` (tónované boxy, dnes i jako
+`ui/Alert.tsx`) a `Button`. Tam se schovává většina tónovaných podkladů,
+které nepokryly proměnné.
 
 ### 24 komponent je čistě vizuálních, 28 čte z enginu
 

@@ -10,6 +10,7 @@ import { discretionaryGroupTotals, hasDiscretionaryBreakdown } from '../../engin
 import HelpTip from '../ui/Tooltip';
 import { Chip } from './budget/Chip';
 import { toggle } from './budget/toggle';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -175,13 +176,8 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
 
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
-      <h3 className="text-lg font-semibold text-ink mb-1">Co kdyby: kam jde váš příjem</h3>
-      <p className="text-sm text-ink-muted mb-4">
-        Celý měsíční příjem ({fmtKc(income)}) rozdělený na výdaje, cíle a volnou rezervu.{' '}
-        <span className="text-ink-body">Klepnutím na položku ji vypnete</span> a hned uvidíte, jestli by vám pak na zbytek vyšlo. Zkuste třeba vypnout dovolenou nebo dítě.
-      </p>
-
+    <Card title="Co kdyby: kam jde váš příjem" subtitle={<>Celý měsíční příjem ({fmtKc(income)}) rozdělený na výdaje, cíle a volnou rezervu.{' '}
+        <span className="text-ink-body">Klepnutím na položku ji vypnete</span> a hned uvidíte, jestli by vám pak na zbytek vyšlo. Zkuste třeba vypnout dovolenou nebo dítě.</>}>
       {/* Výsledek pokusu: změnila se odpověď „Mám na to?" */}
       {whatIf && (
         <div className={`mb-4 p-3 rounded-lg border text-sm ${
@@ -383,6 +379,6 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
         )}
       </div>
 
-    </div>
+    </Card>
   );
 }

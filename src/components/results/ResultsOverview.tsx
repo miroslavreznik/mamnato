@@ -9,6 +9,7 @@ import { DEFAULTS } from '../../engine/defaults';
 import { formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
+import Card from '../ui/Card';
 
 interface Props {
   state: WizardState;
@@ -187,7 +188,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   const readinessGoals = summary.goals;
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       {/* Odpověď na otázku z názvu appky i její rozbor. Jedna karta, aby se
           totéž neříkalo dvakrát za sebou. */}
       <div className={`rounded-xl border p-5 sm:p-6 mb-5 ${verdictStyles[summary.verdict.answer].box}`}>
@@ -311,6 +312,6 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
         </div>
       )}
 
-    </div>
+    </Card>
   );
 }

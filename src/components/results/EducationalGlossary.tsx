@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Card from '../ui/Card';
 
 /**
  * Slovníček pojmů, které appka používá ve výsledcích.
@@ -185,7 +186,7 @@ function GlossaryRow({ item }: { item: GlossaryItem }) {
 
 export default function EducationalGlossary() {
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-line p-6">
+    <Card>
       <p className="text-sm text-ink-muted mb-4">
         Pojmy, které appka ve výsledcích používá, vysvětlené normálně a s příklady.
         Nemusíte je znát dopředu; jsou tu pro chvíli, kdy na některý narazíte.
@@ -204,6 +205,6 @@ export default function EducationalGlossary() {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
