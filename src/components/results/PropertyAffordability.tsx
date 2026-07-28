@@ -19,6 +19,7 @@ import MonthlySavingSlider from './property/MonthlySavingSlider';
 import RateSlider from './property/RateSlider';
 import OneOffCosts from './property/OneOffCosts';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 
 interface Props {
   state: WizardState;
@@ -110,11 +111,11 @@ export default function PropertyAffordability({
 
       <OneOffCosts state={state} />
 
-      <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm text-blue-700 dark:text-blue-300">
+      <Callout tone="brand" className="mt-4">
         <span className="font-semibold">Nezapomeňte na refixaci.</span>{' '}
         Za {formatYears(fixationYears)} vám končí fixace úrokové sazby.
         Zhruba rok předem začněte porovnávat nabídky refinancování u jiných bank. Po skončení fixace lze hypotéku bez sankce přenést jinam.
-      </div>
+      </Callout>
     </Card>
   );
 }

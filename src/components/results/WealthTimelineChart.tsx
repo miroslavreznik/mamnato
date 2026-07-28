@@ -6,6 +6,7 @@ import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chart
 import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 
 interface Props {
   state: WizardState;
@@ -100,14 +101,14 @@ export default function WealthTimelineChart({ state }: Props) {
       </ResponsiveContainer>
 
       {tl.firstNegativeMonth !== null ? (
-        <div className="mt-3 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-sm text-red-700 dark:text-red-300">
+        <Callout tone="danger" className="mt-3">
           Kolem <strong>{fmtMonth(tl.firstNegativeMonth)}</strong> by úspory klesly pod nulu (nejníž {fmtKc(tl.minCash)}).
           Plán v této podobě neprojde. Pomůže větší rezerva, levnější nemovitost, kratší rodičovská nebo odklad některé události.
-        </div>
+        </Callout>
       ) : (
-        <div className="mt-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-sm text-emerald-800 dark:text-emerald-300">
+        <Callout tone="good" className="mt-3">
           Úspory zůstávají po celou dobu v plusu. Nejnižší bod je <strong>{fmtKc(tl.minCash)}</strong> ({fmtMonth(tl.minCashMonth)}).
-        </div>
+        </Callout>
       )}
 
       {state.goals.includes('property') && tl.purchaseMonth === null && (

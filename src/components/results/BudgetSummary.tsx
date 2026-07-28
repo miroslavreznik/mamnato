@@ -1,6 +1,7 @@
 import type { BudgetView } from '../../engine/summary';
 import { czk } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
+import Callout from '../ui/Callout';
 
 /**
  * Rozpočtová věta: kolik měsíčně zbývá a kolik z toho ukusují cíle.
@@ -33,12 +34,8 @@ function Line({ budget, period, afterPurchase }: {
   period?: string;
   afterPurchase?: boolean;
 }) {
-  const box = budget.fits
-    ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300'
-    : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300';
-
   return (
-    <div className={`p-3 rounded-lg text-sm ${box} ${period ? '' : 'mb-5'}`}>
+    <Callout tone={budget.fits ? 'good' : 'danger'} className={period ? '' : 'mb-5'}>
       {period && <span className="block text-xs font-semibold uppercase tracking-wide opacity-70 mb-0.5">{period}</span>}
       {budget.fits ? (
         <>
@@ -65,6 +62,6 @@ function Line({ budget, period, afterPurchase }: {
             : ' Upravte částky u cílů níže.'}
         </>
       )}
-    </div>
+    </Callout>
   );
 }

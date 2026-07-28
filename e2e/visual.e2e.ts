@@ -18,15 +18,21 @@ import { test, expect, type Page } from '@playwright/test'
  * prohlížeče, takže otisk z tohohle kontejneru by v CI hlásil rozdíly, které
  * nikdo neudělal. Je to nástroj pro jedno sezení, ne test v CI.
  *
- * Práh je nula rozdílných pixelů. Ověřeno, že to jde, ale chce to dvě věci:
- * vypnout CSS animace a počkat, až dojedou grafy. Recharts animuje z
- * JavaScriptu, ne CSS, takže `animation: none` na něj nestačí a snímek
- * pořízený moc brzy se lišil i sám se sebou (u sloupcového grafu o dvacet
- * pět tisíc pixelů). Výchozí animace Rechartu trvá 1500 ms, čeká se déle.
+ * Práh je nula rozdílných pixelů. Aby to bylo dosažitelné, musí se srovnat
+ * dvě věci, obě kvůli grafům:
+ *
+ * 1. Recharts animuje z JavaScriptu, ne z CSS, takže `animation: none` na něj
+ *    nestačí a snímek pořízený moc brzy se lišil i sám se sebou (u sloupcového
+ *    grafu o dvacet pět tisíc pixelů). Místo pevného čekání se proto čeká na
+ *    ustálení geometrie SVG (`settleCharts`), naměřeno kolem 1,8 s.
+ *
+ * 2. `fullPage: true` si výšku okna dopočítá až v okamžiku snímku. Tím zmizí
+ *    svislý posuvník, stránka se o jeho šířku rozšíří, `ResponsiveContainer`
+ *    se přeměří a graf se překreslí a znovu rozjede, takže se snímek pořídí
+ *    uprostřed animace. Pokaždé jinde, takže se otisk lišil i proti sobě.
+ *    Okno se proto zvětší na výšku obsahu předem (`fitViewport`) a snímek
+ *    se pořizuje bez `fullPage`.
  */
-
-// Kolik počkat, než graf dojede. Recharts má výchozí animaci 1500 ms.
-const CHART_SETTLE = 2500
 
 const enabled = !!process.env.VISUAL
 test.skip(!enabled, 'Vizuální porovnání běží jen s VISUAL=1')
@@ -41,17 +47,62 @@ async function freeze(page: Page) {
   })
 }
 
-async function walk(page: Page, tag: string) {
-  await page.goto('/')
-  await freeze(page)
-  await expect(page).toHaveScreenshot(`${tag}-uvitani.png`, { fullPage: true, maxDiffPixels: 0 })
+/** Otisk geometrie všech SVG. Když se dvakrát po sobě nezmění, graf dojel. */
+const chartSignature = (page: Page) =>
+  page.evaluate(() =>
+    [...document.querySelectorAll('svg')]
+      .flatMap((s) => [...s.querySelectorAll('path,rect,line')])
+      .map((el) => el.getAttribute('d') ?? `${el.getAttribute('width')}:${el.getAttribute('x')}`)
+      .join('|')
+  )
 
+async function settleCharts(page: Page) {
+  let prev = ''
+  for (let i = 0; i < 40; i++) {
+    await page.waitForTimeout(250)
+    const now = await chartSignature(page)
+    if (now === prev) return
+    prev = now
+  }
+  throw new Error('Grafy se neustálily ani za 10 s')
+}
+
+/**
+ * Zvětší okno na výšku obsahu, aby zmizel posuvník ještě před snímkem.
+ * Výška se po překreslení může změnit, proto se to zopakuje.
+ */
+async function fitViewport(page: Page, width: number) {
+  let height = 0
+  for (let i = 0; i < 5; i++) {
+    const next = await page.evaluate(() => document.documentElement.scrollHeight)
+    if (next === height) break
+    height = next
+    await page.setViewportSize({ width, height })
+  }
+  return height
+}
+
+async function shoot(page: Page, name: string, width: number) {
+  await fitViewport(page, width)
+  await settleCharts(page)
+  await freeze(page)
+  await expect(page).toHaveScreenshot(name, { maxDiffPixels: 0 })
+}
+
+async function walk(page: Page, tag: string, width: number, height: number) {
+  const reset = () => page.setViewportSize({ width, height })
+
+  await page.setViewportSize({ width, height })
+  await page.goto('/')
+  await shoot(page, `${tag}-uvitani.png`, width)
+
+  await reset()
   await page.getByRole('button', { name: /Spustit přehled/ }).click()
   await next(page)
   await next(page)
-  await freeze(page)
-  await expect(page).toHaveScreenshot(`${tag}-vydaje.png`, { fullPage: true, maxDiffPixels: 0 })
+  await shoot(page, `${tag}-vydaje.png`, width)
 
+  await reset()
   await next(page)
   await next(page)
   await page.getByRole('button', { name: /Vlastní bydlení/ }).first().click()
@@ -59,30 +110,24 @@ async function walk(page: Page, tag: string) {
   await next(page)
   await next(page)
   await expect(page.getByText('Váš finanční plán')).toBeVisible()
-  await page.waitForTimeout(CHART_SETTLE)
-  await freeze(page)
-  await expect(page).toHaveScreenshot(`${tag}-souhrn.png`, { fullPage: true, maxDiffPixels: 0 })
+  await shoot(page, `${tag}-souhrn.png`, width)
 
   for (const tab of ['Rozpočet', 'Bydlení', 'Ostatní cíle', 'Slovníček']) {
+    await reset()
     await page.getByRole('tab', { name: tab, exact: true }).click()
-    await page.waitForTimeout(CHART_SETTLE)
-    await freeze(page)
-    await expect(page).toHaveScreenshot(`${tag}-${tab}.png`, { fullPage: true, maxDiffPixels: 0 })
+    await shoot(page, `${tag}-${tab}.png`, width)
   }
 }
 
 test('desktop, světlý režim', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 })
-  await walk(page, 'desktop')
+  await walk(page, 'desktop', 1280, 900)
 })
 
 test('desktop, tmavý režim', async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 900 })
   await page.emulateMedia({ colorScheme: 'dark' })
-  await walk(page, 'tmavy')
+  await walk(page, 'tmavy', 1280, 900)
 })
 
 test('mobil', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 })
-  await walk(page, 'mobil')
+  await walk(page, 'mobil', 390, 844)
 })

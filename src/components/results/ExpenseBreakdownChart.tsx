@@ -11,6 +11,7 @@ import HelpTip from '../ui/Tooltip';
 import { Chip } from './budget/Chip';
 import { toggle } from './budget/toggle';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 
 interface Props {
   state: WizardState;
@@ -180,13 +181,11 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
         <span className="text-ink-body">Klepnutím na položku ji vypnete</span> a hned uvidíte, jestli by vám pak na zbytek vyšlo. Zkuste třeba vypnout dovolenou nebo dítě.</>}>
       {/* Výsledek pokusu: změnila se odpověď „Mám na to?" */}
       {whatIf && (
-        <div className={`mb-4 p-3 rounded-lg border text-sm ${
-          whatIf.improved
-            ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800'
-            : whatIf.worsened
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-              : 'bg-sunken border-line'
-        }`}>
+        <Callout
+          tone={whatIf.improved ? 'good' : whatIf.worsened ? 'danger' : 'neutral'}
+          border
+          className="mb-4"
+        >
           <p className="text-gray-800 dark:text-gray-100">
             <span className="font-semibold">Bez vypnutých položek: {whatIf.now.headline}
               {whatIf.now.qualifier ? `, ${whatIf.now.qualifier}` : ''}.</span>
@@ -200,7 +199,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
           {!whatIf.improved && (
             <p className="mt-0.5 text-gray-600 dark:text-gray-400">{whatIf.hint}</p>
           )}
-        </div>
+        </Callout>
       )}
 
       {/* Stat tiles: volná rezerva */}

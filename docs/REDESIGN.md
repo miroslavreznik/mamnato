@@ -195,9 +195,21 @@ samotný nadpis (`mb-4`), nebo nadpis těsně nad podnadpisem (`mb-1` a `mb-4`).
 Ověřeno pixelovým porovnáním: nula rozdílných pixelů ve dvaceti čtyřech
 snímcích.
 
-**Zbývá:** `Badge` (nálepky stavů), `Callout` (tónované boxy, dnes i jako
-`ui/Alert.tsx`) a `Button`. Tam se schovává většina tónovaných podkladů,
-které nepokryly proměnné.
+Stejně vznikla `ui/Callout.tsx` pro tónované boxy se sdělením. Čtveřice tříd
+(`bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300`)
+byla rozepsaná po komponentách, v každé o kus jinak. Teď se předává tón:
+
+```tsx
+<Callout tone="danger" className="mt-3">…</Callout>
+<Callout tone={whatIf.improved ? 'good' : 'neutral'} border className="mb-4">…</Callout>
+```
+
+Tóny jsou `brand`, `good`, `caution`, `danger` a `neutral`. Také ověřeno
+pixelovým porovnáním na nulu.
+
+**Zbývá:** `Badge` (nálepky stavů) a `Button`. A hlavně sloučit `ui/Alert.tsx`
+s `Callout`: dělá totéž, ale s vlastní paletou (žlutá místo jantarové) a s
+emoji. Sloučení už mění vzhled, proto patří až k novému návrhu, ne před něj.
 
 ### 24 komponent je čistě vizuálních, 28 čte z enginu
 
@@ -289,9 +301,19 @@ VISUAL=1 npx playwright test --project=chromium visual --update-snapshots
 VISUAL=1 npx playwright test --project=chromium visual
 ```
 
-Práh je nula rozdílných pixelů, což jde: dva běhy nezměněného kódu se shodly,
-jakmile se vypnuly animace. Plné znění příkazu i s obejitím proxy je v
-CLAUDE.md.
+Práh je nula rozdílných pixelů a dva běhy nezměněného kódu se shodnou. Stálo
+to dvě opravy, obě kvůli grafům:
+
+- Recharts animuje z JavaScriptu, takže `animation: none` ho nezastaví. Čeká
+  se proto na ustálení geometrie SVG, ne pevný čas.
+- `fullPage: true` si výšku okna dopočítá až v okamžiku snímku. Tím zmizí
+  svislý posuvník, stránka se o jeho šířku rozšíří, `ResponsiveContainer` se
+  přeměří a graf se rozjede znovu, takže snímek padne doprostřed animace,
+  pokaždé jinam. Okno se proto zvětší na výšku obsahu předem a snímek se
+  pořizuje bez `fullPage`.
+
+Kdyby se otisk lišil sám se sebou, hledej příčinu tady, ne v náhodě. Plné
+znění příkazu i s obejitím proxy je v CLAUDE.md.
 
 ## 6. Věci, které redesign může rovnou vyřešit
 

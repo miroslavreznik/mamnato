@@ -11,6 +11,7 @@ import Tooltip from '../ui/Tooltip';
 import EstimateNote from '../ui/EstimateNote';
 import { formatNumber as fmt } from '../../engine/format';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 
 interface Props {
   state: WizardState;
@@ -178,7 +179,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
       </div>
 
       {hasProperty && afterPurchase !== null && (
-        <div className={`p-3 rounded-lg mb-3 text-sm ${afterNeg ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300' : 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300'}`}>
+        <Callout tone={afterNeg ? 'danger' : 'good'} className="mb-3">
           {afterNeg ? (
             <>
               Po koupi byste během rodičovské byli <strong>−{fmt(Math.abs(afterPurchase))} Kč/měs. v mínusu</strong>, splátku hypotéky a nezbytné výdaje byste z běžného příjmu neutáhli.{' '}
@@ -193,11 +194,11 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           ) : (
             <>I po koupi byste během rodičovské měli <strong>+{fmt(afterPurchase)} Kč/měs.</strong> po zaplacení splátky a nezbytných výdajů. Rozpočet volno ustojí.</>
           )}
-        </div>
+        </Callout>
       )}
 
       {leaveNeg && !hasProperty && (
-        <div className="p-3 rounded-lg mb-3 text-sm bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300">
+        <Callout tone="danger" className="mb-3">
           Během rodičovské by výdaje převýšily příjem o <strong>{fmt(Math.abs(impact.disposableDuringLeave))} Kč/měs.</strong>.{' '}
           {impact.reserveAfter > 0 && impact.monthsCovered !== null ? (
             impact.monthsCovered >= impact.durationMonths ? (
@@ -208,7 +209,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           ) : (
             <>Nemáte rezervu, ze které byste schodek kryli. Budete ji potřebovat vytvořit.</>
           )}
-        </div>
+        </Callout>
       )}
 
       <p className="text-sm text-gray-600 dark:text-gray-400">
