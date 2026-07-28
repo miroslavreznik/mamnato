@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import ResultsOverview from './ResultsOverview';
@@ -17,7 +18,8 @@ import ParentalLeavePlanner from './ParentalLeavePlanner';
 import TaxReliefCard from './TaxReliefCard';
 import EducationalGlossary from './EducationalGlossary';
 import ResultsSection from './ResultsSection';
-import ResultsHeader from './ResultsHeader';
+import ResultsHeader, { ModeChip } from './ResultsHeader';
+import AppBar from '../ui/AppBar';
 import ResultsTabs, { type TabDef } from './ResultsTabs';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
@@ -34,9 +36,12 @@ interface ResultsDashboardProps {
   state: WizardState;
   onEdit: () => void;
   onReset: () => void;
+  onHome: () => void;
+  /** Upozornění na cizí přehled. Kreslí ho App, ale patří dovnitř sloupce. */
+  banner?: ReactNode;
 }
 
-export default function ResultsDashboard({ state: initialState, onEdit, onReset }: ResultsDashboardProps) {
+export default function ResultsDashboard({ state: initialState, onEdit, onReset, onHome, banner }: ResultsDashboardProps) {
   // Výsledková stránka pracuje s vlastní kopií stavu, aby úpravy cílů (např.
   // ve „Vlastní finanční cíle") okamžitě přepočítaly souhrn i grafy a zároveň
   // se uložily do prohlížeče.
@@ -168,23 +173,35 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   };
 
   return (
-    <div>
-      <div className="print-only mb-4">
-        <h1 className="type-section text-ink">MámNaTo? Finanční přehled</h1>
-        <p className="text-xs text-ink-muted">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
-      </div>
-      <ResultsHeader
-        mode={state.mode}
-        shareCopied={shareCopied}
-        onShare={handleShare}
-        onPrint={handlePrint}
-        onEdit={onEdit}
-        onReset={onReset}
+    <>
+      <AppBar
+        onHome={onHome}
+        chip={<ModeChip mode={state.mode} />}
+        center={<ResultsTabs tabs={sectionDefs} active={activeTab} onSelect={selectTab} />}
+        actions={
+          <ResultsHeader
+            shareCopied={shareCopied}
+            onShare={handleShare}
+            onPrint={handlePrint}
+            onEdit={onEdit}
+            onReset={onReset}
+          />
+        }
       />
 
-      <ResultsTabs tabs={sectionDefs} active={activeTab} onSelect={selectTab} />
-
-      <div>
+      {/* Název stránky nese `aria-label`, ne nadpis. Nadpis „Váš finanční plán"
+          stál v samostatné kartě nad obsahem, kterou lišta nahradila; pro čtečku
+          ale stránka pojmenovaná zůstat musí. */}
+      <main
+        data-testid="results"
+        aria-label="Váš finanční plán"
+        className="mx-auto max-w-app px-4 py-6 sm:py-8"
+      >
+        {banner}
+        <div className="print-only mb-4">
+          <h1 className="type-section text-ink">MámNaTo? Finanční přehled</h1>
+          <p className="text-xs text-ink-muted">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
+        </div>
         {/* Souhrn: hlavní odpověď „vyjde mi to?" */}
         <ResultsSection id="souhrn" title="Souhrn" subtitle="Odpověď, čísla za ní a stav vašich cílů" active={isVisible('souhrn')}>
           <ResultsOverview state={activeState} allocations={activeAllocations} onOpenSection={selectTab} />
@@ -264,15 +281,15 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
         <ResultsSection id="slovnicek" title="Slovníček pojmů" subtitle="Co která zkratka a číslo v přehledu znamená" active={isVisible('slovnicek')}>
           <EducationalGlossary />
         </ResultsSection>
-      </div>
 
-      {/* Předpoklady patří až za rozbor, ale před právní upozornění: čte se to
-          jako „takhle jsme k tomu došli", ne jako další kapitola výsledků. */}
-      <div className="mt-6">
-        <AssumptionsCard state={activeState} />
-      </div>
+        {/* Předpoklady patří až za rozbor, ale před právní upozornění: čte se to
+            jako „takhle jsme k tomu došli", ne jako další kapitola výsledků. */}
+        <div className="mt-6">
+          <AssumptionsCard state={activeState} />
+        </div>
 
-      <Disclaimer />
-    </div>
+        <Disclaimer />
+      </main>
+    </>
   );
 }

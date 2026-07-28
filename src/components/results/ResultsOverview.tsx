@@ -168,7 +168,12 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   const readinessGoals = summary.goals;
 
   return (
-    <Card>
+    // Dva sloupce: vlevo odpověď a cíle, vpravo čísla a co s tím. Návrh dává
+    // pravému sloupci 340 px; do jednoho sloupce se to vešlo, dokud byla
+    // stránka široká 768 px, na 1280 px by řádky textu přerostly únosnou délku.
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
+      <div className="min-w-0 space-y-5">
+      <Card>
       {/* Odpověď na otázku z názvu appky i její rozbor. Jedna karta, aby se
           totéž neříkalo dvakrát za sebou. */}
       <div className={`rounded-xl border p-5 sm:p-6 mb-5 ${verdictStyles[summary.verdict.answer].box}`}>
@@ -177,7 +182,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           {/* Barva podle stavu a rámeček okolo jsou tu ještě z dnešní podoby.
               Návrh chce verdikt v `ink` přímo na papíru, bez karty a bez ikony;
               to ale patří k překreslení záložky Cesta, ne k řezům. */}
-          <p className="mt-1 type-verdict">
+          <p className="mt-1 type-verdict max-w-[54ch] mx-auto">
             <span className={verdictStyles[summary.verdict.answer].text}>{summary.verdict.headline}</span>
             {summary.verdict.qualifier && (
               <>
@@ -189,7 +194,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
               {summary.verdict.answer === 'yes' || summary.verdict.answer === 'no' ? '.' : '…'}
             </span>
           </p>
-          <p className="mt-2 text-sm font-medium text-ink-label max-w-xl mx-auto leading-relaxed">
+          <p className="mt-2 text-sm font-medium text-ink-label max-w-[62ch] mx-auto leading-relaxed">
             {summary.verdict.reason}
           </p>
         </div>
@@ -213,30 +218,6 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             })}
           </div>
         )}
-      </div>
-
-      {/* Čísla, na kterých verdikt stojí */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-        {kpis.map((k) => (
-          <HeroNumber
-            key={k.label}
-            label={<>{k.label}<Tooltip text={k.tooltip} /></>}
-            value={k.value}
-            unit={k.unit}
-            tone={k.tone}
-            note={k.sub}
-            meter={k.months === undefined ? k.meter : undefined}
-          >
-            {/* Rezerva se měří v měsících, a ty jdou spočítat. Dlaždice to
-                řeknou přesněji než proužek, který je slévá dohromady. */}
-            {k.months !== undefined && (
-              <MonthsMeter
-                months={k.months}
-                tone={k.tone === 'plain' ? 'good' : k.tone === 'caution' ? 'caution' : k.tone}
-              />
-            )}
-          </HeroNumber>
-        ))}
       </div>
 
       {/* Stav jednotlivých cílů */}
@@ -264,9 +245,40 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
       {/* Rozpočtový souhrn: dnes a po koupi */}
       {summary.budget && <BudgetSummary now={summary.budget} after={summary.budgetAfter} />}
 
-      {/* Tipy */}
+      </Card>
+      </div>
+
+      {/* Pravý sloupec: čísla, na kterých verdikt stojí, a co s tím jde dělat.
+          Na mobilu se řadí pod levý, ve stejném pořadí jako na desktopu. */}
+      <div className="min-w-0 space-y-3 lg:sticky lg:top-20">
+        {/* Čísla, na kterých verdikt stojí */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+        {kpis.map((k) => (
+          <HeroNumber
+            key={k.label}
+            label={<>{k.label}<Tooltip text={k.tooltip} /></>}
+            value={k.value}
+            unit={k.unit}
+            tone={k.tone}
+            note={k.sub}
+            meter={k.months === undefined ? k.meter : undefined}
+          >
+            {/* Rezerva se měří v měsících, a ty jdou spočítat. Dlaždice to
+                řeknou přesněji než proužek, který je slévá dohromady. */}
+            {k.months !== undefined && (
+              <MonthsMeter
+                months={k.months}
+                tone={k.tone === 'plain' ? 'good' : k.tone === 'caution' ? 'caution' : k.tone}
+              />
+            )}
+          </HeroNumber>
+        ))}
+      </div>
+
+
+        {/* Tipy */}
       {summary.tips.length > 0 && (
-        <div className="mb-4">
+        <Card>
           <h4 className="text-sm font-semibold text-ink-label mb-2">Co můžete udělat:</h4>
           <ul className="space-y-1.5">
             {summary.tips.map((tip, i) => (
@@ -291,9 +303,10 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
               </li>
             ))}
           </ul>
-        </div>
+        </Card>
       )}
 
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -295,8 +295,9 @@ Slovníček 2 341 px.
 3. ~~**Kotvy pro testy.**~~ Hotovo, viz níže.
 4. ~~**Barvy a fonty ze směru „Cesta".**~~ Hotovo, viz níže.
 5. ~~**Sdílené prvky.**~~ Hotovo, viz níže.
-6. **Skořápka.** `App.tsx` bez `max-w-3xl`, mřížka do 1280 px.
-   `ResultsTabs` na pilulky, „Souhrn" → „Cesta", přidat „Co kdyby".
+6. ~~**Skořápka.**~~ Hotovo, viz níže. Přejmenování „Souhrn" → „Cesta"
+   a záložka „Co kdyby" zůstávají na kroky 7 a 8, protože bez stuhy a bez
+   obsahu by to byly prázdné sliby.
 7. **Záložka Cesta.** `ResultsOverview` se rozpadne na `VerdictHeadline`,
    `JourneyRibbon`, `TightestPoint`, `GoalStatusGrid`, `NextSteps`.
    Největší kus, stuha ručně v SVG (ne Recharts).
@@ -307,6 +308,35 @@ Slovníček 2 341 px.
     tisk do PDF.
 
 Kroky 1 až 3 nic nepředjímaly a byly hotové, ještě než návrh existoval.
+
+### Skořápka (krok 6)
+
+**Tři lišty se slily do jedné.** Nad obsahem stály hlavička se značkou, karta
+s názvem plánu a akcemi, a pod nimi lišta se záložkami. Na mobilu to snědlo
+skoro třetinu první obrazovky, tedy přesně toho místa, kde má být vidět
+odpověď. Teď je lišta jedna (`ui/AppBar`) a obsah se do ní vkládá: uprostřed
+záložky, vpravo akce. Výsledky si ji kreslí samy, protože jen ony vědí, která
+záložka je vybraná; průvodce a úvod nechávají střed i akce prázdné.
+
+Na úzkém okně se lišta zalomí do dvou řádků. Přeskládá je zalomení flexu,
+**ne druhá kopie**: dvě kopie by znamenaly dvě sady `id`, což rozbije
+`aria-controls` u záložek a v testu se `#tab-cile` najde dvakrát. Stalo se to.
+
+**Nadpis „Váš finanční plán" zmizel** i s kartou, ve které stál. Testy ho
+používaly jako značku „jsme na výsledcích" a shodilo to dvacet z nich naráz.
+Stránka je teď pojmenovaná přes `aria-label` na `<main>` a testy míří na
+`data-testid="results"`.
+
+**Šířka 768 → 1280 px** (`--container-app`). Průvodce zůstal úzký
+(`--container-wizard`), formulář se čte po řádcích, ne po sloupcích.
+
+**Dva sloupce na Souhrnu.** Samotné rozšíření udělalo řádky textu dlouhé přes
+celou obrazovku, takže vpravo je teď sloupec 340 px s čísly a radami, přesně
+jak to má návrh. Text je omezený na 62 znaků, verdikt na 54.
+
+**Pilulkový přepínač.** Pilulky jsou široké podle textu a lišta se na úzkém
+okně posouvá. Návrh počítá s `flex:1` přes celou šířku, jenže to platí pro tři
+záložky; s pěti se „Ostatní cíle" lámalo na dva řádky a „Slovníček" se uřízl.
 
 ### Sdílené prvky (krok 5)
 

@@ -244,6 +244,12 @@
 
   /* Řezy. Display nese verdikt a čísla hrdinů, mono jen malé verzálkové
      popisky. Víc řezů návrh nechce. */
+  /* Šířky obsahu. Návrh chce na desktopu 1280 px, dřív to bylo 768
+     (`max-w-3xl`), což je na dvousloupcové výsledky málo. Průvodce zůstává
+     úzký schválně: formulář se čte po řádcích, ne po sloupcích. */
+  --container-app: 80rem;
+  --container-wizard: 42rem;
+
   --font-display: 'Bricolage Grotesque', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;

@@ -35,14 +35,11 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
   };
 
   return (
-    <nav
-      aria-label="Části přehledu"
-      className="no-print sticky top-16 z-30 mb-5 -mx-4 sm:mx-0 px-2 py-1.5 bg-card/90 backdrop-blur border-y sm:border sm:rounded-2xl border-line"
-    >
+    <nav aria-label="Části přehledu" className="no-print min-w-0">
       <div
         ref={listRef}
         role="tablist"
-        className="flex gap-1 overflow-x-auto"
+        className="flex gap-0.5 p-1 rounded-full bg-shell overflow-x-auto"
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
           if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }
@@ -60,10 +57,14 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
               aria-controls={tab.id}
               tabIndex={selected ? 0 : -1}
               onClick={() => onSelect(tab.id)}
-              className={`shrink-0 px-3 min-h-[44px] sm:min-h-0 sm:py-1.5 text-sm font-medium rounded-xl transition-colors ${
+              // Pilulky jsou široké podle textu a lišta se na úzkém okně
+              // posouvá. Dělit šířku rovným dílem šlo, dokud byly záložky tři;
+              // s pěti se „Ostatní cíle" lámalo na dva řádky a „Slovníček"
+              // se uřízl.
+              className={`shrink-0 whitespace-nowrap px-3 min-h-[40px] text-[13px] font-semibold rounded-full transition-colors ${
                 selected
-                  ? 'bg-ink text-page'
-                  : 'text-ink-body hover:bg-sunken'
+                  ? 'bg-raised text-ink shadow-sm'
+                  : 'text-ink-muted hover:text-ink-body'
               }`}
             >
               {tab.label}

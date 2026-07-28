@@ -3,8 +3,7 @@ import type { WizardState } from './types';
 import WizardContainer from './components/wizard/WizardContainer';
 import ResultsDashboard from './components/results/ResultsDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
-import ThemeToggle from './components/ui/ThemeToggle';
-import BrandMark from './components/ui/BrandMark';
+import AppBar from './components/ui/AppBar';
 import { loadState, clearState } from './store/localStorage';
 import { loadedFromShare, sharedStateToShow, sharedReplacesExisting, acceptSharedState, discardSharedState } from './store/shareLink';
 
@@ -70,61 +69,61 @@ function App() {
   // Dokud je cizí přehled otevřený, zobrazuje se on, ne uložená data.
   const state = shared ?? loadState();
 
+  // Cizí přehled: dokud uživatel nerozhodne, nic se neukládá. Banner je stejný
+  // na výsledcích i v průvodci, jen se vkládá do jinak širokého sloupce.
+  const conflictBanner = sharedConflict ? (
+    <div className="no-print mb-5 p-4 rounded-xl border border-line bg-tint-caution">
+      <p className="text-sm font-semibold text-caution">
+        Tenhle přehled je z odkazu od někoho jiného.
+      </p>
+      <p className="mt-1 text-sm text-caution">
+        Svůj vlastní uložený přehled máte pořád k dispozici, tenhle se zatím nikam neuložil.
+        Dokud se nerozhodnete, žádná změna se neukládá.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          onClick={keepShared}
+          className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-caution hover:opacity-90 text-page"
+        >
+          Uložit tenhle a přepsat svůj
+        </button>
+        <button
+          onClick={keepOwn}
+          className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg border border-caution text-caution hover:bg-tint-caution"
+        >
+          Zpět na můj přehled
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div className="min-h-screen bg-page transition-colors">
-      <header className="no-print sticky top-0 z-40 backdrop-blur-md bg-card/70 border-b border-line">
-        <div className="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-          <button
-            onClick={() => setView('welcome')}
-            className="flex items-center gap-2.5 group"
-            aria-label="Domů"
-          >
-            <BrandMark className="w-9 h-9" />
-            {/* Otazník je součástí značky vedle, proto tady není podruhé.
-                Celý název nese `aria-label` na tlačítku i na značce. */}
-            <span className="type-section text-ink">MámNaTo</span>
-          </button>
-          <ThemeToggle />
-        </div>
-      </header>
+      {/* Výsledky si lištu kreslí samy: patří do ní záložky a akce, a jen ony
+          vědí, která záložka je vybraná. Průvodci a úvodu stačí značka. */}
+      {view === 'results' && state ? (
+        <ResultsDashboard
+          state={state}
+          onEdit={handleEdit}
+          onReset={handleReset}
+          onHome={() => setView('welcome')}
+          banner={conflictBanner}
+        />
+      ) : (
+        <>
+          <AppBar onHome={() => setView('welcome')} />
+          <main className="mx-auto max-w-wizard px-4 py-8 sm:py-10">
+            {conflictBanner}
+            {view === 'wizard' ? (
+              <WizardContainer onComplete={handleComplete} returnToStep={returnToStep} resumeSavedState={!returnToStep} />
+            ) : (
+              <WelcomeScreen onStart={handleStart} onResume={handleResume} />
+            )}
+          </main>
+        </>
+      )}
 
-      <main className="max-w-3xl mx-auto px-4 py-8 sm:py-10">
-        {sharedConflict && (
-          <div className="no-print mb-5 p-4 rounded-xl border border-line bg-tint-caution">
-            <p className="text-sm font-semibold text-caution">
-              Tenhle přehled je z odkazu od někoho jiného.
-            </p>
-            <p className="mt-1 text-sm text-caution">
-              Svůj vlastní uložený přehled máte pořád k dispozici, tenhle se zatím nikam neuložil.
-              Dokud se nerozhodnete, žádná změna se neukládá.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                onClick={keepShared}
-                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg bg-caution hover:opacity-90 text-page"
-              >
-                Uložit tenhle a přepsat svůj
-              </button>
-              <button
-                onClick={keepOwn}
-                className="px-4 py-2 min-h-[44px] text-sm font-medium rounded-lg border border-caution text-caution hover:bg-tint-caution"
-              >
-                Zpět na můj přehled
-              </button>
-            </div>
-          </div>
-        )}
-
-        {view === 'results' && state ? (
-          <ResultsDashboard state={state} onEdit={handleEdit} onReset={handleReset} />
-        ) : view === 'wizard' ? (
-          <WizardContainer onComplete={handleComplete} returnToStep={returnToStep} resumeSavedState={!returnToStep} />
-        ) : (
-          <WelcomeScreen onStart={handleStart} onResume={handleResume} />
-        )}
-      </main>
-
-      <footer className="no-print max-w-3xl mx-auto px-4 pb-8 pt-4 text-center">
+      <footer className="no-print mx-auto max-w-app px-4 pb-8 pt-4 text-center">
         <p className="text-xs text-ink-faint">
           MámNaTo? Orientační finanční přehled. Data zůstávají ve vašem prohlížeči.
         </p>

@@ -32,6 +32,12 @@ async function openTab(page: Page, id: 'souhrn' | 'rozpocet' | 'bydleni' | 'cile
   await page.locator(`#tab-${id}`).click()
 }
 
+// „Jsme na výsledcích." Dřív se to poznávalo podle nadpisu „Váš finanční plán",
+// jenže ten se sloučením horní lišty zrušil a shodil dvacet testů naráz.
+async function expectResults(page: Page) {
+  await expect(page.getByTestId('results')).toBeVisible()
+}
+
 // Spustí průvodce z uvítací obrazovky (čistý kontext = tlačítko „Spustit přehled").
 async function start(page: Page) {
   await page.goto('/')
@@ -61,7 +67,7 @@ test('projde průvodcem a zobrazí výsledky', async ({ page }) => {
   await goToGoals(page)
   await pickGoal(page, 'retirement')
   await finish(page)
-  await expect(page.getByText('Váš finanční plán')).toBeVisible()
+  await expectResults(page)
 })
 
 test('věk do 36 let sníží povinnou akontaci na 10 %', async ({ page }) => {
@@ -137,7 +143,7 @@ test('výsledky jsou v sekcích, „Bydlení" je sbalené a otevře se z navigac
   await pickGoal(page, 'property')
   await next(page) // krok Vlastní bydlení
   await finish(page)
-  await expect(page.getByText('Váš finanční plán')).toBeVisible()
+  await expectResults(page)
   // Souhrn je otevřený, detail bydlení sbalený
   await expect(page.getByRole('heading', { name: 'Kalkulačka nemovitosti' })).toBeHidden()
   await openTab(page, 'bydleni')
@@ -445,7 +451,7 @@ test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ 
   const ctx2 = await browser.newContext()
   const page2 = await ctx2.newPage()
   await page2.goto(url)
-  await expect(page2.getByText('Váš finanční plán')).toBeVisible()
+  await expectResults(page2)
   await openTab(page2, 'rozpocet')
   await expect(page2.locator('#rozpocet').getByText(/54\s?321/).first()).toBeVisible()
   await ctx1.close()

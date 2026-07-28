@@ -109,7 +109,7 @@ async function walk(page: Page, tag: string, width: number, height: number) {
   await page.getByRole('button', { name: /Důchod/ }).first().click()
   await next(page)
   await next(page)
-  await expect(page.getByText('Váš finanční plán')).toBeVisible()
+  await expect(page.getByTestId('results')).toBeVisible()
   await shoot(page, `${tag}-souhrn.png`, width)
 
   for (const tab of ['Rozpočet', 'Bydlení', 'Ostatní cíle', 'Slovníček']) {
