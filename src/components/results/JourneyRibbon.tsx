@@ -1,7 +1,7 @@
-import { useId, useMemo } from 'react';
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { line, area, curveMonotoneX } from 'd3-shape';
 import type { Journey, Tension } from '../../engine/journey';
-import { czk } from '../../engine/format';
+import { czk, formatMonths } from '../../engine/format';
 
 /**
  * Cesta: deset let života jako jedna stuha.
@@ -37,11 +37,78 @@ interface Props {
   data: Journey;
   /** Vypne vstupní animaci. Používá se v tisku a při druhém zobrazení. */
   animate?: boolean;
+  /**
+   * Posun události v čase. Dostane ho jen událost, která je opravdu volný
+   * parametr; ostatní se z něčeho odvozují a táhnout jimi by lhalo.
+   *
+   * Koupě nastane, jakmile je naspořeno na akontaci, takže se s ní hýbe
+   * cenou nebo akontací, ne přímo. Konec rodičovské plyne z délky volna,
+   * což je skutečný zadaný údaj, ne úvaha nad grafem.
+   */
+  onMoveChild?: (month: number) => void;
+  /** Mez posunu dítěte v měsících. */
+  childRange?: { min: number; max: number };
 }
 
-export default function JourneyRibbon({ data, animate = true }: Props) {
+export default function JourneyRibbon({
+  data,
+  animate = true,
+  onMoveChild,
+  childRange = { min: 0, max: 96 },
+}: Props) {
   const uid = useId().replace(/:/g, '');
   const { points, tension, events, horizonMonths } = data;
+  const svgRef = useRef<SVGSVGElement>(null);
+
+  // Poměr mezi jednotkami `viewBox` a skutečnými pixely. Potřebuje ho dotyková
+  // plocha úchopu: pevný poloměr je na desktopu jiný počet pixelů než na
+  // mobilu, kde je SVG užší, takže by pravidlo o 44px cíli splnil jen na jedné
+  // šířce okna.
+  const [scale, setScale] = useState(1);
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      const w = entry.contentRect.width;
+      if (w > 0) setScale(w / W);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  // 23, ne 22: přesný průměr 44 se zaokrouhlením rozměru elementu srazí těsně
+  // pod hranici (naměřeno 43,996 px). Pár desetin navíc to drží nad ní.
+  const hitRadius = 23 / scale;
+
+  // Bod, na který uživatel ukazuje. Kreslí se u něj vodicí linka a částka.
+  const [hover, setHover] = useState<number | null>(null);
+
+  /** Měsíc pod kurzorem. Počítá se z pozice v SVG, ne z pozice v okně. */
+  const monthAt = useCallback((clientX: number) => {
+    const el = svgRef.current;
+    if (!el) return 0;
+    const box = el.getBoundingClientRect();
+    const x = ((clientX - box.left) / box.width) * W;
+    const t = (x - PAD.left) / (W - PAD.left - PAD.right);
+    return Math.round(Math.min(1, Math.max(0, t)) * horizonMonths);
+  }, [horizonMonths]);
+
+  const clampChild = useCallback(
+    (m: number) => Math.min(childRange.max, Math.max(childRange.min, m)),
+    [childRange.max, childRange.min]
+  );
+
+  // Tažení běží na `pointer` událostech, takže myš i dotyk jdou jednou cestou.
+  // `setPointerCapture` drží tažení i když kurzor sjede mimo puntík; bez toho
+  // se táhnutí přeruší, jakmile se ujede o pár pixelů.
+  const startDrag = (e: React.PointerEvent) => {
+    if (!onMoveChild) return;
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const drag = (e: React.PointerEvent) => {
+    if (!onMoveChild || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
+    onMoveChild(clampChild(monthAt(e.clientX)));
+  };
 
   const geom = useMemo(() => {
     const xs = (m: number) => PAD.left + (m / horizonMonths) * (W - PAD.left - PAD.right);
@@ -103,8 +170,9 @@ export default function JourneyRibbon({ data, animate = true }: Props) {
 
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
-      className="w-full h-auto block"
+      className="w-full h-auto block touch-pan-y"
       role="img"
       aria-label={
         `Vývoj úspor na ${Math.round(horizonMonths / 12)} let. `
@@ -162,6 +230,36 @@ export default function JourneyRibbon({ data, animate = true }: Props) {
         className={animate ? 'ribbon-draw' : undefined}
       />
 
+      {/* Průhledná plocha, která chytá pohyb kurzoru. Kdyby se poslouchalo
+          přímo na stuze, musel by uživatel trefit devět pixelů široký pruh. */}
+      <rect
+        x={PAD.left} y={PAD.top - 10}
+        width={W - PAD.left - PAD.right} height={H - PAD.top - PAD.bottom + 20}
+        fill="transparent"
+        className="no-print"
+        onPointerMove={(e) => setHover(monthAt(e.clientX))}
+        onPointerLeave={() => setHover(null)}
+      />
+
+      {/* Vodicí linka a částka pod kurzorem. */}
+      {hover !== null && points[hover] && (
+        <g pointerEvents="none" className="no-print">
+          <line
+            x1={geom.xs(hover)} x2={geom.xs(hover)}
+            y1={PAD.top - 6} y2={H - PAD.bottom + 8}
+            stroke="var(--line-strong)" strokeWidth="1"
+          />
+          <circle cx={geom.xs(hover)} cy={geom.ys(points[hover].cash)} r="4" fill="var(--ink)" />
+          <text
+            x={Math.min(Math.max(geom.xs(hover), PAD.left + 50), W - PAD.right - 50)}
+            y={PAD.top - 12}
+            textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)"
+          >
+            {czk(points[hover].cash)} · {formatMonths(hover)}
+          </text>
+        </g>
+      )}
+
       {/* Události: puntík na stuze, vodicí linka nahoru a bublina s názvem.
           Bubliny se střídají ve dvou výškách, aby se u blízkých událostí
           nepřekryly. */}
@@ -171,6 +269,7 @@ export default function JourneyRibbon({ data, animate = true }: Props) {
         const bx = Math.min(Math.max(x, PAD.left + 42), W - PAD.right - 42);
         const y = geom.ys(points[Math.min(e.month, points.length - 1)].cash);
         const labelY = 14 + (i % 2) * 16;
+        const movable = e.key === 'child' && !!onMoveChild;
         return (
           <g key={e.key} className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.2 + i * 0.12}s` }}>
             <line x1={x} x2={bx} y1={labelY + 8} y2={y - 9} stroke="var(--line-strong)" strokeWidth="1" />
@@ -181,7 +280,50 @@ export default function JourneyRibbon({ data, animate = true }: Props) {
             <text x={bx} y={labelY + 4} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)">
               {e.label}
             </text>
-            <circle cx={x} cy={y} r="7" fill="var(--card)" stroke={TENSION_VAR[data.tension[e.month] ?? 'calm']} strokeWidth="3" />
+            {movable && (
+              <>
+                {/* Přerušovaný kroužek je jediný signál „dá se s tím hýbat".
+                    Dostane ho jen událost, kterou opravdu jde posunout. */}
+                <circle
+                  cx={x} cy={y} r="15"
+                  fill="none" stroke="var(--ink-muted)" strokeWidth="1"
+                  strokeDasharray="3 3" strokeOpacity="0.35"
+                  className="no-print"
+                />
+                {/* Dotyková plocha. Poloměr se přepočítá podle skutečné šířky
+                    SVG, aby cíl měl 44 px i na mobilu, kde je stuha užší. */}
+                <circle
+                  cx={x} cy={y} r={hitRadius}
+                  fill="transparent"
+                  className="no-print cursor-ew-resize touch-none focus:outline-none"
+                  role="slider"
+                  tabIndex={0}
+                  aria-label="Za jak dlouho čekáte dítě"
+                  aria-valuemin={childRange.min}
+                  aria-valuemax={childRange.max}
+                  aria-valuenow={e.month}
+                  aria-valuetext={`za ${formatMonths(e.month)}`}
+                  onPointerDown={startDrag}
+                  onPointerMove={drag}
+                  onKeyDown={(ev) => {
+                    if (!onMoveChild) return;
+                    const step = ev.key === 'PageUp' || ev.key === 'PageDown' ? 12 : 1;
+                    const dir = ev.key === 'ArrowRight' || ev.key === 'ArrowUp' || ev.key === 'PageUp' ? 1
+                      : ev.key === 'ArrowLeft' || ev.key === 'ArrowDown' || ev.key === 'PageDown' ? -1 : 0;
+                    if (dir === 0) return;
+                    ev.preventDefault();
+                    onMoveChild(clampChild(e.month + dir * step));
+                  }}
+                />
+              </>
+            )}
+            <circle
+              cx={x} cy={y} r="7"
+              fill="var(--card)"
+              stroke={TENSION_VAR[data.tension[e.month] ?? 'calm']}
+              strokeWidth="3"
+              pointerEvents="none"
+            />
           </g>
         );
       })}

@@ -343,6 +343,20 @@ stav nese věta a rozpad na dílčí otázky pod ní.
 **`TightestPoint`** je jediná karta v plné barvě. Ze všech čísel na obrazovce
 je to jedno, které říká, kde přesně to skřípe, a bez zvýraznění se ztratí.
 
+**Se stuhou jde hýbat, ale jen tam, kde je to poctivé.** Návrh chce
+uchopitelné puntíky událostí. Volný parametr je z nich ale jediný: kdy čekáte
+dítě. Koupě nastane, jakmile je naspořeno na akontaci, takže se s ní hýbe
+cenou nebo akontací, ne přímo; konec rodičovské plyne z délky volna, což je
+zadaný údaj, ne úvaha nad grafem. Přerušovaný kroužek („dá se s tím hýbat")
+proto dostává jen dítě, jinak by sliboval, co neplatí.
+
+Puntík je `role="slider"` s českým `aria-valuetext`, ovládá se šipkami po
+měsíci a Page Up/Down po roce. Dotyková plocha se přepočítává podle skutečné
+šířky SVG (`ResizeObserver`): stuha má pevný `viewBox`, takže pevný poloměr
+by 44px cíl splnil jen na jedné šířce okna. Poloměr je 23, ne 22, protože
+přesný průměr 44 spadl zaokrouhlením na 43,996 px. Hlídá to test na obou
+šířkách.
+
 **Animace nesmí být jediné, co obsah odkrývá.** První verze měla události na
 `opacity: 0` a odkrývala je až animace, takže je `prefers-reduced-motion`,
 tisk i `animation: none` v pixelovém porovnání nesmazaly jen z pohybu, ale
