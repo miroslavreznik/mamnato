@@ -39,7 +39,14 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
       <div
         ref={listRef}
         role="tablist"
-        className="flex gap-0.5 p-1 rounded-full bg-shell overflow-x-auto"
+        // Na úzkém okně se pilulky zalomí do dalšího řádku, neposouvají se.
+        // Posun schovává část záložek za okraj, takže uživatel neví, co mu
+        // uniká, a na dotyku se do lišty snadno trefí prstem při scrollování
+        // stránky. Zalomení má všechno vidět naráz.
+        //
+        // Zaoblení jde s tím: dokonale kulatý obal vypadá u dvou řádků jako
+        // omyl, proto se plné kolečko nechává až na desktop, kde je řádek jeden.
+        className="flex flex-wrap lg:flex-nowrap justify-center gap-0.5 p-1 rounded-2xl lg:rounded-full bg-shell"
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
           if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }
@@ -57,11 +64,10 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
               aria-controls={tab.id}
               tabIndex={selected ? 0 : -1}
               onClick={() => onSelect(tab.id)}
-              // Pilulky jsou široké podle textu a lišta se na úzkém okně
-              // posouvá. Dělit šířku rovným dílem šlo, dokud byly záložky tři;
-              // s pěti se „Ostatní cíle" lámalo na dva řádky a „Slovníček"
-              // se uřízl.
-              className={`shrink-0 whitespace-nowrap px-3 min-h-[40px] text-[13px] font-semibold rounded-full transition-colors ${
+              // Šířka podle textu, ne rovným dílem. Rovné dělení fungovalo,
+              // dokud byly záložky tři; u šesti by z „Rozpočet" a „Cíle" byly
+              // stejně široké pilulky a kratší popisek by plaval v prázdnu.
+              className={`shrink-0 whitespace-nowrap px-3 min-h-[44px] lg:min-h-[40px] text-[13px] font-semibold rounded-full transition-colors ${
                 selected
                   ? 'bg-raised text-ink shadow-sm'
                   : 'text-ink-muted hover:text-ink-body'
