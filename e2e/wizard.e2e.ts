@@ -409,8 +409,10 @@ test('při neočekávané chybě se ukáže záchranná obrazovka, ne bílá str
       throw new Error('simulovaná chyba pro test')
     }
   })
+  // Stačí vstoupit do průvodce: průběžný náhled ve spodní liště formátuje
+  // částky už na prvním kroku. Dřív se muselo o krok dál, protože do té doby
+  // se žádné číslo nesázelo.
   await start(page)
-  await next(page) // → Příjmy (první krok, kde se formátují čísla)
 
   await expect(page.getByText('Něco se pokazilo')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Zkusit znovu' })).toBeVisible()
@@ -678,4 +680,20 @@ test('graf koupě vs. nájem vysvětlí čáry i závěr', async ({ page }) => {
   // Parametry mají srozumitelné popisky bez žargonu.
   await expect(page.getByRole('textbox', { name: 'Výnos investic', exact: true })).toBeVisible()
   await expect(page.getByRole('textbox', { name: 'O kolik ročně poroste nájem', exact: true })).toBeVisible()
+})
+
+test('průběžný náhled reaguje na psaní ještě v průvodci', async ({ page }) => {
+  // Hlavní zlepšení průvodce: dopad každé změny je vidět hned, ne až na konci.
+  await start(page)
+  const strip = page.getByText('Zatím zbývá').locator('xpath=..')
+  await expect(strip).toContainText('10 500')
+
+  await next(page) // → Příjmy
+  await page.getByRole('textbox', { name: 'Můj čistý měsíční příjem', exact: true }).fill('50000')
+  await expect(strip).toContainText('21 000')
+
+  await next(page) // → Výdaje
+  // Pole má vedle sebe krokovací tlačítka se stejným názvem, proto exact.
+  await page.getByRole('textbox', { name: 'Nájem (bez energií a poplatků)', exact: true }).fill('20000')
+  await expect(strip).toContainText('13 000')
 })

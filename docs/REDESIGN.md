@@ -300,11 +300,38 @@ Slovníček 2 341 px.
    obsahu by to byly prázdné sliby.
 7. ~~**Záložka Cesta.**~~ Hotovo, viz níže.
 8. ~~**Záložka Co kdyby.**~~ Hotovo, viz níže.
-9. **Průvodce.** Průběžný náhled „zatím to vypadá takto".
+9. ~~**Průvodce.**~~ Hotovo, viz níže.
 10. **Kontrola.** Validátor palety, průchod personami, pixelové porovnání,
     tisk do PDF.
 
 Kroky 1 až 3 nic nepředjímaly a byly hotové, ještě než návrh existoval.
+
+### Průvodce (krok 9)
+
+**Průběžný náhled.** Dosud uživatel viděl první číslo až na konci, po sedmi
+krocích vyplňování; když pak výsledek nesedl, neměl tušení, která z těch
+obrazovek za to může. Náhled ukazuje dopad každé změny hned.
+
+**Verdikt v něm není.** Ten potřebuje cíle, které se zadávají až v pátém
+kroku, a předběžné „máte na to" na první obrazovce by byl slib
+z nekompletních dat. Náhled říká jen to, co je jisté: kolik zbývá po výdajích.
+
+**Na mobilu je to proužek ve spodní liště, ne karta pod formulářem.** Karta by
+na malé obrazovce byla až za všemi poli, tedy přesně tam, kam se uživatel při
+vyplňování nedívá. Ve spodní liště, kde už stojí Zpět a Další, je vidět pořád
+a nepřidává třetí lištu.
+
+**Formulář má strop 640 px, i když je místa víc.** Číselná pole přes celou
+šířku vypadají jako tabulka a popisek se od hodnoty vzdálí tak, že se ztratí,
+co k čemu patří.
+
+Rozdělení příjmu je hrubé (bydlení, ostatní nezbytné, zbytné, zbytek), ne
+osm kategorií jako v grafu rozpočtu: uživatel právě vyplňuje formulář
+a potřebuje vidět jednu věc, jestli mu něco zbývá.
+
+Vedlejší efekt: test záchranné obrazovky simuluje pád formátování čísel
+a čekal, že se strom rozbije až na druhém kroku. S náhledem se čísla sázejí
+už na prvním, takže se chyba projeví dřív.
 
 ### Záložka Co kdyby (krok 8)
 

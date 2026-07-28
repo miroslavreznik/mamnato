@@ -2,6 +2,7 @@ import { useReducer, useEffect } from 'react';
 import { WizardContext, wizardReducer, createInitialState } from '../../store/wizardStore';
 import { saveState, loadState } from '../../store/localStorage';
 import StepIndicator from './StepIndicator';
+import LivePreview from './LivePreview';
 import type { StepItem } from './StepIndicator';
 import Step1Mode from './steps/Step1Mode';
 import Step2Income from './steps/Step2Income';
@@ -73,14 +74,30 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
 
   return (
     <WizardContext.Provider value={{ state, dispatch }}>
-      <div className="bg-card rounded-2xl shadow-sm ring-1 ring-line border border-transparent p-6 sm:p-8">
-        <StepIndicator
-          currentStep={state.currentStep}
-          steps={stepItems}
-          completedSteps={state.completedSteps}
-          onStepClick={handleStepClick}
-        />
-        {steps[state.currentStep] ?? null}
+      {/* Dva sloupce: vlevo formulář, vpravo průběžný náhled. Na užších
+          oknech se náhled řadí pod formulář, ne nad něj: nahoře by odsunul
+          pole, kvůli kterým sem uživatel přišel, a musel by se k nim
+          proscrollovat po každém kroku.
+
+          Formulář má strop 640 px, i když by místa bylo víc. Číselná pole
+          přes celou šířku vypadají jako tabulka a popisek se od hodnoty
+          vzdálí tak, že se ztratí, co k čemu patří. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,640px)_320px] gap-6 items-start lg:justify-center">
+        <div className="min-w-0 bg-card rounded-2xl shadow-sm ring-1 ring-line border border-transparent p-6 sm:p-8">
+          <StepIndicator
+            currentStep={state.currentStep}
+            steps={stepItems}
+            completedSteps={state.completedSteps}
+            onStepClick={handleStepClick}
+          />
+          {steps[state.currentStep] ?? null}
+        </div>
+
+        {/* Na mobilu se náhled ukazuje jako proužek ve spodní liště, tady by
+            byl až za všemi poli. */}
+        <div className="hidden lg:block min-w-0 lg:sticky lg:top-20">
+          <LivePreview />
+        </div>
       </div>
     </WizardContext.Provider>
   );

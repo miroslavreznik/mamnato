@@ -112,7 +112,9 @@ function App() {
       ) : (
         <>
           <AppBar onHome={() => setView('welcome')} />
-          <main className="mx-auto max-w-wizard px-4 py-8 sm:py-10">
+          {/* Průvodce je širší než úvod: vedle formuláře stojí průběžný náhled.
+              Samotný formulář zůstává úzký, čte se po řádcích. */}
+          <main className={`mx-auto px-4 py-8 sm:py-10 ${view === 'wizard' ? 'max-w-app' : 'max-w-wizard'}`}>
             {conflictBanner}
             {view === 'wizard' ? (
               <WizardContainer onComplete={handleComplete} returnToStep={returnToStep} resumeSavedState={!returnToStep} />
