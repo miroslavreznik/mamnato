@@ -138,9 +138,9 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             {result.monthlyAverage.toLocaleString('cs-CZ')} Kč/měs.
           </p>
         </div>
-        <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+        <div className="p-3 bg-tint-brand rounded-lg">
           <span className="text-sm text-ink-muted">Celkové náklady</span>
-          <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+          <p className="text-lg font-bold text-brand">
             {(result.totalCost / 1_000_000).toFixed(1)} mil. Kč
           </p>
         </div>

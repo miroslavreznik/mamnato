@@ -149,7 +149,7 @@ export default function Step3Expenses() {
         />
       </div>
 
-      <div className="mt-4 p-3 bg-sunken-label rounded-lg text-sm text-ink-body space-y-1">
+      <div className="mt-4 p-3 bg-sunken rounded-lg text-sm text-ink-body space-y-1">
         <div className="flex justify-between">
           <span>Celkem výdaje:</span>
           <span className="font-semibold text-ink">{fmt(expenses)} Kč/měs.</span>

@@ -125,7 +125,7 @@ function App() {
       </main>
 
       <footer className="no-print max-w-3xl mx-auto px-4 pb-8 pt-4 text-center">
-        <p className="text-xs text-ink-faint-body">
+        <p className="text-xs text-ink-faint">
           MámNaTo? Orientační finanční přehled. Data zůstávají ve vašem prohlížeči.
         </p>
       </footer>

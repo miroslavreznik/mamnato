@@ -54,7 +54,7 @@ export default function Tooltip({ text }: TooltipProps) {
           className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 block w-64 max-w-[calc(100vw-2rem)] p-2 text-sm font-normal text-left normal-case tracking-normal text-page bg-card rounded-lg shadow-lg"
         >
           {text}
-          <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-gray-800" />
+          <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-ink" />
         </span>
       )}
     </span>

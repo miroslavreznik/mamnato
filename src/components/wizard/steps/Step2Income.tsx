@@ -88,7 +88,7 @@ export default function Step2Income() {
         />
       )}
 
-      <div className="mt-4 p-3 bg-sunken-label rounded-lg text-sm text-ink-body">
+      <div className="mt-4 p-3 bg-sunken rounded-lg text-sm text-ink-body">
         Celkový příjem domácnosti:{' '}
         <span className="font-semibold text-ink">
           {(

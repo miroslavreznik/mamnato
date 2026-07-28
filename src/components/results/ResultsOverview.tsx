@@ -90,7 +90,7 @@ const goalBadge: Record<GoalStatus, { label: string; className: string }> = {
 // by si appka odporovala, i když každá odpověď mluví o něčem jiném.
 const conditionalBadge = {
   label: 'Podmíněně',
-  className: 'bg-shell text-ink-body-label',
+  className: 'bg-shell text-ink-body',
 };
 
 export default function ResultsOverview({ state, allocations, onOpenSection }: Props) {
