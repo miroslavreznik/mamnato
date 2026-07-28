@@ -16,6 +16,15 @@ import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave'
 export interface WealthPoint {
   month: number;
   cash: number;
+  /**
+   * Kolik ten měsíc přiteklo nebo odteklo (příjem − výdaje). Jednorázový
+   * výdej akontace se sem nezapočítává, ten není opakovaný tok.
+   *
+   * Vystavuje se kvůli stuze na záložce Cesta, která barví průběh podle
+   * napětí rozpočtu, ne podle výše úspor: rok se schodkem vypadá na křivce
+   * zůstatku stejně jako rok bez něj, dokud jsou úspory dost velké.
+   */
+  flow: number;
 }
 
 export interface WealthTimelineResult {
@@ -69,7 +78,8 @@ export function wealthTimeline(
   let minCashMonth = 0;
   let firstNegativeMonth: number | null = null;
 
-  points.push({ month: 0, cash: Math.round(cash) });
+  // Nultý měsíc je výchozí stav, žádný tok se v něm ještě nestal.
+  points.push({ month: 0, cash: Math.round(cash), flow: 0 });
 
   for (let m = 0; m < horizon; m++) {
     // Koupě: jakmile je na cílovou akontaci naspořeno (dynamicky, zohlední
@@ -90,7 +100,8 @@ export function wealthTimeline(
     if (purchaseMonth !== null) expenses = expenses - rent + mortgage + ownership;
     if (childMonth !== null && m >= childMonth) expenses += childCostAt((m - childMonth) / 12);
 
-    cash += income - expenses;
+    const flow = income - expenses;
+    cash += flow;
 
     if (cash < minCash) {
       minCash = cash;
@@ -98,7 +109,7 @@ export function wealthTimeline(
     }
     if (cash < 0 && firstNegativeMonth === null) firstNegativeMonth = m + 1;
 
-    points.push({ month: m + 1, cash: Math.round(cash) });
+    points.push({ month: m + 1, cash: Math.round(cash), flow: Math.round(flow) });
   }
 
   return {

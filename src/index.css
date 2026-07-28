@@ -349,6 +349,55 @@ body {
   text-transform: uppercase;
 }
 
+/* --------------------------------------------------------------------------
+   Vstupní animace stuhy
+   --------------------------------------------------------------------------
+   Stuha se vykreslí zleva doprava, události na ni doskočí po řadě. Návrh na
+   tom staví: cesta se má číst jako příběh v čase, ne jako hotový obrázek.
+
+   Běží jen jednou, při prvním zobrazení výsledků, ne při každém přepnutí
+   záložky (hlídá si to `ResultsOverview` přes ref). Delší čára potřebuje delší
+   `stroke-dasharray`, proto je hodnota schválně větší než jakákoli reálná
+   délka cesty; kratší by animaci useknul doprostřed.
+
+   Kdo si vypnul pohyb v systému, nedostane nic z toho, a v tisku se stuha
+   vykreslí rovnou celá. Bez toho by se vytiskla rozdělaná.
+   -------------------------------------------------------------------------- */
+
+@keyframes ribbon-draw {
+  from { stroke-dashoffset: 3000; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes ribbon-event {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+.ribbon-draw {
+  stroke-dasharray: 3000;
+  animation: ribbon-draw 1.6s cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
+}
+
+.ribbon-event {
+  /* `backwards` je tu podstatné a `opacity: 0` v základním stavu být nesmí.
+     Skrytý výchozí stav, který odkrývá až animace, znamená, že cokoli animaci
+     zastaví (vypnutý pohyb, tisk, `animation: none` v testu) událost nesmaže
+     jen z pohybu, ale úplně. S `backwards` se počáteční stav uplatní jen po
+     dobu zpoždění; když animace neběží, je událost prostě vidět. */
+  animation: ribbon-event 0.3s ease-out backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ribbon-draw {
+    stroke-dasharray: none;
+    animation: none;
+  }
+  .ribbon-event {
+    animation: none;
+  }
+}
+
 /* Klidnější číselné vstupy: skryté spinnery (máme vlastní +/−) */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
@@ -423,6 +472,14 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   }
   .print-only {
     display: block !important;
+  }
+  /* Stuha se musí vytisknout celá, ne zastavená uprostřed vykreslování. */
+  .ribbon-draw {
+    stroke-dasharray: none !important;
+    animation: none !important;
+  }
+  .ribbon-event {
+    animation: none !important;
   }
 }
 

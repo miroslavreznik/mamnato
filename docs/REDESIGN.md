@@ -298,9 +298,7 @@ Slovníček 2 341 px.
 6. ~~**Skořápka.**~~ Hotovo, viz níže. Přejmenování „Souhrn" → „Cesta"
    a záložka „Co kdyby" zůstávají na kroky 7 a 8, protože bez stuhy a bez
    obsahu by to byly prázdné sliby.
-7. **Záložka Cesta.** `ResultsOverview` se rozpadne na `VerdictHeadline`,
-   `JourneyRibbon`, `TightestPoint`, `GoalStatusGrid`, `NextSteps`.
-   Největší kus, stuha ručně v SVG (ne Recharts).
+7. ~~**Záložka Cesta.**~~ Hotovo, viz níže.
 8. **Záložka Co kdyby.** `whatIfState` + `baselineSnapshot`, duch původního
    scénáře, delta karty.
 9. **Průvodce.** Průběžný náhled „zatím to vypadá takto".
@@ -308,6 +306,47 @@ Slovníček 2 341 px.
     tisk do PDF.
 
 Kroky 1 až 3 nic nepředjímaly a byly hotové, ještě než návrh existoval.
+
+### Záložka Cesta (krok 7)
+
+**`engine/journey.ts`** je nový, ale žádnou novou matematiku nepřináší:
+skládá `wealthTimeline` do příběhu. Věty („Po koupi 2034", „Rozpočet by byl
+1 685 Kč měsíčně v mínusu") staví engine, ne komponenta, protože formulace
+verdiktů sem patří a jdou k nim napsat testy. Osm jich je.
+
+`WealthPoint` dostal pole `flow`, tedy měsíční tok. Je to totéž číslo, které
+se v simulaci už počítalo, jen se teď vrací.
+
+**Stuha barví podle napětí rozpočtu, ne podle výše úspor.** To je celý důvod,
+proč nestačil dosavadní čárový graf: rok se schodkem vypadá na křivce
+zůstatku stejně jako rok bez něj, dokud je z čeho brát. Klid, napětí a schodek
+se poznají z toku a z toho, jestli rezerva pokryje aspoň měsíc.
+
+**`JourneyRibbon`** je ruční SVG s `d3-shape`, ne Recharts. Recharts neumí
+přechod barvy podle hodnoty, jen podle osy.
+
+Dvě věci, které při kreslení nebyly zřejmé:
+
+- **Gradient potřebuje dvě zastávky na úsek.** S jednou zastávkou na každou
+  změnu SVG plynule prolne první barvu do poslední přes celou šířku a stuha
+  je červená roky předtím, než schodek nastane. Každý úsek má proto zastávku
+  na začátku i na konci a mezi úseky je úzké okno na změkčení hrany.
+- **Nejtěsnější místo není minimum úspor.** Minimum nastane skoro vždycky
+  v okamžiku koupě, protože akontace jednorázově ukrojí velkou část úspor,
+  a to samo o sobě není problém. Hledá se proto nejhorší měsíční tok a teprve
+  když je rozpočet celou dobu v plusu, sáhne se po nejnižším zůstatku.
+
+**Verdikt sedí na papíru**, bez karty, ikony a barevného podkladu. Barevná
+plocha přes celou šířku z něj dělala výstrahu i tam, kde šlo o dobrou zprávu;
+stav nese věta a rozpad na dílčí otázky pod ní.
+
+**`TightestPoint`** je jediná karta v plné barvě. Ze všech čísel na obrazovce
+je to jedno, které říká, kde přesně to skřípe, a bez zvýraznění se ztratí.
+
+**Animace nesmí být jediné, co obsah odkrývá.** První verze měla události na
+`opacity: 0` a odkrývala je až animace, takže je `prefers-reduced-motion`,
+tisk i `animation: none` v pixelovém porovnání nesmazaly jen z pohybu, ale
+úplně. Řeší to `animation-fill-mode: backwards` a hlídá `e2e/motion.e2e.ts`.
 
 ### Skořápka (krok 6)
 

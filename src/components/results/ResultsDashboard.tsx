@@ -57,7 +57,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
   // Části výsledků jako záložky, jen ty, které dávají smysl podle cílů.
   const sectionDefs: TabDef[] = [
-    { id: 'souhrn', label: 'Souhrn' },
+    { id: 'souhrn', label: 'Cesta' },
     { id: 'rozpocet', label: 'Rozpočet' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
     ...(hasGoalPlanners ? [{ id: 'cile', label: 'Ostatní cíle' }] : []),
@@ -202,8 +202,10 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           <h1 className="type-section text-ink">MámNaTo? Finanční přehled</h1>
           <p className="text-xs text-ink-muted">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
         </div>
-        {/* Souhrn: hlavní odpověď „vyjde mi to?" */}
-        <ResultsSection id="souhrn" title="Souhrn" subtitle="Odpověď, čísla za ní a stav vašich cílů" active={isVisible('souhrn')}>
+        {/* Cesta: hlavní odpověď „vyjde mi to?" a deset let dopředu.
+            Id zůstává `souhrn`: je v uložených odkazech i v kotvách testů
+            a přejmenovat ho by rozbilo sdílené adresy kvůli popisku. */}
+        <ResultsSection id="souhrn" title="Cesta" subtitle="Odpověď, deset let dopředu a stav vašich cílů" active={isVisible('souhrn')}>
           <ResultsOverview state={activeState} allocations={activeAllocations} onOpenSection={selectTab} />
           {hasNoGoals && (
             <div className="bg-tint-caution border border-line rounded-xl p-6 text-center">

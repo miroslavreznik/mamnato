@@ -1,7 +1,8 @@
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
 import { evaluateOverall } from '../../engine/summary';
-import type { GoalStatus, VerdictAnswer } from '../../engine/summary';
+import type { GoalStatus } from '../../engine/summary';
+import { journey } from '../../engine/journey';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
 import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
 import { monthsToSaveAtAllocation } from '../../engine/allocation';
@@ -10,6 +11,8 @@ import { formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
+import JourneyRibbon from './JourneyRibbon';
+import TightestPoint from './TightestPoint';
 import HeroNumber from '../ui/HeroNumber';
 import MonthsMeter from '../ui/MonthsMeter';
 import StatusBadge, { type Status } from '../ui/StatusBadge';
@@ -21,27 +24,6 @@ interface Props {
   // uživatel místo, na které rada odkazuje, najít sám.
   onOpenSection?: (id: string) => void;
 }
-
-// Odpověď „Mám na to?": zelená ano, jantarová ano s výhradou, oranžová zatím ne
-// s cestou ven, červená jasné ne.
-const verdictStyles: Record<VerdictAnswer, { box: string; text: string }> = {
-  yes: {
-    box: 'bg-tint-good border-line',
-    text: 'text-good',
-  },
-  yes_but: {
-    box: 'bg-tint-caution border-line',
-    text: 'text-caution',
-  },
-  no_but: {
-    box: 'bg-tint-caution border-line',
-    text: 'text-caution',
-  },
-  no: {
-    box: 'bg-tint-danger border-line',
-    text: 'text-danger',
-  },
-};
 
 type Tone = 'good' | 'caution' | 'danger' | 'plain';
 
@@ -167,43 +149,34 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   // v přehledu chyběla, přestože je to ten největší závazek ze všech.
   const readinessGoals = summary.goals;
 
+  const journeyData = journey(state);
+
   return (
     // Dva sloupce: vlevo odpověď a cíle, vpravo čísla a co s tím. Návrh dává
     // pravému sloupci 340 px; do jednoho sloupce se to vešlo, dokud byla
     // stránka široká 768 px, na 1280 px by řádky textu přerostly únosnou délku.
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
-      <div className="min-w-0 space-y-5">
-      <Card>
-      {/* Odpověď na otázku z názvu appky i její rozbor. Jedna karta, aby se
-          totéž neříkalo dvakrát za sebou. */}
-      <div className={`rounded-xl border p-5 sm:p-6 mb-5 ${verdictStyles[summary.verdict.answer].box}`}>
-        <div className="text-center">
-          <span className="text-3xl leading-none" aria-hidden="true">{summary.icon}</span>
-          {/* Barva podle stavu a rámeček okolo jsou tu ještě z dnešní podoby.
-              Návrh chce verdikt v `ink` přímo na papíru, bez karty a bez ikony;
-              to ale patří k překreslení záložky Cesta, ne k řezům. */}
-          <p className="mt-1 type-verdict max-w-[54ch] mx-auto">
-            <span className={verdictStyles[summary.verdict.answer].text}>{summary.verdict.headline}</span>
-            {summary.verdict.qualifier && (
-              <>
-                <span className={verdictStyles[summary.verdict.answer].text}>,</span>{' '}
-                <span className="text-ink-muted font-bold">{summary.verdict.qualifier}</span>
-              </>
-            )}
-            <span className={verdictStyles[summary.verdict.answer].text}>
-              {summary.verdict.answer === 'yes' || summary.verdict.answer === 'no' ? '.' : '…'}
-            </span>
-          </p>
-          <p className="mt-2 text-sm font-medium text-ink-label max-w-[62ch] mx-auto leading-relaxed">
+      <div className="min-w-0 space-y-6">
+      {/* Verdikt sedí přímo na papíru: bez karty, bez ikony, bez barevného
+          podkladu. Dřív to byl tónovaný box a barva podle stavu, jenže verdikt
+          už svůj stav říká slovy, a barevná plocha přes celou šířku z něj
+          dělala výstrahu i tam, kde šlo o dobrou zprávu. Stav nese věta
+          a rozpad na dílčí otázky pod ní. */}
+      <div>
+          <h2 className="type-verdict text-ink max-w-[54ch]">
+            {summary.verdict.headline}
+            {summary.verdict.qualifier && <>, {summary.verdict.qualifier}</>}
+            {summary.verdict.answer === 'yes' || summary.verdict.answer === 'no' ? '.' : '…'}
+          </h2>
+          <p className="mt-3 text-[15px] text-ink-body max-w-[62ch] leading-relaxed">
             {summary.verdict.reason}
           </p>
-        </div>
 
         {/* U vlastního bydlení jsou otázky ve skutečnosti dvě: jestli na něj
             dosáhnete a jestli po něm zbyde na zbytek. Jedna nálepka je slučuje
             a uživatel pak nepozná, která z nich ho brzdí. */}
         {summary.verdict.questions.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-line space-y-2">
+          <div className="mt-4 space-y-2 max-w-[70ch]">
             {summary.verdict.questions.map((q) => {
               const badge = q.conditional ? conditionalBadge : goalBadge[q.status];
               return (
@@ -220,10 +193,19 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
         )}
       </div>
 
+      {/* Cesta: deset let života jako jedna stuha. Hrdina obrazovky. */}
+      <div className="rounded-2xl bg-sunken p-5 sm:p-6">
+        {/* Animace se hlídat nemusí. Panely záložek zůstávají připojené
+            (`hidden`, ne odpojení), takže se stuha vykreslí jednou při vstupu
+            na výsledky a přepínání záložek ji nerozjede znovu. Přepočet při
+            tažení posuvníku mění jen atribut `d`, ne uzel, takže taky ne. */}
+        <JourneyRibbon data={journeyData} />
+      </div>
+
       {/* Stav jednotlivých cílů */}
       {readinessGoals.length > 0 && (
-        <div className="mb-5">
-          <h4 className="text-sm font-semibold text-ink-label mb-2">Jak jste na tom s cíli</h4>
+        <div>
+          <h3 className="type-label text-ink-muted mb-2">Jak jste na tom s cíli</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {readinessGoals.map((g) => (
               <div key={g.key} className="p-3 rounded-lg border border-line">
@@ -244,13 +226,17 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
 
       {/* Rozpočtový souhrn: dnes a po koupi */}
       {summary.budget && <BudgetSummary now={summary.budget} after={summary.budgetAfter} />}
-
-      </Card>
       </div>
 
       {/* Pravý sloupec: čísla, na kterých verdikt stojí, a co s tím jde dělat.
           Na mobilu se řadí pod levý, ve stejném pořadí jako na desktopu. */}
       <div className="min-w-0 space-y-3 lg:sticky lg:top-20">
+        {journeyData.tightest && (
+          <TightestPoint
+            data={journeyData.tightest}
+            onOpen={onOpenSection ? () => onOpenSection('rozpocet') : undefined}
+          />
+        )}
         {/* Čísla, na kterých verdikt stojí */}
         <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
         {kpis.map((k) => (
