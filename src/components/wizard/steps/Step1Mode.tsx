@@ -1,6 +1,7 @@
 import { useWizard } from '../../../store/wizardStore';
 import type { UserMode } from '../../../types';
 import StepNavigation from '../StepNavigation';
+import { fieldClass } from '../../ui/fieldClass';
 
 // Popisky mluví o tom, jak žijete dnes, ne o tom, co plánujete. Rozdíl je
 // podstatný: kdo teprve dítě zvažuje, vybírá „Jsme pár" a dítě si o pár kroků
@@ -61,7 +62,7 @@ export default function Step1Mode() {
             aria-label="Počet dětí"
             value={state.numberOfChildren ?? 1}
             onChange={(e) => dispatch({ type: 'SET_NUMBER_OF_CHILDREN', count: parseInt(e.target.value) })}
-            className="w-full px-3 py-2.5 border border-line-strong rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 dark:text-white"
+            className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white')}
           >
             {[1, 2, 3, 4, 5].map((n) => (
               <option key={n} value={n}>{n}</option>

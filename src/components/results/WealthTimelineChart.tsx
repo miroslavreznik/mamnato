@@ -7,6 +7,7 @@ import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
+import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   state: WizardState;
@@ -56,7 +57,7 @@ export default function WealthTimelineChart({ state }: Props) {
             max={96}
             ariaLabel="Za kolik měsíců čekáte dítě"
             step={1}
-            className="w-16 text-right px-2 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-16 text-right px-2 py-2.5 text-base')}
           />
           <span className="text-sm text-ink-muted">měsíců</span>
         </div>

@@ -12,6 +12,7 @@ import EstimateNote from '../ui/EstimateNote';
 import { formatNumber as fmt } from '../../engine/format';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
+import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   state: WizardState;
@@ -120,7 +121,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             max={48}
             ariaLabel="Délka volna v měsících"
             step={1}
-            className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
         </div>
         <div>
@@ -132,7 +133,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             ariaLabel="Měsíční příjem během volna"
             step={1000}
             suffix="Kč"
-            className="w-full px-3 py-2.5 pr-9 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
           />
           <EstimateNote
             overridden={benefitOverridden}

@@ -8,6 +8,7 @@ import SortedTooltip from '../ui/SortedTooltip';
 import NumField from '../ui/NumField';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import Card from '../ui/Card';
+import { fieldClass } from '../ui/fieldClass';
 
 const INFLATION = DEFAULTS.averageCzInflation;
 
@@ -94,7 +95,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             ariaLabel="Měsíční částka k investování"
             step={500}
             suffix="Kč"
-            className="w-full px-3 py-2.5 pr-9 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
           />
           <p className="mt-1 text-xs text-gray-400">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
         </div>
@@ -108,7 +109,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             min={1} max={50}
             ariaLabel="Počet let do důchodu"
             step={1}
-            className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
         </div>
       </div>
@@ -131,7 +132,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
               ariaLabel="Požadovaná měsíční renta"
               step={1000}
               suffix="Kč"
-              className="w-full px-3 py-2.5 pr-9 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+              className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
             />
           </div>
           <div className="flex-1 sm:text-right">

@@ -1,4 +1,5 @@
 import NumField from '../ui/NumField';
+import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   label: string;
@@ -25,7 +26,7 @@ export default function GoalAllocationField({ label, value, onChange, hint }: Pr
           ariaLabel={label}
           step={500}
           suffix="Kč"
-          className="w-28 text-right pr-8 pl-2 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+          className={fieldClass('w-28 text-right pr-8 pl-2 py-2.5 text-base')}
         />
       </div>
       {hint && <p className="mt-1 text-xs text-ink-faint">{hint}</p>}

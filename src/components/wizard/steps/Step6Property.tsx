@@ -7,6 +7,7 @@ import NumberInput from '../../ui/NumberInput';
 import EstimateNote from '../../ui/EstimateNote';
 import StepNavigation from '../StepNavigation';
 import RenovationSection from './RenovationSection';
+import { fieldClass } from '../../ui/fieldClass';
 
 // Fixace, které banky běžně nabízejí.
 const FIXATION_CHOICES = [1, 3, 5, 7, 10];
@@ -195,7 +196,7 @@ export default function Step6Property() {
           aria-label="Délka hypotéky"
           value={term}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'loanTermYears', value: parseInt(e.target.value) })}
-          className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500')}
         >
           {[15, 20, 25, 30].map((y) => (
             <option key={y} value={y}>{y} let</option>
@@ -215,7 +216,7 @@ export default function Step6Property() {
           aria-label="Doba fixace úrokové sazby"
           value={fixation}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'fixationYears', value: parseInt(e.target.value) })}
-          className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-blue-500')}
         >
           {/* U každé fixace je rovnou vidět, na jakou sazbu vede. Bez toho
               vypadá volba jako kosmetika, přitom mění splátku. */}

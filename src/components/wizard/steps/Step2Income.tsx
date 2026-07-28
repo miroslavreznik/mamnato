@@ -3,6 +3,7 @@ import NumberInput from '../../ui/NumberInput';
 import NumField from '../../ui/NumField';
 import Tooltip from '../../ui/Tooltip';
 import StepNavigation from '../StepNavigation';
+import { fieldClass } from '../../ui/fieldClass';
 
 // Nepovinné pole pro věk (prázdné = nezadáno). Věk ovlivňuje akontaci,
 // horizont spoření na důchod a splatnost hypotéky.
@@ -29,7 +30,7 @@ function AgeField({ label, value, onChange, tooltip }: {
         suffix="let"
         placeholder="např. 34"
         ariaLabel={label}
-        className="w-full px-3 py-2.5 pr-10 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className={fieldClass('w-full px-3 py-2.5 pr-10 text-base focus:outline-none focus:ring-2 focus:ring-blue-500')}
       />
     </div>
   );

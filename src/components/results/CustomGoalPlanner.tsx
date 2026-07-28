@@ -8,6 +8,7 @@ import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
 import Card from '../ui/Card';
+import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   state: WizardState;
@@ -219,7 +220,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     value={goal.name}
                     onChange={(e) => updateGoal(goal.id, 'name', e.target.value)}
                     placeholder="např. Auto, dovolená..."
-                    className="w-full px-3 py-2 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+                    className={fieldClass('w-full px-3 py-2 text-sm')}
                   />
                 </div>
                 <div>
@@ -229,7 +230,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     onChange={(v) => updateGoal(goal.id, 'targetAmount', v)}
                     ariaLabel="Cílová částka"
                     step={10000}
-                    className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+                    className={fieldClass('w-full px-3 py-2.5 text-base')}
                   />
                 </div>
                 <div>
@@ -242,7 +243,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     min={1}
                     ariaLabel="Za kolik měsíců/let"
                     step={1}
-                    className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+                    className={fieldClass('w-full px-3 py-2.5 text-base')}
                   />
                 </div>
               </div>

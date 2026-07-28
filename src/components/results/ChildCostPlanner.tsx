@@ -7,6 +7,7 @@ import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
 import Card from '../ui/Card';
+import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   state: WizardState;
@@ -69,7 +70,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             min={1} max={5}
             ariaLabel="Počet dětí"
             step={1}
-            className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
           {numberOfChildren > 1 && (
             <p className="mt-1 text-xs text-gray-400">U druhého a dalšího dítěte mohou být náklady nižší díky zděděnému vybavení.</p>
@@ -83,7 +84,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             min={1} max={26}
             ariaLabel="Horizont v letech"
             step={1}
-            className="w-full px-3 py-2.5 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
         </div>
         <div className="flex items-end">

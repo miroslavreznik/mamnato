@@ -9,6 +9,7 @@ import HelpTip from '../ui/Tooltip';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import { czk } from '../../engine/format';
 import Card from '../ui/Card';
+import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   state: WizardState;
@@ -103,7 +104,7 @@ export default function InvestmentComparisonChart({ state }: Props) {
             ariaLabel="O kolik ročně zdraží nemovitost"
             step={0.5}
             suffix="%"
-            className="w-full px-3 py-2.5 pr-8 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 pr-8 text-base')}
           />
         </div>
         <div>
@@ -118,7 +119,7 @@ export default function InvestmentComparisonChart({ state }: Props) {
             ariaLabel="Výnos investic"
             step={0.5}
             suffix="%"
-            className="w-full px-3 py-2.5 pr-8 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 pr-8 text-base')}
           />
         </div>
         <div>
@@ -133,7 +134,7 @@ export default function InvestmentComparisonChart({ state }: Props) {
             ariaLabel="O kolik ročně poroste nájem"
             step={0.5}
             suffix="%"
-            className="w-full px-3 py-2.5 pr-8 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-base"
+            className={fieldClass('w-full px-3 py-2.5 pr-8 text-base')}
           />
         </div>
       </div>

@@ -7,6 +7,7 @@ import NumField from '../../ui/NumField';
 import Alert from '../../ui/Alert';
 import StepNavigation from '../StepNavigation';
 import { formatNumber as fmt } from '../../../engine/format';
+import { fieldClass } from '../../ui/fieldClass';
 
 const categories: { field: string; label: string; tooltip: string; step: number; familyOnly?: boolean }[] = [
   { field: 'rent', label: 'Nájem (bez energií a poplatků)', tooltip: 'Zadejte čistou výši nájmu, tedy částku, kterou platíte pronajímateli za byt. Energie a zálohy zadejte do pole níže.', step: 1000 },
@@ -28,7 +29,7 @@ function ItemInput({ label, value, onChange }: { label: string; value: number; o
           value={value}
           onChange={onChange}
           ariaLabel={label}
-          className="w-24 text-right pr-7 pl-2 py-1 border border-line-strong dark:bg-gray-700 dark:text-white rounded-lg text-sm"
+          className={fieldClass('w-24 text-right pr-7 pl-2 py-1 text-sm')}
         />
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">Kč</span>
       </div>
