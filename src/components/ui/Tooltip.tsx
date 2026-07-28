@@ -51,7 +51,11 @@ export default function Tooltip({ text }: TooltipProps) {
       {show && (
         <span
           role="tooltip"
-          className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 block w-64 max-w-[calc(100vw-2rem)] p-2 text-sm font-normal text-left normal-case tracking-normal text-page bg-card rounded-lg shadow-lg"
+          // Tmavá bublina se světlým textem. `bg-card` tu být nesmí: v novém
+          // vzhledu má karta stejnou barvu jako stránka, takže `text-page`
+          // na ní byl neviditelný a nápověda se sice otevřela, ale nedala
+          // se přečíst. Šipka pod bublinou má `border-t-ink` odjakživa.
+          className="absolute z-30 bottom-full left-1/2 -translate-x-1/2 mb-2 block w-64 max-w-[calc(100vw-2rem)] p-2 text-sm font-normal text-left normal-case tracking-normal text-page bg-ink rounded-lg shadow-lg"
         >
           {text}
           <span className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-ink" />

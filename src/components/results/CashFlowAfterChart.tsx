@@ -56,7 +56,15 @@ export default function CashFlowAfterChart({ state }: Props) {
               />
             }
           />
-          <Legend formatter={(value) => (value === 'current' ? 'Pokud nekoupím' : 'Po koupi')} />
+          {/* Popisek se sází barvou textu, ne barvou série. Recharts jinak obarví
+              i písmo, jenže odstíny sérií jsou ověřené jako značky v grafu
+              (práh 3:1 vůči ploše), ne jako text, kde je potřeba 4,5:1.
+              Barvu nese čtvereček vedle popisku. */}
+          <Legend
+            formatter={(value) => (
+              <span className="text-ink-body">{value === 'current' ? 'Pokud nekoupím' : 'Po koupi'}</span>
+            )}
+          />
           <Area type="monotone" dataKey="current" stroke={colors.primary} strokeWidth={2} fill="url(#cf-current)" dot={false} />
           <Area type="monotone" dataKey="afterPurchase" stroke={colors.positive} strokeWidth={2} fill="url(#cf-after)" dot={false} />
         </AreaChart>

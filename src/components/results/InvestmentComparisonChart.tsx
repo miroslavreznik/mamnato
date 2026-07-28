@@ -75,6 +75,9 @@ export default function InvestmentComparisonChart({ state }: Props) {
               />
             }
           />
+          {/* Popisek se sází barvou textu, ne barvou série: odstíny sérií jsou
+              ověřené jako značky v grafu (práh 3:1 vůči ploše), ne jako text,
+              kde je potřeba 4,5:1. Barvu nese čtvereček vedle popisku. */}
           <Legend
             formatter={(value) => {
               const labels: Record<string, string> = {
@@ -82,7 +85,7 @@ export default function InvestmentComparisonChart({ state }: Props) {
                 rentInvestNetWorth: 'Nájem a investování rozdílu',
                 rentNoInvestNetWorth: 'Nájem bez investování',
               };
-              return labels[value] ?? value;
+              return <span className="text-ink-body">{labels[value] ?? value}</span>;
             }}
           />
           <Line type="monotone" dataKey="propertyNetWorth" stroke={colors.positive} strokeWidth={2} dot={false} />

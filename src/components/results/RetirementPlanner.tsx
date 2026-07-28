@@ -216,12 +216,16 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
               />
             }
           />
+          {/* Popisek se sází barvou textu, ne barvou série: odstíny sérií jsou
+              ověřené jako značky v grafu (práh 3:1 vůči ploše), ne jako text,
+              kde je potřeba 4,5:1. Barvu nese čtvereček vedle popisku. */}
           <Legend
             formatter={(value) => {
               const isNominal = value.endsWith('_nom');
               const key = isNominal ? value.replace('_nom', '') : value;
               const label = instruments.find((i) => i.key === key)?.label ?? key;
-              return isNominal ? `${label} (nom.)` : showInflation ? `${label} (reál.)` : label;
+              const text = isNominal ? `${label} (nom.)` : showInflation ? `${label} (reál.)` : label;
+              return <span className="text-ink-body">{text}</span>;
             }}
           />
           {instruments.map((inst) => (
