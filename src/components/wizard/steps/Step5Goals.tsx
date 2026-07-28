@@ -73,7 +73,7 @@ export default function Step5Goals() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-ink mb-2">Vaše finanční cíle</h2>
+      <h2 className="type-section text-ink mb-2">Vaše finanční cíle</h2>
       <p className="text-ink-muted mb-6">
         Na co šetříte? Vyberte jeden nebo více cílů. Čím víc jich zadáte, tím líp uvidíte,
         jestli se vejdou do jednoho rozpočtu vedle sebe.

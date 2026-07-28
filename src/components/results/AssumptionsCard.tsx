@@ -37,7 +37,7 @@ export default function AssumptionsCard({ state }: { state: WizardState }) {
     <Card>
       <details className="no-print">
         <summary className="cursor-pointer list-none">
-          <span className="text-lg font-semibold text-ink">Z čeho přehled počítá</span>
+          <span className="type-section text-ink">Z čeho přehled počítá</span>
           <span className="block text-sm text-ink-muted">
             Všechny předpoklady na jednom místě. Co jste zadali vy a co jsme odhadli.
           </span>
@@ -47,7 +47,7 @@ export default function AssumptionsCard({ state }: { state: WizardState }) {
 
       {/* V tisku se předpoklady ukazují vždy, bez nich se report nedá ověřit. */}
       <div className="hidden print:block">
-        <h3 className="text-lg font-semibold text-ink mb-3">Z čeho přehled počítá</h3>
+        <h3 className="type-section text-ink mb-3">Z čeho přehled počítá</h3>
         {list}
       </div>
 

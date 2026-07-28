@@ -2,9 +2,9 @@ import type { WizardState } from '../../types';
 import { cashFlowAfterPurchase } from '../../engine/savings';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
-import Alert from '../ui/Alert';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 
 interface Props {
   state: WizardState;
@@ -29,7 +29,7 @@ export default function CashFlowAfterChart({ state }: Props) {
     <Card title="Výhled: vývoj úspor s koupí vs. bez" subtitle="Jak by rostly (nebo klesaly) vaše úspory v čase, kdybyste nemovitost koupili, nebo zůstali v nájmu.">
       {permanentlyNegative && (
         <div className="mb-4">
-          <Alert type="warning">Po koupi nemovitosti by vaše úspory postupně klesaly. Měsíční výdaje by převýšily příjem.</Alert>
+          <Callout tone="caution" border alert>Po koupi nemovitosti by vaše úspory postupně klesaly. Měsíční výdaje by převýšily příjem.</Callout>
         </div>
       )}
 

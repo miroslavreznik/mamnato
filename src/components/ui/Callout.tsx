@@ -51,17 +51,26 @@ const TONES: Record<CalloutTone, { fill: string; edge: string }> = {
   },
 };
 
-export default function Callout({ tone, border = false, className = '', children }: {
+export default function Callout({ tone, border = false, alert = false, className = '', children }: {
   tone: CalloutTone;
   /** Obrys v tónu boxu. */
   border?: boolean;
+  /**
+   * Ohlásit obsah čtečce hned, jak se objeví. Pro sdělení, které vzniklo
+   * reakcí na to, co uživatel právě zadal (výdaje přerostly příjem), ne pro
+   * text, který na stránce je od začátku.
+   */
+  alert?: boolean;
   /** Rozestupy a odsazení. Výchozí je `p-3 rounded-lg text-sm`. */
   className?: string;
   children: ReactNode;
 }) {
   const t = TONES[tone];
   return (
-    <div className={`p-3 rounded-lg text-sm ${t.fill} ${border ? `border ${t.edge}` : ''} ${className}`.replace(/\s+/g, ' ').trim()}>
+    <div
+      role={alert ? 'alert' : undefined}
+      className={`p-3 rounded-lg text-sm ${t.fill} ${border ? `border ${t.edge}` : ''} ${className}`.replace(/\s+/g, ' ').trim()}
+    >
       {children}
     </div>
   );

@@ -139,7 +139,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-ink mb-2">Vlastní finanční cíle</h3>
+      <h3 className="type-section text-ink mb-2">Vlastní finanční cíle</h3>
       <p className="text-sm text-ink-muted mb-4">
         Seřaď cíle podle důležitosti. Začneme od nejvyššího a uvidíme, na které ještě zbývá.
       </p>

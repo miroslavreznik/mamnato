@@ -39,7 +39,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
         <span className="text-3xl">👶</span>
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-ink">Náklady na dítě</h3>
+            <h3 className="type-section text-ink">Náklady na dítě</h3>
             <button
               onClick={() => setShowInfo(!showInfo)}
               className="text-brand hover:text-brand text-sm"

@@ -22,7 +22,7 @@ export default function Card({ title, subtitle, tooltip, children, className = '
   return (
     <div className={`bg-card rounded-xl shadow-sm border border-line p-6 ${className}`.trimEnd()}>
       {title && (
-        <h3 className={`text-lg font-semibold text-ink ${subtitle ? 'mb-1' : 'mb-4'}`}>
+        <h3 className={`type-section text-ink ${subtitle ? 'mb-1' : 'mb-4'}`}>
           {title}
           {tooltip && <Tooltip text={tooltip} />}
         </h3>

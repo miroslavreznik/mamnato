@@ -62,7 +62,7 @@ export default function Step6Property() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-ink mb-2">Vlastní bydlení</h2>
+      <h2 className="type-section text-ink mb-2">Vlastní bydlení</h2>
       <p className="text-ink-muted mb-6">Zadejte parametry nemovitosti, kterou chcete koupit, a hypotéky na ni.</p>
 
       <h3 className="text-sm font-semibold text-ink-label mb-3">Nemovitost a úspory</h3>

@@ -33,7 +33,7 @@ export default function ResultsSection({ id, title, subtitle, active, children }
       className="scroll-mt-32"
     >
       <div className="mb-4">
-        <h2 className="text-lg font-bold text-ink">{title}</h2>
+        <h2 className="type-section text-ink">{title}</h2>
         {subtitle && <p className="text-sm text-ink-muted">{subtitle}</p>}
       </div>
       <div className="space-y-6">{children}</div>

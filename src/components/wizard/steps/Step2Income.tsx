@@ -43,7 +43,7 @@ export default function Step2Income() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-ink mb-2">Vaše příjmy</h2>
+      <h2 className="type-section text-ink mb-2">Vaše příjmy</h2>
       <p className="text-ink-muted mb-6">Zadejte čisté měsíční příjmy domácnosti. Věk je nepovinný, ale zpřesní výpočty.</p>
 
       <NumberInput

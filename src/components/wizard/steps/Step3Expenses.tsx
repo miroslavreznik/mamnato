@@ -4,10 +4,10 @@ import { totalMonthlyIncome, totalMonthlyExpenses, necessaryMonthlyExpenses, dis
 import { DISCRETIONARY_GROUPS, discretionaryGroupTotals, hasDiscretionaryBreakdown, itemKey } from '../../../engine/discretionary';
 import NumberInput from '../../ui/NumberInput';
 import NumField from '../../ui/NumField';
-import Alert from '../../ui/Alert';
 import StepNavigation from '../StepNavigation';
 import { formatNumber as fmt } from '../../../engine/format';
 import { fieldClass } from '../../ui/fieldClass';
+import Callout from '../../ui/Callout';
 
 const categories: { field: string; label: string; tooltip: string; step: number; familyOnly?: boolean }[] = [
   { field: 'rent', label: 'Nájem (bez energií a poplatků)', tooltip: 'Zadejte čistou výši nájmu, tedy částku, kterou platíte pronajímateli za byt. Energie a zálohy zadejte do pole níže.', step: 1000 },
@@ -55,7 +55,7 @@ export default function Step3Expenses() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-ink mb-2">Vaše výdaje</h2>
+      <h2 className="type-section text-ink mb-2">Vaše výdaje</h2>
       <p className="text-ink-muted mb-6">Zadejte měsíční výdaje po kategoriích. Hodnoty jsou předvyplněny průměrem ČR.</p>
 
       <h3 className="text-sm font-semibold text-ink-label mb-3">Nezbytné výdaje</h3>
@@ -166,13 +166,13 @@ export default function Step3Expenses() {
 
       {ratio > 1 && (
         <div className="mt-3">
-          <Alert type="error">Vaše výdaje převyšují příjmy. Doporučujeme nejdříve zkontrolovat rozpočet.</Alert>
+          <Callout tone="danger" border alert>Vaše výdaje převyšují příjmy. Doporučujeme nejdříve zkontrolovat rozpočet.</Callout>
         </div>
       )}
 
       {ratio > 0.9 && ratio <= 1 && (
         <div className="mt-3">
-          <Alert type="warning">Vaše výdaje tvoří více než 90 % příjmů. Zbývá velmi málo na spoření.</Alert>
+          <Callout tone="caution" border alert>Vaše výdaje tvoří více než 90 % příjmů. Zbývá velmi málo na spoření.</Callout>
         </div>
       )}
 

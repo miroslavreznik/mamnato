@@ -283,6 +283,66 @@ body {
   background: rgb(16 113 95 / 0.18);
 }
 
+/* --------------------------------------------------------------------------
+   Typografické role
+   --------------------------------------------------------------------------
+   Návrh má pět rolí a u každé pevnou velikost, řádkování i prostrkání.
+   Rozepsané do tříd by to bylo pět dlouhých řetězců opakovaných na desítkách
+   míst, což je přesně to, co se tady posledně uklízelo u karet a polí.
+
+   Velikosti jsou `clamp()`, protože návrh počítá s tím, že na mobilu je
+   verdikt menší (26–30 px) než na desktopu (46 px), ale jinak stejný.
+   Střední hodnota je vztažená k šířce okna, takže mezistupně nejsou skoky.
+   -------------------------------------------------------------------------- */
+
+/* Verdikt a hlavní sdělení. Na výsledcích to první, co uživatel přečte. */
+.type-verdict {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.625rem, 1.1rem + 2.6vw, 2.875rem);
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+/* Nadpis úvodní obrazovky. Jediné místo, kde jde písmo takhle nahoru. */
+.type-display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 1.2rem + 4vw, 3.75rem);
+  line-height: 1.04;
+  letter-spacing: -0.035em;
+}
+
+/* Nadpis sekce a karty. */
+.type-section {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.125rem, 1rem + 0.6vw, 1.5rem);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+/* Číslo, kvůli kterému karta existuje. Pevná šířka číslic je tu povinná:
+   tahle čísla se přepočítávají pod rukama při tažení posuvníku. */
+.type-hero {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(1.625rem, 1.3rem + 1.2vw, 2rem);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Verzálkový popisek nad číslem. Mono, protože v návrhu odděluje „co to je"
+   od „kolik to je" tvarem písma, ne jen velikostí. */
+.type-label {
+  font-family: var(--font-mono);
+  font-weight: 400;
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
 /* Klidnější číselné vstupy: skryté spinnery (máme vlastní +/−) */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {

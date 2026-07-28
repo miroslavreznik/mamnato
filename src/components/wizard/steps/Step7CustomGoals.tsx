@@ -46,7 +46,7 @@ export default function Step7CustomGoals() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-ink mb-2">Vaše vlastní cíle</h2>
+      <h2 className="type-section text-ink mb-2">Vaše vlastní cíle</h2>
       <p className="text-ink-muted mb-6">
         Na co dalšího šetříte? Zadejte, co chcete, kolik na to potřebujete a za jak dlouho to chcete mít.
       </p>

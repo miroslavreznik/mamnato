@@ -10,6 +10,9 @@ import { formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
+import HeroNumber from '../ui/HeroNumber';
+import MonthsMeter from '../ui/MonthsMeter';
+import StatusBadge, { type Status } from '../ui/StatusBadge';
 
 interface Props {
   state: WizardState;
@@ -40,7 +43,7 @@ const verdictStyles: Record<VerdictAnswer, { box: string; text: string }> = {
   },
 };
 
-type Tone = 'good' | 'warn' | 'bad' | 'plain';
+type Tone = 'good' | 'caution' | 'danger' | 'plain';
 
 interface Kpi {
   label: string;
@@ -52,46 +55,23 @@ interface Kpi {
   // Naplnění 0..1 pro proužek pod číslem. Ukazuje, jak daleko je hodnota
   // od svého cíle, takže stav jde poznat bez čtení.
   meter?: number;
+  // Rezerva v měsících. Když je zadaná, kreslí se místo proužku měřič
+  // po měsících, protože ty jdou spočítat a proužek je slévá dohromady.
+  months?: number;
 }
 
-const toneClass: Record<Tone, string> = {
-  good: 'text-good',
-  warn: 'text-caution',
-  bad: 'text-danger',
-  plain: 'text-ink',
+// Stav cíle slovem a tvarem, ne jen barvou. Samotná tečka nešla bez legendy
+// pochopit a legenda pro tři stavy nemá cenu; tvar ji nepotřebuje.
+const goalBadge: Record<GoalStatus, { label: string; status: Status }> = {
+  good: { label: 'V pořádku', status: 'good' },
+  caution: { label: 'Pozor', status: 'caution' },
+  warning: { label: 'Nevychází', status: 'danger' },
 };
 
-const meterBar: Record<Tone, string> = {
-  good: 'bg-good',
-  warn: 'bg-caution',
-  bad: 'bg-danger',
-  plain: 'bg-ink',
-};
-
-// Stav cíle slovem, ne jen barvou. Samotná tečka nešla bez legendy pochopit
-// a legenda navíc pro tři stavy nemá cenu.
-const goalBadge: Record<GoalStatus, { label: string; className: string }> = {
-  good: {
-    label: 'V pořádku',
-    className: 'bg-tint-good text-good',
-  },
-  caution: {
-    label: 'Pozor',
-    className: 'bg-tint-caution text-caution',
-  },
-  warning: {
-    label: 'Nevychází',
-    className: 'bg-tint-danger text-danger',
-  },
-};
-
-// Odpověď, která platí jen za předpokladu, jenž zatím neplatí. Barvu si
+// Odpověď, která platí jen za předpokladu, jenž zatím neplatí. Barvu stavu si
 // nezaslouží: zelené „v pořádku" hned pod červeným „nevychází" vypadá, jako
 // by si appka odporovala, i když každá odpověď mluví o něčem jiném.
-const conditionalBadge = {
-  label: 'Podmíněně',
-  className: 'bg-shell text-ink-body',
-};
+const conditionalBadge = { label: 'Podmíněně', status: 'neutral' as const };
 
 export default function ResultsOverview({ state, allocations, onOpenSection }: Props) {
   const summary = evaluateOverall(state, allocations);
@@ -108,7 +88,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
     : runway < 0.05
       ? '0'
       : runway.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-  const runwayTone: Tone = runway >= 6 ? 'good' : runway >= 3 ? 'warn' : 'bad';
+  const runwayTone: Tone = runway >= 6 ? 'good' : runway >= 3 ? 'caution' : 'danger';
 
   // Dlaždice se liší podle toho, co uživatel řeší. U hypotéky jsou nejdůležitější
   // splátka a akontace (jinak schované ve sbalené sekci Bydlení), ne obecné
@@ -124,7 +104,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             value: fmt(payment),
             unit: 'Kč/měs.',
             sub: isFinite(dstiPct) ? `${Math.round(dstiPct * 100)} % čistého příjmu` : undefined,
-            tone: !isFinite(dstiPct) || dstiPct > DEFAULTS.dstiLimit ? 'bad' : dstiPct > DEFAULTS.dstiLimit * 0.85 ? 'warn' : 'plain',
+            tone: !isFinite(dstiPct) || dstiPct > DEFAULTS.dstiLimit ? 'danger' : dstiPct > DEFAULTS.dstiLimit * 0.85 ? 'caution' : 'plain',
             // Proužek vůči obvyklému bankovnímu stropu DSTI.
             meter: isFinite(dstiPct) ? dstiPct / DEFAULTS.dstiLimit : 1,
           };
@@ -141,7 +121,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             sub: gap > 0
               ? (isFinite(months) ? `naspoříte za ${formatMonths(months, true)}` : 'zatím na ni nic neodkládáte')
               : 'akontaci máte pokrytou',
-            tone: gap > 0 ? (isFinite(months) ? 'warn' : 'bad') : 'good',
+            tone: gap > 0 ? (isFinite(months) ? 'caution' : 'danger') : 'good',
             // Kolik z požadované akontace je už pokryto.
             meter: required > 0 ? (required - gap) / required : 1,
           };
@@ -152,7 +132,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           value: runwayLabel,
           unit: 'měs.',
           tone: runwayTone,
-          meter: runway === Infinity ? 1 : runway / 6,
+          months: runway === Infinity ? 6 : runway,
         },
       ]
     : [
@@ -161,14 +141,14 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           tooltip: 'Kolik vám měsíčně zbyde po odečtení všech výdajů od čistých příjmů (příjmy − výdaje). Z této částky spoříte na cíle a tvoříte rezervu.',
           value: `${disposable >= 0 ? '+' : ''}${fmt(disposable)}`,
           unit: 'Kč/měs.',
-          tone: disposable >= 0 ? 'plain' : 'bad',
+          tone: disposable >= 0 ? 'plain' : 'danger',
         },
         {
           label: 'Míra úspor',
           tooltip: 'Jaký podíl čistého příjmu vám po výdajích zbývá (disponibilní částka ÷ příjem). Zdravé bývá aspoň 10–20 %.',
           value: (rate * 100).toFixed(1),
           unit: '%',
-          tone: rate >= 0.2 ? 'good' : rate >= 0.1 ? 'plain' : 'warn',
+          tone: rate >= 0.2 ? 'good' : rate >= 0.1 ? 'plain' : 'caution',
           meter: rate / 0.2,
         },
         {
@@ -177,7 +157,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           value: runwayLabel,
           unit: 'měs.',
           tone: runwayTone,
-          meter: runway === Infinity ? 1 : runway / 6,
+          months: runway === Infinity ? 6 : runway,
         },
       ];
 
@@ -194,7 +174,10 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
       <div className={`rounded-xl border p-5 sm:p-6 mb-5 ${verdictStyles[summary.verdict.answer].box}`}>
         <div className="text-center">
           <span className="text-3xl leading-none" aria-hidden="true">{summary.icon}</span>
-          <p className="mt-1 text-3xl sm:text-4xl font-extrabold leading-tight tracking-tight">
+          {/* Barva podle stavu a rámeček okolo jsou tu ještě z dnešní podoby.
+              Návrh chce verdikt v `ink` přímo na papíru, bez karty a bez ikony;
+              to ale patří k překreslení záložky Cesta, ne k řezům. */}
+          <p className="mt-1 type-verdict">
             <span className={verdictStyles[summary.verdict.answer].text}>{summary.verdict.headline}</span>
             {summary.verdict.qualifier && (
               <>
@@ -220,9 +203,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
               const badge = q.conditional ? conditionalBadge : goalBadge[q.status];
               return (
                 <div key={q.question} className="flex items-start gap-2.5">
-                  <span className={`shrink-0 mt-0.5 px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
-                    {badge.label}
-                  </span>
+                  <StatusBadge status={badge.status} label={badge.label} className="shrink-0 mt-0.5" />
                   <p className={`text-sm min-w-0 ${q.conditional ? 'text-ink-muted' : 'text-ink-label'}`}>
                     <span className="font-semibold">{q.question}</span>{' '}
                     <span className="text-ink-body">{q.answer}</span>
@@ -237,25 +218,24 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
       {/* Čísla, na kterých verdikt stojí */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
         {kpis.map((k) => (
-          <div key={k.label} className="p-3 rounded-lg bg-sunken">
-            <span className="text-xs text-ink-muted inline-flex items-center">
-              {k.label}
-              <Tooltip text={k.tooltip} />
-            </span>
-            <p className={`text-xl font-bold whitespace-nowrap ${toneClass[k.tone]}`}>
-              {k.value}
-              {k.unit && <span className="text-sm font-normal text-ink-faint"> {k.unit}</span>}
-            </p>
-            {k.meter !== undefined && (
-              <div className="mt-1.5 h-1.5 rounded-full bg-shell overflow-hidden">
-                <div
-                  className={`h-full rounded-full ${meterBar[k.tone]}`}
-                  style={{ width: `${Math.max(4, Math.min(100, k.meter * 100))}%` }}
-                />
-              </div>
+          <HeroNumber
+            key={k.label}
+            label={<>{k.label}<Tooltip text={k.tooltip} /></>}
+            value={k.value}
+            unit={k.unit}
+            tone={k.tone}
+            note={k.sub}
+            meter={k.months === undefined ? k.meter : undefined}
+          >
+            {/* Rezerva se měří v měsících, a ty jdou spočítat. Dlaždice to
+                řeknou přesněji než proužek, který je slévá dohromady. */}
+            {k.months !== undefined && (
+              <MonthsMeter
+                months={k.months}
+                tone={k.tone === 'plain' ? 'good' : k.tone === 'caution' ? 'caution' : k.tone}
+              />
             )}
-            {k.sub && <p className="text-xs text-ink-faint mt-1">{k.sub}</p>}
-          </div>
+          </HeroNumber>
         ))}
       </div>
 
@@ -268,9 +248,11 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
               <div key={g.key} className="p-3 rounded-lg border border-line">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-semibold text-ink">{g.label}</span>
-                  <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${goalBadge[g.status].className}`}>
-                    {goalBadge[g.status].label}
-                  </span>
+                  <StatusBadge
+                    status={goalBadge[g.status].status}
+                    label={goalBadge[g.status].label}
+                    className="shrink-0"
+                  />
                 </div>
                 <p className="mt-1 text-sm text-ink-muted">{g.headline}</p>
               </div>

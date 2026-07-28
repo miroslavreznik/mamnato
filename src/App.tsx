@@ -80,9 +80,9 @@ function App() {
             aria-label="Domů"
           >
             <BrandMark className="w-9 h-9" />
-            <span className="text-lg font-bold tracking-tight text-ink">
-              MámNaTo<span className="text-brand">?</span>
-            </span>
+            {/* Otazník je součástí značky vedle, proto tady není podruhé.
+                Celý název nese `aria-label` na tlačítku i na značce. */}
+            <span className="type-section text-ink">MámNaTo</span>
           </button>
           <ThemeToggle />
         </div>

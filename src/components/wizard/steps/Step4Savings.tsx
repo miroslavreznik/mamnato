@@ -24,7 +24,7 @@ export default function Step4Savings() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-ink mb-2">Vaše úspory</h2>
+      <h2 className="type-section text-ink mb-2">Vaše úspory</h2>
       <p className="text-ink-muted mb-6">
         Zadejte celkovou částku, kterou máte odloženou na spořicím účtu, termínovaném vkladu nebo v hotovosti.
         Nemusí to být vše, co máte, jen to, s čím můžete pracovat.

@@ -170,7 +170,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset 
   return (
     <div>
       <div className="print-only mb-4">
-        <h1 className="text-lg font-bold text-ink">MámNaTo? Finanční přehled</h1>
+        <h1 className="type-section text-ink">MámNaTo? Finanční přehled</h1>
         <p className="text-xs text-ink-muted">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
       </div>
       <ResultsHeader

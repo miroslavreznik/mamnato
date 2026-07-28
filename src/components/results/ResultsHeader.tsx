@@ -66,7 +66,7 @@ export default function ResultsHeader({ mode, shareCopied, onShare, onPrint, onE
   return (
     <div className="mb-4 rounded-2xl border border-line bg-card px-4 py-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
       <div className="flex items-center gap-2.5 min-w-0">
-        <h2 className="text-xl font-semibold text-ink truncate">Váš finanční plán</h2>
+        <h2 className="type-section text-ink truncate">Váš finanční plán</h2>
         <span className="shrink-0 px-2 py-0.5 rounded-full text-xs font-medium bg-sunken text-ink-body">
           {MODE_LABELS[mode]}
         </span>

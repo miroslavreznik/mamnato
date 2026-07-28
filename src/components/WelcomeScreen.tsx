@@ -41,7 +41,7 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
           Zdarma · Bez registrace · Hotovo za 3 minuty
         </span>
 
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-ink mb-4 text-balance">
+        <h1 className="type-display text-ink mb-4 text-balance">
           Mám na vlastní bydlení a na své cíle?
         </h1>
 

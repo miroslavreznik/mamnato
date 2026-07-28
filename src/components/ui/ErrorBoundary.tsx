@@ -52,7 +52,7 @@ export default class ErrorBoundary extends Component<Props, State> {
           <div className="text-4xl mb-3" aria-hidden="true">
             😕
           </div>
-          <h1 className="text-lg font-bold text-ink mb-2">
+          <h1 className="type-section text-ink mb-2">
             Něco se pokazilo
           </h1>
           <p className="text-sm text-ink-body mb-5">

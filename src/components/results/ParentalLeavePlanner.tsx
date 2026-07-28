@@ -79,7 +79,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
   return (
     <Card>
       <div className="flex items-start justify-between gap-2 mb-1">
-        <h3 className="text-lg font-semibold text-ink">Rodičovská: co udělá s rozpočtem</h3>
+        <h3 className="type-section text-ink">Rodičovská: co udělá s rozpočtem</h3>
         <button onClick={() => onChange(undefined)} className="text-xs text-ink-faint hover:text-ink-body shrink-0">
           Skrýt
         </button>

@@ -2,8 +2,8 @@ import type { WizardState } from '../../types';
 import { dti, dsti } from '../../engine/mortgage';
 import { DEFAULTS } from '../../engine/defaults';
 import Tooltip from '../ui/Tooltip';
-import Alert from '../ui/Alert';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 
 interface Props {
   state: WizardState;
@@ -60,9 +60,9 @@ export default function DtiDstiIndicator({ state }: Props) {
 
       {overLimit && (
         <div className="mt-4">
-          <Alert type="error">
+          <Callout tone="danger" border alert>
             Vaše zadluženost překračuje běžná bankovní vodítka. Banka může hypotéku odmítnout nebo nabídnout horší podmínky.
-          </Alert>
+          </Callout>
         </div>
       )}
 

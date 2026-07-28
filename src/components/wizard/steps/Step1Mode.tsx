@@ -18,7 +18,7 @@ export default function Step1Mode() {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold text-ink mb-2">Kdo plánuje?</h2>
+      <h2 className="type-section text-ink mb-2">Kdo plánuje?</h2>
       <p className="text-ink-muted mb-2">
         Vyberte, jak žijete <span className="font-medium">teď</span>, ne co plánujete.
       </p>

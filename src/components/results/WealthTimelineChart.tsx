@@ -39,7 +39,7 @@ export default function WealthTimelineChart({ state }: Props) {
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-ink mb-1 flex items-center">
+      <h3 className="type-section text-ink mb-1 flex items-center">
         Vývoj jmění v čase
         <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Bez výnosů z investic a inflace, konzervativní odhad." />
       </h3>

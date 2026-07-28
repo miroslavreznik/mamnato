@@ -4,9 +4,9 @@ import { requiredDownPayment, downPaymentGap, downPaymentFraction } from '../../
 import { monthlyDisposable } from '../../engine/cashflow';
 import { formatMonths, czkPerMonth } from '../../engine/format';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
-import Alert from '../ui/Alert';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 
 interface Props {
   state: WizardState;
@@ -30,7 +30,7 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
 
   if (disposable <= 0) {
     return (
-      <Card title="Vývoj úspor v čase">        <Alert type="warning">Při záporné disponibilní částce nelze zobrazit projekci úspor.</Alert>
+      <Card title="Vývoj úspor v čase">        <Callout tone="caution" border alert>Při záporné disponibilní částce nelze zobrazit projekci úspor.</Callout>
       </Card>
     );
   }
@@ -47,7 +47,7 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
 
   return (
     <Card>
-      <h3 className="text-lg font-semibold text-ink mb-1">Vývoj úspor v čase</h3>
+      <h3 className="type-section text-ink mb-1">Vývoj úspor v čase</h3>
       {intersectMonth !== undefined && intersectMonth > 0 && (
         <p className="text-sm text-good mb-4">
           Při odkládání {czkPerMonth(monthlySaving)} na akontaci dosáhnete za {formatMonths(intersectMonth)}.

@@ -294,9 +294,7 @@ Slovníček 2 341 px.
    a `Button` se schválně nedělaly, viz níže.
 3. ~~**Kotvy pro testy.**~~ Hotovo, viz níže.
 4. ~~**Barvy a fonty ze směru „Cesta".**~~ Hotovo, viz níže.
-5. **Sdílené prvky.** `BrandMark` (domeček pryč, otazník v zeleném čtverci),
-   sloučit `Alert` do `Callout`, `StatusBadge` (tvar + slovo), `HeroNumber`,
-   `MonthsMeter`. Teprve tady se nasadí displayový řez.
+5. ~~**Sdílené prvky.**~~ Hotovo, viz níže.
 6. **Skořápka.** `App.tsx` bez `max-w-3xl`, mřížka do 1280 px.
    `ResultsTabs` na pilulky, „Souhrn" → „Cesta", přidat „Co kdyby".
 7. **Záložka Cesta.** `ResultsOverview` se rozpadne na `VerdictHeadline`,
@@ -309,6 +307,45 @@ Slovníček 2 341 px.
     tisk do PDF.
 
 Kroky 1 až 3 nic nepředjímaly a byly hotové, ještě než návrh existoval.
+
+### Sdílené prvky (krok 5)
+
+**Značka.** Domeček s rostoucí šipkou zrušen, místo něj otazník v zeleném
+čtverci. Otazník je vysazený **cestou, ne textem**: textová varianta by při
+prvním načtení blikla systémovým fontem, a značka je to první, co je vidět.
+Cesta je glyf „?" z Bricolage Grotesque 700, vytažený z toho samého souboru,
+který appka posílá do prohlížeče, takže vypadá stejně jako nadpisy. Stejná
+kresba je i ve `public/favicon.svg`; mění se obojí naráz.
+
+Wordmark ztratil svůj otazník, protože ho nese značka vedle. Celý název drží
+`aria-label`, takže čtečka i test slyší dál „MámNaTo?".
+
+**Typografické role.** Pět rolí (`type-verdict`, `type-display`,
+`type-section`, `type-hero`, `type-label`) je v `index.css`, ne rozepsaných
+do tříd: každá má pevnou velikost, řádkování i prostrkání a rozepsané by to
+bylo pět dlouhých řetězců na desítkách míst. Velikosti jsou `clamp()`, protože
+návrh chce na mobilu menší verdikt (26–30 px) než na desktopu (46 px).
+Devatenáct nadpisů, které měly tři různé velikosti, teď má jednu roli.
+
+**`StatusBadge`.** Tvar, slovo a barva naráz. Tvar je u každého stavu jiný
+(plné kolečko, čtvereček, čárka, prázdné kolečko), takže stav projde i tiskem
+a barvoslepostí. Tónovaná pilulka zrušena: čtyři pilulky vedle sebe v mřížce
+vypadaly jako čtyři tlačítka.
+
+**`Alert` sloučen do `Callout`.** Byly to dva systémy tónovaných boxů, každý
+s vlastní paletou. Emoji ikony (ℹ️ ⚠️ ❌) zrušeny, návrh je nechce. `role="alert"`
+zůstalo jako prop `alert`, protože to není dekorace: ta hlášení vznikají reakcí
+na to, co uživatel právě zadal.
+
+**`HeroNumber` a `MonthsMeter`.** Číslo, kvůli kterému karta existuje, bylo
+rozepsané v každé kartě zvlášť a pokaždé o kus jinak. Proužek je nově 10 px
+místo 6, protože v šesti pixelech nešlo poznat „těsně pod limitem" od „přes
+limit". Rezerva dostala místo proužku měřič po měsících: doporučení je 3 až 6
+měsíců, což jsou počítatelné jednotky, a proužek je sléval do spojité škály.
+Neúplný měsíc se kreslí poloviční sytostí, protože zaokrouhlit nahoru by lhalo.
+
+Nula se u proužku kreslí jako **prázdná kolejnice**, ne jako krátký pahýl.
+S proužkem 10 px se čtyřprocentní minimum četlo jako tečka, tedy „něco tam je".
 
 ### Barvy a fonty (krok 4)
 
@@ -327,11 +364,8 @@ mimo subsety zůstávají jen emoji a čtyři symboly (→ ✓ ∞ ▲▼), kter
 na systémový font. Test v e2e potvrdil, že stránka nedělá **žádný** požadavek
 mimo vlastní server.
 
-Co se **ještě nezměnilo**, ať to nepřekvapí: displayový řez zatím nikde není
-nasazený (žádná komponenta nepoužívá `font-display`), logo je pořád domeček
-v modrém čtverci a verdikt má pořád barvu podle stavu, ne `ink`. Všechno tři
-patří ke krokům 5 a 7. Po tomhle kroku je appka teplá a čitelná, ale ještě
-to není „Cesta".
+Po tomhle kroku byla appka teplá a čitelná, ale bez displayového řezu
+a se starou značkou. Obojí dodal krok 5.
 Zbytek čeká na něj.
 
 ### Proč nevzniklo `Badge` ani `Button`
