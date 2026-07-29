@@ -41,7 +41,7 @@ export default function MortgageVsRent({ state }: Props) {
               <span>{fmt(utilities)} Kč</span>
             </div>
           </div>
-          <div className="border-t mt-2 pt-2 text-center">
+          <div className="border-t border-line mt-2 pt-2 text-center">
             <div className="text-xl sm:text-2xl font-bold whitespace-nowrap text-ink">{fmt(totalRent)} Kč</div>
             <div className="text-xs text-ink-faint">celkem měsíčně</div>
           </div>
@@ -63,7 +63,7 @@ export default function MortgageVsRent({ state }: Props) {
               <span>{fmt(ownershipCosts)} Kč</span>
             </div>
           </div>
-          <div className="border-t mt-2 pt-2 text-center">
+          <div className="border-t border-line mt-2 pt-2 text-center">
             <div className="text-xl sm:text-2xl font-bold whitespace-nowrap text-brand">{fmt(totalOwnership)} Kč</div>
             <div className="text-xs text-ink-faint">celkem měsíčně</div>
           </div>

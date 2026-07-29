@@ -78,7 +78,7 @@ export default function Step4Savings() {
             step={10000}
           />
 
-          <div className="flex justify-between text-sm pt-2 border-t">
+          <div className="flex justify-between text-sm pt-2 border-t border-line">
             <span className="text-ink-body">Celkem</span>
             <span className="font-semibold text-ink">{breakdownTotal.toLocaleString('cs-CZ')} Kč</span>
           </div>

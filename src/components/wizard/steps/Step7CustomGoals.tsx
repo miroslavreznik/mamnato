@@ -88,36 +88,48 @@ export default function Step7CustomGoals() {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs text-ink-muted mb-1">Co chci (název)</label>
+              {/* Tatáž tři pole jsou i na výsledcích v `CustomGoalPlanner`.
+                  Musí se jmenovat i ovládat stejně: dřív tu stálo „Co chci
+                  (název)" a tam „Název cíle", a krokovací tlačítka měla jen
+                  jedna z těch dvojic, takže tentýž cíl šlo zadat dvěma
+                  různými způsoby. */}
+              {/* Název přes celou šířku, částka a doba pod ním. Ve třech
+                  sloupcích byla pole tak úzká, že se do nich s krokovacími
+                  tlačítky nevešlo ani „300 000": v průvodci se číslo ořízlo
+                  na „300 00". */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs text-ink-muted mb-1">Název cíle</label>
                   <input
                     type="text"
                     value={goal.name}
                     onChange={(e) => update(goal.id, 'name', e.target.value)}
-                    placeholder="např. Auto, dovolená, rezerva…"
-                    className={fieldClass('w-full px-3 py-2 text-sm')}
+                    placeholder="např. Auto, dovolená…"
+                    aria-label="Název cíle"
+                    className={fieldClass('w-full px-3 py-2.5 text-base')}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-ink-muted mb-1">Kolik potřebuji (Kč)</label>
+                  <label className="block text-xs text-ink-muted mb-1">Cílová částka (Kč)</label>
                   <NumField
                     value={goal.targetAmount}
                     onChange={(v) => update(goal.id, 'targetAmount', v)}
-                    ariaLabel="Kolik potřebuji"
-                    className={fieldClass('w-full px-3 py-2 text-sm')}
+                    ariaLabel="Cílová částka"
+                    step={10000}
+                    className={fieldClass('w-full px-3 py-2.5 text-base')}
                   />
                 </div>
                 <div>
                   <label className="block text-xs text-ink-muted mb-1">
-                    Za jak dlouho ({timeUnit === 'months' ? 'měsíců' : 'let'})
+                    Za kolik {timeUnit === 'months' ? 'měsíců' : 'let'}
                   </label>
                   <NumField
                     value={toDisplay(goal.targetMonths)}
                     onChange={(v) => update(goal.id, 'targetMonths', fromDisplay(v))}
                     min={1}
-                    ariaLabel="Za jak dlouho"
-                    className={fieldClass('w-full px-3 py-2 text-sm')}
+                    step={1}
+                    ariaLabel={timeUnit === 'months' ? 'Za kolik měsíců' : 'Za kolik let'}
+                    className={fieldClass('w-full px-3 py-2.5 text-base')}
                   />
                 </div>
               </div>

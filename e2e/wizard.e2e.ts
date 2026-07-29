@@ -88,7 +88,7 @@ test('výběr „Jiné" přidá krok vlastních cílů a název dorazí do výsl
   await pickGoal(page, 'other')
   await next(page) // → krok Vlastní cíle
   await expect(page.getByText('Vaše vlastní cíle')).toBeVisible()
-  await page.getByPlaceholder(/Auto, dovolená, rezerva/).fill('Dovolená')
+  await page.getByPlaceholder(/Auto, dovolená/).fill('Dovolená')
   await finish(page)
   await openTab(page, 'cile')
   await expect(page.getByPlaceholder(/Auto, dovolená/)).toHaveValue('Dovolená')

@@ -75,7 +75,7 @@ function AllocationSlider({ value, free, onChange }: {
 }) {
   const max = Math.max(value, value + free);
   return (
-    <div className="mt-4 pt-4 border-t border-line">
+    <div className="mt-4 pt-4 border-t border-line max-w-2xl">
       <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1.5">
         {/* Popisek nemá `htmlFor`: posuvník si nese vlastní `aria-label`,
             protože ho čte i klávesnice a dotykové čtečky. */}
@@ -159,16 +159,18 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
       </p>
 
       <div className="p-4 rounded-xl border border-line bg-sunken mb-4">
-        <div className="grid grid-cols-3 gap-4 text-sm">
-          <div>
+        {/* Na mobilu pod sebe. Ve třech sloupcích na 390 px se lámalo
+            i „50 000 Kč/měs." a z panelu byla kaše. */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-sm">
+          <div className="flex justify-between sm:block">
             <span className="text-ink-muted">Zbývá po výdajích</span>
             <p className="font-semibold text-ink">{czkPerMonth(budget.disposable)}</p>
           </div>
-          <div>
+          <div className="flex justify-between sm:block">
             <span className="text-ink-muted">Rozdáno na cíle</span>
             <p className="font-semibold text-ink">{czkPerMonth(budget.allocated)}</p>
           </div>
-          <div>
+          <div className="flex justify-between sm:block">
             <span className="text-ink-muted">Volných zbývá</span>
             <p className={`font-semibold ${budget.surplus >= 0 ? 'text-good' : 'text-danger'}`}>
               {czkPerMonth(budget.surplus)}
@@ -218,8 +220,14 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                 )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
+              {/* Stejné rozvržení jako v průvodci: název přes celou šířku,
+                  částka a doba pod ním. Ve třech sloupcích se do polí
+                  s krokovacími tlačítky nevešla šestimístná částka.
+                  `max-w-2xl` proto, že karta cílů je na záložce sama a zabírá
+                  celou šířku; bez něj bylo pole na název cíle přes tisíc
+                  pixelů široké. */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl">
+                <div className="sm:col-span-2">
                   <label className="block text-xs text-ink-muted mb-1">Název cíle</label>
                   {/* Popisky nad poli nemají `htmlFor`, takže samy o sobě
                       pole nepojmenují. Číselná pole si jméno nesou v `ariaLabel`,
@@ -231,7 +239,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     onChange={(e) => updateGoal(goal.id, 'name', e.target.value)}
                     placeholder="např. Auto, dovolená…"
                     aria-label="Název cíle"
-                    className={fieldClass('w-full px-3 py-2 text-sm')}
+                    className={fieldClass('w-full px-3 py-2.5 text-base')}
                   />
                 </div>
                 <div>
@@ -263,7 +271,10 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                 onChange={(v) => onChangeAllocation(index, v)}
               />
 
-              <div className="mt-4 space-y-2">
+              {/* Zarovnáno na stejnou šířku jako pole nad tím. Bez toho
+                  končila pole v půlce karty a věty pod nimi až u pravého
+                  okraje. */}
+              <div className="mt-4 space-y-2 max-w-2xl">
                 {/* Bez termínu se potřebná částka spočítat nedá. Pole má
                     minimum jedna, takže je to spíš pojistka než stav, který
                     uživatel uvidí. */}

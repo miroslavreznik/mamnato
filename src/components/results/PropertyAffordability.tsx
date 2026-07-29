@@ -104,7 +104,7 @@ export default function PropertyAffordability({
         )}
         {onChangeRate && <RateSlider state={state} onChange={onChangeRate} />}
 
-        <div className="border-t pt-3" />
+        <div className="border-t border-line pt-3" />
 
         <Row label="Výše hypotéky" value={czk(loanAmountOf(state))} />
         <Row label="Odhadovaná měsíční splátka" value={czkPerMonth(mortgagePayment(state))} bold />
@@ -116,7 +116,7 @@ export default function PropertyAffordability({
             jen ke čtení) by ale chyběl úplně, proto ten řádek zbývá tady. */}
         {!onChangeMonthlySaving && gap > 0 && months !== Infinity && (
           <>
-            <div className="border-t pt-3" />
+            <div className="border-t border-line pt-3" />
             <Row
               label="Čas na naspoření chybějící akontace"
               value={formatMonths(months)}

@@ -65,7 +65,7 @@ export default function DiscretionaryBreakdownChart({ state }: Props) {
             <div key={g.key}>
               <div className="flex items-center gap-2 text-sm">
                 <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: colorFor(i) }} />
-                <span className="mr-0.5">{g.icon}</span>
+                
                 <span className="text-ink-label">{g.label}</span>
                 <span className="ml-auto font-semibold text-ink">{fmtKc(g.amount)}</span>
                 <span className="text-xs text-ink-faint w-10 text-right">{pct.toFixed(0)} %</span>

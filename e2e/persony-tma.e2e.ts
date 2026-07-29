@@ -14,6 +14,12 @@ import { test, type Page } from '@playwright/test'
  * Jako testy nic netvrdí, jen projdou a udělají otisk. Soud je na oku.
  */
 
+// Otisky jsou dražší než testy: každý mění velikost okna na celou výšku
+// stránky a fotí ji. Ve výchozím třicetisekundovém limitu to při plné sadě
+// se dvěma workery občas nestihly, přestože samotný průchod trvá osm vteřin
+// a šest opakování za sebou prošlo.
+test.describe.configure({ timeout: 90_000 })
+
 const OUT = '/tmp/claude-0/-home-user-mamnato/ac41d95e-14fb-56b8-a040-5aa25aa88d4c/scratchpad'
 
 const num = (page: Page, label: string) =>
@@ -90,8 +96,8 @@ test('persona 5: pár jen s vlastními cíli, bez bydlení', async ({ page }) =>
   const fill = async (i: number, name: string, amount: string, months: string) => {
     const card = page.locator('div.border.border-line.rounded-xl').nth(i)
     await card.getByRole('textbox').first().fill(name)
-    await card.getByRole('textbox', { name: 'Kolik potřebuji' }).fill(amount)
-    await card.getByRole('textbox', { name: 'Za jak dlouho' }).fill(months)
+    await card.getByRole('textbox', { name: 'Cílová částka' }).fill(amount)
+    await card.getByRole('textbox', { name: 'Za kolik měsíců' }).fill(months)
   }
   await fill(0, 'Auto', '600000', '18')
   await page.getByRole('button', { name: /Přidat další cíl/ }).click()

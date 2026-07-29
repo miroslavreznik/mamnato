@@ -36,7 +36,7 @@ export default function TaxReliefCard({ state }: { state: WizardState }) {
         ))}
       </div>
 
-      <div className="mt-4 flex justify-between items-baseline border-t pt-3">
+      <div className="mt-4 flex justify-between items-baseline border-t border-line pt-3">
         <span className="text-sm text-ink-body">
           Dohromady
           <Tooltip text="Součet ročních úlev přepočtený na měsíc. Uplatní se jen do výše daně, kterou skutečně platíte: odpočet úroků nemůže vrátit víc, než kolik jste na dani odvedli. Zvýhodnění na dítě se naopak může změnit v daňový bonus a vyplatit se i nad rámec daně." />

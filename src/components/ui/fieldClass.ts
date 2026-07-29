@@ -13,15 +13,18 @@
  * Pozor na `px-3 pr-9`: obě třídy musí zůstat. `pr-*` v Tailwindu přebíjí
  * `px-*`, takže vypuštění `px-3` by změnilo odsazení vlevo.
  *
- * Zjištěná nesrovnalost, která se schválně neopravuje teď (byla by to změna
- * vzhledu, ne úklid): fokusový prstenec má jen pět polí z třiadvaceti.
+ * **Fokusový prstenec je součástí chrome, ne volitelný doplněk.** Dřív si ho
+ * nesla čtyři pole z třiadvaceti a ostatní spoléhaly na výchozí obrys
+ * prohlížeče, takže vedle sebe stála dvě pole a každé při fokusu vypadalo
+ * jinak. V Safari se navíc výchozí obrys liší od Chromu.
  *
  * Sem nepatří hlavní pole průvodce v `NumberInput.tsx`: barvu rámečku si
  * přepíná podle chyby (`border-danger`), takže napevno zadaný
- * `border-line-strong` by mu chybový stav sebral. Při redesignu na něj
- * nezapomeň, je to nejvíc vidět ze všech polí.
+ * `border-line-strong` by mu chybový stav sebral. Prstenec má ale stejný.
  */
-export const FIELD = 'border border-line-strong bg-card text-ink rounded-lg';
+export const FIELD =
+  'border border-line-strong bg-card text-ink rounded-lg '
+  + 'focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink';
 
 export const fieldClass = (...extra: (string | false | undefined)[]) =>
   [FIELD, ...extra.filter(Boolean)].join(' ');

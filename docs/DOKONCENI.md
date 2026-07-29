@@ -375,6 +375,42 @@ Při tom se opravily další dvě věci:
 
 Hlídají to tři testy v `cokdyby.e2e.ts`.
 
+### B9. Vizuální revize polí a tvarů (hotovo)
+
+Průchod všemi obrazovkami průvodce a výsledků na desktopu i mobilu, se
+zaměřením na to, jestli pole a bloky vypadají jako jeden systém.
+
+**Chyby, které bylo vidět:**
+
+- **Oddělovací čáry braly barvu textu.** Osm míst mělo `border-t` bez
+  barevného tokenu, a Tailwind 4 má výchozí barvu ohraničení `currentColor`.
+  Nad součty tak seděla tlustá tmavá čára místo vlasové v `--line`.
+- **V průvodci se ořízla částka.** Tři pole cíle vedle sebe s krokovacími
+  tlačítky nechala na číslo tak málo místa, že se z „300 000" zobrazilo
+  „300 00". Název je nově přes celou šířku a částka s dobou pod ním.
+- **Karta cílů se roztáhla přes celou šířku výsledků.** Pole na název cíle
+  bylo přes tisíc pixelů široké; formulář má strop.
+- **Panel se třemi čísly měl i na mobilu tři sloupce**, takže se lámalo
+  i „50 000 Kč/měs.".
+
+**Nekonzistence, které nebyly chybou, jen dvěma jazyky:**
+
+- **Fokusový prstenec měl čtyři pole z třiadvaceti.** Zbytek spoléhal na
+  výchozí obrys prohlížeče, takže vedle sebe stála dvě pole a každé při
+  fokusu vypadalo jinak (v Safari ještě jinak než v Chromu). Prstenec je
+  nově součástí `FIELD`, ne volitelný doplněk.
+- **Pole pod 16 px zoomují na iOS.** Čtyři pole měla `text-sm`, což je
+  proti pravidlu v CLAUDE.md.
+- **Emoji vedle obrysových ikon.** Redesign nahradil emoji ikonami v kroku
+  Cíle, ale první krok průvodce si je nechal a rozpis zbytných výdajů také.
+  Dvě obrazovky za sebou tak mluvily jiným vizuálním jazykem. Ikony skupin
+  navíc seděly v `engine/discretionary.ts`, kam vzhled nepatří.
+- **Ikony „pár" a „rodina" byly k nerozeznání**, obojí dvě stejně velké
+  postavy. Rodina má nově menší postavu vpředu.
+- **Tentýž cíl se zadával dvakrát jinak.** V průvodci „Co chci (název)"
+  bez krokovacích tlačítek, na výsledcích „Název cíle" s nimi. Sjednoceno
+  na podobu z výsledků.
+
 ---
 
 ## C. Jak to celé otestovat

@@ -29,7 +29,7 @@ function ItemInput({ label, value, onChange }: { label: string; value: number; o
           value={value}
           onChange={onChange}
           ariaLabel={label}
-          className={fieldClass('w-24 text-right pr-7 pl-2 py-1 text-sm')}
+          className={fieldClass('w-24 text-right pr-7 pl-2 py-1.5 text-base')}
         />
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-faint text-xs pointer-events-none">Kč</span>
       </div>
@@ -106,7 +106,7 @@ export default function Step3Expenses() {
               <div key={g.key}>
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm font-semibold text-ink-label">
-                    <span className="mr-1.5">{g.icon}</span>{g.label}
+                    {g.label}
                   </span>
                   <span className="text-xs text-ink-muted">{fmt(groupTotal.amount)} Kč</span>
                 </div>
@@ -127,7 +127,7 @@ export default function Step3Expenses() {
             );
           })}
 
-          <div className="flex justify-between pt-2 border-t text-sm">
+          <div className="flex justify-between pt-2 border-t border-line text-sm">
             <span className="text-ink-body font-medium">Zbytné výdaje celkem</span>
             <span className="font-semibold text-ink">{fmt(state.expenses.other)} Kč/měs.</span>
           </div>

@@ -10,7 +10,6 @@ export interface DiscretionaryItemDef {
 export interface DiscretionaryGroupDef {
   key: string;
   label: string;
-  icon: string;
   items: DiscretionaryItemDef[];
 }
 
@@ -18,7 +17,6 @@ export const DISCRETIONARY_GROUPS: DiscretionaryGroupDef[] = [
   {
     key: 'leisure',
     label: 'Zábava a volný čas',
-    icon: '🎭',
     items: [
       { key: 'dining', label: 'Restaurace a kavárny' },
       { key: 'culture', label: 'Kultura (kino, divadlo, knihy)' },
@@ -29,7 +27,6 @@ export const DISCRETIONARY_GROUPS: DiscretionaryGroupDef[] = [
   {
     key: 'subscriptions',
     label: 'Předplatné a služby',
-    icon: '📱',
     items: [
       { key: 'streaming', label: 'Streamování (Netflix, Spotify…)' },
       { key: 'apps', label: 'Aplikace a software' },
@@ -39,7 +36,6 @@ export const DISCRETIONARY_GROUPS: DiscretionaryGroupDef[] = [
   {
     key: 'travel',
     label: 'Dovolená a cestování',
-    icon: '✈️',
     items: [
       { key: 'domestic', label: 'Tuzemská rekreace' },
       { key: 'abroad', label: 'Zahraniční rekreace' },
@@ -48,7 +44,6 @@ export const DISCRETIONARY_GROUPS: DiscretionaryGroupDef[] = [
   {
     key: 'shopping',
     label: 'Nákupy a dárky',
-    icon: '🛍️',
     items: [
       { key: 'clothing', label: 'Oblečení a obuv (nad rámec nutnosti)' },
       { key: 'electronics', label: 'Elektronika' },
@@ -66,7 +61,6 @@ export function itemKey(groupKey: string, item: string): string {
 export interface DiscretionaryGroupTotal {
   key: string;
   label: string;
-  icon: string;
   amount: number;
   items: Array<{ key: string; label: string; amount: number }>;
 }
@@ -84,7 +78,6 @@ export function discretionaryGroupTotals(
     return {
       key: g.key,
       label: g.label,
-      icon: g.icon,
       amount: items.reduce((s, i) => s + i.amount, 0),
       items,
     };

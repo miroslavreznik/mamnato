@@ -196,7 +196,7 @@ export default function Step6Property() {
           aria-label="Délka hypotéky"
           value={term}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'loanTermYears', value: parseInt(e.target.value) })}
-          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-ink')}
+          className={fieldClass('w-full px-3 py-2.5 text-base')}
         >
           {[15, 20, 25, 30].map((y) => (
             <option key={y} value={y}>{y} let</option>
@@ -216,7 +216,7 @@ export default function Step6Property() {
           aria-label="Doba fixace úrokové sazby"
           value={fixation}
           onChange={(e) => dispatch({ type: 'UPDATE_PROPERTY', field: 'fixationYears', value: parseInt(e.target.value) })}
-          className={fieldClass('w-full px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-ink')}
+          className={fieldClass('w-full px-3 py-2.5 text-base')}
         >
           {/* U každé fixace je rovnou vidět, na jakou sazbu vede. Bez toho
               vypadá volba jako kosmetika, přitom mění splátku. */}

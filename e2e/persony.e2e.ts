@@ -1,5 +1,11 @@
 import { test, type Page } from '@playwright/test'
 
+// Otisky jsou dražší než testy: každý mění velikost okna na celou výšku
+// stránky a fotí ji. Ve výchozím třicetisekundovém limitu to při plné sadě
+// se dvěma workery občas nestihly, přestože samotný průchod trvá osm vteřin
+// a šest opakování za sebou prošlo.
+test.describe.configure({ timeout: 90_000 })
+
 const OUT = '/tmp/claude-0/-home-user-mamnato/ac41d95e-14fb-56b8-a040-5aa25aa88d4c/scratchpad'
 
 const num = (page: Page, label: string) =>
