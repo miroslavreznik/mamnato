@@ -14,6 +14,7 @@ import {
   downPaymentFraction,
 } from './mortgage';
 import { evaluateParentalLeave } from './parentalLeave';
+import { planHorizonMonths } from './wealthTimeline';
 import { formatMonths, formatYears, czk, czkMonthly, percentCompact } from './format';
 
 /**
@@ -128,6 +129,20 @@ export function buildAssumptions(state: WizardState): Assumption[] {
     source: 'user',
   });
   rows.push({ label: 'Naspořeno', value: czk(state.savings.totalSavings), source: 'user' });
+
+  // Poslední řádek schválně: je to předpoklad o celém přehledu, ne o jednom
+  // údaji. Bez něj se dlouhá časová osa čte jako předpověď v budoucích
+  // korunách, což by u třicetiletého horizontu byla docela jiná zpráva.
+  rows.push({
+    label: 'Horizont plánu',
+    value: formatYears(Math.round(planHorizonMonths(state) / 12)),
+    source: 'estimate',
+    note: 'Cesta počítá do odchodu do důchodu, kde ji přebírá důchodová projekce, nejméně ale deset let, '
+      + 'aby měl plán co ukázat i těsně před ním. '
+      + 'Příjmy i výdaje drží konstantní, takže jsou všechny částky v dnešních cenách: '
+      + 'mzdy a výdaje rostou s inflací zhruba stejně a v poměru se vykrátí. '
+      + 'Naspořená částka se ale neúročí, což je záměrně konzervativní.',
+  });
 
   return rows;
 }

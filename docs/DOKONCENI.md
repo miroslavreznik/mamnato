@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 339 jednotkových, 61 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 348 jednotkových, 62 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -520,6 +520,41 @@ přestože samotné projití všech deseti trvá 37 sekund.
 ### C4. Co se neověřuje a proč
 
 - Výpočty. Ty hlídá 318 jednotkových testů a redesign se jich nedotkl.
-- Rychlost. Appka počítá desítky čísel nad polem 120 měsíců; není co měřit.
+- Rychlost. Appka počítá desítky čísel nad polem několika stovek měsíců;
+  není co měřit.
 - Prohlížeče starší než dva roky. `@theme inline`, `clamp()` a
   `ResizeObserver` jsou podmínka, ne volba.
+
+---
+
+## B11. Horizont Cesty: deset let končilo dřív než plán
+
+Cesta i graf jmění počítaly pevných 120 měsíců. Na otázku „mám na bydlení"
+to stačilo, jenže hypotéka se bere na 15 až 30 let a důchod je ještě dál,
+takže se osa uzavírala dřív, než se stalo cokoli, na co si člověk spoří.
+Graf „koupě vs. nájem" přitom počítal třicet let a důchodová projekce do 65:
+appka si sama se sebou odporovala v tom, jak daleko dohlédne.
+
+Horizont teď dává `planHorizonMonths()`: k odchodu do důchodu, nejméně deset
+let (aby měl plán co ukázat i těsně před ním) a nejvíc čtyřicet (proti
+nesmyslně zadanému věku). U páru rozhoduje mladší, protože s ním končí příjem
+domácnosti. Dál by osa musela umět rentu místo mzdy, což je jiná úloha.
+
+Prodloužení odhalilo dvě věci:
+
+1. **Časová osa nevěděla, že hypotéka jednou skončí.** U patnáctileté splácela
+   domácnost celých třicet let stejnou splátku, tedy i patnáct let poté, co
+   měla doplaceno, a osa zamlčela největší skok v rozpočtu za celý plán.
+   Do desetiletého okna se to nevešlo, protože nejkratší volitelná hypotéka
+   je patnáctiletá. Doplacení je nově i pojmenovaná událost na stuze.
+2. **Popisek „nejníž" odletěl na opačný konec grafu.** Vybíral se podle
+   největší svislé mezery od stuhy, a když se všechny události nakupí
+   v prvních letech, je nejprázdnější místo grafu o půl osy dál; od popisku
+   pak vedla tečkovaná čára přes celou šířku. Nekolidovat je nově podmínka
+   (šest jednotek mezery) a být u svého bodu cíl, ne naopak.
+
+Inflace a výnosy se nepřidávaly schválně. Mzdy i výdaje rostou zhruba stejně,
+takže se v poměru vykrátí a všechno je v dnešních cenách; naspořená částka se
+neúročí, což je konzervativní. Stojí to v předpokladech („Horizont plánu")
+i pod grafem jmění. Alternativa by vyrobila čísla, která vypadají přesně
+a stojí na odhadu inflace na třicet let dopředu.

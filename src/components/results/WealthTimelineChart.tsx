@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
-import { wealthTimeline } from '../../engine/wealthTimeline';
+import { wealthTimeline, planHorizonMonths } from '../../engine/wealthTimeline';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
 import NumField from '../ui/NumField';
@@ -33,16 +33,27 @@ export default function WealthTimelineChart({ state, allocations }: Props) {
   // Kdy čekáte dítě, „co kdyby" parametr časové osy (neovlivňuje verdikt).
   const [childOffset, setChildOffset] = useState(12);
 
+  // Horizont sahá k důchodu, ne na deset let. Do desetiletého okna se
+  // nevešlo doplacení hypotéky ani odrostlé dítě, tedy dvě největší změny
+  // rozpočtu, které z plánu plynou.
+  const horizon = useMemo(() => planHorizonMonths(state), [state]);
+
   const tl = useMemo(
-    () => wealthTimeline(state, { months: 120, childOffsetMonths: childOffset, allocations }),
-    [state, childOffset, allocations]
+    () => wealthTimeline(state, { months: horizon, childOffsetMonths: childOffset, allocations }),
+    [state, horizon, childOffset, allocations]
   );
 
   const events = [
     tl.purchaseMonth !== null ? { month: tl.purchaseMonth, label: 'Koupě' } : null,
     tl.childMonth !== null ? { month: tl.childMonth, label: 'Dítě' } : null,
-    tl.leaveEndMonth !== null && tl.leaveEndMonth <= 120 ? { month: tl.leaveEndMonth, label: 'Konec rodič.' } : null,
-  ].filter((e): e is { month: number; label: string } => e !== null);
+    tl.leaveEndMonth !== null && tl.leaveEndMonth <= horizon ? { month: tl.leaveEndMonth, label: 'Konec rodič.' } : null,
+    tl.mortgagePaidOffMonth !== null ? { month: tl.mortgagePaidOffMonth, label: 'Splaceno' } : null,
+  ].filter((e): e is { month: number; label: string } => e !== null)
+    .sort((a, b) => a.month - b.month);
+
+  // Popisky roků: po pěti letech na dlouhém horizontu, jinak po dvou.
+  const tickStep = horizon > 240 ? 60 : 24;
+  const ticks = Array.from({ length: Math.floor(horizon / tickStep) + 1 }, (_, i) => i * tickStep);
 
   return (
     <Card>
@@ -51,7 +62,7 @@ export default function WealthTimelineChart({ state, allocations }: Props) {
         <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Bez výnosů z investic a inflace, konzervativní odhad." />
       </h3>
       <p className="text-sm text-ink-muted mb-4">
-        Jak se vaše úspory vyvinou přes plánované události: spoření, koupi, dítě i rodičovskou. Nejde o předpověď, ale o kontrolu, jestli plán projde bez pádu pod nulu.
+        Jak se vaše úspory vyvinou přes plánované události: spoření, koupi, dítě, rodičovskou i doplacení hypotéky. Nejde o předpověď, ale o kontrolu, jestli plán projde bez pádu pod nulu.
       </p>
 
       {hasChild && (
@@ -82,8 +93,8 @@ export default function WealthTimelineChart({ state, allocations }: Props) {
           <XAxis
             dataKey="month"
             type="number"
-            domain={[0, 120]}
-            ticks={[0, 12, 24, 36, 48, 60, 72, 84, 96, 108, 120]}
+            domain={[0, horizon]}
+            ticks={ticks}
             tickFormatter={(m) => `${m / 12}`}
             {...axisProps(colors)}
             label={{ value: 'Roky', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }}
@@ -121,12 +132,12 @@ export default function WealthTimelineChart({ state, allocations }: Props) {
 
       {state.goals.includes('property') && tl.purchaseMonth === null && (
         <p className="mt-2 text-xs text-caution">
-          Na akontaci v horizontu 10 let nedosáhnete, takže se koupě na časové ose nekoná.
+          Na akontaci do {Math.round(horizon / 12)} let nedosáhnete, takže se koupě na časové ose nekoná.
         </p>
       )}
 
       <p className="mt-2 text-xs text-ink-faint">
-        Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace. Spoření na cíle zůstává součástí jmění.
+        Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace, tedy všechno v dnešních cenách. Spoření na cíle zůstává součástí jmění.
       </p>
     </Card>
   );

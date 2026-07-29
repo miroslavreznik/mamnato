@@ -4,7 +4,7 @@ import type { Journey, Tension } from '../../engine/journey';
 import { czk, formatMonths } from '../../engine/format';
 
 /**
- * Cesta: deset let života jako jedna stuha.
+ * Cesta: život až do důchodu jako jedna stuha.
  *
  * Nahrazuje graf v roli hrdiny výsledků. Proti čárovému grafu úspor umí dvě
  * věci navíc, kvůli kterým vznikla:
@@ -185,8 +185,10 @@ export default function JourneyRibbon({
     return { xs, ys, path, fill, stops, lo, ghostPath, deficitRanges };
   }, [points, tension, horizonMonths, ghost]);
 
-  // Roky na ose. U desetiletého horizontu po dvou letech, ať se popisky nelepí.
-  const yearStep = horizonMonths > 60 ? 24 : 12;
+  // Roky na ose. Krok se řídí délkou horizontu, ať se popisky nelepí: přes
+  // dvacet let by jich po dvou letech bylo na sedmi stech jednotkách šířky
+  // sedmnáct a slily by se v pruh.
+  const yearStep = horizonMonths > 240 ? 60 : horizonMonths > 60 ? 24 : 12;
   const thisYear = new Date().getFullYear();
   const ticks = [];
   for (let m = 0; m <= horizonMonths; m += yearStep) ticks.push(m);
@@ -277,9 +279,22 @@ export default function JourneyRibbon({
 
     const below = Math.min(y + 20, H - PAD.bottom + 2);
     const above = Math.max(y - 14, PAD.top + 4);
-    const best = spots
-      .flatMap((t) => [below, above].map((ty) => ({ tx: t, ty, gap: gapTo(t, ty) })))
-      .sort((a, b) => b.gap - a.gap || Math.abs(a.tx - x) - Math.abs(b.tx - x))[0];
+    const candidates = spots
+      .flatMap((t) => [below, above].map((ty) => ({ tx: t, ty, gap: gapTo(t, ty) })));
+
+    // Nekolidovat je podmínka, být u svého bodu je cíl. Dokud se vybíralo
+    // podle největší mezery, vyhrálo prostě nejprázdnější místo grafu:
+    // na horizontu do důchodu se všechny události mačkají v prvních letech,
+    // takže jediná volná poloha vyšla o půl grafu dál a od popisku vedla
+    // tečkovaná čára přes celou šířku. Šest jednotek je mezera, ve které
+    // se text stuhy nedotkne; z těch, co ji mají, vyhrává nejbližší.
+    const roomy = candidates.filter((c) => c.gap >= 6);
+    const best = (roomy.length ? roomy : candidates)
+      .sort((a, b) => (
+        roomy.length
+          ? Math.abs(a.tx - x) - Math.abs(b.tx - x) || b.gap - a.gap
+          : b.gap - a.gap || Math.abs(a.tx - x) - Math.abs(b.tx - x)
+      ))[0];
 
     return {
       x,

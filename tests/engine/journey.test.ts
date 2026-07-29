@@ -156,3 +156,38 @@ describe('práh na schodku cílů', () => {
     expect(j.tightest?.tension).toBe('tense');
   });
 });
+
+describe('cesta sahá až k důchodu', () => {
+  it('bez zadaného horizontu se řídí věkem, ne pevnými deseti lety', () => {
+    const j = journey(makeState({ person1Age: 30 }));
+    expect(j.horizonMonths).toBe(35 * 12);
+    expect(j.points[j.points.length - 1].month).toBe(35 * 12);
+  });
+
+  it('doplacení hypotéky je událost na cestě jako každá jiná', () => {
+    // Konec splácení je největší skok v rozpočtu za celý plán a do
+    // desetiletého okna se nikdy nevešel: nejkratší hypotéka je patnáctiletá.
+    const state = makeState({
+      goals: ['property'],
+      person1Age: 30,
+      savings: { totalSavings: 1500000 },
+      property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 15 },
+    });
+    const j = journey(state);
+    const payoff = j.events.find((e) => e.key === 'payoff');
+    const purchase = j.events.find((e) => e.key === 'purchase');
+    expect(payoff).toBeDefined();
+    expect(payoff!.month).toBe(purchase!.month + 15 * 12);
+    expect(payoff!.label).toBe('Splaceno');
+  });
+
+  it('u krátkého horizontu se doplacení nekreslí', () => {
+    const state = makeState({
+      goals: ['property'],
+      person1Age: 62, // horizont spadne na minimum, tedy deset let
+      savings: { totalSavings: 1500000 },
+      property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 15 },
+    });
+    expect(journey(state).events.some((e) => e.key === 'payoff')).toBe(false);
+  });
+});

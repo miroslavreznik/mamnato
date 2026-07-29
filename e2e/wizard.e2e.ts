@@ -697,3 +697,30 @@ test('průběžný náhled reaguje na psaní ještě v průvodci', async ({ page
   await page.getByRole('textbox', { name: 'Nájem (bez energií a poplatků)', exact: true }).fill('20000')
   await expect(strip).toContainText('13 000')
 })
+
+test('cesta dohlédne až k důchodu a ukáže doplacení hypotéky', async ({ page }) => {
+  // Deset let byl původní horizont a končil dřív, než se stalo cokoli, na co
+  // si člověk spoří. Třicátník s patnáctiletou hypotékou musí na cestě vidět
+  // i to, jak mu po poslední splátce zbyde splátka v rozpočtu.
+  await start(page)
+  await next(page) // → Příjmy
+  await page.getByRole('textbox', { name: 'Můj věk', exact: true }).fill('30')
+  await page.getByRole('textbox', { name: 'Můj čistý měsíční příjem', exact: true }).fill('70000')
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await page.getByRole('textbox', { name: 'Celkové úspory', exact: true }).fill('1500000')
+  await next(page) // → Cíle
+  await pickGoal(page, 'property')
+  await next(page) // → Vlastní bydlení
+  await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('4000000')
+  await page.getByLabel('Délka hypotéky').selectOption('15')
+  await finish(page)
+  await expectResults(page)
+
+  // Popisek stuhy nese délku horizontu, takže se dá ověřit bez čtení SVG.
+  const stuha = page.getByRole('img', { name: /Vývoj úspor na/ })
+  const popis = (await stuha.getAttribute('aria-label')) ?? ''
+  const let_ = Number(popis.match(/Vývoj úspor na (\d+) let/)?.[1])
+  expect(let_).toBe(35)
+  expect(popis).toContain('Splaceno')
+})

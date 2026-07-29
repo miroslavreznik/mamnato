@@ -1,5 +1,5 @@
 import type { WizardState } from '../types';
-import { wealthTimeline } from './wealthTimeline';
+import { wealthTimeline, planHorizonMonths } from './wealthTimeline';
 import type { WealthPoint } from './wealthTimeline';
 import { necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
 import type { GoalAllocations } from './allocation';
@@ -17,7 +17,7 @@ import { czk, czkMonthly, formatMonths } from './format';
 export type Tension = 'calm' | 'tense' | 'deficit';
 
 export interface JourneyEvent {
-  key: 'purchase' | 'child' | 'leaveEnd' | 'lowest';
+  key: 'purchase' | 'child' | 'leaveEnd' | 'payoff' | 'lowest';
   month: number;
   label: string;
   /** Popisek k puntíku, když je na něj místo. */
@@ -213,7 +213,7 @@ export function journey(
     allocations?: GoalAllocations;
   } = {}
 ): Journey {
-  const horizonMonths = opts.months ?? 120;
+  const horizonMonths = opts.months ?? planHorizonMonths(state);
   const tl = wealthTimeline(state, { ...opts, months: horizonMonths });
   const oneMonthOfExpenses = necessaryMonthlyExpenses(state);
 
@@ -229,6 +229,14 @@ export function journey(
   }
   if (tl.leaveEndMonth !== null && tl.leaveEndMonth <= horizonMonths) {
     events.push({ key: 'leaveEnd', month: tl.leaveEndMonth, label: 'Konec rodičovské' });
+  }
+  if (tl.mortgagePaidOffMonth !== null) {
+    events.push({
+      key: 'payoff',
+      month: tl.mortgagePaidOffMonth,
+      label: 'Splaceno',
+      detail: 'Hypotéka splacena',
+    });
   }
   events.sort((a, b) => a.month - b.month);
 

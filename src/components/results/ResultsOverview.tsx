@@ -207,7 +207,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
         )}
       </div>
 
-      {/* Cesta: deset let života jako jedna stuha. Hrdina obrazovky. */}
+      {/* Cesta: život až do důchodu jako jedna stuha. Hrdina obrazovky. */}
       <div className="rounded-2xl bg-sunken p-5 sm:p-6">
         {/* Animace se hlídat nemusí. Panely záložek zůstávají připojené
             (`hidden`, ne odpojení), takže se stuha vykreslí jednou při vstupu
@@ -223,8 +223,8 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             u ní říct proč. */}
         {hasProperty && !journeyData.events.some((e) => e.key === 'purchase') && (
           <p className="mt-3 text-sm text-caution">
-            Koupě na cestě není: na akontaci v horizontu deseti let zatím
-            nedosáhnete, takže cesta ukazuje život bez ní.
+            Koupě na cestě není: na akontaci do {Math.round(journeyData.horizonMonths / 12)} let
+            zatím nedosáhnete, takže cesta ukazuje život bez ní.
           </p>
         )}
       </div>

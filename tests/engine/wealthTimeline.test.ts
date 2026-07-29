@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { wealthTimeline } from '../../src/engine/wealthTimeline';
+import { wealthTimeline, planHorizonMonths, MIN_HORIZON_MONTHS, MAX_HORIZON_MONTHS } from '../../src/engine/wealthTimeline';
+import { monthlyMortgagePayment, loanAmount, mortgageRate, loanTermYears, ownershipCosts } from '../../src/engine/mortgage';
 import { calculateDefaultAllocations, monthsToSaveAtAllocation } from '../../src/engine/allocation';
 import type { WizardState } from '../../src/types';
 
@@ -128,5 +129,66 @@ describe('cíle, které v čase končí', () => {
     expect(tl.purchaseMonth).toBe(0);
     const after = tl.points[3];
     expect(after.flowAfterGoals).toBe(after.flow - 4000);
+  });
+});
+
+describe('horizont plánu', () => {
+  it('sahá k odchodu do důchodu, ne na pevných deset let', () => {
+    // Třicátník má do pětašedesáti pětatřicet let. Do desetiletého okna
+    // se nevešlo nic z toho, na co si spoří: doplacení hypotéky ani
+    // odrostlé dítě, ani konec výdělku.
+    expect(planHorizonMonths(makeState({ person1Age: 30 }))).toBe(35 * 12);
+    // U páru rozhoduje mladší: příjem domácnosti končí až s ním.
+    expect(planHorizonMonths(makeState({ person1Age: 50, person2Age: 40 }))).toBe(25 * 12);
+  });
+
+  it('drží se mezi deseti a čtyřiceti lety', () => {
+    // Kdo je pár let před důchodem, ať přesto vidí, jak plán dopadne.
+    expect(planHorizonMonths(makeState({ person1Age: 62 }))).toBe(MIN_HORIZON_MONTHS);
+    // A nesmyslně zadaný věk nemá natáhnout osu do nekonečna.
+    expect(planHorizonMonths(makeState({ person1Age: 1 }))).toBe(MAX_HORIZON_MONTHS);
+  });
+
+  it('bez zadaného věku počítá třicet let', () => {
+    expect(planHorizonMonths(makeState())).toBe(30 * 12);
+  });
+});
+
+describe('doplacení hypotéky', () => {
+  const buyer = () => makeState({
+    goals: ['property'],
+    person1Age: 30,
+    savings: { totalSavings: 1500000 },
+    property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 15 },
+  });
+
+  it('poslední splátka padne patnáct let po koupi, ne patnáct let od dneška', () => {
+    const tl = wealthTimeline(buyer(), { months: 360 });
+    expect(tl.purchaseMonth).not.toBeNull();
+    expect(tl.mortgagePaidOffMonth).toBe(tl.purchaseMonth! + 15 * 12);
+  });
+
+  it('po doplacení zůstane v rozpočtu splátka navíc', () => {
+    // Tohle byla na dlouhém horizontu tichá chyba: osa splácela dál
+    // a zamlčela největší skok v rozpočtu za celý plán. V desetiletém
+    // okně se neprojevila, protože nejkratší hypotéka je patnáctiletá.
+    const state = buyer();
+    const tl = wealthTimeline(state, { months: 360 });
+    const payoff = tl.mortgagePaidOffMonth!;
+    const at = (m: number) => tl.points.find((p) => p.month === m)!;
+    const splatka = monthlyMortgagePayment(
+      loanAmount(state), mortgageRate(state), loanTermYears(state)
+    );
+    expect(at(payoff + 1).flow - at(payoff - 1).flow).toBeCloseTo(splatka, 0);
+    // Náklady na vlastnictví běží dál, ty koncem hypotéky nemizí: proti
+    // nájemníkovi zbyde nájem minus tyhle náklady, ne celý nájem.
+    // 75 000 příjem, 34 000 výdajů, z toho 18 500 za nájem a energie.
+    const bezBydleni = 75000 - (34000 - 18500);
+    expect(at(payoff + 1).flow).toBe(Math.round(bezBydleni - ownershipCosts(state)));
+  });
+
+  it('mimo horizont se nedoplácí, takže se událost nekreslí', () => {
+    const tl = wealthTimeline(buyer(), { months: 120 });
+    expect(tl.mortgagePaidOffMonth).toBeNull();
   });
 });

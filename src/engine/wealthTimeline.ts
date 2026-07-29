@@ -1,8 +1,9 @@
 import type { WizardState } from '../types';
 import { CHILD_COSTS_CZ } from './defaults';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment } from './mortgage';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment, youngestApplicantAge } from './mortgage';
 import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
+import { yearsUntilRetirement } from './savings';
 import { calculateDefaultAllocations, type GoalAllocations } from './allocation';
 
 // Časová osa jmění: měsíc po měsíci simuluje vývoj úspor domácnosti přes
@@ -13,6 +14,12 @@ import { calculateDefaultAllocations, type GoalAllocations } from './allocation'
 // Záměrná zjednodušení: příjmy a výdaje jsou konstantní, výnosy z investic
 // a inflaci nepočítáme (konzervativní odhad). Spoření na cíle zůstává součástí
 // jmění (peníze se jen přesouvají), proto se od `cash` neodečítá.
+//
+// Konstantní částky znamenají, že **celá osa je v dnešních cenách**. Mzdy
+// i výdaje rostou s inflací zhruba stejně, takže se v poměru vykrátí a to,
+// co osa říká o napětí rozpočtu, platí i za dvacet let. Neplatí to o kupní
+// síle naspořené částky; ta je záměrně konzervativní, protože model nulovým
+// výnosem počítá s penězi na účtu, ne v akciích.
 //
 // **Koupě se ale nespouští z celého jmění.** Z něj se kupovat nedá: peníze
 // odložené na důchod nebo na dítě jsou v akciích a v rezervě, ne v akontaci.
@@ -52,9 +59,36 @@ export interface WealthTimelineResult {
   purchaseMonth: number | null; // null = koupě se v horizontu nekoná
   childMonth: number | null;
   leaveEndMonth: number | null;
+  /** Měsíc poslední splátky. null = v horizontu se nedoplatí (nebo se nekupuje). */
+  mortgagePaidOffMonth: number | null;
   minCash: number;
   minCashMonth: number;
   firstNegativeMonth: number | null;
+}
+
+/** Nejkratší rozumný pohled: pod deset let se plán na bydlení nevejde. */
+export const MIN_HORIZON_MONTHS = 120;
+/** Nejdelší. Chrání osu před nesmyslně zadaným věkem (třeba 5 let). */
+export const MAX_HORIZON_MONTHS = 480;
+
+/**
+ * Jak daleko má smysl plán kreslit.
+ *
+ * Deset let byl původní horizont a na otázku „mám na bydlení" stačil.
+ * Jenže hypotéka se bere na 15 až 30 let a důchod je ještě dál, takže se
+ * osa uzavírala dřív, než se stalo cokoli z toho, na co si člověk spoří:
+ * doplacení hypotéky, odrostlé dítě, konec výdělku. Graf „koupě vs. nájem"
+ * přitom už dávno počítal třicet let a důchodová projekce do 65, takže si
+ * appka sama se sebou odporovala v tom, jak daleko dohlédne.
+ *
+ * Horizont proto sahá k odchodu do důchodu: tam plán opravdu končí a tam
+ * ho přebírá důchodová projekce. Dál by osa musela umět rentu místo mzdy,
+ * což je jiná úloha než tahle.
+ */
+export function planHorizonMonths(state: WizardState): number {
+  const age = youngestApplicantAge(state);
+  const months = yearsUntilRetirement(age) * 12;
+  return Math.min(MAX_HORIZON_MONTHS, Math.max(MIN_HORIZON_MONTHS, months));
 }
 
 // Měsíční náklady na dítě dle věku (0–18 let; VŠ do časové osy nezahrnujeme).
@@ -77,7 +111,7 @@ export function wealthTimeline(
     allocations?: GoalAllocations;
   } = {}
 ): WealthTimelineResult {
-  const horizon = opts.months ?? 120;
+  const horizon = opts.months ?? planHorizonMonths(state);
   const hasProperty = state.goals.includes('property');
   const hasChild = state.goals.includes('child');
 
@@ -123,6 +157,9 @@ export function wealthTimeline(
   // odkládá. Kupuje se z něj, ne z celého jmění.
   let downPaymentFund = effectiveDownPayment(state);
   let purchaseMonth: number | null = null;
+  // Doplacení se odvozuje od koupě, ne od nuly: kdo kupuje za tři roky,
+  // doplácí o tři roky později.
+  let mortgagePaidOffMonth: number | null = null;
   let minCash = cash;
   let minCashMonth = 0;
   let firstNegativeMonth: number | null = null;
@@ -136,6 +173,8 @@ export function wealthTimeline(
     if (hasProperty && purchaseMonth === null && downPaymentFund >= targetDownPayment) {
       purchaseMonth = m;
       cash -= targetDownPayment;
+      const payoff = m + term * 12;
+      if (payoff <= horizon) mortgagePaidOffMonth = payoff;
     }
 
     let income = baseIncome;
@@ -146,7 +185,15 @@ export function wealthTimeline(
     }
 
     let expenses = baseExpenses;
-    if (purchaseMonth !== null) expenses = expenses - rent + mortgage + ownership;
+    if (purchaseMonth !== null) {
+      // Po poslední splátce zůstávají jen náklady na vlastnictví. Bez tohohle
+      // kroku splácela domácnost na dlouhém horizontu hypotéku i patnáct let
+      // poté, co ji měla doplacenou, a osa zamlčela největší skok v rozpočtu
+      // za celý plán. Do desetiletého okna se to nevešlo, protože nejkratší
+      // volitelná hypotéka je patnáctiletá.
+      const repaid = mortgagePaidOffMonth !== null && m >= mortgagePaidOffMonth;
+      expenses = expenses - rent + (repaid ? 0 : mortgage) + ownership;
+    }
     if (childMonth !== null && m >= childMonth) expenses += childCostAt((m - childMonth) / 12);
 
     const flow = income - expenses;
@@ -179,6 +226,7 @@ export function wealthTimeline(
     purchaseMonth,
     childMonth,
     leaveEndMonth,
+    mortgagePaidOffMonth,
     minCash: Math.round(minCash),
     minCashMonth,
     firstNegativeMonth,
