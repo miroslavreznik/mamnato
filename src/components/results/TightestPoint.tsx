@@ -19,10 +19,14 @@ export default function TightestPoint({ data, onOpen }: {
   onOpen?: () => void;
 }) {
   return (
-    <div className="rounded-2xl bg-ink text-page p-5">
-      <p className="type-label opacity-70">Nejtěsnější místo</p>
+    // V tisku se plocha zahodí a text zčerná. Prohlížeče ve výchozím nastavení
+    // pozadí netisknou, takže by ze světlého textu na tmavé ploše zbyl bílý
+    // text na bílém papíře, tedy prázdné místo. Rámeček nahradí plochu, aby
+    // karta i na papíře zůstala tím nejdůraznějším sdělením.
+    <div className="rounded-2xl bg-ink text-page p-5 print:bg-transparent print:text-ink print:border-2 print:border-ink">
+      <p className="type-label opacity-70 print:opacity-100">Nejtěsnější místo</p>
       <p className="type-hero mt-1.5">{data.title}</p>
-      <p className="mt-2 text-sm leading-relaxed opacity-90">{data.explanation}</p>
+      <p className="mt-2 text-sm leading-relaxed opacity-90 print:opacity-100">{data.explanation}</p>
       {onOpen && (
         <button
           type="button"

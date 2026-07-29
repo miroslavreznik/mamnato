@@ -166,10 +166,21 @@
   --tint-neutral: #f0efeb;
 
   /* Stuha na záložce Cesta. Gradient podle napětí rozpočtu v čase.
-     Čistě grafické, na text se nepoužívají. */
-  --ribbon-calm: #8fc9a6;
-  --ribbon-tense: #e2a15b;
-  --ribbon-deficit: #e2725b;
+     Čistě grafické, na text se nepoužívají.
+
+     Ztmaveno proti handoffu (#8fc9a6, #e2a15b, #e2725b). Ten je má tak světlé,
+     že na ploše grafu daly 1,69, 1,97 a 2,75 ku jedné, tedy pod prahem 3:1,
+     který platí pro grafický prvek. Odstíny zůstaly, ubrala se světlost
+     a přidala sytost, aby ztmavená pastelová barva nevypadala jako bláto.
+
+     Světlost navíc **klesá** od klidu ke schodku (0,244 → 0,160 → 0,100).
+     Pořadí stavů tak jde přečíst i bez barev, tedy v tisku a při barvosleposti;
+     handoff měl klid a napětí skoro stejně světlé. Rozlišit jantarovou od
+     červené je i tak těžké (ΔE 10,7), a právě proto má schodkový úsek na stuze
+     ještě vzorek, viz `JourneyRibbon`. */
+  --ribbon-calm: #37995e;
+  --ribbon-tense: #aa5b05;
+  --ribbon-deficit: #ad2105;
   --ribbon-recover: #10715f;
 }
 
@@ -195,6 +206,8 @@
   --danger: #ea8168;
   --neutral: #93a49e;
 
+  /* Tmavé hodnoty stuhy zůstávají z handoffu: na tmavé ploše dávají 9,6, 8,4
+     a 6,1 ku jedné a jejich světlost klesá stejně jako ve světlém režimu. */
   --tint-brand: #1e3e36;
   --tint-good: #1e3e36;
   --tint-caution: #393d2d;

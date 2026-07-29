@@ -36,7 +36,7 @@ function Line({ budget, period, afterPurchase }: {
 }) {
   return (
     <Callout tone={budget.fits ? 'good' : 'danger'} className={period ? '' : 'mb-5'}>
-      {period && <span className="block text-xs font-semibold uppercase tracking-wide opacity-70 mb-0.5">{period}</span>}
+      {period && <span className="block text-xs font-semibold uppercase tracking-wide opacity-70 print:opacity-100 mb-0.5">{period}</span>}
       {budget.fits ? (
         <>
           {afterPurchase ? 'Po splátce a nákladech na bydlení' : 'Po všech výdajích'} vám měsíčně

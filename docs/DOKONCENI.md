@@ -9,7 +9,7 @@ Stav ke commitu `29eecb0`. Testy: 313 jednotkových, 44 e2e.
 
 ## A. Otevřené nálezy
 
-### A1. Paleta stuhy neprošla validátorem
+### ~~A1. Paleta stuhy neprošla validátorem~~ (hotovo)
 
 Barvy stuhy (`--ribbon-*`) jsou zatím přesně podle handoffu a **jako jediné
 z celého redesignu neprošly** validátorem palety.
@@ -36,28 +36,31 @@ od sebe" na ni tedy plně nesedí. Co na ni sedí:
    v tisku a při barvosleposti. Návrh ji nemá; klid je světlejší než napětí,
    ale napětí a schodek mají skoro stejnou.
 
-**Rozhodnutí:** ztmavit všechny tři tak, aby každá přelezla 3:1 vůči ploše,
-a seřadit je do monotónně klesající světlosti. Odstíny zůstanou z návrhu.
-Pokusné hodnoty (`#4b9b6b`, `#b8810a`, `#c0432c`) projdou vším kromě
-rozlišitelnosti napětí a schodku, kde vychází ΔE 14,7 proti prahu 15;
-právě proto potřebuje stuha i sekundární kódování, viz A2.
+**Hotovo.** Světlá sada je nově `#37995e`, `#aa5b05`, `#ad2105`: kontrast
+3,18, 4,44 a 6,24 ku jedné a **klesající světlost** (0,244 → 0,160 → 0,100),
+takže pořadí stavů jde přečíst i bez barev. Odstíny jsou z návrhu, ubrala se
+světlost a přidala sytost, aby ztmavená pastelová barva nevypadala jako bláto.
 
-**Ověření:** validátor palety na světlou i tmavou sadu, plus snímek stuhy
-v obou režimech a v tisku.
+Tmavá sada zůstala z návrhu beze změny: na tmavé ploše dává 9,6, 8,4 a 6,1
+ku jedné a její světlost klesá také.
 
-### A2. Stuha nese stav jen barvou
+Rozlišitelnost napětí od schodku zůstává pod prahem (ΔE 10,7). Jantarová
+a červená jsou si blízké ze své podstaty a žádná varianta v mezích návrhu
+to nespraví; proto A2.
+
+### ~~A2. Stuha nese stav jen barvou~~ (hotovo)
 
 Pravidlo, které si repozitář drží a návrh ho opakuje: stav se nikdy nenese
 jen barvou. Odznaky stavů to splňují (tvar + slovo + barva), stuha ne.
 
-**Rozhodnutí:** úsek se schodkem dostane vzorek (šrafování nebo přerušení),
-takže je poznat i černobíle a při jakékoli poruše barvocitu. Klid a napětí
-zůstanou plné, protože rozlišit „dobré od nejhoršího" stačí.
+**Hotovo.** Schodkový úsek dostal zářezy: přes stuhu se v jeho rozsahu
+překreslí přerušovaná kopie barvou plochy, takže vznikne pruhovaný úsek.
+Klid a napětí zůstaly plné, rozlišit „dobré od nejhoršího" stačí.
 
-**Ověření:** snímek v odstínech šedi, e2e test na přítomnost vzorku
-u schodkového úseku.
+Hlídají to dva testy v `ribbon.e2e.ts`: že vzorek je tam, kde schodek je,
+a že tam není, kde schodek není.
 
-### A3. Tisk se od redesignu neprošel
+### ~~A3. Tisk se od redesignu neprošel~~ (hotovo)
 
 Výsledky mají nově dva sloupce, stuhu a šest záložek. Tisk se od té doby
 neověřoval, přitom se ho dotkla každá z těch změn.
@@ -69,8 +72,22 @@ Rizika, která se dají čekat:
 - `position: sticky` u lišty a bočního sloupce se v tisku chová jinak;
 - šest záložek se musí vytisknout všech, ne jen aktivní.
 
-**Ověření:** PDF přes Playwright, vizuální kontrola stránkování, a test, že
-se v PDF objeví obsah všech záložek.
+**Hotovo,** a našly se dvě chyby.
+
+Karta „Nejtěsnější místo" měla světlý text na tmavé ploše. Prohlížeče ale
+ve výchozím nastavení pozadí netisknou, takže by z ní na papíře zbylo prázdné
+místo. V tisku teď plochu nahradí rámeček a text zčerná. Je to stejná chyba
+jako u nápovědy, jen se projeví jinde.
+
+Panel „Co kdyby" jsou samé ovládací prvky. Na papíře nemají co dělat
+a zakázané tlačítko se tisklo tak vybledlé, že nešlo přečíst.
+
+Test v `tisk.e2e.ts` proto neměří kontrast proti vlastní ploše, ale **proti
+bílému papíru**: co je vidět jen díky vytištěnému pozadí, se počítá za
+neviditelné. Ostatní tři testy hlídají, že se vytisknou všechny záložky,
+že se do tisku nedostanou ovládací prvky a že stránka nepřeteče na šířku.
+
+Obsah vychází zhruba na 10,5 stránky A4.
 
 ---
 

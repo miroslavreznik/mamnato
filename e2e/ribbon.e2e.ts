@@ -15,7 +15,7 @@ import { test, expect, type Page } from '@playwright/test'
  * neschová.
  */
 
-async function toResults(page: Page, goal: 'property' | 'child' = 'property') {
+async function toResults(page: Page, goal: 'property' | 'child' | 'retirement' = 'property') {
   await page.goto('/')
   await page.getByRole('button', { name: /Spustit přehled/ }).click()
   for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
@@ -109,3 +109,24 @@ for (const width of [390, 1280]) {
     expect(box.height).toBeGreaterThanOrEqual(44)
   })
 }
+
+test('schodkový úsek nese kromě barvy i vzorek', async ({ page }) => {
+  // Jantarová a červená se od sebe těžko poznají i bez poruchy barvocitu
+  // (naměřeno ΔE 10,7) a v tisku vůbec. Schodek proto musí být poznat
+  // i tvarem, ne jen odstínem.
+  await toResults(page, 'property')
+
+  const hatch = page.locator('#souhrn svg path[stroke-dasharray="2 6"]')
+  await expect(hatch).toHaveCount(1)
+
+  // Vzorek se kreslí jen tam, kde schodek opravdu je: má ořez na jeho úseky.
+  const clip = await hatch.getAttribute('clip-path')
+  expect(clip).toMatch(/^url\(#deficit-/)
+})
+
+test('bez schodku se vzorek nekreslí', async ({ page }) => {
+  // Spoření na důchod rozpočet neprohne: peníze se jen přesunou, ze jmění
+  // nezmizí, takže cesta zůstane celou dobu v klidu.
+  await toResults(page, 'retirement')
+  await expect(page.locator('#souhrn svg path[stroke-dasharray="2 6"]')).toHaveCount(0)
+})

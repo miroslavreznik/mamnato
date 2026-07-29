@@ -175,7 +175,14 @@ export default function JourneyRibbon({
         .curve(curveMonotoneX)(ghost.points) ?? ''
       : null;
 
-    return { xs, ys, path, fill, stops, lo, ghostPath };
+    // Úseky se schodkem. Kreslí se do nich vzorek, aby se stav nenesl jen
+    // barvou: jantarová a červená se od sebe těžko poznají i bez poruchy
+    // barvocitu (ΔE 10,7), natož v tisku.
+    const deficitRanges = runs
+      .filter((r) => r.tension === 'deficit')
+      .map((r) => ({ from: xs(r.from * horizonMonths), to: xs(r.to * horizonMonths) }));
+
+    return { xs, ys, path, fill, stops, lo, ghostPath, deficitRanges };
   }, [points, tension, horizonMonths, ghost]);
 
   // Roky na ose. U desetiletého horizontu po dvou letech, ať se popisky nelepí.
@@ -205,6 +212,14 @@ export default function JourneyRibbon({
             <stop key={i} offset={`${s.offset * 100}%`} stopColor={TENSION_VAR[s.tension]} />
           ))}
         </linearGradient>
+        {/* Ořez na schodkové úseky. Přes ně se překreslí stuha přerušovaně,
+            takže v nich vzniknou zářezy. Vzorek nese informaci sám o sobě,
+            i černobíle. */}
+        <clipPath id={`deficit-${uid}`}>
+          {geom.deficitRanges.map((r, i) => (
+            <rect key={i} x={r.from} y={0} width={Math.max(0, r.to - r.from)} height={H} />
+          ))}
+        </clipPath>
         <linearGradient id={`under-${uid}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--ink)" stopOpacity="0.14" />
           <stop offset="100%" stopColor="var(--ink)" stopOpacity="0" />
@@ -261,6 +276,20 @@ export default function JourneyRibbon({
         strokeLinejoin="round"
         className={animate ? 'ribbon-draw' : undefined}
       />
+
+      {/* Zářezy ve schodkovém úseku. Kreslí se barvou plochy, takže do stuhy
+          „ukusují" a vzniká pruhovaný úsek. */}
+      {geom.deficitRanges.length > 0 && (
+        <path
+          d={geom.path}
+          fill="none"
+          stroke="var(--sunken)"
+          strokeWidth="9"
+          strokeDasharray="2 6"
+          clipPath={`url(#deficit-${uid})`}
+          className={animate ? 'ribbon-draw' : undefined}
+        />
+      )}
 
       {/* Průhledná plocha, která chytá pohyb kurzoru. Kdyby se poslouchalo
           přímo na stuze, musel by uživatel trefit devět pixelů široký pruh. */}

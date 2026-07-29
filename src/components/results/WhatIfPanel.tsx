@@ -55,7 +55,10 @@ export default function WhatIfPanel() {
   const leave = overrides.parentalLeaveMonths ?? baseline.parentalLeave?.durationMonths ?? 36;
 
   return (
-    <div className="rounded-2xl bg-sunken p-5 space-y-5">
+    // Panel jsou samé ovládací prvky: posuvníky a tlačítko zpět. Na papíře
+    // nemají co dělat a zakázané tlačítko by se navíc vytisklo tak vybledlé,
+    // že by nešlo přečíst.
+    <div className="no-print rounded-2xl bg-sunken p-5 space-y-5">
       <div className="flex items-center justify-between gap-2">
         <h3 className="type-section text-ink">Co kdyby</h3>
         {touched && (
