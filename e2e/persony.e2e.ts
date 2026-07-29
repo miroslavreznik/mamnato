@@ -1,10 +1,24 @@
 import { test, type Page } from '@playwright/test'
 
-// Otisky jsou dražší než testy: každý mění velikost okna na celou výšku
-// stránky a fotí ji. Ve výchozím třicetisekundovém limitu to při plné sadě
-// se dvěma workery občas nestihly, přestože samotný průchod trvá osm vteřin
-// a šest opakování za sebou prošlo.
-test.describe.configure({ timeout: 90_000 })
+/**
+ * Otisky se pořizují jen s `PERSONY=1`.
+ *
+ * Nejsou to testy: nic netvrdí a nic nemůže selhat, jen fotí celou stránku
+ * v plné výšce, což je paměťově nejdražší věc v celé sadě. Samotné projití
+ * všech deseti person trvá 37 sekund, ale ve společném běhu se zbytkem
+ * (kontrast, tisk, klávesnice) se jedna z nich zasekla na půl druhé minuty
+ * a spadla na limit. Samostatně se to nereprodukovalo ani jednou.
+ *
+ * Stejně je na tom pixelové porovnání za `VISUAL=1`. Obojí je nástroj pro
+ * jedno sezení, ne kontrola pro CI.
+ *
+ *   PERSONY=1 … npx playwright test --project=chromium persony
+ *
+ * Plné znění příkazu i s obejitím proxy je v CLAUDE.md.
+ */
+const enabled = !!process.env.PERSONY
+test.describe.configure({ mode: enabled ? 'parallel' : 'default', timeout: 90_000 })
+test.beforeEach(() => test.skip(!enabled, 'otisky person: spusťte s PERSONY=1'))
 
 const OUT = '/tmp/claude-0/-home-user-mamnato/ac41d95e-14fb-56b8-a040-5aa25aa88d4c/scratchpad'
 
@@ -76,4 +90,69 @@ test('persona 3: rodina se schodkem', async ({ page }) => {
   await page.getByTestId('wizard-next').click()
   await page.waitForTimeout(2200)
   await shot(page, '3-rodina-schodek')
+})
+
+/**
+ * Persony 8 a 9 míří na cesty, které dosud žádný průchod nepotkal:
+ * mladého žadatele s desetiprocentní akontací a rodičovskou, a člověka
+ * pár let před důchodem.
+ */
+
+test('persona 8: mladý pár do 36 let, LTV 90 % a rodičovská', async ({ page }) => {
+  // Žadateli do 36 let banka půjčí až 90 % ceny, takže z vlastního stačí
+  // desetina. Tuhle větev `downPaymentFraction` zatím nikdo neprošel.
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/')
+  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByTestId('mode-couple').click()
+  await page.getByTestId('wizard-next').click()
+  await num(page, 'Čistý měsíční příjem: osoba 1').fill('42000')
+  await num(page, 'Věk: osoba 1').fill('29')
+  await num(page, 'Čistý měsíční příjem: osoba 2').fill('35000')
+  await num(page, 'Věk: osoba 2').fill('28')
+  await page.getByTestId('wizard-next').click()
+  await num(page, 'Nájem (bez energií a poplatků)').fill('17000')
+  await page.getByTestId('wizard-next').click()
+  await num(page, 'Celkové úspory').fill('700000')
+  await page.getByTestId('wizard-next').click()
+  await page.getByTestId('goal-property').click()
+  await page.getByTestId('goal-child').click()
+  await page.getByTestId('wizard-next').click()
+  await num(page, 'Cílová cena nemovitosti').fill('5800000')
+  await page.getByTestId('wizard-next').click()
+  await page.waitForTimeout(2200)
+  await shot(page, '8-mlady-par')
+
+  await page.locator('#tab-bydleni').click()
+  await page.waitForTimeout(2200)
+  await shot(page, '8-bydleni')
+
+  await page.locator('#tab-cile').click()
+  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
+  await page.waitForTimeout(2200)
+  await shot(page, '8-rodicovska')
+})
+
+test('persona 9: pár let před důchodem, bez bydlení', async ({ page }) => {
+  // Krátký horizont do důchodu je druhý konec škály: `yearsUntilRetirement`
+  // se blíží jedničce a projekce má na složené úročení sotva pár let.
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/')
+  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByTestId('wizard-next').click()
+  await num(page, 'Můj čistý měsíční příjem').fill('54000')
+  await num(page, 'Můj věk').fill('58')
+  await page.getByTestId('wizard-next').click()
+  await num(page, 'Nájem (bez energií a poplatků)').fill('14000')
+  await page.getByTestId('wizard-next').click()
+  await num(page, 'Celkové úspory').fill('2200000')
+  await page.getByTestId('wizard-next').click()
+  await page.getByTestId('goal-retirement').click()
+  await page.getByTestId('wizard-next').click()
+  await page.waitForTimeout(2200)
+  await shot(page, '9-pred-duchodem')
+
+  await page.locator('#tab-cile').click()
+  await page.waitForTimeout(2200)
+  await shot(page, '9-duchod')
 })

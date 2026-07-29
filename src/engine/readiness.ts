@@ -3,7 +3,7 @@ import type { GoalAllocations } from './allocation';
 import { downPaymentGap, postPurchaseRunwayMonths } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
-import { retirementProjection, goalProgress, yearsUntilRetirement } from './savings';
+import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
 import { formatMonths, czk, czkMonthly } from './format';
 
@@ -93,7 +93,12 @@ export function retirementReadiness(state: WizardState, allocations: GoalAllocat
     return { key: 'retirement', label: 'Důchod', status: 'warning', headline: 'Zatím na důchod nespoříte nic.' };
   }
   const years = yearsUntilRetirement(state.person1Age);
-  const projection = retirementProjection(monthly, years, 0.07);
+  // Do projekce patří i to, co už je naspořeno. Bez toho vycházela renta
+  // u lidí s velkými úsporami tak nízko, že se verdikt překlápěl na „zatím
+  // spíš doplněk" i tomu, kdo měl na účtu dva miliony.
+  const projection = retirementProjection(
+    monthly, years, 0.07, undefined, retirementStartingCapital(state)
+  );
   const finalValue = projection[projection.length - 1]?.portfolioValue ?? 0;
   const monthlyRent = finalValue * 0.04 / 12;
   // Renta pod ~8 000 Kč/měs je spíš doplněk k důchodu než plnohodnotný příjem.

@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 330 jednotkových, 69 e2e.
+Testy: 339 jednotkových, 61 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -411,6 +411,43 @@ zaměřením na to, jestli pole a bloky vypadají jako jeden systém.
   bez krokovacích tlačítek, na výsledcích „Název cíle" s nimi. Sjednoceno
   na podobu z výsledků.
 
+### B10. Persony 8 a 9: mladý žadatel a člověk před důchodem (hotovo)
+
+Dvě cesty, které dosud žádný průchod nepotkal: pár do 36 let (banka půjčí
+90 % ceny, takže z vlastního stačí desetina) a jednotlivec sedm let před
+důchodem s dvěma miliony naspořenými.
+
+**Dvě logické chyby, obě vážné, obě měnily verdikt.**
+
+1. **Projekce důchodu ignorovala, co už je naspořeno.** `retirementProjection`
+   začínala od nuly, takže člověku s 2 200 000 Kč a sedmi lety do důchodu
+   tvrdila, že bude mít portfolio za 745 193 Kč. Renta z toho vyšla tak
+   nízko, že se i verdikt překlápěl na „zatím spíš doplněk", ačkoli samotné
+   dnešní úspory dají přes sedm tisíc měsíčně.
+
+   Projekce nově začíná od `retirementStartingCapital(state)`, což jsou
+   úspory po odečtení akontace (ty peníze skončí v nemovitosti) a tříměsíční
+   nouzové rezervy (ta musí zůstat po ruce). Bez toho odečtení by se tytéž
+   peníze počítaly dvakrát. V kartě je to editovatelné pole, protože kolik
+   z dnešních peněz je opravdu na důchod, ví jen uživatel.
+
+   Oprava odhalila navazující chybu: sloupec „Složené úroky" počítal hodnotu
+   minus vklady, takže u řádku „Hotovost (pod polštářem)" při nulovém výnosu
+   hlásil dva miliony úroků. Odečítají se nově všechny vlastní peníze.
+
+2. **Verdikt „napjaté" vysvětloval vždycky totéž.** Status `tight` má tři
+   příčiny (tenká rezerva, málo zbývá po výdajích, cíl na hraně), ale
+   zdůvodnění znělo pokaždé „bez velkého polštáře, nečekaný výdaj by rozpočet
+   rozhodil". U člověka před důchodem to stálo hned vedle dlaždice „rezerva
+   vydrží 78,6 měsíce". Každá příčina má nově vlastní větu a `buildVerdict`
+   dostává `TightReason`.
+
+**Vizuálně zbyla dvě místa, která redesign minul.** Emoji 👶 v hlavičce
+nákladů na dítě, a tři tlačítka `ⓘ` v barvě značky (inflace, pravidlo 4 %,
+náklady na dítě), zatímco zbytek appky má nápovědu jako `?` v kroužku.
+Vzhled tlačítka je nově sdílený (`HELP_BUTTON` v `ui/Tooltip.tsx`); rozbalují
+dál celý odstavec, ale vypadají jako nápověda, kterou uživatel v appce zná.
+
 ---
 
 ## C. Jak to celé otestovat
@@ -438,8 +475,8 @@ Co které soubory hlídají:
 |---|---|
 | `wizard.e2e.ts` | průchod appkou, sdílení, tisk dat, průběžný náhled |
 | `ribbon.e2e.ts` | pohyb, úchop, dotykový cíl 44 px, tisk, vypnutý pohyb, překryv popisků |
-| `persony.e2e.ts` | průchod třemi scénáři, otisky k posouzení okem |
-| `persony-tma.e2e.ts` | další čtyři scénáře v tmavém režimu, včetně mobilu |
+| `persony.e2e.ts` | pět scénářů, otisky k posouzení okem (jen s `PERSONY=1`) |
+| `persony-tma.e2e.ts` | další čtyři v tmavém režimu, včetně mobilu (`PERSONY=1`) |
 | `cile.e2e.ts` | vlastní cíle: částka platí, strop drží, odložení funguje |
 | `klavesnice.e2e.ts` | fokus je vidět, lišta záložek se ovládá šipkami |
 | `cokdyby.e2e.ts` | duch původního scénáře, delta, izolace od Cesty |
@@ -460,6 +497,17 @@ Kontroluje se: kategoriální paleta grafů (osm slotů, obě sady) a stuha
 
 **Pixelové porovnání.** Po redesignu už neslouží k „nic se nezměnilo", ale
 k „změnilo se přesně tohle": otisk před zásahem, otisk po něm, rozdíl.
+
+**Otisky person.** Devět scénářů ve světlém i tmavém režimu:
+
+```bash
+PERSONY=1 … npx playwright test --project=chromium persony
+```
+
+Bez proměnné se přeskočí, stejně jako pixelové porovnání. Nic netvrdí a nic
+nemůže selhat, jen fotí celou stránku v plné výšce; ve společném běhu se
+zbytkem sady se jedna z nich zasekla na půl druhé minuty a spadla na limit,
+přestože samotné projití všech deseti trvá 37 sekund.
 
 ### C3. Ruční, na závěr
 

@@ -1,10 +1,13 @@
 import { useState } from 'react';
 import type { WizardState } from '../../types';
 import { monthlyDisposable } from '../../engine/cashflow';
-import { retirementProjection, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../engine/savings';
+import { retirementProjection, retirementStartingCapital, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../engine/savings';
 import { DEFAULTS } from '../../engine/defaults';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
+// `Tooltip` je v tomhle souboru Recharts. Vlastní nápověda se proto podle
+// zvyklosti repozitáře importuje jako `HelpTip`.
+import HelpTip, { HELP_BUTTON } from '../ui/Tooltip';
 import NumField from '../ui/NumField';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import Card from '../ui/Card';
@@ -36,6 +39,10 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
   const monthlyAmount = monthlyContribution;
   const setMonthlyAmount = onChangeContribution;
   const [yearsToRetirement, setYearsToRetirement] = useState(() => yearsUntilRetirement(state.person1Age));
+  // Co už je naspořeno. Appka to odhadne z úspor (bez akontace a bez
+  // tříměsíční rezervy), uživatel může přepsat: kolik z dnešních peněz je
+  // opravdu na důchod, ví jen on.
+  const [startingCapital, setStartingCapital] = useState(() => retirementStartingCapital(state));
   const [monthlyRent, setMonthlyRent] = useState(30000);
   const [rates, setRates] = useState(() =>
     Object.fromEntries(instruments.map((i) => [i.key, i.rate]))
@@ -48,13 +55,13 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
 
   const nominalProjections = instruments.map((inst) => ({
     ...inst,
-    data: retirementProjection(monthlyAmount, yearsToRetirement, rates[inst.key] / 100),
+    data: retirementProjection(monthlyAmount, yearsToRetirement, rates[inst.key] / 100, undefined, startingCapital),
   }));
 
   const realProjections = showInflation
     ? instruments.map((inst) => ({
         ...inst,
-        data: retirementProjection(monthlyAmount, yearsToRetirement, rates[inst.key] / 100, INFLATION),
+        data: retirementProjection(monthlyAmount, yearsToRetirement, rates[inst.key] / 100, INFLATION, startingCapital),
       }))
     : null;
 
@@ -76,7 +83,10 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
     return point;
   });
 
+  // Co do portfolia vložíte vlastními penězi: dnešní kapitál plus všechny
+  // budoucí vklady. Zbytek je výnos.
   const totalContributions = monthlyAmount * yearsToRetirement * 12;
+  const ownMoney = totalContributions + startingCapital;
 
   const fmt = fmtKcShort;
 
@@ -113,6 +123,20 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
         </div>
+        <div>
+          <label className="block text-sm font-medium text-ink-label mb-1 flex items-center">
+            Už mám naspořeno
+            <HelpTip text="Kolik z dnešních úspor je určeno na důchod. Appka odhadla to, co zbývá po odečtení akontace a tříměsíční nouzové rezervy; přepište, pokud je to u vás jinak. Bez téhle částky by projekce počítala jen nové vklady a portfolio by vycházelo mnohem níž, než jaké doopravdy bude." />
+          </label>
+          <NumField
+            value={startingCapital}
+            onChange={setStartingCapital}
+            ariaLabel="Už mám naspořeno"
+            step={50000}
+            suffix="Kč"
+            className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
+          />
+        </div>
       </div>
 
       {/* 4% rule / renta target */}
@@ -123,9 +147,9 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
               Požadovaná měsíční renta
               <button
                 onClick={() => setShowRentInfo(!showRentInfo)}
-                className="ml-1 text-good hover:text-good text-sm"
-                aria-label="Informace o 4% pravidle"
-              >ⓘ</button>
+                className={`ml-1 ${HELP_BUTTON}`}
+                aria-label="Nápověda k pravidlu 4 %"
+              >?</button>
             </label>
             <NumField
               value={monthlyRent}
@@ -171,9 +195,9 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
         </label>
         <button
           onClick={() => setShowInflationInfo(!showInflationInfo)}
-          className="text-brand hover:text-brand text-sm"
-          aria-label="Informace o inflaci"
-        >ⓘ</button>
+          className={HELP_BUTTON}
+          aria-label="Nápověda k inflaci"
+        >?</button>
       </div>
 
       {showInflationInfo && (
@@ -276,7 +300,10 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             <tbody>
               {tableProjections.map((p) => {
                 const finalValue = p.data[p.data.length - 1]?.portfolioValue ?? 0;
-                const compoundInterest = finalValue - totalContributions;
+                // Vlastní peníze, ne jen vklady. Bez počátečního kapitálu
+                // hlásil řádek „Hotovost (pod polštářem)" při nulovém výnosu
+                // dva miliony složených úroků.
+                const compoundInterest = finalValue - ownMoney;
                 const reachedYear = targetPortfolio !== Infinity
                   ? yearOfReachingTarget(p.data, targetPortfolio)
                   : null;
@@ -315,7 +342,16 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             <tfoot>
               <tr className="border-t-2 border-line-strong">
                 <td colSpan={2} className="py-2 text-ink-body text-sm">
-                  Celkové vklady: {totalContributions.toLocaleString('cs-CZ')} Kč
+                  {/* Když se počítá i s dnešním kapitálem, musí být vidět,
+                      z čeho se „vlastní peníze" skládají. Jinak nesedí ani
+                      sloupec s výnosem. */}
+                  Vlastní peníze celkem: {ownMoney.toLocaleString('cs-CZ')} Kč
+                  {startingCapital > 0 && (
+                    <span className="text-ink-faint">
+                      {' '}({startingCapital.toLocaleString('cs-CZ')} Kč dnes
+                      {' '}+ {totalContributions.toLocaleString('cs-CZ')} Kč vklady)
+                    </span>
+                  )}
                 </td>
                 <td colSpan={3} />
               </tr>

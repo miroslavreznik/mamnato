@@ -1,6 +1,6 @@
 import type { WizardState, CustomGoal } from '../types';
 import { DEFAULTS } from './defaults';
-import { monthlyDisposable, totalMonthlyIncome } from './cashflow';
+import { monthlyDisposable, totalMonthlyIncome, necessaryMonthlyExpenses } from './cashflow';
 import {
   effectiveDownPayment,
   mortgageRate,
@@ -219,11 +219,32 @@ export function yearOfReachingTarget(
   return point ? point.year : null;
 }
 
+/**
+ * Kolik z dnešních úspor lze považovat za základ důchodového portfolia.
+ *
+ * Odečítá se dvojí: co je vázané v akontaci (ty peníze skončí v nemovitosti)
+ * a tříměsíční nouzová rezerva, která musí zůstat po ruce. Bez toho by se
+ * tytéž peníze počítaly dvakrát, jednou jako rezerva a podruhé jako
+ * investice.
+ *
+ * Bez tohohle základu tvrdila projekce člověku s 2 200 000 Kč naspořenými
+ * a sedmi lety do důchodu, že bude mít portfolio za 745 193 Kč, protože
+ * počítala jen nové vklady. Kvůli tomu vycházela renta tak nízko, že se
+ * i verdikt překlápěl na „zatím spíš doplněk".
+ */
+export function retirementStartingCapital(state: WizardState): number {
+  const reserve = necessaryMonthlyExpenses(state) * 3;
+  const tiedInDownPayment = state.goals.includes('property') ? effectiveDownPayment(state) : 0;
+  return Math.max(0, state.savings.totalSavings - tiedInDownPayment - reserve);
+}
+
 export function retirementProjection(
   monthlyContribution: number,
   years: number,
   annualReturn: number,
-  inflation?: number
+  inflation?: number,
+  /** Co už je naspořeno a od začátku se zhodnocuje. */
+  initialCapital = 0
 ): RetirementProjectionPoint[] {
   // Fisher equation: realReturn = (1 + nominal) / (1 + inflation) - 1
   const effectiveReturn = inflation
@@ -231,7 +252,7 @@ export function retirementProjection(
     : annualReturn;
   const monthlyReturn = effectiveReturn / 12;
   const result: RetirementProjectionPoint[] = [];
-  let portfolio = 0;
+  let portfolio = Math.max(0, initialCapital);
 
   for (let year = 0; year <= years; year++) {
     result.push({ year, portfolioValue: Math.round(portfolio) });

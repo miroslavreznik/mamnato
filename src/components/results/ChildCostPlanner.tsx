@@ -8,6 +8,7 @@ import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
+import { HELP_BUTTON } from '../ui/Tooltip';
 import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
@@ -36,18 +37,13 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
 
   return (
     <Card>
-      <div className="flex items-start gap-3 mb-4">
-        <span className="text-3xl">👶</span>
-        <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="type-section text-ink">Náklady na dítě</h3>
-            <button
-              onClick={() => setShowInfo(!showInfo)}
-              className="text-brand hover:text-brand text-sm"
-              aria-label="Informace"
-            >ⓘ</button>
-          </div>
-        </div>
+      <div className="flex items-center gap-2 mb-4">
+        <h3 className="type-section text-ink">Náklady na dítě</h3>
+        <button
+          onClick={() => setShowInfo(!showInfo)}
+          className={HELP_BUTTON}
+          aria-label="Nápověda"
+        >?</button>
       </div>
 
       {showInfo && (

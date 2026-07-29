@@ -77,9 +77,24 @@ describe('evaluateOverall', () => {
   });
 
   it('flags a modest retirement contribution as caution, not automatically good', () => {
-    const state = makeState({ goals: ['retirement'], person1Age: 55 });
+    // Malý příspěvek *a* malé úspory. S velkými úsporami je „pozor" špatně:
+    // kdo má naspořeno, dosáhne na rentu i s tisícovkou měsíčně.
+    const state = makeState({ goals: ['retirement'], person1Age: 55, savings: { totalSavings: 50000 } });
     const s = evaluateOverall(state, allocs({ retirement: 1000 }));
     expect(s.goals.find((g) => g.key === 'retirement')?.status).toBe('caution');
+  });
+
+  it('do renty se počítá i to, co už je naspořeno', () => {
+    // Dva miliony na účtu a sedm let do důchodu. Dokud projekce začínala od
+    // nuly, tvrdila appka, že renta bude „spíš doplněk", i když samotné
+    // úspory dají přes sedm tisíc měsíčně.
+    const rich = makeState({ goals: ['retirement'], person1Age: 58, savings: { totalSavings: 2200000 } });
+    const poor = makeState({ goals: ['retirement'], person1Age: 58, savings: { totalSavings: 0 } });
+    const withSavings = evaluateOverall(rich, allocs({ retirement: 6900 }));
+    const without = evaluateOverall(poor, allocs({ retirement: 6900 }));
+
+    expect(withSavings.goals.find((g) => g.key === 'retirement')?.status).toBe('good');
+    expect(without.goals.find((g) => g.key === 'retirement')?.status).toBe('caution');
   });
 
   it('adds a parental-leave readiness row and downgrades the verdict when leave goes negative', () => {
@@ -161,5 +176,42 @@ describe('verdikt „Mám na to?"', () => {
       expect(hasBut ? v.qualifier.length > 0 : v.qualifier === '').toBe(true);
       expect(v.reason.length).toBeGreaterThan(10);
     }
+  });
+});
+
+describe('napjatý verdikt vysvětluje svůj vlastní důvod', () => {
+  it('u tenké rezervy mluví o polštáři', () => {
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 20000 } });
+    const v = evaluateOverall(state, allocs({ retirement: 12000 })).verdict;
+    expect(v.answer).toBe('yes_but');
+    expect(v.reason).toMatch(/polštář/);
+  });
+
+  it('u nízké míry úspor mluví o tom, že po výdajích málo zbývá', () => {
+    // Rezerva na pět let, renta v pohodě, ale z příjmu zbývá 8 %.
+    const state = makeState({
+      goals: ['retirement'],
+      person1Age: 40,
+      savings: { totalSavings: 3000000 },
+      expenses: { rent: 30000, utilities: 5000, existingLoans: 0, insurance: 2000, food: 8000, transport: 5000, children: 0, other: 5000 },
+    });
+    const v = evaluateOverall(state, allocs({ retirement: 1000 })).verdict;
+    expect(v.answer).toBe('yes_but');
+    expect(v.reason).toMatch(/zbývá míň než desetina/);
+  });
+
+  it('u cíle na hraně pojmenuje ten cíl, ne chybějící rezervu', () => {
+    // Rezerva na šest let a čtyřicet procent příjmu stranou. Dřív u toho
+    // stálo „bez velkého polštáře, nečekaný výdaj by rozpočet rozhodil",
+    // hned vedle dlaždice „rezerva vydrží 78,6 měsíce".
+    const state = makeState({
+      goals: ['retirement'],
+      person1Age: 58,
+      savings: { totalSavings: 400000 },
+    });
+    const v = evaluateOverall(state, allocs({ retirement: 12000 })).verdict;
+    expect(v.answer).toBe('yes_but');
+    expect(v.reason).not.toMatch(/polštář/);
+    expect(v.reason).toMatch(/Důchod/);
   });
 });

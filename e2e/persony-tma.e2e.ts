@@ -14,11 +14,25 @@ import { test, type Page } from '@playwright/test'
  * Jako testy nic netvrdí, jen projdou a udělají otisk. Soud je na oku.
  */
 
-// Otisky jsou dražší než testy: každý mění velikost okna na celou výšku
-// stránky a fotí ji. Ve výchozím třicetisekundovém limitu to při plné sadě
-// se dvěma workery občas nestihly, přestože samotný průchod trvá osm vteřin
-// a šest opakování za sebou prošlo.
-test.describe.configure({ timeout: 90_000 })
+/**
+ * Otisky se pořizují jen s `PERSONY=1`.
+ *
+ * Nejsou to testy: nic netvrdí a nic nemůže selhat, jen fotí celou stránku
+ * v plné výšce, což je paměťově nejdražší věc v celé sadě. Samotné projití
+ * všech deseti person trvá 37 sekund, ale ve společném běhu se zbytkem
+ * (kontrast, tisk, klávesnice) se jedna z nich zasekla na půl druhé minuty
+ * a spadla na limit. Samostatně se to nereprodukovalo ani jednou.
+ *
+ * Stejně je na tom pixelové porovnání za `VISUAL=1`. Obojí je nástroj pro
+ * jedno sezení, ne kontrola pro CI.
+ *
+ *   PERSONY=1 … npx playwright test --project=chromium persony
+ *
+ * Plné znění příkazu i s obejitím proxy je v CLAUDE.md.
+ */
+const enabled = !!process.env.PERSONY
+test.describe.configure({ mode: enabled ? 'parallel' : 'default', timeout: 90_000 })
+test.beforeEach(() => test.skip(!enabled, 'otisky person: spusťte s PERSONY=1'))
 
 const OUT = '/tmp/claude-0/-home-user-mamnato/ac41d95e-14fb-56b8-a040-5aa25aa88d4c/scratchpad'
 

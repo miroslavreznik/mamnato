@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
+import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, retirementStartingCapital, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
+import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
+import { effectiveDownPayment } from '../../src/engine/mortgage';
 import type { CustomGoal } from '../../src/types';
 import type { WizardState } from '../../src/types';
 
@@ -240,5 +242,42 @@ describe('yearOfReachingTarget', () => {
   it('returns null when the target is not reached within the horizon', () => {
     const projection = retirementProjection(1000, 5, 0.02);
     expect(yearOfReachingTarget(projection, 100000000)).toBeNull();
+  });
+});
+
+describe('retirementStartingCapital', () => {
+  it('odečte akontaci a tříměsíční rezervu', () => {
+    // Bez toho by se tytéž peníze počítaly dvakrát: jednou jako nouzová
+    // rezerva, podruhé jako investované portfolio.
+    const state = makeState({ goals: ['property', 'retirement'], savings: { totalSavings: 2000000 } });
+    const reserve = necessaryMonthlyExpenses(state) * 3;
+    expect(retirementStartingCapital(state))
+      .toBe(2000000 - effectiveDownPayment(state) - reserve);
+  });
+
+  it('bez bydlení se akontace neodečítá', () => {
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 2000000 } });
+    expect(retirementStartingCapital(state)).toBe(2000000 - necessaryMonthlyExpenses(state) * 3);
+  });
+
+  it('nikdy není záporný', () => {
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 1000 } });
+    expect(retirementStartingCapital(state)).toBe(0);
+  });
+});
+
+describe('retirementProjection s počátečním kapitálem', () => {
+  it('počáteční kapitál se zhodnocuje od začátku', () => {
+    const withStart = retirementProjection(0, 10, 0.07, undefined, 1000000);
+    // Bez vkladů je to prostý složený úrok: milion při 7 % za deset let.
+    expect(withStart[0].portfolioValue).toBe(1000000);
+    expect(withStart[10].portfolioValue).toBeGreaterThan(1900000);
+    expect(withStart[10].portfolioValue).toBeLessThan(2100000);
+  });
+
+  it('bez počátečního kapitálu se chová jako dřív', () => {
+    expect(retirementProjection(5000, 10, 0.07)).toEqual(
+      retirementProjection(5000, 10, 0.07, undefined, 0)
+    );
   });
 });

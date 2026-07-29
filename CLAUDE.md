@@ -46,6 +46,10 @@ env -u HTTPS_PROXY -u HTTP_PROXY -u https_proxy -u http_proxy NO_PROXY="localhos
 Bez `--project=chromium` se pokusí spustit i WebKit a spadne. **WebKit ověří až CI**:
 pokud sáhneš na e2e, počítej s tím, že výsledek uvidíš až tam.
 
+Dvě sady se schválně přeskakují a pouštějí se ručně: `VISUAL=1` u pixelového
+porovnání a `PERSONY=1` u otisků person. Ani jedna nic netvrdí, obojí je
+podklad k posouzení okem.
+
 ## Architektura
 
 Tři vrstvy, ostře oddělené:

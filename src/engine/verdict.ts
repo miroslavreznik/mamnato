@@ -125,6 +125,23 @@ export function buildVerdictQuestions(
 
 // Odpověď „Mám na to?" odvozená z celkového statusu. Formulace jsou úmyslně
 // krátké, aby fungovaly jako velký nadpis nad celým přehledem.
+/**
+ * Proč je plán napjatý. Status `tight` má tři různé příčiny a každá se
+ * vysvětluje jinak.
+ *
+ * Dřív se u všech tří psalo „bez velkého polštáře, nečekaný výdaj by rozpočet
+ * rozhodil". U člověka pár let před důchodem, který má rezervu na šest a půl
+ * roku a odkládá 42 % příjmu, to stálo hned vedle dlaždice „rezerva vydrží
+ * 78,6 měsíce". Napjaté to u něj bylo z úplně jiného důvodu: renta
+ * z důchodového spoření zatím nevyjde.
+ */
+export interface TightReason {
+  /** Rezerva nepokryje ani tři měsíce nezbytných výdajů. */
+  thinReserve: boolean;
+  /** Po výdajích zbývá míň než desetina příjmu. */
+  lowSavingsRate: boolean;
+}
+
 export function buildVerdict(
   status: OverallStatusKey,
   goals: GoalReadiness[],
@@ -132,10 +149,11 @@ export function buildVerdict(
   disposable: number,
   leave: LeaveImpact | null,
   budget: BudgetView | null = null,
-  budgetAfter: BudgetView | null = null
+  budgetAfter: BudgetView | null = null,
+  tight: TightReason = { thinReserve: false, lowSavingsRate: false }
 ): Verdict {
   return {
-    ...buildAnswer(status, goals, hasGoals, disposable, leave, budget, budgetAfter),
+    ...buildAnswer(status, goals, hasGoals, disposable, leave, budget, budgetAfter, tight),
     questions: buildVerdictQuestions(goals, budgetAfter),
   };
 }
@@ -147,7 +165,8 @@ function buildAnswer(
   disposable: number,
   leave: LeaveImpact | null,
   budget: BudgetView | null,
-  budgetAfter: BudgetView | null
+  budgetAfter: BudgetView | null,
+  tight: TightReason
 ): Omit<Verdict, 'questions'> {
   // Bez zvolených cílů není na co odpovídat, tak aspoň zhodnotíme rozpočet.
   if (!hasGoals) {
@@ -193,13 +212,35 @@ function buildAnswer(
         qualifier: '',
         reason: 'Rozpočet je v plusu, cíle se do něj vejdou a zbývá vám i rezerva.',
       };
-    case 'tight':
+    case 'tight': {
+      // Pořadí je od nejnaléhavějšího: chybějící rezerva je akutní riziko,
+      // nízká míra úspor je dlouhodobá vada, cíl na hraně je jen upozornění.
+      if (tight.thinReserve) {
+        return {
+          answer: 'yes_but',
+          headline: 'Máte na to',
+          qualifier: 'ale bez rezervy',
+          reason: 'Na cíle vám to vyjde, jenže bez velkého polštáře. Nečekaný výdaj by rozpočet rozhodil.',
+        };
+      }
+      if (tight.lowSavingsRate) {
+        return {
+          answer: 'yes_but',
+          headline: 'Máte na to',
+          qualifier: 'ale zbývá vám málo',
+          reason: 'Rozpočet vychází, jenže po výdajích vám z příjmu zbývá míň než desetina. Plán tak stojí na tom, že se nic nezmění.',
+        };
+      }
+      const shaky = goals.filter((g) => g.status === 'caution').map((g) => g.label);
       return {
         answer: 'yes_but',
         headline: 'Máte na to',
         qualifier: 'ale bude to napjaté',
-        reason: 'Na cíle vám to vyjde, jenže bez velkého polštáře. Nečekaný výdaj by rozpočet rozhodil.',
+        reason: shaky.length > 0
+          ? `Rozpočet i rezerva jsou v pořádku, na hraně ${shaky.length === 1 ? 'je' : 'jsou'} ${list(shaky)}. Podrobnosti najdete u ${goalWord(shaky)} níže.`
+          : 'Na cíle vám to vyjde, ale bez velké rezervy navíc.',
       };
+    }
     case 'not_yet':
       if (leave && leave.shortfallPerMonth > 0 && !leave.coversWholeLeave) {
         return {

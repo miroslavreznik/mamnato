@@ -94,6 +94,12 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   const leave = evaluateParentalLeave(state);
   const tips = buildTips(state, status, goals, budget, budgetAfter, leave);
 
-  const verdict = buildVerdict(status, goals, state.goals.length > 0, disposable, leave, budget, budgetAfter);
+  // Proč je to napjaté, ne jen že je. Stejné podmínky, ze kterých se status
+  // odvodil; bez nich verdikt psal o chybějícím polštáři i tomu, kdo má
+  // rezervu na šest let.
+  const verdict = buildVerdict(
+    status, goals, state.goals.length > 0, disposable, leave, budget, budgetAfter,
+    { thinReserve: runway < 3, lowSavingsRate: rate < 0.1 }
+  );
   return { status, icon: OVERALL_ICON[status], verdict, tips, goals, budget, budgetAfter };
 }

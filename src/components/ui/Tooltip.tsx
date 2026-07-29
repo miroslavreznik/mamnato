@@ -1,5 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
 
+/**
+ * Vzhled tlačítka nápovědy.
+ *
+ * Sdílí ho i místa, která místo bubliny rozbalují celý odstavec (inflace,
+ * pravidlo 4 %, náklady na dítě). Ta měla vlastní `ⓘ` v barvě značky, takže
+ * na jedné obrazovce stály dvě různé ikony pro totéž. Uživatel hledá u
+ * popisku nápovědu, ne dvě různé nápovědy.
+ */
+export const HELP_BUTTON =
+  'w-6 h-6 rounded-full bg-shell text-ink-body text-xs font-bold inline-flex '
+  + 'items-center justify-center hover:bg-shell dark:hover:bg-sunken '
+  + 'focus:outline-none focus:ring-2 focus:ring-ink';
+
 interface TooltipProps {
   text: string;
 }
@@ -35,7 +48,7 @@ export default function Tooltip({ text }: TooltipProps) {
     <span ref={wrapRef} className="relative inline-block ml-1 align-middle">
       <button
         type="button"
-        className="w-6 h-6 rounded-full bg-shell text-ink-body text-xs font-bold inline-flex items-center justify-center hover:bg-shell dark:hover:bg-sunken focus:outline-none focus:ring-2 focus:ring-ink"
+        className={HELP_BUTTON}
         onClick={() => setPinned((v) => !v)}
         // Hover jen pro myš, dotyk jinak nápovědu otevře a zavře zároveň.
         onPointerEnter={(e) => { if (e.pointerType === 'mouse') setHovered(true); }}
