@@ -392,6 +392,17 @@ body {
   animation: ribbon-draw 1.6s cubic-bezier(0.22, 0.8, 0.3, 1) forwards;
 }
 
+/* Zářezy ve schodkovém úseku.
+   Odkrývají se až po dokreslení stuhy, ale NESMÍ to dělat `.ribbon-draw`.
+   Ta nastavuje `stroke-dasharray: 3000` v CSS a to přebije atribut
+   `stroke-dasharray="2 6"` na prvku, protože CSS je silnější než prezentační
+   atribut. Zářezy se tím slily v jeden souvislý tah barvou plochy: schodkový
+   úsek se nepruhoval, ale mazal, a při dlouhém schodku z celé stuhy zbyla
+   skoro jen prázdná plocha. */
+.ribbon-hatch {
+  animation: ribbon-event 0.3s ease-out 1.5s backwards;
+}
+
 .ribbon-event {
   /* `backwards` je tu podstatné a `opacity: 0` v základním stavu být nesmí.
      Skrytý výchozí stav, který odkrývá až animace, znamená, že cokoli animaci
@@ -418,7 +429,8 @@ body {
     stroke-dasharray: none;
     animation: none;
   }
-  .ribbon-event {
+  .ribbon-event,
+  .ribbon-hatch {
     animation: none;
   }
 }
@@ -503,7 +515,8 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
     stroke-dasharray: none !important;
     animation: none !important;
   }
-  .ribbon-event {
+  .ribbon-event,
+  .ribbon-hatch {
     animation: none !important;
   }
 }

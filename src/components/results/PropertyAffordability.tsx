@@ -10,6 +10,7 @@ import {
   mortgagePayment,
   fixationYears as fixationYearsOf,
   totalProjectCost,
+  renovationCost,
 } from '../../engine/mortgage';
 import { monthsToSaveAtAllocation } from '../../engine/allocation';
 import { formatMonths, formatYears, czk, czkPerMonth, formatRate } from '../../engine/format';
@@ -49,6 +50,7 @@ export default function PropertyAffordability({
   onChangeMonthlySaving,
 }: Props) {
   const projectCost = totalProjectCost(state);
+  const renovation = renovationCost(state);
   const dpFraction = downPaymentFraction(state);
   const dpPct = Math.round(dpFraction * 100);
   const dp = requiredDownPayment(projectCost, dpFraction);
@@ -60,8 +62,23 @@ export default function PropertyAffordability({
     <Card title="Kalkulačka nemovitosti">
       <div className="space-y-3 text-sm">
         <Row label="Cena nemovitosti" value={czk(state.property.targetPrice)} />
+        {/* Rekonstrukce se do akontace i hypotéky počítá, protože banka půjčuje
+            proti hodnotě po ní. Bez těchhle dvou řádků ale zůstala neviditelná
+            a čísla pod sebou si odporovala: u ceny 7,5 milionu a rekonstrukce
+            za 900 tisíc stála hned pod cenou „potřebná akontace (20 %)
+            1 680 000 Kč", což je pětina osmi a půl milionu, ne sedmi a půl. */}
+        {renovation > 0 && (
+          <>
+            <Row label="Rekonstrukce" value={czk(renovation)} />
+            <Row
+              label="Celková investice"
+              value={czk(projectCost)}
+              tooltip="Cena plus rozpočet na rekonstrukci. Akontace i výše hypotéky se počítají z téhle částky, protože banka půjčuje proti hodnotě nemovitosti po rekonstrukci."
+            />
+          </>
+        )}
         <Row
-          label={`Potřebná akontace (${dpPct} %)`}
+          label={`Potřebná akontace (${dpPct} %${renovation > 0 ? ' z investice' : ''})`}
           value={czk(dp)}
           tooltip={
             dpPct === 10

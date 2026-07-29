@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Stav ke commitu `29eecb0`. Testy: 318 jednotkových, 54 e2e.
+Testy: 318 jednotkových, 62 e2e.
 
 ---
 
@@ -197,6 +197,52 @@ takže se mu prstenec roztahuje z nuly a hned po stisku tabulátoru vrací
 v testu vypínají, stejně jako v `kontrast.e2e.ts`, kde stejná past chytla
 měření barev.
 
+### B5. Persony v tmavém režimu (hotovo)
+
+Čtyři další scénáře v `e2e/persony-tma.e2e.ts`, schválně jiné než ve světlé
+sadě, aby při té příležitosti prošly cesty, které zatím nikdo neprošel:
+rekonstrukce, samostatné vlastní cíle, všechny čtyři cíle naráz (i na mobilu)
+a koupě, na kterou rozpočet nestačí.
+
+Tmavý režim sám o sobě obstál. Zato se našlo pět věcí, které s ním nesouvisí
+a které by ve světlém režimu vypadaly stejně špatně:
+
+1. **Zářezy schodku stuhu nepruhovaly, ale mazaly.** Vzorek měl třídu
+   `ribbon-draw`, která nastavuje `stroke-dasharray: 3000` v CSS. To přebilo
+   atribut `stroke-dasharray="2 6"` na prvku, protože CSS je silnější než
+   prezentační atribut, takže se zářezy slily v jeden souvislý tah barvou
+   plochy. U plánu, který je v mínusu celých deset let, z celé stuhy zbyla
+   skoro prázdná plocha, tedy přesně v situaci, kvůli které stuha vznikla.
+   Nově má vzorek vlastní třídu `.ribbon-hatch`; hlídá to test.
+2. **Rekonstrukce byla v kalkulačce neviditelná.** Akontace i hypotéka se
+   z ní počítají (banka půjčuje proti hodnotě po rekonstrukci), ale řádky to
+   neříkaly: pod „cena 7 500 000 Kč" stálo „potřebná akontace (20 %)
+   1 680 000 Kč", což je pětina osmi a půl milionu. Přibyly řádky
+   „Rekonstrukce" a „Celková investice".
+3. **Popisek nejnižšího bodu ležel na stuze.** Potřetí, pokaždé jinde. Místo
+   další záplaty tam je teď malý řešitel: projde několik poloh a u každé
+   změří vzdálenost od stuhy po celé šířce textu.
+4. **Vlastní cíle jako jediná obrazovka tykaly.** „Tvoje cíle", „Seřaď",
+   „dosáhneš", a v jedné větě dokonce obojí naráz („Snižte cílovou částku:
+   při tvém rozpočtu dosáhneš"). Repozitář má vykání jako pravidlo.
+5. **Jeden falešný nález**, který stojí za zápis: grafy v Rechartu se kreslí
+   1,5 s animovaně a otisk hned po přepnutí záložky je zachytí useknuté
+   v půlce. Vypadá to jako chybný výpočet a poslalo mě to hledat chybu
+   v projekci cíle, která žádná nebyla. Otisky teď na dokreslení počkají.
+
+**Neopraveno, čeká na rozhodnutí:** karta vlastních cílů má u každého cíle
+pole „Kolik na tento cíl měsíčně dávám", ale stav pod ním počítá
+`allocateGoals(cíle, disponibilní částka)`, což pole ignoruje a rozděluje
+peníze čistě podle pořadí. Na obrazovce pak stojí „dávám 14 667 Kč"
+a hned pod tím „na tento cíl odkládáte 33 334 Kč". Engine (`customReadiness`)
+navíc rozděluje jiný balík než karta, takže si verdikt a karta můžou
+odporovat. Které z těch dvou pojetí platí, je produktové rozhodnutí,
+ne oprava.
+
+**Neopraveno, spíš námět:** období rekonstrukce (`engine/renovation.ts`)
+umí spočítat, že se souběžně platí nájem i úroky, ale na výsledcích se
+neukazuje nikde, jen v průvodci. Na stuze taky žádná událost není.
+
 ---
 
 ## C. Jak to celé otestovat
@@ -225,6 +271,7 @@ Co které soubory hlídají:
 | `wizard.e2e.ts` | průchod appkou, sdílení, tisk dat, průběžný náhled |
 | `ribbon.e2e.ts` | pohyb, úchop, dotykový cíl 44 px, tisk, vypnutý pohyb, překryv popisků |
 | `persony.e2e.ts` | průchod třemi scénáři, otisky k posouzení okem |
+| `persony-tma.e2e.ts` | další čtyři scénáře v tmavém režimu, včetně mobilu |
 | `klavesnice.e2e.ts` | fokus je vidět, lišta záložek se ovládá šipkami |
 | `cokdyby.e2e.ts` | duch původního scénáře, delta, izolace od Cesty |
 | `tooltip.e2e.ts` | nápověda je čitelná, ne jen otevřená |
@@ -247,8 +294,7 @@ k „změnilo se přesně tohle": otisk před zásahem, otisk po něm, rozdíl.
 
 ### C3. Ruční, na závěr
 
-1. **Tři persony** podle tabulky v B1. Hotovo ve světlém režimu; tmavý zatím
-   projitý není, hlídá ho jen `kontrast.e2e.ts`, což je kontrast, ne rozvržení.
+1. ~~**Persony**~~: hotovo, tři ve světlém režimu (B1) a čtyři v tmavém (B5).
 2. **Tisk do PDF** ze skutečného prohlížeče, ne jen z Playwrightu.
 3. ~~**Klávesnice**~~: hotovo, viz B4.
 4. **Mobil**: skutečné zařízení, ne jen zúžené okno. Kontroluje se zoom polí

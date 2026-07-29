@@ -122,6 +122,17 @@ test('schodkový úsek nese kromě barvy i vzorek', async ({ page }) => {
   // Vzorek se kreslí jen tam, kde schodek opravdu je: má ořez na jeho úseky.
   const clip = await hatch.getAttribute('clip-path')
   expect(clip).toMatch(/^url\(#deficit-/)
+
+  // A pořád je to vzorek, ne souvislý tah.
+  //
+  // Vzniklo to z konkrétní chyby: vzorek měl třídu `ribbon-draw`, která
+  // nastavuje `stroke-dasharray: 3000` v CSS. To přebilo atribut na prvku,
+  // protože CSS je silnější než prezentační atribut, a zářezy se slily
+  // v jeden tah barvou plochy. Schodkový úsek se pak stuhu nepruhoval, ale
+  // mazal: u plánu, který je v mínusu celých deset let, z ní zbyla skoro
+  // prázdná plocha. V DOM přitom vypadalo všechno v pořádku.
+  const dash = await hatch.evaluate((el) => getComputedStyle(el).strokeDasharray)
+  expect(dash, `vzorek se slil v souvislý tah: ${dash}`).toMatch(/^2px[, ] ?6px$/)
 })
 
 /**

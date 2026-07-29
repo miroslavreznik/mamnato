@@ -229,50 +229,69 @@ export default function JourneyRibbon({
 
   const lowest = events.find((e) => e.key === 'lowest');
 
-  // Popisek nejnižšího bodu se uhne, když u něj stojí puntík události.
-  // U páru s dítětem spadl nejnižší bod hned vedle něj a částka se četla
-  // přes kroužek úchopu. Uhýbá se na stranu od té události pryč.
+  /**
+   * Kam s popiskem nejnižšího bodu.
+   *
+   * Vypadá to jako detail, ale je to jediný text, který se kreslí doprostřed
+   * plochy, takže se má o co otřít: o stuhu, o puntíky událostí, o popisky
+   * roků i o okraj. Postupné záplaty („uhni od nejbližšího puntíku", „dej to
+   * pod bod, když je nad ním stuha") vždycky spravily jeden scénář a rozbily
+   * jiný, protože každá koukala jen na jedno místo křivky.
+   *
+   * Tohle prochází několik poloh a u každé změří, jak daleko je text od stuhy
+   * **po celé své šířce**. Vybere se poloha s největší mezerou, při shodě ta
+   * blíž k bodu. Vodicí čárka pak řekne, ke kterému bodu popisek patří.
+   */
   const lowestLabel = useMemo(() => {
     if (!lowest) return null;
     const x = geom.xs(lowest.month);
     const y = geom.ys(data.minCash);
-    // Poloviční šířka textu plus poloměr úchopu: pod tuhle vzdálenost se
-    // popisek s puntíkem opravdu potká.
     const halfText = lowest.label.length * 2.7 + 6;
     const min = PAD.left + halfText;
     const max = W - PAD.right - halfText;
     const home = Math.min(Math.max(x, min), max);
 
-    // Zakázané polohy středu textu, jedna kolem každého puntíku události.
-    //
-    // Uhnout jen od nejbližšího puntíku nestačí: u páru s dítětem se popisek
-    // odsunul od koupě a přistál přesně na kroužku dítěte. Hledá se proto
-    // nejbližší poloha, která nekoliduje se žádnou z nich; kandidáti jsou
-    // původní místo a okraje zakázaných úseků.
+    // Zakázané polohy středu textu: jedna kolem každého puntíku události.
+    // Uhnout jen od nejbližšího nestačilo, popisek pak přistál na dalším.
     const blocked = named.map((e) => {
       const ex = geom.xs(e.month);
       return [ex - 18 - halfText, ex + 18 + halfText] as const;
     });
     const free = (t: number) => t >= min && t <= max && !blocked.some(([a, b]) => t > a && t < b);
-    const tx = [home, ...blocked.flat()]
-      .filter(free)
-      .sort((a, b) => Math.abs(a - x) - Math.abs(b - x))[0] ?? home;
+    const spots = [home, ...blocked.flat()].filter(free);
+    if (spots.length === 0) spots.push(home);
+
+    // Nejmenší svislá mezera mezi textem a stuhou přes celou šířku textu.
+    // Jeden vzorek uprostřed nestačí: u strmého úseku se stuha přes šířku
+    // popisku posune o desítky jednotek a mezera změřená ve středu lže.
+    const gapTo = (t: number, ty: number) => {
+      let worst = Infinity;
+      for (let px = t - halfText; px <= t + halfText; px += 6) {
+        const m = Math.round(((px - PAD.left) / (W - PAD.left - PAD.right)) * horizonMonths);
+        const ry = geom.ys(points[Math.min(Math.max(m, 0), points.length - 1)].cash);
+        // Text sedí zhruba v ty-8 až ty+2, stuha je 9 široká, tedy ry±4,5.
+        worst = Math.min(worst, ty > ry ? (ty - 8) - (ry + 4.5) : (ry - 4.5) - (ty + 2));
+      }
+      return worst;
+    };
+
+    const below = Math.min(y + 20, H - PAD.bottom + 2);
+    const above = Math.max(y - 14, PAD.top + 4);
+    const best = spots
+      .flatMap((t) => [below, above].map((ty) => ({ tx: t, ty, gap: gapTo(t, ty) })))
+      .sort((a, b) => b.gap - a.gap || Math.abs(a.tx - x) - Math.abs(b.tx - x))[0];
 
     return {
       x,
       y,
-      // Popisek patří pod bod, kdykoli se tam vejde nad osu. Nad bodem se
-      // totiž skoro vždy zvedá stuha a text se do ní opře; u rodiny bez koupě
-      // tak „Kč" leželo na stuze. Nahoru jde jen tehdy, když je bod tak
-      // nízko, že by se popisek pod ním tloukl s popiskem roku.
-      tx,
-      ty: y <= H - PAD.bottom - 16 ? y + 20 : y - 14,
+      tx: best.tx,
+      ty: best.ty,
       // Konec vodicí čárky u bližší hrany textu, ne uprostřed něj: jinak
       // čárka končí pod písmeny a vypadá jako přeškrtnutí.
-      edge: tx > x ? tx - halfText : tx + halfText,
-      shifted: Math.abs(tx - x) > 2,
+      edge: best.tx > x ? best.tx - halfText : best.tx + halfText,
+      shifted: Math.abs(best.tx - x) > 2,
     };
-  }, [lowest, geom, data.minCash, named]);
+  }, [lowest, geom, data.minCash, named, points, horizonMonths]);
 
   return (
     <svg
@@ -358,7 +377,10 @@ export default function JourneyRibbon({
       />
 
       {/* Zářezy ve schodkovém úseku. Kreslí se barvou plochy, takže do stuhy
-          „ukusují" a vzniká pruhovaný úsek. */}
+          „ukusují" a vzniká pruhovaný úsek.
+
+          Vlastní třída, ne `ribbon-draw`: ta nastavuje `stroke-dasharray`
+          v CSS a přebila by vzorek. Vysvětlení je u `.ribbon-hatch`. */}
       {geom.deficitRanges.length > 0 && (
         <path
           d={geom.path}
@@ -367,7 +389,7 @@ export default function JourneyRibbon({
           strokeWidth="9"
           strokeDasharray="2 6"
           clipPath={`url(#deficit-${uid})`}
-          className={animate ? 'ribbon-draw' : undefined}
+          className={animate ? 'ribbon-hatch' : undefined}
         />
       )}
 

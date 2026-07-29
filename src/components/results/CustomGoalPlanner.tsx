@@ -66,7 +66,7 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
       </div>
       {totalNeeded > disposable && (
         <Callout tone="danger" className="mt-3">
-          Tvoje cíle dohromady potřebují o {(totalNeeded - disposable).toLocaleString('cs-CZ')} Kč/měs. více, než máš k dispozici. Uprav cíle nebo jejich horizont.
+          Vaše cíle dohromady potřebují o {(totalNeeded - disposable).toLocaleString('cs-CZ')} Kč/měs. více, než máte k dispozici. Upravte cíle nebo jejich horizont.
         </Callout>
       )}
     </div>
@@ -143,7 +143,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
     <Card>
       <h3 className="type-section text-ink mb-2">Vlastní finanční cíle</h3>
       <p className="text-sm text-ink-muted mb-4">
-        Seřaď cíle podle důležitosti. Začneme od nejvyššího a uvidíme, na které ještě zbývá.
+        Seřaďte cíle podle důležitosti. Začneme od nejvyššího a uvidíme, na které ještě zbývá.
       </p>
 
       <GoalSummaryPanel disposable={disposable} totalAllocated={totalAllocated} totalNeeded={totalNeeded} />
@@ -265,13 +265,13 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink-body">Na tento cíl odkládáš:</span>
+                    <span className="text-ink-body">Na tento cíl odkládáte:</span>
                     <span className={`font-semibold ${alloc.achievable ? 'text-good' : alloc.monthlyAllocation > 0 ? 'text-caution' : 'text-danger'}`}>
                       {alloc.monthlyAllocation.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink-body">Zbývá ti po tomto cíli:</span>
+                    <span className="text-ink-body">Zbývá vám po tomto cíli:</span>
                     <span className="font-semibold text-ink">
                       {alloc.remainingAfter.toLocaleString('cs-CZ')} Kč/měs.
                     </span>
@@ -279,17 +279,17 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
 
                   {alloc.achievable && (
                     <Callout tone="good" pad="p-2 rounded-lg">
-                      Na cíl dosáhneš v požadovaném čase.
+                      Na cíl dosáhnete v požadovaném čase.
                     </Callout>
                   )}
                   {!alloc.achievable && alloc.monthlyAllocation > 0 && (
                     <Callout tone="caution" pad="p-2 rounded-lg">
-                      Cíl potřebuje více času. Při aktuální alokaci dosáhneš za {alloc.monthsNeeded} měsíců místo {months}.
+                      Cíl potřebuje více času. Při aktuální alokaci na něj dosáhnete za {alloc.monthsNeeded} měsíců místo {months}.
                     </Callout>
                   )}
                   {alloc.monthlyAllocation <= 0 && (
                     <Callout tone="danger" pad="p-2 rounded-lg">
-                      Na tento cíl ti po předchozích cílech nezbývají žádné prostředky.
+                      Na tento cíl vám po předchozích cílech nezbývají žádné prostředky.
                     </Callout>
                   )}
 
@@ -310,7 +310,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                           )}
                           {alloc.achievableAmount !== undefined && alloc.achievableAmount > 0 && (
                             <p className="text-brand">
-                              <strong>Snižte cílovou částku:</strong> při tvém rozpočtu dosáhneš na {alloc.achievableAmount.toLocaleString('cs-CZ')} Kč v zadaném čase.
+                              <strong>Snižte cílovou částku:</strong> při vašem rozpočtu dosáhnete na {alloc.achievableAmount.toLocaleString('cs-CZ')} Kč v zadaném čase.
                             </p>
                           )}
                           <p className="text-brand">
