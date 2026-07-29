@@ -171,6 +171,32 @@ a `clamp()` v typografii.
   Při té příležitosti se opravil komentář v `engine/preview.ts`: mluvil
   o osmi kategoriích, jsou jich sedm.
 
+### B4. Klávesnice (hotovo)
+
+Průchod tabulátorem je v `e2e/klavesnice.e2e.ts`. Kontroluje, že každý prvek,
+na který se dá dostat tabulátorem, dává fokus najevo, a že se lišta záložek
+chová podle vzoru: tabulátorem se do ní vstoupí jednou a mezi záložkami se
+jezdí šipkami.
+
+**Našel se jeden skutečný nález.** Úchop události ve stuze měl
+`focus:outline-none` bez náhrady. Je to průhledný kroužek v SVG, takže žádný
+podklad ani obrys, na kterém by šel fokus poznat, nemá; a je to zároveň
+jediné místo v appce, které se myší ovládá tažením, takže bez klávesnice se
+s ním nedá dělat nic. Nově má vlastní prstenec (`.ribbon-grip:focus-visible`).
+
+Appka nemá jeden globální fokusový prstenec, každý prvek si ho nese sám
+(`focus:ring-2` nebo výchozí obrys prohlížeče). Právě proto se dá zapomenout
+a právě proto na to je test.
+
+**Pořadí prvků se neověřuje.** Nikde není kladný `tabindex`, takže pořadí
+plyne z pořadí v DOM; to je kontrola pro prohlížeč, ne pro test.
+
+Jeden falešný nález stojí za zápis: tlačítko „Další" má `transition-all`,
+takže se mu prstenec roztahuje z nuly a hned po stisku tabulátoru vrací
+`outline-width: 0px`. Vypadalo to jako chybějící fokus. Přechody se proto
+v testu vypínají, stejně jako v `kontrast.e2e.ts`, kde stejná past chytla
+měření barev.
+
 ---
 
 ## C. Jak to celé otestovat
@@ -199,6 +225,7 @@ Co které soubory hlídají:
 | `wizard.e2e.ts` | průchod appkou, sdílení, tisk dat, průběžný náhled |
 | `ribbon.e2e.ts` | pohyb, úchop, dotykový cíl 44 px, tisk, vypnutý pohyb, překryv popisků |
 | `persony.e2e.ts` | průchod třemi scénáři, otisky k posouzení okem |
+| `klavesnice.e2e.ts` | fokus je vidět, lišta záložek se ovládá šipkami |
 | `cokdyby.e2e.ts` | duch původního scénáře, delta, izolace od Cesty |
 | `tooltip.e2e.ts` | nápověda je čitelná, ne jen otevřená |
 | `kontrast.e2e.ts` | nikde nesplývá text s pozadím, oba režimy |
@@ -223,8 +250,7 @@ k „změnilo se přesně tohle": otisk před zásahem, otisk po něm, rozdíl.
 1. **Tři persony** podle tabulky v B1. Hotovo ve světlém režimu; tmavý zatím
    projitý není, hlídá ho jen `kontrast.e2e.ts`, což je kontrast, ne rozvržení.
 2. **Tisk do PDF** ze skutečného prohlížeče, ne jen z Playwrightu.
-3. **Klávesnice**: projít celou appku tabulátorem, ověřit pořadí, fokusový
-   prstenec a že se dá ovládat stuha i posuvníky.
+3. ~~**Klávesnice**~~: hotovo, viz B4.
 4. **Mobil**: skutečné zařízení, ne jen zúžené okno. Kontroluje se zoom polí
    na iOS a dosah palcem na spodní lištu.
 

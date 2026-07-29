@@ -401,6 +401,18 @@ body {
   animation: ribbon-event 0.3s ease-out backwards;
 }
 
+/* Úchop události ve stuze.
+   Je to průhledný kroužek v SVG, takže žádný podklad ani obrys, na kterém by
+   šel fokus poznat, nemá. Zbytek appky si prstenec nese na sobě
+   (`focus:ring-2`), tady se na to zapomnělo: prvek měl `focus:outline-none`
+   bez náhrady, a přitom je to jediné místo, které se myší ovládá tažením,
+   takže bez klávesnice se s ním nedá dělat vůbec nic. */
+.ribbon-grip:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 9999px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ribbon-draw {
     stroke-dasharray: none;

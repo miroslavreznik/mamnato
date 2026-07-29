@@ -435,7 +435,7 @@ export default function JourneyRibbon({
                 <circle
                   cx={x} cy={y} r={hitRadius}
                   fill="transparent"
-                  className="no-print cursor-ew-resize touch-none focus:outline-none"
+                  className="ribbon-grip no-print cursor-ew-resize touch-none"
                   role="slider"
                   tabIndex={0}
                   aria-label="Za jak dlouho čekáte dítě"
