@@ -119,6 +119,8 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     });
   }, []);
 
+  const resetGoals = useCallback(() => setExcludedGoals(new Set()), []);
+
   const handleChangeAllocation = (goal: string, index: number | null, value: number) => {
     setAllocations((prev) => {
       if (goal === 'custom' && index !== null) {
@@ -313,6 +315,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             allGoalAllocations={allocations}
             excludedGoals={excludedGoals}
             onToggleGoal={toggleGoal}
+            onResetGoals={resetGoals}
           >
             <WhatIfTab />
           </WhatIfProvider>

@@ -92,8 +92,8 @@ export default function WhatIfPanel() {
         )}
       </div>
       <p className="text-[13px] text-ink-body leading-relaxed">
-        Hýbejte čímkoli. Cesta vlevo se překreslí při každém pohybu a původní
-        scénář zůstane vidět jako přerušovaný obrys.
+        Hýbejte čímkoli. Cesta vlevo se překreslí hned, a když se změní její
+        tvar, zůstane ten původní vidět jako přerušovaný obrys.
       </p>
 
       {hasProperty && (

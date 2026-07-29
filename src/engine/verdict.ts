@@ -32,6 +32,17 @@ export interface VerdictQuestion {
   conditional?: boolean;
 }
 
+/**
+ * Celá odpověď jednou větou, i s doplňkem za čárkou.
+ *
+ * Samotný `headline` na porovnání dvou scénářů nestačí: „Máte na to"
+ * a „Máte na to, ale bude to napjaté" mají headline stejný, takže Co kdyby
+ * hlásilo „odpověď se změnila z máte na to na máte na to".
+ */
+export function answerText(v: Verdict): string {
+  return v.qualifier ? `${v.headline}, ${v.qualifier}` : v.headline;
+}
+
 export interface Verdict {
   answer: VerdictAnswer;
   // Hlavní věta, např. „Máte na to".

@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 330 jednotkových, 66 e2e.
+Testy: 330 jednotkových, 69 e2e.
 
 ---
 
@@ -338,6 +338,42 @@ Ověřeno bez nálezu: anuita, DSTI (splátka + stávající úvěry ku čistém
 příjmu), DTI (celkový dluh ku ročnímu příjmu), náklady na vlastnictví (1 %
 z ceny ročně), rezerva po koupi, součet kategorií grafu rozpočtu proti
 disponibilní částce.
+
+### B8. Odkládání cílů v Co kdyby (hotovo)
+
+Přepínače na všechny cíle, ne jen na vlastní: akontace, důchod, dítě
+i jednotlivé vlastní cíle. Odškrtnutí platí pro celý přehled, takže se
+překreslí i verdikt.
+
+**Odložení cíle se ale neprojeví tam, kde by to člověk čekal.** Odložit
+důchod křivkou jmění nehne ani o pixel: spoření na cíl zůstává jměním, jen
+leží jinde. Změní se jen volné peníze v rozpočtu. Panel to musel začít říkat
+nahlas, protože jinak vypadá, že klik nic neudělal:
+
+- **Dlaždice ukazuje volné peníze, ne disponibilní částku.** Disponibilní
+  částka cíle nezná, takže po odložení důchodu hlásily všechny tři dlaždice
+  „beze změny", i když se uvolnilo 11 250 Kč měsíčně.
+- **Duch se kreslí, jen když se tvar opravdu změní.** Jinak leží přesně pod
+  živou stuhou a legenda slibuje přerušovaný obrys, který nikde není.
+  U odložení bydlení se tvar změní (zmizí koupě) a duch má co ukázat.
+- **Věta, když se tvar nezměnil:** že je to tak správně a kde se změna
+  projeví.
+- **Nadpis mluví o tom, co uživatel udělal.** Po odložení cíle stálo
+  „Zkoušíte: bydlení za 6 000 000 Kč", ačkoli s cenou nikdo nehnul.
+
+Při tom se opravily další dvě věci:
+
+- **Proti čemu se to měří.** `baseline` byl scénář už profiltrovaný
+  o odložené cíle, takže odložení nebylo změnou proti ničemu: duch se
+  nevykreslil, dlaždice hlásily „beze změny" a tlačítko „Vrátit původní
+  scénář" zůstalo zakázané. Nově je `baseline` scénář tak, jak ho uživatel
+  zadal.
+- **„Odpověď se změnila z máte na to na máte na to."** Porovnával se jen
+  `headline`, jenže „Máte na to" a „Máte na to, ale bude to napjaté" ho mají
+  stejný. Slouží k tomu nová `answerText()`, která složí celou odpověď
+  i s doplňkem za čárkou.
+
+Hlídají to tři testy v `cokdyby.e2e.ts`.
 
 ---
 

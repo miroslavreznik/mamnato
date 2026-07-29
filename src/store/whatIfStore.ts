@@ -12,6 +12,12 @@ import type { GoalAllocations } from '../engine/allocation';
  *   která má měnit i verdikt nahoře. Tak to funguje odjakživa. Kontext je
  *   sem jen podává dál, aby šly cíle odkládat i odsud; drží je pořád
  *   dashboard, ne tenhle stav.
+ *
+ * **Proti čemu se to měří.** `baseline` je scénář, jak ho uživatel zadal:
+ * se všemi cíli a bez vypnutých položek. Dřív to byl scénář už profiltrovaný,
+ * takže odložení cíle sice překreslilo stuhu, ale duch původní cesty se
+ * nevykreslil a dlaždice u toho hlásily „beze změny". Změna byla vidět jen
+ * tomu, kdo si pamatoval, jak graf vypadal před kliknutím.
  * - **Posuvníky** (cena, sazba, délka rodičovské) drží tenhle kontext a platí
  *   jen uvnitř záložky „Co kdyby". Je to pískoviště: uživatel zkouší, co by
  *   bylo kdyby, ne že by to tak měl. Kdyby posuvníky měnily i Cestu, přestal
@@ -52,16 +58,16 @@ export interface WhatIfValue {
   excludedGoals: Set<string>;
   toggleGoal: (key: string) => void;
   /**
-   * Scénář se **všemi** cíli, i odloženými, a jejich částkami.
+   * Seznam všech cílů, i odložených, pro přepínače.
    *
-   * Seznam přepínačů se musí stavět z něj, ne z `baseline`. V `baseline` už
-   * odložený cíl není, takže by zmizel i jeho přepínač a nešlo by ho vrátit
-   * zpátky, jen resetem celé stránky.
+   * Je to totéž co `baseline`, jen pojmenované podle toho, k čemu se tam
+   * sahá: přepínač odloženého cíle musí zůstat, jinak by nešlo cíl vrátit
+   * zpátky jinak než resetem celé stránky.
    */
   allGoals: WizardState;
   allGoalAllocations: GoalAllocations;
 
-  /** Sáhl uživatel na posuvníky? */
+  /** Liší se scénář od zadaného? Posuvníkem, odložením cíle nebo výdaje. */
   touched: boolean;
   reset: () => void;
 }

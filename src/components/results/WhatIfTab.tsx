@@ -1,8 +1,9 @@
 import { useWhatIf } from '../../store/whatIfStore';
 import { compareScenarios } from '../../engine/whatIf';
+import { answerText } from '../../engine/verdict';
 import { journey } from '../../engine/journey';
 import { mortgagePayment, postPurchaseRunwayMonths } from '../../engine/mortgage';
-import { monthlyDisposable } from '../../engine/cashflow';
+import { budgetNow } from '../../engine/budget';
 import { czk, formatNumber as fmt, formatMonths } from '../../engine/format';
 import JourneyRibbon from './JourneyRibbon';
 import WhatIfPanel from './WhatIfPanel';
@@ -46,40 +47,85 @@ function Delta({ label, value, unit, diff, betterWhenLower }: {
 }
 
 export default function WhatIfTab() {
-  const { baseline, baselineAllocations, current, currentAllocations, touched } = useWhatIf();
+  const {
+    baseline, baselineAllocations, current, currentAllocations, touched, excludedGoals,
+  } = useWhatIf();
 
   const comparison = compareScenarios(baseline, baselineAllocations, current, currentAllocations);
   const currentJourney = journey(current, { allocations: currentAllocations });
   const baselineJourney = journey(baseline, { allocations: baselineAllocations });
 
+  // Dlaždice se řídí zadaným scénářem, aby po odložení bydlení nezmizely
+  // a bylo vidět, co odložení udělalo. Samotné číslo ale musí jít na nulu:
+  // `mortgagePayment` počítá z ceny nemovitosti bez ohledu na to, jestli je
+  // bydlení mezi cíli, takže by po odložení dál hlásilo splátku.
   const hasProperty = baseline.goals.includes('property');
+  const buysNow = current.goals.includes('property');
 
-  const paymentNow = hasProperty ? mortgagePayment(current) : 0;
+  const paymentNow = buysNow ? mortgagePayment(current) : 0;
   const paymentBefore = hasProperty ? mortgagePayment(baseline) : 0;
-  const disposableNow = monthlyDisposable(current);
-  const disposableBefore = monthlyDisposable(baseline);
-  const runwayNow = hasProperty ? postPurchaseRunwayMonths(current) : 0;
+  const runwayNow = buysNow ? postPurchaseRunwayMonths(current) : 0;
   const runwayBefore = hasProperty ? postPurchaseRunwayMonths(baseline) : 0;
+
+  // Volné peníze, ne disponibilní částka.
+  //
+  // Disponibilní částka cíle nezná, takže odložením cíle nehne ani o korunu
+  // a všechny tři dlaždice hlásily „beze změny" i po odložení důchodu.
+  // Přitom právě uvolněné peníze jsou to, co odložení dělá.
+  const freeNow = budgetNow(current, currentAllocations).surplus;
+  const freeBefore = budgetNow(baseline, baselineAllocations).surplus;
+
+  // Odložení cíle křivkou jmění nehne: spoření na cíl je pořád jmění, jen
+  // leží jinde. Duch původní cesty by pak byl přesně pod živou stuhou
+  // a legenda by slibovala přerušovaný obrys, který nikde není.
+  const shapeChanged = currentJourney.points.some(
+    (p, i) => p.cash !== baselineJourney.points[i]?.cash
+  );
+
+  // Odpověď se porovnává celá, i s doplňkem za čárkou. Bez něj vycházelo
+  // „odpověď se změnila z máte na to na máte na to", protože „Máte na to"
+  // a „Máte na to, ale bude to napjaté" mají headline stejný.
+  const answerBefore = answerText(comparison.baseline);
+  const answerNow = answerText(comparison.now);
+  const answerChanged = answerBefore !== answerNow;
+
+  // Co je zrovna odložené, pojmenované tak, jak to stojí v přepínačích.
+  const GOAL_NAMES: Record<string, string> = {
+    property: 'vlastní bydlení',
+    retirement: 'spoření na důchod',
+    child: 'rezerva na dítě',
+  };
+  const postponed = [
+    ...Object.entries(GOAL_NAMES).filter(([k]) => excludedGoals.has(k)).map(([, v]) => v),
+    ...(baseline.customGoals ?? [])
+      .filter((g) => excludedGoals.has(`other:${g.id}`) || excludedGoals.has('other'))
+      .map((g, i) => g.name.trim() || `vlastní cíl ${i + 1}`),
+  ];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 items-start">
       <div className="min-w-0 space-y-5">
         <div>
           <h2 className="type-verdict text-ink max-w-[54ch]">
-            {touched
-              ? hasProperty
-                ? `Zkoušíte: bydlení za ${czk(current.property.targetPrice)}.`
-                : 'Zkoušíte upravený scénář.'
-              : 'Zkuste s plánem pohnout.'}
+            {!touched
+              ? 'Zkuste s plánem pohnout.'
+              : postponed.length > 0
+                // Nadpis má říct, co uživatel právě udělal. Když odložil cíl,
+                // je „Zkoušíte: bydlení za 6 000 000 Kč" matoucí: s cenou
+                // nehnul a přesto o ní nadpis mluví.
+                ? `Zkoušíte to bez toho, co jste odložili: ${postponed.join(', ')}.`
+                : hasProperty
+                  ? `Zkoušíte: bydlení za ${czk(current.property.targetPrice)}.`
+                  : 'Zkoušíte upravený scénář.'}
           </h2>
           <p className="mt-3 text-[15px] text-ink-body max-w-[62ch] leading-relaxed">
             {touched ? (
-              comparison.improved ? (
-                <>Pomohlo to. Odpověď se změnila z <strong>{comparison.baseline.headline.toLowerCase()}</strong> na <strong>{comparison.now.headline.toLowerCase()}</strong>.</>
-              ) : comparison.worsened ? (
-                <>Tímhle směrem ne. Odpověď se změnila z <strong>{comparison.baseline.headline.toLowerCase()}</strong> na <strong>{comparison.now.headline.toLowerCase()}</strong>.</>
+              comparison.improved && answerChanged ? (
+                <>Pomohlo to. Odpověď byla <strong>{answerBefore.toLowerCase()}</strong>, teď je <strong>{answerNow.toLowerCase()}</strong>.</>
+              ) : comparison.worsened && answerChanged ? (
+                <>Tímhle směrem ne. Odpověď byla <strong>{answerBefore.toLowerCase()}</strong>, teď je <strong>{answerNow.toLowerCase()}</strong>.</>
               ) : (
-                <>Odpověď zůstává <strong>{comparison.now.headline.toLowerCase()}</strong>. {comparison.hint}</>
+                <>Odpověď zůstává <strong>{answerNow.toLowerCase()}</strong>. {comparison.hint}</>
               )
             ) : (
               'Posuvníky vpravo mění cenu, sazbu a délku rodičovské. Cesta se překreslí hned a původní scénář zůstane vidět jako přerušovaný obrys, takže je poznat, jestli jste si pomohli.'
@@ -88,7 +134,7 @@ export default function WhatIfTab() {
         </div>
 
         <div className="rounded-2xl bg-sunken p-5 sm:p-6">
-          {touched && (
+          {touched && shapeChanged && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3 text-xs text-ink-muted">
               <span className="inline-flex items-center gap-1.5">
                 <svg width="18" height="6" aria-hidden="true"><line x1="0" y1="3" x2="18" y2="3" stroke="var(--line-strong)" strokeWidth="3" strokeDasharray="4 4" /></svg>
@@ -105,7 +151,7 @@ export default function WhatIfTab() {
           <JourneyRibbon
             data={currentJourney}
             animate={false}
-            ghost={touched ? baselineJourney : undefined}
+            ghost={touched && shapeChanged ? baselineJourney : undefined}
           />
         </div>
 
@@ -120,10 +166,10 @@ export default function WhatIfTab() {
             />
           )}
           <Delta
-            label="Zbývá měsíčně"
-            value={fmt(disposableNow)}
+            label="Volných měsíčně"
+            value={fmt(freeNow)}
             unit="Kč"
-            diff={disposableNow - disposableBefore}
+            diff={freeNow - freeBefore}
             betterWhenLower={false}
           />
           {hasProperty && (
@@ -136,6 +182,14 @@ export default function WhatIfTab() {
             />
           )}
         </div>
+
+        {touched && postponed.length > 0 && !shapeChanged && (
+          <Callout tone="neutral">
+            Na cestě to nevypadá jinak, a je to tak správně: spoření na cíl
+            zůstává vaším jměním, jen leží jinde. Odložením se uvolní peníze
+            v rozpočtu, a teprve když je dáte někam jinam, změní se i cesta.
+          </Callout>
+        )}
 
         {touched && currentJourney.tightest && (
           <Callout tone={comparison.improved ? 'good' : 'neutral'}>
