@@ -49,8 +49,8 @@ export default function WhatIfTab() {
   const { baseline, baselineAllocations, current, currentAllocations, touched } = useWhatIf();
 
   const comparison = compareScenarios(baseline, baselineAllocations, current, currentAllocations);
-  const currentJourney = journey(current);
-  const baselineJourney = journey(baseline);
+  const currentJourney = journey(current, { allocations: currentAllocations });
+  const baselineJourney = journey(baseline, { allocations: baselineAllocations });
 
   const hasProperty = baseline.goals.includes('property');
 

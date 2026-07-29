@@ -1,7 +1,8 @@
 import type { WizardState } from '../types';
 import { wealthTimeline } from './wealthTimeline';
 import type { WealthPoint } from './wealthTimeline';
-import { necessaryMonthlyExpenses } from './cashflow';
+import { necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
+import type { GoalAllocations } from './allocation';
 import { czk, czkMonthly, formatMonths } from './format';
 
 /**
@@ -61,9 +62,31 @@ const yearOf = (month: number) => new Date().getFullYear() + Math.floor(month / 
  * stejně jako rok bez něj, dokud jsou úspory dost velké, a právě to je věc,
  * kterou má stuha ukázat dřív, než dojdou.
  */
-function tensionAt(point: WealthPoint, oneMonthOfExpenses: number): Tension {
+/**
+ * Od kolika se schodek na cílech počítá za napětí.
+ *
+ * Bez prahu obarvila stuha třetinu horizontu jantarovou kvůli sedmnácti
+ * korunám a karta u ní hlásila poplach. Rozdíl v řádu desetikorun je
+ * zaokrouhlení, ne problém. Práh je relativní, aby dával stejný smysl
+ * u příjmu 30 000 i 150 000 Kč, se spodní hranicí pro velmi nízké příjmy.
+ */
+function goalShortfallTolerance(state: WizardState): number {
+  return Math.max(200, totalMonthlyIncome(state) * 0.01);
+}
+
+function tensionAt(point: WealthPoint, oneMonthOfExpenses: number, tolerance: number): Tension {
+  // Schodek je jen skutečný schodek: víc odteče, než přiteče, a rozdíl se
+  // bere z úspor.
   if (point.flow < 0) return 'deficit';
+  // Napětí má dva důvody a oba znamenají „unese to jen za dobrého počasí":
+  // buď nejsou úspory ani na měsíc, nebo na cíle nezbývá.
+  //
+  // Ten druhý tu dřív nebyl a stuha kvůli tomu odporovala nadpisu nad sebou.
+  // Verdikt hlásil „po koupi by na cíle chybělo 924 Kč měsíčně" a stuha pod
+  // ním byla celou dobu klidná zelená, protože počítala s tokem, ve kterém
+  // cíle vůbec nejsou.
   if (point.cash < oneMonthOfExpenses) return 'tense';
+  if (point.flowAfterGoals < -tolerance) return 'tense';
   return 'calm';
 }
 
@@ -80,7 +103,8 @@ function findTightest(
   events: JourneyEvent[],
   minCash: number,
   minCashMonth: number,
-  oneMonthOfExpenses: number
+  oneMonthOfExpenses: number,
+  tolerance: number
 ): TightestPoint | null {
   if (points.length < 2) return null;
 
@@ -109,41 +133,72 @@ function findTightest(
     };
   }
 
+  // Odsud se hledá důvod k napětí, od nejvážnějšího. Rezerva má přednost
+  // před cíli: „nemáte ani na měsíc" je jiná zpráva než „nespoříte, kolik
+  // jste chtěli", i když obojí barví stuhu stejně.
+  const runwayAt = (cash: number) =>
+    oneMonthOfExpenses > 0 ? cash / oneMonthOfExpenses : Infinity;
+
   // Úspory jen rostou a nejnižší bod je start. Říct „úspory klesnou na"
   // by byla lež: nic neklesalo, jen se ještě nic nenaspořilo. Nejtěsnější
   // je pak opravdu teď, a to je jiné sdělení než „někdy v budoucnu to bude
   // zlé".
-  if (minCashMonth === 0) {
-    const runway = oneMonthOfExpenses > 0 ? minCash / oneMonthOfExpenses : Infinity;
+  if (minCash < oneMonthOfExpenses) {
+    return minCashMonth === 0
+      ? {
+        month: 0,
+        title: 'Nejtěsnější je teď',
+        explanation: `Úspory ${czk(Math.max(0, minCash))} nepokryjí ani měsíc nezbytných výdajů. `
+          + 'Odsud už jen rostou, ale do té doby rozpočet neunese nic nečekaného.',
+        tension: 'tense',
+      }
+      : {
+        month: minCashMonth,
+        title: `Nejníže ${yearOf(minCashMonth)}`,
+        explanation: `Úspory klesnou na ${czk(Math.max(0, minCash))}, tedy pod jeden měsíc nezbytných výdajů. `
+          + 'Rozpočet sice vychází, ale první nečekaná událost ho rozhodí.',
+        tension: 'tense',
+      };
+  }
+
+  // Rezerva je v pohodě a schodek nikde. Zbývá poslední důvod k napětí,
+  // který stuha barví: nezbývá na cíle.
+  //
+  // Bez tohohle kroku si karta a stuha přímo odporovaly. Karta hlásila
+  // „plán drží po celou dobu" a stuha vedle ní byla poslední tři roky
+  // jantarová, protože náklady na dítě mezitím přerostly to, co na cíle
+  // zbývalo.
+  let leanest = points[1];
+  for (const p of points) {
+    if (p.month > 0 && p.flowAfterGoals < leanest.flowAfterGoals) leanest = p;
+  }
+  if (leanest.flowAfterGoals < -tolerance) {
     return {
-      month: 0,
-      title: 'Nejtěsnější je teď',
-      explanation: minCash < oneMonthOfExpenses
-        ? `Úspory ${czk(Math.max(0, minCash))} nepokryjí ani měsíc nezbytných výdajů. `
-          + 'Odsud už jen rostou, ale do té doby rozpočet neunese nic nečekaného.'
-        : `Úspory ${czk(Math.max(0, minCash))} pokryjí ${formatMonths(runway)} nezbytných výdajů `
-          + 'a odsud už jen rostou.',
-      tension: minCash < oneMonthOfExpenses ? 'tense' : 'calm',
+      month: leanest.month,
+      title: `Nejtěsněji ${yearOf(leanest.month)}`,
+      explanation: 'Rozpočet vychází a úspory rostou, ale na cíle by chybělo '
+        + `${czkMonthly(Math.abs(leanest.flowAfterGoals))}. `
+        + 'Buď se na ně bude odkládat míň, nebo je potřeba ubrat jinde.',
+      tension: 'tense',
     };
   }
 
-  if (minCash < oneMonthOfExpenses) {
+  if (minCashMonth === 0) {
     return {
-      month: minCashMonth,
-      title: `Nejníže ${yearOf(minCashMonth)}`,
-      explanation: `Úspory klesnou na ${czk(Math.max(0, minCash))}, tedy pod jeden měsíc nezbytných výdajů. `
-        + 'Rozpočet sice vychází, ale první nečekaná událost ho rozhodí.',
-      tension: 'tense',
+      month: 0,
+      title: 'Nejtěsnější je teď',
+      explanation: `Úspory ${czk(Math.max(0, minCash))} pokryjí ${formatMonths(runwayAt(minCash))} nezbytných výdajů `
+        + 'a odsud už jen rostou.',
+      tension: 'calm',
     };
   }
 
   // Rozpočet drží celou dobu. „Nejtěsnější místo" pak není varování,
   // ale informace, kde je plán nejblíž ke hraně.
-  const runway = oneMonthOfExpenses > 0 ? minCash / oneMonthOfExpenses : Infinity;
   return {
     month: minCashMonth,
     title: `Nejníže ${yearOf(minCashMonth)}`,
-    explanation: `Úspory klesnou na ${czk(Math.max(0, minCash))}, což je ${formatMonths(runway)} nezbytných výdajů. `
+    explanation: `Úspory klesnou na ${czk(Math.max(0, minCash))}, což je ${formatMonths(runwayAt(minCash))} nezbytných výdajů. `
       + 'Plán drží po celou dobu.',
     tension: 'calm',
   };
@@ -151,13 +206,19 @@ function findTightest(
 
 export function journey(
   state: WizardState,
-  opts: { months?: number; childOffsetMonths?: number } = {}
+  opts: {
+    months?: number;
+    childOffsetMonths?: number;
+    /** Kolik měsíčně jde na cíle. Viz `wealthTimeline`. */
+    allocations?: GoalAllocations;
+  } = {}
 ): Journey {
   const horizonMonths = opts.months ?? 120;
   const tl = wealthTimeline(state, { ...opts, months: horizonMonths });
   const oneMonthOfExpenses = necessaryMonthlyExpenses(state);
 
-  const tension = tl.points.map((p) => tensionAt(p, oneMonthOfExpenses));
+  const tolerance = goalShortfallTolerance(state);
+  const tension = tl.points.map((p) => tensionAt(p, oneMonthOfExpenses, tolerance));
 
   const events: JourneyEvent[] = [];
   if (tl.purchaseMonth !== null) {
@@ -172,7 +233,7 @@ export function journey(
   events.sort((a, b) => a.month - b.month);
 
   const tightest = findTightest(
-    tl.points, events, tl.minCash, tl.minCashMonth, oneMonthOfExpenses
+    tl.points, events, tl.minCash, tl.minCashMonth, oneMonthOfExpenses, tolerance
   );
 
   // Nejnižší bod je událost až nakonec, aby nepřebil koupi a dítě v pořadí.

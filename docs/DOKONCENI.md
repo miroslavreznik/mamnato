@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 322 jednotkových, 66 e2e.
+Testy: 330 jednotkových, 66 e2e.
 
 ---
 
@@ -276,6 +276,68 @@ Při té příležitosti se našly tři drobnosti:
 Hlídá to `e2e/cile.e2e.ts` (částka platí, strop drží, cíle si peníze
 nepřehazují, odložení přepočítá celý přehled) a unit testy `goalProgress`
 a `customReadiness`.
+
+### B7. Revize soudržnosti: sedí čísla napříč obrazovkami? (hotovo)
+
+Průchod celou appkou nad jedním scénářem (rodina, 84 000 Kč čistého, byt za
+6 milionů, cíle bydlení + důchod + dítě) s porovnáním každého čísla proti
+tomu, co ukazuje vedlejší karta.
+
+**Nic se redesignem neztratilo.** Proti stavu před ním engine jen přibyl
+(`journey`, `preview`, `goalProgress`, `isGoalActive`) a jediné, co zmizelo,
+je `allocateGoals`, které nahradil `goalProgress`. Ze součástí výsledků
+nezmizela žádná a všechny se dál renderují; smazaný `ui/Alert.tsx` se slil
+do `Callout`.
+
+Zato se našly **tři chyby ve výpočtu**, všechny starší než redesign a všechny
+z jednoho kořene: **vrstva Cesty nevěděla o cílech.** `wealthTimeline`
+a `journey` dostávaly jen stav, ne rozdělení peněz na cíle, zatímco verdikt,
+rozpočet i karty cílů s ním počítaly celou dobu.
+
+1. **Kupovalo se z peněz, které jsou určené jinam.** Časová osa spouštěla
+   koupi, jakmile na akontaci stačilo *celé* jmění, tedy i to, co je odložené
+   na důchod nebo na dítě. Na jedné obrazovce pak stálo „chybějící akontace
+   300 000 Kč, naspoříte za 4 roky a 4 měsíce" a stuha hned vedle kreslila
+   koupi za rok a dva měsíce. `allocation.ts` si přitom v komentáři
+   u `monthsToSaveAtAllocation` sám zakazuje počítat termín z celé
+   disponibilní částky, protože „jako slíbený termín by lhal".
+   Časová osa teď vede zvlášť fond na akontaci, který roste jen o vyhrazenou
+   částku. Ve zkoušeném scénáři se koupě posunula z měsíce 14 na 52, což je
+   přesně to, co slibuje dlaždice vedle.
+2. **Stuha barvila podle toku, ve kterém cíle nejsou.** Verdikt hlásil
+   „po koupi by na cíle chybělo 924 Kč měsíčně" a stuha pod tím byla celou
+   dobu klidná zelená. `WealthPoint` má nově `flowAfterGoals` a napětí se
+   řídí jím.
+3. **Dítě se počítalo dvakrát.** Od narození brala appka rezervu na dítě
+   (11 333 Kč jako cíl) *i* skutečné náklady dítěte podle věku (6 426 Kč
+   jako výdaj). Do narození je rezerva odkládání stranou, od narození se
+   dítě platí doopravdy; obojí naráz znamenalo, že domácnost za dítě platí
+   dvakrát. Stejně jako odkládání na akontaci končí koupí, končí rezerva
+   na dítě narozením.
+
+K tomu dvě věci, které z oprav vypadly:
+
+- **Karta „Nejtěsnější místo" a stuha si odporovaly.** Karta hlásila „plán
+  drží po celou dobu" a stuha vedle ní byla poslední tři roky jantarová.
+  `findTightest` hledal jen schodek a nízkou rezervu, ne „nezbývá na cíle".
+  Důvody jsou nově seřazené od nejvážnějšího: schodek → rezerva pod měsíc
+  výdajů → nezbývá na cíle → klid.
+- **Práh na schodku cílů.** Bez něj obarvila stuha třetinu horizontu kvůli
+  sedmnácti korunám a karta u toho hlásila poplach. Práh je 1 % čistého
+  příjmu, nejméně 200 Kč, aby dával stejný smysl u příjmu 30 000 i 150 000.
+
+**Co se neopravilo a proč.** `budgetNow` a `budgetAfterPurchase` jsou snímky
+(„jak vypadá měsíc dnes", „jak by vypadal po koupi"), ne časová osa, a proto
+u nich rezerva na dítě platí pořád. Časová osa místo ní od narození počítá
+skutečný náklad podle věku. Obojí je vnitřně správně, jen dá jiné číslo:
+verdikt může říct „po koupi chybí 924 Kč" tam, kde na časové ose v tu dobu
+nechybí nic. Srovnat to by znamenalo dostat čas do rozpočtové karty, což je
+její protiklad.
+
+Ověřeno bez nálezu: anuita, DSTI (splátka + stávající úvěry ku čistému
+příjmu), DTI (celkový dluh ku ročnímu příjmu), náklady na vlastnictví (1 %
+z ceny ročně), rezerva po koupi, součet kategorií grafu rozpočtu proti
+disponibilní částce.
 
 ---
 

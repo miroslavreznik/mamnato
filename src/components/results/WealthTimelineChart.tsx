@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { WizardState } from '../../types';
+import type { GoalAllocations } from '../../engine/allocation';
 import { wealthTimeline } from '../../engine/wealthTimeline';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useChartColors, gridProps, axisProps, fmtKcShort, fmtKc } from './chartTheme';
@@ -11,6 +12,12 @@ import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   state: WizardState;
+  /**
+   * Kolik měsíčně jde na cíle. Bez toho by graf kupoval z celého jmění,
+   * tedy i z peněz odložených na důchod, a koupě by vyšla o roky dřív,
+   * než slibuje dlaždice „chybějící akontace".
+   */
+  allocations: GoalAllocations;
 }
 
 const fmtMonth = (m: number) => {
@@ -20,15 +27,15 @@ const fmtMonth = (m: number) => {
   return mm === 0 ? `${y}. rok` : `${y} r. ${mm} měs.`;
 };
 
-export default function WealthTimelineChart({ state }: Props) {
+export default function WealthTimelineChart({ state, allocations }: Props) {
   const colors = useChartColors();
   const hasChild = state.goals.includes('child');
   // Kdy čekáte dítě, „co kdyby" parametr časové osy (neovlivňuje verdikt).
   const [childOffset, setChildOffset] = useState(12);
 
   const tl = useMemo(
-    () => wealthTimeline(state, { months: 120, childOffsetMonths: childOffset }),
-    [state, childOffset]
+    () => wealthTimeline(state, { months: 120, childOffsetMonths: childOffset, allocations }),
+    [state, childOffset, allocations]
   );
 
   const events = [

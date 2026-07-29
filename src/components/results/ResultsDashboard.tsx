@@ -247,7 +247,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
             <DiscretionaryBreakdownChart state={activeState} />
           )}
-          <WealthTimelineChart state={activeState} />
+          <WealthTimelineChart state={activeState} allocations={activeAllocations} />
         </ResultsSection>
 
         {/* Bydlení a hypotéka */}

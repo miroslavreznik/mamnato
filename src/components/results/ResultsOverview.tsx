@@ -163,7 +163,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   // Stejnou hodnotu má i graf vývoje úspor v záložce Bydlení; sjednotit je
   // patří ke kroku, kde vznikne sdílený stav pro „co kdyby".
   const [childOffset, setChildOffset] = useState(12);
-  const journeyData = journey(state, { childOffsetMonths: childOffset });
+  const journeyData = journey(state, { childOffsetMonths: childOffset, allocations });
 
   return (
     // Dva sloupce: vlevo odpověď a cíle, vpravo čísla a co s tím. Návrh dává

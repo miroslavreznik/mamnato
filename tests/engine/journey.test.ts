@@ -115,3 +115,44 @@ describe('journey: nejtěsnější místo na startu', () => {
     expect(bohaty.tightest?.title).toBe('Nejtěsnější je teď');
   });
 });
+
+describe('nejtěsnější místo a stuha si neodporují', () => {
+  it('když stuha zežloutne kvůli cílům, karta to řekne taky', () => {
+    // Rozpočet vychází, úspory rostou, rezerva je velká. Přesto na cíle
+    // nezbývá. Dřív karta hlásila „plán drží po celou dobu" a stuha vedle
+    // ní byla jantarová.
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 2000000 } });
+    const j = journey(state, { allocations: { downPayment: 0, retirement: 99000, child: 0, custom: [] } });
+    expect(j.tension.some((t) => t === 'tense')).toBe(true);
+    expect(j.tightest?.tension).toBe('tense');
+    expect(j.tightest?.explanation).toContain('na cíle by chybělo');
+  });
+
+  it('když na cíle zbývá, zůstává karta i stuha klidná', () => {
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 2000000 } });
+    const j = journey(state, { allocations: { downPayment: 0, retirement: 1000, child: 0, custom: [] } });
+    expect(j.tension.every((t) => t === 'calm')).toBe(true);
+    expect(j.tightest?.tension).toBe('calm');
+  });
+});
+
+describe('práh na schodku cílů', () => {
+  it('rozdíl v řádu desetikorun není napětí', () => {
+    // Bez prahu obarvila stuha třetinu horizontu jantarovou kvůli sedmnácti
+    // korunám a karta u ní hlásila poplach.
+    const state = makeState({ savings: { totalSavings: 2000000 } });
+    const disposable = 41000;
+    const j = journey(state, { allocations: { downPayment: 0, retirement: disposable + 20, child: 0, custom: [] } });
+    expect(j.tension.every((t) => t === 'calm')).toBe(true);
+    expect(j.tightest?.tension).toBe('calm');
+  });
+
+  it('schodek nad prahem napětím je', () => {
+    const state = makeState({ savings: { totalSavings: 2000000 } });
+    const disposable = 41000;
+    // Práh je 1 % z příjmu 75 000, tedy 750 Kč.
+    const j = journey(state, { allocations: { downPayment: 0, retirement: disposable + 2000, child: 0, custom: [] } });
+    expect(j.tension.some((t) => t === 'tense')).toBe(true);
+    expect(j.tightest?.tension).toBe('tense');
+  });
+});
