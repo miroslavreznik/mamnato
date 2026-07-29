@@ -142,14 +142,34 @@ V tomhle kontejneru se nedá spustit, ověří ho až CI. Rizikové jsou
 `ResizeObserver` ve stuze, `setPointerCapture` u úchopu, `@theme inline`
 a `clamp()` v typografii.
 
-### B3. Drobnosti odložené z dřívějška
+### ~~B3. Drobnosti odložené z dřívějška~~ (hotovo)
 
 - „Uložit jako scénář" v panelu Co kdyby: **přeskočeno** po dohodě, sdílení
   odkazu dělá totéž.
-- `ui/Alert.tsx` byl sloučen do `Callout`; zbývá projít, jestli někde nezůstal
-  tónovaný box, který se dá nahradit.
-- Rozdělení příjmu v náhledu průvodce a v grafu rozpočtu používá jiné
-  kategorie (hrubé vs. osm). Je to záměr, ale stojí za zápis do slovníčku.
+- **Tónované boxy projité.** Do `Callout` přešlo devět míst: doporučená
+  rezerva v průvodci, dvě poznámky u nákladů na dítě, vysvětlení inflace
+  u důchodu, tři stavové věty a panel doporučení u vlastních cílů a banner
+  cizího přehledu v `App.tsx`.
+
+  `Callout` k tomu dostal prop `pad`. Bez něj to nešlo: `p-4` a `p-3` by
+  na prvku byly obě naráz a rozhodovalo by pořadí tříd ve výsledném CSS,
+  ne záměr autora. Přesně kvůli tomu se sem dřív box s jiným odsazením
+  nedal převést vůbec, což si komentář v souboru poznamenal jako výjimku.
+
+  `CustomGoalPlanner` měl navíc **vlastní `StatusBadge`** stejného jména
+  jako sdílená komponenta, ale jiného vzhledu: tónovaná pilulka se slovem,
+  zatímco ostatní cíle mají tvar plus slovo bez podkladu. Nahrazeno sdílenou
+  komponentou.
+
+  Nepřešly tónované dlaždice s číslem (náklady na dítě, volná rezerva,
+  srovnání koupě a nájmu), odznaky a chipy, prázdný stav v `ResultsDashboard`
+  a závěrečná věta v `MortgageVsRent`, která se sází základní velikostí
+  písma a `Callout` by ji zmenšil. Soupis i důvody jsou v komentáři
+  `ui/Callout.tsx`, aby se to nemuselo procházet znovu.
+- **Slovníček doplněn** o heslo „Pruh v průvodci a graf rozpočtu". Obojí
+  vychází z `expenseCategories`, průvodce jen slučuje do čtyř dílů.
+  Při té příležitosti se opravil komentář v `engine/preview.ts`: mluvil
+  o osmi kategoriích, jsou jich sedm.
 
 ---
 

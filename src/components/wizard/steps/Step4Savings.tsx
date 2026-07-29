@@ -3,6 +3,7 @@ import { useWizard } from '../../../store/wizardStore';
 import { totalMonthlyExpenses } from '../../../engine/cashflow';
 import NumberInput from '../../ui/NumberInput';
 import StepNavigation from '../StepNavigation';
+import Callout from '../../ui/Callout';
 
 export default function Step4Savings() {
   const { state, dispatch } = useWizard();
@@ -91,10 +92,10 @@ export default function Step4Savings() {
         </div>
       )}
 
-      <div className="mt-3 p-3 bg-tint-brand rounded-lg text-sm text-brand">
+      <Callout tone="brand" className="mt-3">
         Doporučená finanční rezerva (3 měsíce výdajů):{' '}
         <span className="font-semibold">{recommendedReserve.toLocaleString('cs-CZ')} Kč</span>
-      </div>
+      </Callout>
 
       <StepNavigation
         showBack={true}

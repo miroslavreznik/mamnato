@@ -51,6 +51,11 @@ const groups: GlossaryGroup[] = [
           'Peníze stranou na 3 až 6 měsíců nezbytných výdajů, dostupné do pár dnů (spořicí účet, ne akcie). Při výdajích 25 000 Kč měsíčně je to 75 000 až 150 000 Kč. Je to první věc, kterou má smysl mít hotovou, dřív než cokoli jiného: bez ní se každá rána řeší drahou půjčkou. Nepleťte si ji s volnou rezervou, ta je měsíční; tahle je naspořená.',
       },
       {
+        term: 'Pruh v průvodci a graf rozpočtu',
+        explanation:
+          'Jedno a totéž rozdělení, jen jinak hrubé. Pruh v průvodci slučuje výdaje do čtyř dílů (bydlení a provoz, ostatní nezbytné, zbytné, zbývá), protože při vyplňování formuláře jde o jedinou otázku: zbývá vůbec něco? Graf rozpočtu na výsledcích rozpadá tytéž peníze na jednotlivé položky: bydlení, jídlo, doprava, pojistky, splátky úvěrů, výdaje na děti a zbytné. Obě čísla vycházejí ze stejného výpočtu, takže když chcete vidět, kde peníze konkrétně mizí, jděte na graf rozpočtu; z pruhu v průvodci se to nepozná.',
+      },
+      {
         term: 'Inflace',
         explanation:
           'Zdražování, kvůli kterému si za stejnou částku příští rok koupíte míň. Peníze bez úroku na běžném účtu proto potichu ztrácejí hodnotu. U hypotéky s pevnou splátkou pracuje inflace naopak pro vás: splátka zůstává stejná, ale příjmy postupně rostou.',

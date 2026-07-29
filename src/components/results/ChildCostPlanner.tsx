@@ -7,6 +7,7 @@ import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
@@ -50,15 +51,15 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
       </div>
 
       {showInfo && (
-        <div className="mb-4 p-3 bg-tint-brand rounded-lg text-sm text-brand">
+        <Callout tone="brand" className="mb-4">
           Průměrné náklady na jedno dítě v ČR dle ČSÚ. Skutečné náklady se liší dle regionu, životního stylu a počtu dětí. Nezahrnují jednorázové výdaje (kočárek, autosedačka, nábytek).
-        </div>
+        </Callout>
       )}
 
       {isFamily && (
-        <div className="mb-4 p-3 bg-tint-caution rounded-lg text-sm text-caution">
+        <Callout tone="caution" className="mb-4">
           Vaše aktuální výdaje na děti ({state.expenses.children.toLocaleString('cs-CZ')} Kč/měs.) jsou již zahrnuty ve výpočtu cashflow. Níže zobrazené náklady představují odhad pro plánované/budoucí dítě.
-        </div>
+        </Callout>
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">

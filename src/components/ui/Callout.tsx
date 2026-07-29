@@ -7,24 +7,28 @@ import type { ReactNode } from 'react';
  * a tmavá výplň, světlý a tmavý text), v každé o kus jinak. Odstíny stavů
  * teď drží jedno místo a tmavý režim řeší proměnná, ne druhá sada tříd.
  *
- * Rozestupy zůstávají na volajícím (`className`), protože se případ od případu
- * liší a sjednocovat je má smysl až s novým vzhledem, ne teď.
+ * Vnější rozestupy zůstávají na volajícím (`className`), vnitřní geometrie
+ * má vlastní prop `pad`. Přes `className` by nešla: `p-4` a `p-3` by na
+ * prvku byly obě naráz a rozhodovalo by pořadí tříd ve výsledném CSS, ne
+ * záměr autora. Kvůli tomu se sem dřív box s jiným odsazením nedal převést
+ * vůbec.
  *
  * Obrys je od nového vzhledu ve všech tónech neutrální. Návrh chce jednu
  * úroveň ohraničení: vnitřní bloky se odlišují výplní, nikdy obrysem.
  * Proto `border` u tónů nic nerozlišuje a při dalším kroku redesignu
  * nejspíš zmizí úplně i s propem.
  *
- * Pozor: `ui/Alert.tsx` dělá totéž, ale s emoji a vlastní sadou tónů.
- * Sloučit je patří k překreslení sdílených prvků, ne sem.
- *
- * Schválně sem zatím nepřešly:
+ * Schválně sem nepřešly:
  * - vybrané dlaždice v kroku režimu, cílů a u rodičovské. To není sdělení,
  *   ale stav výběru.
- * - prázdný stav „vyberte si cíle" v `ResultsDashboard`, který má jinou
- *   geometrii (větší rádius, větší odsazení, na střed). Přepsat ji přes
- *   `className` by spoléhalo na pořadí tříd ve výsledném CSS.
+ * - prázdný stav „vyberte si cíle" v `ResultsDashboard`, který je na střed
+ *   a chová se jako karta, ne jako poznámka v ní.
  * - verdikt v `ResultsOverview`, který má čtyři tóny odpovědi.
+ * - tónované dlaždice s číslem (náklady na dítě, volná rezerva, srovnání
+ *   koupě a nájmu). Výplň v nich nenese stav, jen odděluje sloupec.
+ * - závěrečná věta v `MortgageVsRent`. Je to tónovaný box se sdělením, ale
+ *   sází se základní velikostí písma, ne `text-sm`, a projít sem by ji
+ *   zmenšilo.
  */
 export type CalloutTone = 'brand' | 'good' | 'caution' | 'danger' | 'neutral';
 
@@ -51,17 +55,19 @@ const TONES: Record<CalloutTone, { fill: string; edge: string }> = {
   },
 };
 
-export default function Callout({ tone, border = false, alert = false, className = '', children }: {
+export default function Callout({ tone, border = false, alert = false, pad = 'p-3 rounded-lg', className = '', children }: {
   tone: CalloutTone;
   /** Obrys v tónu boxu. */
   border?: boolean;
+  /** Vnitřní odsazení a zaoblení. Do `className` nepatří, viz komentář výše. */
+  pad?: string;
   /**
    * Ohlásit obsah čtečce hned, jak se objeví. Pro sdělení, které vzniklo
    * reakcí na to, co uživatel právě zadal (výdaje přerostly příjem), ne pro
    * text, který na stránce je od začátku.
    */
   alert?: boolean;
-  /** Rozestupy a odsazení. Výchozí je `p-3 rounded-lg text-sm`. */
+  /** Vnější rozestupy a cokoli dalšího, co se s `pad` nepere. */
   className?: string;
   children: ReactNode;
 }) {
@@ -69,7 +75,7 @@ export default function Callout({ tone, border = false, alert = false, className
   return (
     <div
       role={alert ? 'alert' : undefined}
-      className={`p-3 rounded-lg text-sm ${t.fill} ${border ? `border ${t.edge}` : ''} ${className}`.replace(/\s+/g, ' ').trim()}
+      className={`${pad} text-sm ${t.fill} ${border ? `border ${t.edge}` : ''} ${className}`.replace(/\s+/g, ' ').trim()}
     >
       {children}
     </div>

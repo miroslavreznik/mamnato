@@ -8,6 +8,8 @@ import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
+import StatusBadge from '../ui/StatusBadge';
 import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
@@ -28,18 +30,18 @@ function toggleInSet(prev: Set<string>, id: string): Set<string> {
   return next;
 }
 
-function StatusBadge({ alloc }: { alloc: GoalAllocation }) {
-  const configs = [
-    { show: alloc.monthlyAllocation <= 0, label: 'Nestačí prostředky', colors: 'bg-tint-danger text-danger' },
-    { show: !alloc.achievable, label: 'Potřebuje více času', colors: 'bg-tint-caution text-caution' },
-    { show: true, label: 'Dosažitelný', colors: 'bg-tint-good text-good' },
-  ];
-  const { label, colors } = configs.find((c) => c.show)!;
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors}`}>
-      {label}
-    </span>
-  );
+/**
+ * Stav vlastního cíle. Dřív to byl vlastní odznak: tónovaná pilulka se
+ * slovem, jinak vypadající než odznaky u ostatních cílů, a stejným jménem
+ * jako sdílená komponenta. Vedle sebe to byly dva různé odznaky pro totéž.
+ */
+function GoalStatus({ alloc }: { alloc: GoalAllocation }) {
+  const [status, label] = alloc.monthlyAllocation <= 0
+    ? ['danger', 'Nestačí prostředky'] as const
+    : !alloc.achievable
+      ? ['caution', 'Potřebuje více času'] as const
+      : ['good', 'Dosažitelný'] as const;
+  return <StatusBadge status={status} label={label} />;
 }
 
 function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposable: number; totalAllocated: number; totalNeeded: number }) {
@@ -63,9 +65,9 @@ function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposa
         </div>
       </div>
       {totalNeeded > disposable && (
-        <div className="mt-3 p-3 bg-tint-danger rounded-lg text-sm text-danger">
+        <Callout tone="danger" className="mt-3">
           Tvoje cíle dohromady potřebují o {(totalNeeded - disposable).toLocaleString('cs-CZ')} Kč/měs. více, než máš k dispozici. Uprav cíle nebo jejich horizont.
-        </div>
+        </Callout>
       )}
     </div>
   );
@@ -190,7 +192,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                     >▼</button>
                   </div>
                   <span className="text-sm font-medium text-ink-label">#{index + 1}</span>
-                  {!isDeferred && alloc && <StatusBadge alloc={alloc} />}
+                  {!isDeferred && alloc && <GoalStatus alloc={alloc} />}
                   {isDeferred && (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sunken text-ink-muted">
                       Odložený
@@ -276,19 +278,19 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                   </div>
 
                   {alloc.achievable && (
-                    <div className="text-sm p-2 rounded-lg bg-tint-good text-good">
+                    <Callout tone="good" pad="p-2 rounded-lg">
                       Na cíl dosáhneš v požadovaném čase.
-                    </div>
+                    </Callout>
                   )}
                   {!alloc.achievable && alloc.monthlyAllocation > 0 && (
-                    <div className="text-sm p-2 rounded-lg bg-tint-caution text-caution">
+                    <Callout tone="caution" pad="p-2 rounded-lg">
                       Cíl potřebuje více času. Při aktuální alokaci dosáhneš za {alloc.monthsNeeded} měsíců místo {months}.
-                    </div>
+                    </Callout>
                   )}
                   {alloc.monthlyAllocation <= 0 && (
-                    <div className="text-sm p-2 rounded-lg bg-tint-danger text-danger">
+                    <Callout tone="danger" pad="p-2 rounded-lg">
                       Na tento cíl ti po předchozích cílech nezbývají žádné prostředky.
-                    </div>
+                    </Callout>
                   )}
 
                   {!alloc.achievable && (
@@ -300,7 +302,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                         {expandedTips.has(goal.id) ? 'Skrýt doporučení' : 'Co s tím?'}
                       </button>
                       {expandedTips.has(goal.id) && (
-                        <div className="mt-2 p-3 bg-tint-brand rounded-lg text-sm space-y-1.5">
+                        <Callout tone="brand" className="mt-2 space-y-1.5">
                           {alloc.suggestedMonths !== undefined && alloc.suggestedMonths !== Infinity && (
                             <p className="text-brand">
                               <strong>Prodlužte horizont:</strong> pro dosažení tohoto cíle by stačilo {alloc.suggestedMonths} měsíců místo {months}.
@@ -314,7 +316,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                           <p className="text-brand">
                             <strong>Přesuňte cíl níže v prioritách:</strong> uvolní se prostředky z vyšších cílů.
                           </p>
-                        </div>
+                        </Callout>
                       )}
                     </div>
                   )}

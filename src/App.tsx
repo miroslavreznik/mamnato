@@ -4,6 +4,7 @@ import WizardContainer from './components/wizard/WizardContainer';
 import ResultsDashboard from './components/results/ResultsDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
 import AppBar from './components/ui/AppBar';
+import Callout from './components/ui/Callout';
 import { loadState, clearState } from './store/localStorage';
 import { loadedFromShare, sharedStateToShow, sharedReplacesExisting, acceptSharedState, discardSharedState } from './store/shareLink';
 
@@ -72,7 +73,7 @@ function App() {
   // Cizí přehled: dokud uživatel nerozhodne, nic se neukládá. Banner je stejný
   // na výsledcích i v průvodci, jen se vkládá do jinak širokého sloupce.
   const conflictBanner = sharedConflict ? (
-    <div className="no-print mb-5 p-4 rounded-xl border border-line bg-tint-caution">
+    <Callout tone="caution" border pad="p-4 rounded-xl" className="no-print mb-5">
       <p className="text-sm font-semibold text-caution">
         Tenhle přehled je z odkazu od někoho jiného.
       </p>
@@ -94,7 +95,7 @@ function App() {
           Zpět na můj přehled
         </button>
       </div>
-    </div>
+    </Callout>
   ) : null;
 
   return (

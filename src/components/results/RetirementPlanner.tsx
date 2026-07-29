@@ -8,6 +8,7 @@ import SortedTooltip from '../ui/SortedTooltip';
 import NumField from '../ui/NumField';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import Card from '../ui/Card';
+import Callout from '../ui/Callout';
 import { fieldClass } from '../ui/fieldClass';
 
 const INFLATION = DEFAULTS.averageCzInflation;
@@ -176,7 +177,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
       </div>
 
       {showInflationInfo && (
-        <div className="mb-4 p-4 bg-tint-brand rounded-lg text-sm text-brand space-y-2">
+        <Callout tone="brand" pad="p-4 rounded-lg" className="mb-4 space-y-2">
           <p className="font-semibold">Co znamená „započítat inflaci"?</p>
           <p>
             Inflace postupně snižuje kupní sílu peněz. 1 000 000 Kč dnes bude mít za 30 let reálnou hodnotu
@@ -187,7 +188,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             si za ně skutečně koupíte v dnešních cenách. Nominální hodnota je to, co uvidíte na výpisu z účtu.
           </p>
           <p>Používáme průměrnou roční inflaci v ČR: <strong>3 %</strong> (dlouhodobý průměr ČNB).</p>
-        </div>
+        </Callout>
       )}
 
       <ResponsiveContainer width="100%" height={350}>

@@ -5,8 +5,8 @@ import { expenseCategories } from './expenseBreakdown';
 /**
  * Podklad pro průběžný náhled v průvodci: kam zatím teče příjem.
  *
- * Rozdělení je hrubé schválně. Osm kategorií, které zná graf rozpočtu, je
- * v průběžném náhledu k ničemu: uživatel právě vyplňuje formulář a potřebuje
+ * Rozdělení je hrubé schválně. Jednotlivé kategorie, které zná graf rozpočtu,
+ * jsou v průběžném náhledu k ničemu: uživatel právě vyplňuje formulář a potřebuje
  * vidět jednu věc, jestli mu něco zbývá. Podrobnosti si prohlédne na
  * výsledcích.
  *
