@@ -10,8 +10,12 @@ import { czk, formatRate, formatMonths } from '../../engine/format';
  * doma. Příjem mezi nimi není: „co kdybych bral o deset tisíc víc" je hezká
  * představa, ale plán se podle ní stavět nedá.
  *
- * Vypínání položek rozpočtu zůstává v grafu na záložce Rozpočet, kde jsou
- * u sebe s čísly, ze kterých vycházejí. Sem se duplikovat nebude.
+ * Vypínání jednotlivých **výdajů** zůstává v grafu na záložce Rozpočet, kde
+ * jsou u sebe s čísly, ze kterých vycházejí. Odkládání **cílů** je naopak
+ * tady: „co kdybych auto o rok odložil" je přesně ta otázka, na kterou je
+ * tahle záložka. Dřív se cíl dal odložit jen v kartě vlastních cílů, kde to
+ * byl místní stav a nezměnilo to ani verdikt, ani rozpočet; jen zešedla
+ * karta.
  */
 
 function Slider({ label, value, min, max, step, format, onChange, ariaLabel }: {
@@ -45,10 +49,30 @@ function Slider({ label, value, min, max, step, format, onChange, ariaLabel }: {
 }
 
 export default function WhatIfPanel() {
-  const { baseline, current, overrides, setOverride, touched, reset } = useWhatIf();
+  const {
+    baseline, current, overrides, setOverride,
+    excludedGoals, toggleGoal, allGoals, allGoalAllocations, touched, reset,
+  } = useWhatIf();
 
   const hasProperty = baseline.goals.includes('property');
   const hasLeave = !!baseline.parentalLeave?.enabled;
+
+  // Seznam cílů, které jde odložit. Vlastní cíle po jednom, ostatní jako
+  // celek: „odložit důchod" je jedno rozhodnutí, kdežto vlastních cílů bývá
+  // víc a odkládá se konkrétní z nich.
+  //
+  // Staví se z `allGoals`, ne z `baseline`: odložený cíl z `baseline` zmizí,
+  // takže by zmizel i jeho přepínač a nešlo by ho vrátit zpátky.
+  const goalToggles: { key: string; label: string; amount: number }[] = [
+    ...(allGoals.goals.includes('property') ? [{ key: 'property', label: 'Spoření na akontaci', amount: allGoalAllocations.downPayment }] : []),
+    ...(allGoals.goals.includes('retirement') ? [{ key: 'retirement', label: 'Spoření na důchod', amount: allGoalAllocations.retirement }] : []),
+    ...(allGoals.goals.includes('child') ? [{ key: 'child', label: 'Rezerva na dítě', amount: allGoalAllocations.child }] : []),
+    ...(allGoals.customGoals ?? []).map((g, i) => ({
+      key: `other:${g.id}`,
+      label: g.name.trim() || `Vlastní cíl ${i + 1}`,
+      amount: allGoalAllocations.custom[i] ?? 0,
+    })),
+  ];
 
   const price = overrides.propertyPrice ?? baseline.property.targetPrice;
   const rate = overrides.mortgageRate ?? mortgageRate(baseline);
@@ -115,6 +139,40 @@ export default function WhatIfPanel() {
           Posuvníky se nabízejí u vlastního bydlení a u rodičovské. Vypnout
           jednotlivé výdaje jde v záložce Rozpočet.
         </p>
+      )}
+
+      {goalToggles.length > 0 && (
+        <div className="pt-1">
+          <h4 className="text-[13px] font-semibold text-ink-label mb-1">Odložit cíl</h4>
+          <p className="text-xs text-ink-muted mb-2">
+            Odložený cíl přestane ukrajovat z rozpočtu a peníze se uvolní
+            ostatním. Přepočítá se celý přehled včetně odpovědi nahoře.
+          </p>
+          <div className="space-y-1">
+            {goalToggles.map((g) => {
+              const off = excludedGoals.has(g.key);
+              return (
+                <label
+                  key={g.key}
+                  className="flex items-center gap-2.5 min-h-[44px] cursor-pointer text-[13px] text-ink-body"
+                >
+                  <input
+                    type="checkbox"
+                    checked={!off}
+                    onChange={() => toggleGoal(g.key)}
+                    className="w-4 h-4 shrink-0 accent-brand"
+                  />
+                  <span className={off ? 'line-through text-ink-faint' : ''}>{g.label}</span>
+                  {g.amount > 0 && (
+                    <span className="ml-auto shrink-0 text-xs text-ink-muted tabular-nums">
+                      {czk(g.amount)}
+                    </span>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {/* Doba splácení se posuvníkem nemění, ale patří k obrázku: bez ní

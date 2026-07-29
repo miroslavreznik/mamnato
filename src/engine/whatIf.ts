@@ -1,7 +1,7 @@
-import type { WizardState } from '../types';
+import type { WizardState, CustomGoal } from '../types';
 import type { GoalAllocations } from './allocation';
 import { evaluateOverall, type Verdict } from './summary';
-import { withExcludedExpenses, withExcludedGoals } from './expenseBreakdown';
+import { withExcludedExpenses, withExcludedGoals, isGoalActive } from './expenseBreakdown';
 import { evaluateScenario } from './scenarios';
 import { dsti, downPaymentGap } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
@@ -31,13 +31,20 @@ const RANK = { no: 0, no_but: 1, yes_but: 2, yes: 3 } as const;
 
 export function allocationsWithoutGoals(
   allocations: GoalAllocations,
-  excludedGoals: Set<string>
+  excludedGoals: Set<string>,
+  customGoals: CustomGoal[]
 ): GoalAllocations {
   return {
     downPayment: excludedGoals.has('property') ? 0 : allocations.downPayment,
     retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
     child: excludedGoals.has('child') ? 0 : allocations.child,
-    custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
+    // Odložené cíle se z pole vyhazují, ne nulují. `withExcludedGoals` je
+    // vyhazuje ze stavu taky, a kdyby se tady jen nulovaly, rozešla by se
+    // obě pole v indexech a částky by sedly na cizí cíle.
+    custom: allocations.custom.filter((_, i) => {
+      const goal = customGoals[i];
+      return goal ? isGoalActive(excludedGoals, goal.id) : !excludedGoals.has('other');
+    }),
   };
 }
 
@@ -52,7 +59,7 @@ export function evaluateWhatIf(
   const adjusted = withExcludedGoals(withExcludedExpenses(state, excluded), excludedGoals);
   return compareScenarios(
     state, allocations,
-    adjusted, allocationsWithoutGoals(allocations, excludedGoals)
+    adjusted, allocationsWithoutGoals(allocations, excludedGoals, state.customGoals ?? [])
   );
 }
 

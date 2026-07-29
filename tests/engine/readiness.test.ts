@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { propertyReadiness } from '../../src/engine/readiness';
+import { propertyReadiness, customReadiness } from '../../src/engine/readiness';
 import { evaluateOverall } from '../../src/engine/summary';
 import type { WizardState } from '../../src/types';
 import type { GoalAllocations } from '../../src/engine/allocation';
@@ -95,5 +95,39 @@ describe('rezerva po zaplacení akontace', () => {
     const r = propertyReadiness(state, allocs());
     expect(r.status).toBe('good');
     expect(r.headline).not.toMatch(/rezerva/);
+  });
+});
+
+describe('customReadiness', () => {
+  const goals = [
+    { id: 'a', name: 'Auto', targetAmount: 120000, targetMonths: 12 },   // 10 000/měs.
+    { id: 'b', name: 'Svatba', targetAmount: 60000, targetMonths: 12 },  // 5 000/měs.
+  ];
+
+  it('posuzuje každý cíl podle jeho vlastní částky', () => {
+    const state = makeState({ goals: ['other'], customGoals: goals });
+    const r = customReadiness(state, allocs({ custom: [10000, 5000] }));
+    expect(r.status).toBe('good');
+    expect(r.headline).toContain('2 z 2');
+  });
+
+  it('cíl bez peněz nevyjde, i když je vedle něj cíl s přebytkem', () => {
+    // Tohle je celý rozdíl proti dřívějšku: peníze se mezi cíle nepřelévají
+    // podle pořadí, každý má tu částku, kterou u něj uživatel nastavil.
+    const state = makeState({ goals: ['other'], customGoals: goals });
+    const r = customReadiness(state, allocs({ custom: [50000, 0] }));
+    expect(r.status).toBe('caution');
+    expect(r.headline).toContain('1 z 2');
+  });
+
+  it('bez peněz nevyjde nic', () => {
+    const state = makeState({ goals: ['other'], customGoals: goals });
+    expect(customReadiness(state, allocs({ custom: [0, 0] })).status).toBe('warning');
+  });
+
+  it('chybějící částka se bere jako nula, ne jako neomezená', () => {
+    const state = makeState({ goals: ['other'], customGoals: goals });
+    const r = customReadiness(state, allocs({ custom: [10000] }));
+    expect(r.headline).toContain('1 z 2');
   });
 });

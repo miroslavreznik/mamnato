@@ -73,8 +73,12 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
   if (state.goals.includes('other') && state.customGoals && state.customGoals.length > 0) {
     const used = allocs.downPayment + allocs.retirement + allocs.child;
     const remaining = Math.max(0, disposable - used);
-    const perGoal = Math.round(remaining / state.customGoals.length);
-    allocs.custom = state.customGoals.map(() => perGoal);
+    // Zaokrouhlený podíl by po vynásobení počtem cílů přestřelil: ze 44 000
+    // na tři cíle vyjde 14 667 na každý, dohromady 44 001, a v přehledu pak
+    // stálo „volných zbývá −1 Kč". Zbytek po dělení dostane první cíl.
+    const n = state.customGoals.length;
+    const perGoal = Math.floor(remaining / n);
+    allocs.custom = state.customGoals.map((_, i) => (i === 0 ? remaining - perGoal * (n - 1) : perGoal));
   }
 
   return allocs;

@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 318 jednotkových, 62 e2e.
+Testy: 322 jednotkových, 66 e2e.
 
 ---
 
@@ -230,18 +230,52 @@ a které by ve světlém režimu vypadaly stejně špatně:
    v půlce. Vypadá to jako chybný výpočet a poslalo mě to hledat chybu
    v projekci cíle, která žádná nebyla. Otisky teď na dokreslení počkají.
 
-**Neopraveno, čeká na rozhodnutí:** karta vlastních cílů má u každého cíle
-pole „Kolik na tento cíl měsíčně dávám", ale stav pod ním počítá
-`allocateGoals(cíle, disponibilní částka)`, což pole ignoruje a rozděluje
-peníze čistě podle pořadí. Na obrazovce pak stojí „dávám 14 667 Kč"
-a hned pod tím „na tento cíl odkládáte 33 334 Kč". Engine (`customReadiness`)
-navíc rozděluje jiný balík než karta, takže si verdikt a karta můžou
-odporovat. Které z těch dvou pojetí platí, je produktové rozhodnutí,
-ne oprava.
+**Rozhodnuto a opraveno (viz B6):** karta vlastních cílů měla dvě pojetí
+naráz. Pole „Kolik na tento cíl měsíčně dávám" hlásilo jedno číslo, a hned
+pod ním stálo druhé, protože stav počítal `allocateGoals(cíle, disponibilní
+částka)`, což pole ignorovalo a rozdělovalo peníze podle pořadí cílů.
 
 **Neopraveno, spíš námět:** období rekonstrukce (`engine/renovation.ts`)
 umí spočítat, že se souběžně platí nájem i úroky, ale na výsledcích se
 neukazuje nikde, jen v průvodci. Na stuze taky žádná událost není.
+
+### B6. Vlastní cíle: cíl je měsíční částka (hotovo)
+
+Ze dvou pojetí platí to, které uživatel skutečně ovládá. **Cíl je měsíční
+částka z volných peněz, jako každý jiný výdaj**, a otázka zní jediná: vyjde
+s ní zadaný termín?
+
+Co se změnilo:
+
+- `allocateGoals` je pryč. Nahradil ho `goalProgress(cíl, částka)`, který
+  posuzuje jeden cíl podle jeho vlastní částky a nezávisí na ostatních.
+  `customReadiness` počítá stejně, takže verdikt nahoře a karta už si
+  nemůžou odporovat; dřív každý rozděloval jiný balík.
+- Částka se zadává posuvníkem, jehož **strop je vlastní částka plus to, co
+  je zrovna volné**. Rozdat víc než volné peníze nejde. Kdyby to šlo,
+  rozpočet by tiše spadl do mínusu a appka by přitom tvrdila, že cíl vychází.
+- Karta odpovídá na „mám na to" i za všechny cíle najednou: kolik dohromady
+  potřebují a kolik je k dispozici.
+- **Odložit cíl se dělá v Co kdyby**, ne v kartě. Dřív to byl místní stav
+  karty, takže odložení nezměnilo ani verdikt, ani rozpočet; jen zešedla
+  karta. Teď je to vypnutá položka jako každá jiná (`other:<id>`) a platí
+  pro celý přehled.
+- **Priority zmizely.** Šipky a čísla „#1, #2" existovaly jen kvůli
+  rozdělování podle pořadí. Pořadí teď na nic nemá vliv a ovládací prvek,
+  který nic nedělá, je horší než žádný.
+
+Při té příležitosti se našly tři drobnosti:
+
+- Výchozí rozdělení přestřelovalo. Ze 44 000 Kč na tři cíle vycházelo
+  3 × 14 667 = 44 001 a v přehledu stálo „volných zbývá −1 Kč".
+- Textové pole s názvem cíle nemělo přístupné jméno: popisek nad ním nemá
+  `htmlFor`, takže ho čtečka i test našly jen podle placeholderu.
+- „…dosáhnete za 3 roky místo 1 rok" nešlo ohnout do genitivu, protože
+  `formatMonths` vrací nominativ. Věta je přeformulovaná, ne ohnutá.
+
+Hlídá to `e2e/cile.e2e.ts` (částka platí, strop drží, cíle si peníze
+nepřehazují, odložení přepočítá celý přehled) a unit testy `goalProgress`
+a `customReadiness`.
 
 ---
 
@@ -272,6 +306,7 @@ Co které soubory hlídají:
 | `ribbon.e2e.ts` | pohyb, úchop, dotykový cíl 44 px, tisk, vypnutý pohyb, překryv popisků |
 | `persony.e2e.ts` | průchod třemi scénáři, otisky k posouzení okem |
 | `persony-tma.e2e.ts` | další čtyři scénáře v tmavém režimu, včetně mobilu |
+| `cile.e2e.ts` | vlastní cíle: částka platí, strop drží, odložení funguje |
 | `klavesnice.e2e.ts` | fokus je vidět, lišta záložek se ovládá šipkami |
 | `cokdyby.e2e.ts` | duch původního scénáře, delta, izolace od Cesty |
 | `tooltip.e2e.ts` | nápověda je čitelná, ne jen otevřená |

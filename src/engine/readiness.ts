@@ -3,7 +3,7 @@ import type { GoalAllocations } from './allocation';
 import { downPaymentGap, postPurchaseRunwayMonths } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
-import { retirementProjection, allocateGoals, yearsUntilRetirement } from './savings';
+import { retirementProjection, goalProgress, yearsUntilRetirement } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
 import { formatMonths, czk, czkMonthly } from './format';
 
@@ -180,8 +180,10 @@ export function customReadiness(state: WizardState, allocations: GoalAllocations
   if (goals.length === 0) {
     return { key: 'other', label: 'Vlastní cíle', status: 'caution', headline: 'Zatím jste žádný vlastní cíl nezadali.' };
   }
-  const totalAlloc = allocations.custom.reduce((s, v) => s + v, 0);
-  const results = allocateGoals(goals, totalAlloc);
+  // Každý cíl se posuzuje podle částky, kterou na něj uživatel dává, ne podle
+  // přerozdělení společného balíku. Balík rozděloval `allocateGoals` a mohl
+  // dát cíli jiné peníze, než kolik u něj uživatel viděl nastaveno.
+  const results = goals.map((g, i) => goalProgress(g, allocations.custom[i] ?? 0));
   const achievable = results.filter((r) => r.achievable).length;
   const status: GoalStatus = achievable === goals.length ? 'good' : achievable > 0 ? 'caution' : 'warning';
   return {

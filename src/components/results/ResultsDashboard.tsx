@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import type { WizardState } from '../../types';
 import ResultsOverview from './ResultsOverview';
 import ExpenseBreakdownChart from './ExpenseBreakdownChart';
@@ -26,7 +26,7 @@ import ResultsTabs, { type TabDef } from './ResultsTabs';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
-import { withExcludedExpenses, withExcludedGoals } from '../../engine/expenseBreakdown';
+import { withExcludedExpenses, withExcludedGoals, isGoalActive } from '../../engine/expenseBreakdown';
 import { parentalLeaveApplicable } from '../../engine/parentalLeave';
 import type { CustomGoal, ParentalLeave } from '../../types';
 import { saveState } from '../../store/localStorage';
@@ -100,8 +100,24 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     downPayment: excludedGoals.has('property') ? 0 : allocations.downPayment,
     retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
     child: excludedGoals.has('child') ? 0 : allocations.child,
-    custom: excludedGoals.has('other') ? allocations.custom.map(() => 0) : allocations.custom,
-  }), [allocations, excludedGoals]);
+    // Odložený vlastní cíl se z pole vyhazuje, ne nuluje: `withExcludedGoals`
+    // ho vyhazuje i ze stavu, a kdyby se tady jen nuloval, rozešly by se obě
+    // pole v indexech a částky by sedly na cizí cíle.
+    custom: allocations.custom.filter((_, i) => {
+      const goal = (state.customGoals ?? [])[i];
+      return goal ? isGoalActive(excludedGoals, goal.id) : !excludedGoals.has('other');
+    }),
+  }), [allocations, excludedGoals, state.customGoals]);
+
+  // Odložení cíle v Co kdyby. Platí pro celý přehled, takže se překreslí
+  // i verdikt: to je celý smysl, jinak by šlo jen o zešedlou kartu.
+  const toggleGoal = useCallback((key: string) => {
+    setExcludedGoals((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }, []);
 
   const handleChangeAllocation = (goal: string, index: number | null, value: number) => {
     setAllocations((prev) => {
@@ -275,7 +291,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
               <CustomGoalPlanner
                 state={activeState}
                 onChangeGoals={handleChangeCustomGoals}
-                allocations={allocations.custom}
+                allocations={allocations}
                 onChangeAllocation={(i, v) => handleChangeAllocation('custom', i, v)}
               />
             )}
@@ -290,7 +306,14 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           subtitle="Zkuste s plánem pohnout a uvidíte, jestli to pomůže"
           active={isVisible('cokdyby')}
         >
-          <WhatIfProvider state={activeState} allocations={activeAllocations}>
+          <WhatIfProvider
+            state={activeState}
+            allocations={activeAllocations}
+            allGoals={state}
+            allGoalAllocations={allocations}
+            excludedGoals={excludedGoals}
+            onToggleGoal={toggleGoal}
+          >
             <WhatIfTab />
           </WhatIfProvider>
         </ResultsSection>

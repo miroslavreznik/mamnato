@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, allocateGoals, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
+import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
 import type { CustomGoal } from '../../src/types';
 import type { WizardState } from '../../src/types';
 
@@ -168,65 +168,45 @@ describe('retirementProjection', () => {
   });
 });
 
-describe('allocateGoals', () => {
-  function goal(id: string, amount: number, months: number): CustomGoal {
-    return { id, name: id, targetAmount: amount, targetMonths: months };
+describe('goalProgress', () => {
+  function goal(amount: number, months: number): CustomGoal {
+    return { id: 'g', name: 'g', targetAmount: amount, targetMonths: months };
   }
 
-  it('one goal, sufficient funds → achievable', () => {
-    // Need 10000/mo, have 15000
-    const result = allocateGoals([goal('a', 120000, 12)], 15000);
-    expect(result).toHaveLength(1);
-    expect(result[0].achievable).toBe(true);
-    expect(result[0].monthlyAllocation).toBe(10000);
-    expect(result[0].remainingAfter).toBe(5000);
+  it('částka stačí na termín', () => {
+    // 120 000 za 12 měsíců potřebuje 10 000 měsíčně, dává se 12 000.
+    const p = goalProgress(goal(120000, 12), 12000);
+    expect(p.requiredMonthly).toBe(10000);
+    expect(p.monthsNeeded).toBe(10);
+    expect(p.achievable).toBe(true);
+    expect(p.missingMonthly).toBe(0);
   });
 
-  it('one goal, insufficient funds → not achievable', () => {
-    // Need 10000/mo, have 5000
-    const result = allocateGoals([goal('a', 120000, 12)], 5000);
-    expect(result[0].achievable).toBe(false);
-    expect(result[0].monthlyAllocation).toBe(5000);
-    expect(result[0].monthsNeeded).toBe(24); // 120000/5000
+  it('částka na termín nestačí a řekne, kolik chybí', () => {
+    const p = goalProgress(goal(120000, 12), 5000);
+    expect(p.achievable).toBe(false);
+    expect(p.monthsNeeded).toBe(24);
+    expect(p.missingMonthly).toBe(5000);
+    expect(p.reachableAmount).toBe(60000);
   });
 
-  it('two goals, funds for both → both achievable', () => {
-    // Goal 1: 60000 in 12mo = 5000/mo, Goal 2: 60000 in 12mo = 5000/mo, disposable 15000
-    const result = allocateGoals([goal('a', 60000, 12), goal('b', 60000, 12)], 15000);
-    expect(result[0].achievable).toBe(true);
-    expect(result[1].achievable).toBe(true);
-    expect(result[0].remainingAfter).toBe(10000);
-    expect(result[1].remainingAfter).toBe(5000);
+  it('nula je platná odpověď, ne chybějící údaj', () => {
+    // Cíl, na který se nic nedává, se sám nenaspoří. Nesmí z toho vypadnout
+    // dělení nulou ani „vyjde v termínu".
+    const p = goalProgress(goal(120000, 12), 0);
+    expect(p.achievable).toBe(false);
+    expect(p.monthsNeeded).toBe(Infinity);
+    expect(p.reachableAmount).toBe(0);
+    expect(p.missingMonthly).toBe(10000);
   });
 
-  it('two goals, funds only for first → second not achievable with 0 allocation', () => {
-    // Goal 1: 120000 in 12mo = 10000/mo, Goal 2: 60000 in 12mo = 5000/mo, disposable 10000
-    const result = allocateGoals([goal('a', 120000, 12), goal('b', 60000, 12)], 10000);
-    expect(result[0].achievable).toBe(true);
-    expect(result[1].achievable).toBe(false);
-    expect(result[1].monthlyAllocation).toBe(0);
-  });
-
-  it('two goals, funds for first and partial second → second not achievable but has allocation', () => {
-    // Goal 1: 60000 in 12mo = 5000/mo, Goal 2: 120000 in 12mo = 10000/mo, disposable 8000
-    const result = allocateGoals([goal('a', 60000, 12), goal('b', 120000, 12)], 8000);
-    expect(result[0].achievable).toBe(true);
-    expect(result[0].monthlyAllocation).toBe(5000);
-    expect(result[1].achievable).toBe(false);
-    expect(result[1].monthlyAllocation).toBe(3000); // 8000 - 5000
-    expect(result[1].monthsNeeded).toBe(40); // 120000/3000
-  });
-
-  it('changing order changes achievability', () => {
-    // 10000/mo disposable, Goal A: 120000 in 12mo (10000/mo), Goal B: 60000 in 12mo (5000/mo)
-    const orderAB = allocateGoals([goal('a', 120000, 12), goal('b', 60000, 12)], 10000);
-    expect(orderAB[0].achievable).toBe(true);  // A achievable
-    expect(orderAB[1].monthlyAllocation).toBe(0); // B gets nothing
-
-    const orderBA = allocateGoals([goal('b', 60000, 12), goal('a', 120000, 12)], 10000);
-    expect(orderBA[0].achievable).toBe(true);  // B achievable
-    expect(orderBA[1].achievable).toBe(false); // A not achievable
-    expect(orderBA[1].monthlyAllocation).toBe(5000); // A gets leftover
+  it('cíl nezávisí na ostatních cílech ani na jejich pořadí', () => {
+    // Tohle je celý rozdíl proti dřívějšímu rozdělování balíku podle pořadí:
+    // částka u cíle je jeho, ať jich je vedle kolik chce.
+    const a = goalProgress(goal(60000, 12), 5000);
+    const b = goalProgress(goal(60000, 12), 5000);
+    expect(a).toEqual(b);
+    expect(a.achievable).toBe(true);
   });
 });
 

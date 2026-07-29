@@ -1,227 +1,236 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { WizardState, CustomGoal } from '../../types';
-import { monthlyDisposable } from '../../engine/cashflow';
-import { allocateGoals } from '../../engine/savings';
-import type { GoalAllocation } from '../../engine/savings';
+import type { GoalAllocations } from '../../engine/allocation';
+import { goalProgress } from '../../engine/savings';
+import { budgetNow } from '../../engine/budget';
+import { czk, czkMonthly, czkPerMonth, formatMonths } from '../../engine/format';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
-import GoalAllocationField from './GoalAllocationField';
+import { StepButton } from './property/shared';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
 import StatusBadge from '../ui/StatusBadge';
 import { fieldClass } from '../ui/fieldClass';
 
+/**
+ * Vlastní finanční cíle: kolik na každý měsíčně dávám a jestli to stačí.
+ *
+ * **Cíl je měsíční částka jako každý jiný výdaj.** Dává se z volných peněz,
+ * ubírá je ostatním cílům a otázka zní jediná: vyjde s ní zadaný termín?
+ *
+ * Dřív tu byla dvě pojetí naráz. Pole „kolik na tento cíl měsíčně dávám"
+ * hlásilo jedno číslo, a hned pod ním stálo druhé, protože stav počítal
+ * `allocateGoals(cíle, disponibilní částka)`, což pole ignorovalo a rozdělilo
+ * peníze podle pořadí cílů. Na obrazovce tak stálo „dávám 14 667 Kč"
+ * a „na tento cíl odkládáte 33 334 Kč". Engine navíc rozděloval jiný balík
+ * než karta, takže si verdikt nahoře a karta mohly odporovat.
+ *
+ * S tím zmizely i priority. Šipky a čísla „#1, #2" existovaly jen kvůli
+ * tomu rozdělování; pořadí teď na nic nemá vliv a ovládací prvek, který nic
+ * nedělá, je horší než žádný.
+ *
+ * **Odložit nebo zrušit cíl se dá v Co kdyby.** Dřív to byl místní stav
+ * téhle karty, takže odložení nezměnilo ani verdikt, ani rozpočet: jen
+ * zešedla karta. Teď je to vypnutá položka jako každá jiná.
+ */
+
 interface Props {
   state: WizardState;
   onChangeGoals: (goals: CustomGoal[]) => void;
-  allocations: number[];
+  allocations: GoalAllocations;
   onChangeAllocation: (index: number, value: number) => void;
 }
+
+const STEP = 500;
 
 let nextId = 1;
 function makeId() {
   return `goal-${Date.now()}-${nextId++}`;
 }
 
-function toggleInSet(prev: Set<string>, id: string): Set<string> {
-  const next = new Set(prev);
-  if (next.has(id)) next.delete(id); else next.add(id);
-  return next;
+function newGoal(): CustomGoal {
+  return { id: makeId(), name: '', targetAmount: 500000, targetMonths: 24 };
+}
+
+function recommendInstrument(months: number) {
+  if (months <= 12) return 'Spořicí účet';
+  if (months <= 60) return 'Spořicí účet nebo konzervativní dluhopisy';
+  return 'Akciový index (SP500 / globální)';
 }
 
 /**
- * Stav vlastního cíle. Dřív to byl vlastní odznak: tónovaná pilulka se
- * slovem, jinak vypadající než odznaky u ostatních cílů, a stejným jménem
- * jako sdílená komponenta. Vedle sebe to byly dva různé odznaky pro totéž.
+ * Kolik na cíl měsíčně dávám.
+ *
+ * Horní mez je vlastní částka plus to, co je zrovna volné: víc než volné
+ * peníze rozdat nejde, a kdyby to šlo, rozpočet by tiše spadl do mínusu
+ * a appka by přitom tvrdila, že cíl vychází. Když je volných nula, jde
+ * částka jen dolů, dokud se neubere jinde. To je celá odpověď na otázku
+ * „mám na to": buď se to do volných peněz vejde, nebo ne.
  */
-function GoalStatus({ alloc }: { alloc: GoalAllocation }) {
-  const [status, label] = alloc.monthlyAllocation <= 0
-    ? ['danger', 'Nestačí prostředky'] as const
-    : !alloc.achievable
-      ? ['caution', 'Potřebuje více času'] as const
-      : ['good', 'Dosažitelný'] as const;
-  return <StatusBadge status={status} label={label} />;
-}
-
-function GoalSummaryPanel({ disposable, totalAllocated, totalNeeded }: { disposable: number; totalAllocated: number; totalNeeded: number }) {
-  const remaining = disposable - totalAllocated;
+function AllocationSlider({ value, free, onChange }: {
+  value: number;
+  free: number;
+  onChange: (v: number) => void;
+}) {
+  const max = Math.max(value, value + free);
   return (
-    <div className="p-4 rounded-xl border border-line bg-sunken mb-4">
-      <div className="grid grid-cols-3 gap-4 text-sm">
-        <div>
-          <span className="text-ink-muted">Disponibilní celkem</span>
-          <p className="font-semibold text-ink">{disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
-        </div>
-        <div>
-          <span className="text-ink-muted">Alokováno na cíle</span>
-          <p className="font-semibold text-ink">{totalAllocated.toLocaleString('cs-CZ')} Kč/měs.</p>
-        </div>
-        <div>
-          <span className="text-ink-muted">Zbývá volných</span>
-          <p className={`font-semibold ${remaining >= 0 ? 'text-good' : 'text-danger'}`}>
-            {remaining.toLocaleString('cs-CZ')} Kč/měs.
-          </p>
-        </div>
+    <div className="mt-4 pt-4 border-t border-line">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 mb-1.5">
+        {/* Popisek nemá `htmlFor`: posuvník si nese vlastní `aria-label`,
+            protože ho čte i klávesnice a dotykové čtečky. */}
+        <span className="text-sm font-medium text-ink-label">Kolik na tento cíl měsíčně dávám</span>
+        <span data-testid="goal-allocation" className="text-sm font-semibold text-ink tabular-nums">
+          {czkPerMonth(value)}
+        </span>
       </div>
-      {totalNeeded > disposable && (
-        <Callout tone="danger" className="mt-3">
-          Vaše cíle dohromady potřebují o {(totalNeeded - disposable).toLocaleString('cs-CZ')} Kč/měs. více, než máte k dispozici. Upravte cíle nebo jejich horizont.
-        </Callout>
-      )}
+      <div className="flex items-center gap-2">
+        <StepButton onClick={() => onChange(Math.max(0, value - STEP))} disabled={value <= 0} label="Ubrat z cíle">
+          −
+        </StepButton>
+        <input
+          type="range"
+          min={0}
+          max={Math.max(STEP, max)}
+          step={STEP}
+          value={Math.min(value, Math.max(STEP, max))}
+          aria-label="Kolik na tento cíl měsíčně dávám"
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="flex-1 min-w-0 h-1.5 rounded-full appearance-none cursor-pointer accent-brand bg-line"
+        />
+        <StepButton
+          onClick={() => onChange(Math.min(max, value + STEP))}
+          disabled={free < STEP}
+          label="Přidat na cíl"
+        >
+          +
+        </StepButton>
+      </div>
+      <p className="mt-1.5 text-xs text-ink-muted">
+        {free > 0
+          ? `Volných zbývá ${czkMonthly(free)}, o tolik se dá ještě přidat.`
+          : 'Volné peníze jsou rozdané. Přidat jde jen tím, že jinde uberete.'}
+      </p>
     </div>
   );
 }
 
 export default function CustomGoalPlanner({ state, onChangeGoals, allocations, onChangeAllocation }: Props) {
   const colors = useChartColors();
-  const disposable = monthlyDisposable(state);
-  // Cíle jsou zdrojem pravdy ve sdíleném stavu, změny se hned promítnou
-  // do souhrnu i grafu rozpočtu a uloží se do prohlížeče.
   const goals = useMemo(() => state.customGoals ?? [], [state.customGoals]);
-  const setGoals = onChangeGoals;
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
 
   // Kdyby uživatel dorazil bez zadaného cíle, nabídneme jeden prázdný.
   useEffect(() => {
-    if (goals.length === 0) {
-      onChangeGoals([{ id: makeId(), name: '', targetAmount: 500000, targetMonths: 24 }]);
-    }
+    if (goals.length === 0) onChangeGoals([newGoal()]);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const [timeUnit, setTimeUnit] = useState<'months' | 'years'>('months');
-  const [deferredIds, setDeferredIds] = useState<Set<string>>(new Set());
-  const [expandedTips, setExpandedTips] = useState<Set<string>>(new Set());
+  // Rozpočet počítá se všemi cíli, ne jen s vlastními: akontace a důchod
+  // ukusují ze stejných peněz, takže „volné" musí být volné doopravdy.
+  const budget = budgetNow(state, allocations);
+  const free = Math.max(0, budget.surplus);
 
-  const toMonths = useCallback(
-    (g: CustomGoal) => (timeUnit === 'years' ? g.targetMonths * 12 : g.targetMonths),
-    [timeUnit]
+  const progress = useMemo(
+    () => goals.map((g, i) => goalProgress(g, allocations.custom[i] ?? 0)),
+    [goals, allocations.custom]
   );
 
-  // Single memo: filter active goals, convert to months, allocate
-  const { allocationMap, totalAllocated, totalNeeded } = useMemo(() => {
-    const active = goals.filter((g) => !deferredIds.has(g.id));
-    const inMonths = active.map((g) => ({ ...g, targetMonths: toMonths(g) }));
-    const allocs = allocateGoals(inMonths, disposable);
-    const map = new Map<string, GoalAllocation>();
-    active.forEach((g, i) => map.set(g.id, allocs[i]));
-    const needed = inMonths.reduce((sum, g) => sum + (g.targetMonths > 0 ? Math.ceil(g.targetAmount / g.targetMonths) : 0), 0);
-    const allocated = allocs.reduce((sum, a) => sum + a.monthlyAllocation, 0);
-    return { allocationMap: map, totalAllocated: allocated, totalNeeded: needed };
-  }, [goals, deferredIds, toMonths, disposable]);
-
-  const addGoal = () => {
-    setGoals([...goals, { id: makeId(), name: '', targetAmount: 500000, targetMonths: 24 }]);
-  };
+  // Odpověď za všechny cíle najednou: kolik by dohromady potřebovaly a kolik
+  // je na ně k dispozici, tedy co už na nich leží plus to, co je volné.
+  const needed = progress.reduce((s, p) => s + (Number.isFinite(p.requiredMonthly) ? p.requiredMonthly : 0), 0);
+  const onCustom = allocations.custom.reduce((s, v) => s + v, 0);
+  const available = onCustom + free;
+  const allFit = progress.every((p) => p.achievable);
 
   const updateGoal = (id: string, field: keyof CustomGoal, value: string | number) => {
-    setGoals(goals.map((g) => (g.id === id ? { ...g, [field]: value } : g)));
+    onChangeGoals(goals.map((g) => (g.id === id ? { ...g, [field]: value } : g)));
   };
 
   const removeGoal = (id: string) => {
-    if (goals.length > 1) {
-      setGoals(goals.filter((g) => g.id !== id));
-      setDeferredIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
-    }
-  };
-
-  const move = (id: string, delta: -1 | 1) => {
-    const idx = goals.findIndex((g) => g.id === id);
-    const target = idx + delta;
-    if (target < 0 || target >= goals.length) return;
-    const next = [...goals];
-    [next[idx], next[target]] = [next[target], next[idx]];
-    setGoals(next);
-  };
-
-  const recommendInstrument = (months: number) => {
-    if (months <= 12) return 'Spořicí účet';
-    if (months <= 60) return 'Spořicí účet nebo konzervativní dluhopisy';
-    return 'Akciový index (SP500 / globální)';
+    if (goals.length > 1) onChangeGoals(goals.filter((g) => g.id !== id));
   };
 
   return (
     <Card>
       <h3 className="type-section text-ink mb-2">Vlastní finanční cíle</h3>
       <p className="text-sm text-ink-muted mb-4">
-        Seřaďte cíle podle důležitosti. Začneme od nejvyššího a uvidíme, na které ještě zbývá.
+        Na každý cíl dáváte část volných peněz. Uvidíte hned, jestli s tou
+        částkou stihnete termín, který jste zadali.
       </p>
 
-      <GoalSummaryPanel disposable={disposable} totalAllocated={totalAllocated} totalNeeded={totalNeeded} />
+      <div className="p-4 rounded-xl border border-line bg-sunken mb-4">
+        <div className="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <span className="text-ink-muted">Zbývá po výdajích</span>
+            <p className="font-semibold text-ink">{czkPerMonth(budget.disposable)}</p>
+          </div>
+          <div>
+            <span className="text-ink-muted">Rozdáno na cíle</span>
+            <p className="font-semibold text-ink">{czkPerMonth(budget.allocated)}</p>
+          </div>
+          <div>
+            <span className="text-ink-muted">Volných zbývá</span>
+            <p className={`font-semibold ${budget.surplus >= 0 ? 'text-good' : 'text-danger'}`}>
+              {czkPerMonth(budget.surplus)}
+            </p>
+          </div>
+        </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <span className="text-sm text-ink-body">Časový horizont v:</span>
-        {(['months', 'years'] as const).map((unit) => (
-          <button
-            key={unit}
-            onClick={() => setTimeUnit(unit)}
-            className={`px-3 py-1 text-sm rounded-lg ${timeUnit === unit ? 'bg-tint-brand text-brand' : 'text-ink-muted'}`}
-          >
-            {unit === 'months' ? 'Měsících' : 'Letech'}
-          </button>
-        ))}
+        {goals.length > 0 && (
+          <Callout tone={allFit ? 'good' : needed <= available ? 'caution' : 'danger'} className="mt-3">
+            {allFit ? (
+              <>Na všechny vlastní cíle v zadaných termínech máte.</>
+            ) : needed <= available ? (
+              <>
+                Na všechny cíle byste měli, jen jsou peníze zatím rozdělené jinak.
+                Dohromady potřebují <strong>{czkMonthly(needed)}</strong> a k dispozici je{' '}
+                <strong>{czk(available)}</strong>. Přidejte u cílů níže.
+              </>
+            ) : (
+              <>
+                Na všechny cíle v zadaných termínech nemáte. Dohromady by potřebovaly{' '}
+                <strong>{czkMonthly(needed)}</strong>, k dispozici je <strong>{czk(available)}</strong>.
+                Chybí <strong>{czk(needed - available)}</strong>. Pomůže delší termín, nižší
+                částka, nebo některý cíl odložit v Co kdyby.
+              </>
+            )}
+          </Callout>
+        )}
       </div>
 
       <div className="space-y-6">
         {goals.map((goal, index) => {
-          const isDeferred = deferredIds.has(goal.id);
-          const alloc = allocationMap.get(goal.id);
-          const months = toMonths(goal);
-          const requiredMonthly = months > 0 ? Math.ceil(goal.targetAmount / months) : 0;
-          const chartAllocation = alloc?.monthlyAllocation ?? 0;
-          const chartMonths = chartAllocation > 0 ? Math.min(Math.ceil(goal.targetAmount / chartAllocation), 360) : 0;
+          const given = allocations.custom[index] ?? 0;
+          const p = progress[index];
+          const chartMonths = given > 0 ? Math.min(p.monthsNeeded, 360) : 0;
 
           return (
-            <div
-              key={goal.id}
-              className={`border rounded-xl p-4 ${isDeferred ? 'opacity-50 border-dashed border-line-strong' : 'border-line'}`}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-col gap-0.5">
-                    <button
-                      onClick={() => move(goal.id, -1)}
-                      disabled={index === 0}
-                      className="text-ink-faint hover:text-ink-body disabled:opacity-30 text-xs leading-none p-0.5"
-                      aria-label="Posunout nahoru"
-                    >▲</button>
-                    <button
-                      onClick={() => move(goal.id, 1)}
-                      disabled={index === goals.length - 1}
-                      className="text-ink-faint hover:text-ink-body disabled:opacity-30 text-xs leading-none p-0.5"
-                      aria-label="Posunout dolů"
-                    >▼</button>
-                  </div>
-                  <span className="text-sm font-medium text-ink-label">#{index + 1}</span>
-                  {!isDeferred && alloc && <GoalStatus alloc={alloc} />}
-                  {isDeferred && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-sunken text-ink-muted">
-                      Odložený
-                    </span>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setDeferredIds((prev) => toggleInSet(prev, goal.id))}
-                    className="text-xs text-brand hover:underline"
-                  >
-                    {isDeferred ? 'Obnovit cíl' : 'Co kdybych odložil tento cíl?'}
+            <div key={goal.id} className="border border-line rounded-xl p-4">
+              <div className="flex justify-between items-start gap-2 mb-3">
+                <StatusBadge
+                  status={p.achievable ? 'good' : given > 0 ? 'caution' : 'danger'}
+                  label={p.achievable ? 'Vyjde v termínu' : given > 0 ? 'Potřebuje víc času' : 'Zatím nic neodkládáte'}
+                />
+                {goals.length > 1 && (
+                  <button onClick={() => removeGoal(goal.id)} className="text-danger hover:underline text-sm shrink-0">
+                    Odebrat
                   </button>
-                  {goals.length > 1 && (
-                    <button onClick={() => removeGoal(goal.id)} className="text-danger hover:text-danger text-sm">
-                      Odebrat
-                    </button>
-                  )}
-                </div>
+                )}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs text-ink-muted mb-1">Název cíle</label>
+                  {/* Popisky nad poli nemají `htmlFor`, takže samy o sobě
+                      pole nepojmenují. Číselná pole si jméno nesou v `ariaLabel`,
+                      tohle textové ho nemělo žádné a čtečka i test ho našly
+                      jen podle nápovědy v placeholderu. */}
                   <input
                     type="text"
                     value={goal.name}
                     onChange={(e) => updateGoal(goal.id, 'name', e.target.value)}
-                    placeholder="např. Auto, dovolená..."
+                    placeholder="např. Auto, dovolená…"
+                    aria-label="Název cíle"
                     className={fieldClass('w-full px-3 py-2 text-sm')}
                   />
                 </div>
@@ -236,100 +245,103 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-ink-muted mb-1">
-                    Za kolik {timeUnit === 'months' ? 'měsíců' : 'let'}
-                  </label>
+                  <label className="block text-xs text-ink-muted mb-1">Za kolik měsíců</label>
                   <NumField
                     value={goal.targetMonths}
                     onChange={(v) => updateGoal(goal.id, 'targetMonths', v)}
                     min={1}
-                    ariaLabel="Za kolik měsíců/let"
+                    ariaLabel="Za kolik měsíců"
                     step={1}
                     className={fieldClass('w-full px-3 py-2.5 text-base')}
                   />
                 </div>
               </div>
 
-              <GoalAllocationField
-                label="Kolik na tento cíl měsíčně dávám"
-                value={allocations[index] ?? 0}
+              <AllocationSlider
+                value={given}
+                free={free}
                 onChange={(v) => onChangeAllocation(index, v)}
               />
 
-              {!isDeferred && alloc && (
-                <div className="space-y-2 mb-4">
+              <div className="mt-4 space-y-2">
+                {/* Bez termínu se potřebná částka spočítat nedá. Pole má
+                    minimum jedna, takže je to spíš pojistka než stav, který
+                    uživatel uvidí. */}
+                {Number.isFinite(p.requiredMonthly) && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-ink-body">Potřebná měsíční úspora:</span>
-                    <span className="font-semibold text-ink">
-                      {requiredMonthly.toLocaleString('cs-CZ')} Kč/měs.
-                    </span>
+                    <span className="text-ink-body">Aby termín vyšel, potřebuje:</span>
+                    <span className="font-semibold text-ink">{czkPerMonth(p.requiredMonthly)}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-ink-body">Na tento cíl odkládáte:</span>
-                    <span className={`font-semibold ${alloc.achievable ? 'text-good' : alloc.monthlyAllocation > 0 ? 'text-caution' : 'text-danger'}`}>
-                      {alloc.monthlyAllocation.toLocaleString('cs-CZ')} Kč/měs.
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-ink-body">Zbývá vám po tomto cíli:</span>
-                    <span className="font-semibold text-ink">
-                      {alloc.remainingAfter.toLocaleString('cs-CZ')} Kč/měs.
-                    </span>
-                  </div>
+                )}
 
-                  {alloc.achievable && (
-                    <Callout tone="good" pad="p-2 rounded-lg">
-                      Na cíl dosáhnete v požadovaném čase.
-                    </Callout>
-                  )}
-                  {!alloc.achievable && alloc.monthlyAllocation > 0 && (
-                    <Callout tone="caution" pad="p-2 rounded-lg">
-                      Cíl potřebuje více času. Při aktuální alokaci na něj dosáhnete za {alloc.monthsNeeded} měsíců místo {months}.
-                    </Callout>
-                  )}
-                  {alloc.monthlyAllocation <= 0 && (
-                    <Callout tone="danger" pad="p-2 rounded-lg">
-                      Na tento cíl vám po předchozích cílech nezbývají žádné prostředky.
-                    </Callout>
-                  )}
+                {p.achievable ? (
+                  <Callout tone="good" pad="p-2 rounded-lg">
+                    S {czkMonthly(given)} na cíl dosáhnete za {formatMonths(p.monthsNeeded)},
+                    tedy v termínu.
+                  </Callout>
+                ) : given > 0 ? (
+                  <Callout tone="caution" pad="p-2 rounded-lg">
+                    S {czkMonthly(given)} na cíl dosáhnete za {formatMonths(p.monthsNeeded)}.
+                    Zadaný termín je {formatMonths(goal.targetMonths)}, takže do něj chybí{' '}
+                    <strong>{czkMonthly(p.missingMonthly)}</strong>.
+                  </Callout>
+                ) : (
+                  <Callout tone="danger" pad="p-2 rounded-lg">
+                    Na tenhle cíl zatím nedáváte nic, takže se sám nenaspoří.
+                  </Callout>
+                )}
 
-                  {!alloc.achievable && (
-                    <div>
-                      <button
-                        onClick={() => setExpandedTips((prev) => toggleInSet(prev, goal.id))}
-                        className="text-sm text-brand hover:underline"
-                      >
-                        {expandedTips.has(goal.id) ? 'Skrýt doporučení' : 'Co s tím?'}
-                      </button>
-                      {expandedTips.has(goal.id) && (
-                        <Callout tone="brand" className="mt-2 space-y-1.5">
-                          {alloc.suggestedMonths !== undefined && alloc.suggestedMonths !== Infinity && (
-                            <p className="text-brand">
-                              <strong>Prodlužte horizont:</strong> pro dosažení tohoto cíle by stačilo {alloc.suggestedMonths} měsíců místo {months}.
-                            </p>
-                          )}
-                          {alloc.achievableAmount !== undefined && alloc.achievableAmount > 0 && (
-                            <p className="text-brand">
-                              <strong>Snižte cílovou částku:</strong> při vašem rozpočtu dosáhnete na {alloc.achievableAmount.toLocaleString('cs-CZ')} Kč v zadaném čase.
-                            </p>
-                          )}
+                {!p.achievable && (
+                  <div>
+                    <button
+                      onClick={() => setExpanded((prev) => {
+                        const next = new Set(prev);
+                        if (next.has(goal.id)) next.delete(goal.id); else next.add(goal.id);
+                        return next;
+                      })}
+                      className="text-sm text-brand hover:underline"
+                    >
+                      {expanded.has(goal.id) ? 'Skrýt doporučení' : 'Co s tím?'}
+                    </button>
+                    {expanded.has(goal.id) && (
+                      <Callout tone="brand" className="mt-2 space-y-1.5">
+                        {free >= STEP && (
                           <p className="text-brand">
-                            <strong>Přesuňte cíl níže v prioritách:</strong> uvolní se prostředky z vyšších cílů.
+                            <strong>Přidejte z volných peněz:</strong> volných je {czkMonthly(free)}
+                            {p.missingMonthly > 0 && p.missingMonthly <= free
+                              ? ', na termín by to stačilo.'
+                              : '.'}
                           </p>
-                        </Callout>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="text-sm text-ink-body">
-                    Doporučený nástroj: <span className="font-medium text-ink">{recommendInstrument(months)}</span>
+                        )}
+                        {given > 0 && Number.isFinite(p.monthsNeeded) && (
+                          <p className="text-brand">
+                            <strong>Prodlužte termín:</strong> s dnešní částkou by cíl vyšel
+                            za {formatMonths(p.monthsNeeded)}, zadáno máte {formatMonths(goal.targetMonths)}.
+                          </p>
+                        )}
+                        {p.reachableAmount > 0 && (
+                          <p className="text-brand">
+                            <strong>Snižte cílovou částku:</strong> do termínu naspoříte{' '}
+                            {czk(p.reachableAmount)}.
+                          </p>
+                        )}
+                        <p className="text-brand">
+                          <strong>Odložte cíl:</strong> v záložce Co kdyby ho jde vypnout
+                          z plánu a uvidíte, co to uvolní ostatním.
+                        </p>
+                      </Callout>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
 
-              {!isDeferred && chartMonths > 0 && (
+                <div className="text-sm text-ink-body">
+                  Doporučený nástroj: <span className="font-medium text-ink">{recommendInstrument(goal.targetMonths)}</span>
+                </div>
+              </div>
+
+              {chartMonths > 0 && (
                 <ResponsiveContainer width="100%" height={200}>
-                  <AreaChart data={Array.from({ length: chartMonths + 1 }, (_, m) => ({ month: m, savings: chartAllocation * m }))} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
+                  <AreaChart data={Array.from({ length: chartMonths + 1 }, (_, m) => ({ month: m, savings: given * m }))} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
                     <defs>
                       <linearGradient id={`goal-grad-${goal.id}`} x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={colors.primary} stopOpacity={0.3} />
@@ -355,7 +367,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
       </div>
 
       <button
-        onClick={addGoal}
+        onClick={() => onChangeGoals([...goals, newGoal()])}
         className="mt-4 px-4 py-2 text-sm text-brand border border-line rounded-lg hover:bg-tint-brand min-h-[44px]"
       >
         + Přidat další cíl

@@ -99,7 +99,31 @@ export function withExcludedExpenses(state: WizardState, excluded: Set<string>):
 // cíle se ukáže, jestli by na zbytek peníze stačily.
 export function withExcludedGoals(state: WizardState, excluded: Set<string>): WizardState {
   if (excluded.size === 0) return state;
-  return { ...state, goals: state.goals.filter((g) => !excluded.has(g)) };
+  const custom = (state.customGoals ?? []).filter((g) => isGoalActive(excluded, g.id));
+  // Když se odloží poslední vlastní cíl, nemá smysl držet skupinu „Vlastní
+  // cíle" zapnutou: hlásila by „žádný cíl jste nezadali", což není pravda.
+  const off = new Set(excluded);
+  if ((state.customGoals ?? []).length > 0 && custom.length === 0) off.add('other');
+  return {
+    ...state,
+    goals: state.goals.filter((g) => !off.has(g)),
+    customGoals: custom,
+  };
+}
+
+/**
+ * Je vlastní cíl součástí plánu?
+ *
+ * `other` vypíná celou skupinu, `other:<id>` jeden konkrétní cíl. Odkládání
+ * jednotlivého cíle bývalo jen v kartě cílů jako místní stav, takže se nikam
+ * nepromítlo: verdikt i rozpočet dál počítaly s cílem, který uživatel právě
+ * odložil. Teď je to vypnutá položka jako každá jiná a platí pro celý přehled.
+ *
+ * Používá se na dvou místech naráz (stav i alokace) a musí tam dát stejnou
+ * odpověď, jinak se pole cílů a pole částek rozejdou v indexech.
+ */
+export function isGoalActive(excluded: Set<string>, id: string): boolean {
+  return !excluded.has('other') && !excluded.has(`other:${id}`);
 }
 
 // Přebytek příjmu po odečtení zapnutých kategorií (odškrtnuté klíče se ignorují).

@@ -12,58 +12,45 @@ import {
   ownershipCosts,
 } from './mortgage';
 
-export interface GoalAllocation {
-  monthlyAllocation: number;
+/**
+ * Jak je na tom jeden vlastní cíl s částkou, kterou na něj uživatel dává.
+ *
+ * Dřív se místo tohohle rozděloval balík peněz mezi cíle podle pořadí
+ * (`allocateGoals`). Vedle toho ale stálo pole „kolik na tento cíl měsíčně
+ * dávám", které ten výpočet vůbec nebral v úvahu, takže na obrazovce stálo
+ * „dávám 14 667 Kč" a hned pod tím „na tento cíl odkládáte 33 334 Kč".
+ * Dvě různá pojetí téhož. Platí to, které uživatel skutečně ovládá:
+ * cíl je měsíční částka jako každý jiný výdaj a otázka zní, jestli s ní
+ * termín vyjde.
+ */
+export interface GoalProgress {
+  /** Kolik by cíl potřeboval měsíčně, aby vyšel v zadaném termínu. */
+  requiredMonthly: number;
+  /** Za jak dlouho na něj při zadané částce dosáhnete. */
   monthsNeeded: number;
+  /** Vyjde termín? */
   achievable: boolean;
-  remainingAfter: number;
-  suggestedMonths?: number;
-  achievableAmount?: number;
+  /** Kolik se při zadané částce stihne naspořit do zadaného termínu. */
+  reachableAmount: number;
+  /** Kolik měsíčně chybí do termínu. Nula, když vychází. */
+  missingMonthly: number;
 }
 
-export function allocateGoals(
-  goals: CustomGoal[],
-  monthlyDisposableAmount: number
-): GoalAllocation[] {
-  let remaining = Math.max(0, monthlyDisposableAmount);
-  const result: GoalAllocation[] = [];
-
-  for (let i = 0; i < goals.length; i++) {
-    const goal = goals[i];
-    const requiredMonthly = goal.targetMonths > 0
-      ? Math.ceil(goal.targetAmount / goal.targetMonths)
-      : Infinity;
-
-    if (remaining <= 0) {
-      result.push({
-        monthlyAllocation: 0,
-        monthsNeeded: Infinity,
-        achievable: false,
-        remainingAfter: 0,
-        suggestedMonths: undefined,
-        achievableAmount: 0,
-      });
-      continue;
-    }
-
-    const allocation = Math.min(remaining, requiredMonthly);
-    const monthsNeeded = allocation > 0 ? Math.ceil(goal.targetAmount / allocation) : Infinity;
-    const achievable = monthsNeeded <= goal.targetMonths;
-    const afterThis = Math.max(0, remaining - requiredMonthly);
-
-    result.push({
-      monthlyAllocation: allocation,
-      monthsNeeded,
-      achievable,
-      remainingAfter: afterThis,
-      suggestedMonths: !achievable && allocation > 0 ? monthsNeeded : undefined,
-      achievableAmount: !achievable ? allocation * goal.targetMonths : undefined,
-    });
-
-    remaining = afterThis;
-  }
-
-  return result;
+export function goalProgress(goal: CustomGoal, monthly: number): GoalProgress {
+  const given = Math.max(0, monthly);
+  const months = Math.max(0, goal.targetMonths);
+  const requiredMonthly = months > 0 ? Math.ceil(goal.targetAmount / months) : Infinity;
+  const monthsNeeded = given > 0 ? Math.ceil(goal.targetAmount / given) : Infinity;
+  const achievable = given > 0 && months > 0 && monthsNeeded <= months;
+  return {
+    requiredMonthly,
+    monthsNeeded,
+    achievable,
+    reachableAmount: given * months,
+    missingMonthly: achievable || requiredMonthly === Infinity
+      ? 0
+      : Math.max(0, requiredMonthly - given),
+  };
 }
 
 export interface InvestmentProjectionPoint {

@@ -37,10 +37,22 @@ describe('režim co kdyby', () => {
 
   it('vypnutí cíle uvolní jeho částku', () => {
     const a = allocs({ retirement: 5000, child: 2000, downPayment: 1000, custom: [500] });
-    expect(allocationsWithoutGoals(a, new Set(['retirement']))).toEqual({ ...a, retirement: 0 });
-    expect(allocationsWithoutGoals(a, new Set(['other']))).toEqual({ ...a, custom: [0] });
-    expect(allocationsWithoutGoals(a, new Set(['property']))).toEqual({ ...a, downPayment: 0 });
-    expect(allocationsWithoutGoals(a, new Set())).toEqual(a);
+    const g = [{ id: 'g1', name: 'Auto', targetAmount: 100000, targetMonths: 12 }];
+    expect(allocationsWithoutGoals(a, new Set(['retirement']), g)).toEqual({ ...a, retirement: 0 });
+    expect(allocationsWithoutGoals(a, new Set(['property']), g)).toEqual({ ...a, downPayment: 0 });
+    expect(allocationsWithoutGoals(a, new Set(), g)).toEqual(a);
+  });
+
+  it('odložený vlastní cíl z pole částek zmizí, ne aby se vynuloval', () => {
+    // `withExcludedGoals` odloží cíl ze seznamu, takže kdyby se tady jen
+    // nuloval, rozešly by se obě pole v indexech a částka by sedla na cizí cíl.
+    const a = allocs({ custom: [500, 900] });
+    const g = [
+      { id: 'g1', name: 'Auto', targetAmount: 100000, targetMonths: 12 },
+      { id: 'g2', name: 'Svatba', targetAmount: 200000, targetMonths: 24 },
+    ];
+    expect(allocationsWithoutGoals(a, new Set(['other:g1']), g).custom).toEqual([900]);
+    expect(allocationsWithoutGoals(a, new Set(['other']), g).custom).toEqual([]);
   });
 
   it('u splátky nad limit bank řekne, že škrtání výdajů nepomůže', () => {

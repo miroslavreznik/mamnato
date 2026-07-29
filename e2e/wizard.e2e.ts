@@ -91,7 +91,7 @@ test('výběr „Jiné" přidá krok vlastních cílů a název dorazí do výsl
   await page.getByPlaceholder(/Auto, dovolená, rezerva/).fill('Dovolená')
   await finish(page)
   await openTab(page, 'cile')
-  await expect(page.getByPlaceholder('např. Auto, dovolená...')).toHaveValue('Dovolená')
+  await expect(page.getByPlaceholder(/Auto, dovolená/)).toHaveValue('Dovolená')
 })
 
 test('číselné pole jde smazat a napsat bez nuly vepředu', async ({ page }) => {

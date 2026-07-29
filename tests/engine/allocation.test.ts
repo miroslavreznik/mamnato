@@ -93,3 +93,23 @@ describe('monthsToSaveAtAllocation', () => {
     expect(monthsToSaveAtAllocation(state, 0)).toBe(0);
   });
 });
+
+describe('rozdělení mezi vlastní cíle', () => {
+  it('součet nepřesáhne volné peníze ani při nedělitelném zbytku', () => {
+    // Zaokrouhlený podíl přestřeloval: ze 44 000 na tři cíle vycházelo
+    // 3 × 14 667 = 44 001 a v přehledu stálo „volných zbývá −1 Kč".
+    for (const count of [1, 2, 3, 7]) {
+      const state = makeState({
+        goals: ['other'],
+        customGoals: Array.from({ length: count }, (_, i) => ({
+          id: `g${i}`, name: `c${i}`, targetAmount: 100000, targetMonths: 12,
+        })),
+      });
+      const a = calculateDefaultAllocations(state);
+      const sum = a.custom.reduce((s, v) => s + v, 0);
+      expect(a.custom).toHaveLength(count);
+      expect(sum).toBeLessThanOrEqual(monthlyDisposable(state));
+      expect(a.custom.every((v) => v >= 0)).toBe(true);
+    }
+  });
+});

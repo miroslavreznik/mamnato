@@ -54,8 +54,8 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     [state, excluded, excludedGoals]
   );
   const adjustedAllocations = useMemo<GoalAllocations>(
-    () => allocationsWithoutGoals(allocations, excludedGoals),
-    [allocations, excludedGoals]
+    () => allocationsWithoutGoals(allocations, excludedGoals, state.customGoals ?? []),
+    [allocations, excludedGoals, state.customGoals]
   );
 
   const flowNow = useMemo(() => incomeFlow(adjustedState, adjustedAllocations, false), [adjustedState, adjustedAllocations]);
