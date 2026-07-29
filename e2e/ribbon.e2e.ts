@@ -124,6 +124,91 @@ test('schodkový úsek nese kromě barvy i vzorek', async ({ page }) => {
   expect(clip).toMatch(/^url\(#deficit-/)
 })
 
+/**
+ * Popisky se nesmějí překrývat.
+ *
+ * Vzniklo to z průchodu persony „pár, bydlení a dítě": bubliny „Koupě"
+ * a „Dítě" jsou rok od sebe a dosedly na sebe, text „Konec rodičovské" vytekl
+ * z pilulky ven a částka nejnižšího bodu ležela přes kroužek úchopu. Sazba
+ * se počítá z odhadu šířky písma, takže se to znovu rozejde tiše: nic
+ * nespadne, jen se to překryje.
+ */
+test('popisky na stuze se nepřekrývají', async ({ page }) => {
+  const num = (label: string) => page.getByRole('textbox', { name: label, exact: true })
+
+  await page.setViewportSize({ width: 1280, height: 900 })
+  await page.goto('/')
+  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByTestId('mode-couple').click()
+  await page.getByTestId('wizard-next').click()
+  await num('Čistý měsíční příjem: osoba 1').fill('48000')
+  await num('Čistý měsíční příjem: osoba 2').fill('36000')
+  await page.getByTestId('wizard-next').click()
+  await num('Nájem (bez energií a poplatků)').fill('18000')
+  await page.getByTestId('wizard-next').click()
+  await num('Celkové úspory').fill('900000')
+  await page.getByTestId('wizard-next').click()
+  await page.getByTestId('goal-property').click()
+  await page.getByTestId('goal-child').click()
+  await page.getByTestId('wizard-next').click()
+  await page.getByTestId('wizard-next').click()
+  await page.locator('#tab-cile').click()
+  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
+  await page.locator('#tab-souhrn').click()
+  await expect(page.getByTestId('results')).toBeVisible()
+
+  const geom = await page.evaluate(() => {
+    const svg = document.querySelector('#souhrn svg[aria-label^="Vývoj úspor"]')!
+    const box = (el: Element) => {
+      const b = (el as SVGGraphicsElement).getBBox()
+      return { x: b.x, y: b.y, w: b.width, h: b.height }
+    }
+    const groups = [...svg.querySelectorAll('g.ribbon-event')]
+    return {
+      events: groups
+        .filter((g) => g.querySelector('rect'))
+        .map((g) => ({
+          pill: box(g.querySelector('rect')!),
+          text: box(g.querySelector('text')!),
+          // Puntík a případný kroužek úchopu; průhledná dotyková plocha ne.
+          dots: [...g.querySelectorAll('circle')]
+            .filter((c) => c.getAttribute('fill') !== 'transparent')
+            .map((c) => ({
+              cx: Number(c.getAttribute('cx')),
+              cy: Number(c.getAttribute('cy')),
+              r: Number(c.getAttribute('r')),
+            })),
+        })),
+      lowest: groups.filter((g) => !g.querySelector('rect')).map((g) => box(g.querySelector('text')!))[0],
+    }
+  })
+
+  // Scénář musí být opravdu ten hustý, jinak test nic nehlídá.
+  expect(geom.events.length).toBeGreaterThanOrEqual(3)
+  expect(geom.lowest).toBeTruthy()
+
+  // Text se vejde do své pilulky.
+  for (const e of geom.events) {
+    expect(e.text.x, `text přetéká z pilulky: ${e.text.x} < ${e.pill.x}`).toBeGreaterThanOrEqual(e.pill.x - 0.5)
+    expect(e.text.x + e.text.w).toBeLessThanOrEqual(e.pill.x + e.pill.w + 0.5)
+  }
+
+  // Dvě pilulky se nepotkají.
+  const pills = geom.events.map((e) => e.pill).sort((a, b) => a.x - b.x)
+  for (let i = 1; i < pills.length; i++) {
+    expect(pills[i].x, 'pilulky se překrývají').toBeGreaterThanOrEqual(pills[i - 1].x + pills[i - 1].w)
+  }
+
+  // Popisek nejnižšího bodu nesmí ležet na žádném puntíku.
+  for (const e of geom.events) {
+    for (const d of e.dots) {
+      const apart = geom.lowest.x > d.cx + d.r || geom.lowest.x + geom.lowest.w < d.cx - d.r
+        || geom.lowest.y > d.cy + d.r || geom.lowest.y + geom.lowest.h < d.cy - d.r
+      expect(apart, `popisek nejnižšího bodu leží na puntíku ${d.cx};${d.cy}`).toBe(true)
+    }
+  }
+})
+
 test('bez schodku se vzorek nekreslí', async ({ page }) => {
   // Spoření na důchod rozpočet neprohne: peníze se jen přesunou, ze jmění
   // nezmizí, takže cesta zůstane celou dobu v klidu.

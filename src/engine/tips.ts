@@ -129,15 +129,18 @@ export function buildTips(
   const goalTips = goals.map(goalTip).filter((t): t is Tip => t !== null);
 
   // 5. Když nic nedrhne, radí se, co s volným prostorem.
+  //
+  // Jedna rada, ne dvě. Dřív se přidávaly obě naráz a u někoho, komu rozpočet
+  // vychází, ale rezervu nemá, vyšly obě o nouzovém fondu: „Vytvořte si
+  // nouzový fond na 3–6 měsíců výdajů" a hned pod tím „Držte si nouzový fond
+  // 3–6 měsíců výdajů". Dvakrát totéž jinými slovy vypadá, že si appka
+  // nečte, co sama napsala.
   if (tips.length === 0 && goalTips.length === 0) {
-    tips.push(
-      {
-        text: status === 'good'
-          ? 'Máte prostor: zvažte navýšení spoření nebo investování volné rezervy pro rychlejší růst.'
-          : 'Vytvořte si nouzový fond na 3–6 měsíců výdajů, dodá rozpočtu odolnost.',
-      },
-      { text: 'Držte si nouzový fond 3–6 měsíců výdajů pro nečekané situace.' }
-    );
+    tips.push({
+      text: status === 'good'
+        ? 'Máte prostor: zvažte navýšení spoření nebo investování volné rezervy pro rychlejší růst.'
+        : 'Vytvořte si nouzový fond na 3–6 měsíců výdajů, dodá rozpočtu odolnost.',
+    });
   }
 
   // Rodičovská: rada se liší podle toho, jestli na schodek máte z čeho brát.

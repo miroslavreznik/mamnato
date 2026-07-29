@@ -109,6 +109,24 @@ function findTightest(
     };
   }
 
+  // Úspory jen rostou a nejnižší bod je start. Říct „úspory klesnou na"
+  // by byla lež: nic neklesalo, jen se ještě nic nenaspořilo. Nejtěsnější
+  // je pak opravdu teď, a to je jiné sdělení než „někdy v budoucnu to bude
+  // zlé".
+  if (minCashMonth === 0) {
+    const runway = oneMonthOfExpenses > 0 ? minCash / oneMonthOfExpenses : Infinity;
+    return {
+      month: 0,
+      title: 'Nejtěsnější je teď',
+      explanation: minCash < oneMonthOfExpenses
+        ? `Úspory ${czk(Math.max(0, minCash))} nepokryjí ani měsíc nezbytných výdajů. `
+          + 'Odsud už jen rostou, ale do té doby rozpočet neunese nic nečekaného.'
+        : `Úspory ${czk(Math.max(0, minCash))} pokryjí ${formatMonths(runway)} nezbytných výdajů `
+          + 'a odsud už jen rostou.',
+      tension: minCash < oneMonthOfExpenses ? 'tense' : 'calm',
+    };
+  }
+
   if (minCash < oneMonthOfExpenses) {
     return {
       month: minCashMonth,

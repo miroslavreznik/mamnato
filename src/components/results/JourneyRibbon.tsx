@@ -191,8 +191,88 @@ export default function JourneyRibbon({
   const ticks = [];
   for (let m = 0; m <= horizonMonths; m += yearStep) ticks.push(m);
 
-  const named = events.filter((e) => e.key !== 'lowest');
+  const named = useMemo(() => events.filter((e) => e.key !== 'lowest'), [events]);
+
+  // Vodorovné rozestrkání bublin.
+  //
+  // Původně se bubliny při shluku posouvaly do druhého řádku pod sebe. Nešlo
+  // to: bublina je 19 vysoká, řádky se posouvaly o 18, takže u páru, který
+  // kupuje a rok nato čeká dítě, na sebe pořád dosedly. Zvětšit rozestup taky
+  // nejde, třetí řádek by už ležel na stuze.
+  //
+  // Nad stuhou je přitom místa dost do šířky. Bubliny proto zůstávají v jednom
+  // řádku a odsouvají se stranou tak, aby se jejich okraje nepotkaly. Že je
+  // bublina jinde než puntík, je vidět z vodicí čárky, která je spojuje.
+  //
+  // Šířka se odhaduje z délky textu, ne pevně: „Konec rodičovské" se do
+  // osmdesáti jednotek nevejde a text z pilulky vytekl na obě strany.
+  const bubbles = useMemo(() => {
+    // Odhad šířky písmene v `viewBox` jednotkách při fontSize 11 a tučném řezu.
+    const half = (label: string) => Math.max(42, label.length * 3.2 + 10);
+    const min = PAD.left;
+    const max = W - PAD.right;
+    const hs = named.map((e) => half(e.label));
+    const xs = named.map((e, i) => Math.min(Math.max(geom.xs(e.month), min + hs[i]), max - hs[i]));
+    // Zleva doprava odsuň každou bublinu za okraj té předchozí…
+    for (let i = 1; i < xs.length; i++) {
+      xs[i] = Math.max(xs[i], xs[i - 1] + hs[i - 1] + hs[i] + 6);
+    }
+    // …a když poslední vyjede z plochy, vrať je stejnou cestou zpět.
+    for (let i = xs.length - 1; i >= 0; i--) {
+      const limit = i === xs.length - 1
+        ? max - hs[i]
+        : xs[i + 1] - hs[i + 1] - hs[i] - 6;
+      xs[i] = Math.max(min + hs[i], Math.min(xs[i], limit));
+    }
+    return xs.map((x, i) => ({ x, half: hs[i] }));
+  }, [named, geom]);
+
   const lowest = events.find((e) => e.key === 'lowest');
+
+  // Popisek nejnižšího bodu se uhne, když u něj stojí puntík události.
+  // U páru s dítětem spadl nejnižší bod hned vedle něj a částka se četla
+  // přes kroužek úchopu. Uhýbá se na stranu od té události pryč.
+  const lowestLabel = useMemo(() => {
+    if (!lowest) return null;
+    const x = geom.xs(lowest.month);
+    const y = geom.ys(data.minCash);
+    // Poloviční šířka textu plus poloměr úchopu: pod tuhle vzdálenost se
+    // popisek s puntíkem opravdu potká.
+    const halfText = lowest.label.length * 2.7 + 6;
+    const min = PAD.left + halfText;
+    const max = W - PAD.right - halfText;
+    const home = Math.min(Math.max(x, min), max);
+
+    // Zakázané polohy středu textu, jedna kolem každého puntíku události.
+    //
+    // Uhnout jen od nejbližšího puntíku nestačí: u páru s dítětem se popisek
+    // odsunul od koupě a přistál přesně na kroužku dítěte. Hledá se proto
+    // nejbližší poloha, která nekoliduje se žádnou z nich; kandidáti jsou
+    // původní místo a okraje zakázaných úseků.
+    const blocked = named.map((e) => {
+      const ex = geom.xs(e.month);
+      return [ex - 18 - halfText, ex + 18 + halfText] as const;
+    });
+    const free = (t: number) => t >= min && t <= max && !blocked.some(([a, b]) => t > a && t < b);
+    const tx = [home, ...blocked.flat()]
+      .filter(free)
+      .sort((a, b) => Math.abs(a - x) - Math.abs(b - x))[0] ?? home;
+
+    return {
+      x,
+      y,
+      // Popisek patří pod bod, kdykoli se tam vejde nad osu. Nad bodem se
+      // totiž skoro vždy zvedá stuha a text se do ní opře; u rodiny bez koupě
+      // tak „Kč" leželo na stuze. Nahoru jde jen tehdy, když je bod tak
+      // nízko, že by se popisek pod ním tloukl s popiskem roku.
+      tx,
+      ty: y <= H - PAD.bottom - 16 ? y + 20 : y - 14,
+      // Konec vodicí čárky u bližší hrany textu, ne uprostřed něj: jinak
+      // čárka končí pod písmeny a vypadá jako přeškrtnutí.
+      edge: tx > x ? tx - halfText : tx + halfText,
+      shifted: Math.abs(tx - x) > 2,
+    };
+  }, [lowest, geom, data.minCash, named]);
 
   return (
     <svg
@@ -322,20 +402,19 @@ export default function JourneyRibbon({
       )}
 
       {/* Události: puntík na stuze, vodicí linka nahoru a bublina s názvem.
-          Bubliny se střídají ve dvou výškách, aby se u blízkých událostí
-          nepřekryly. */}
+          Bubliny jsou v jednom řádku a u blízkých událostí se rozestrkají
+          do stran. */}
       {named.map((e, i) => {
         const x = geom.xs(e.month);
-        // Bublina se u kraje posune dovnitř, aby nepřetekla viewBox.
-        const bx = Math.min(Math.max(x, PAD.left + 42), W - PAD.right - 42);
+        const { x: bx, half: bw } = bubbles[i];
         const y = geom.ys(points[Math.min(e.month, points.length - 1)].cash);
-        const labelY = 14 + (i % 2) * 16;
+        const labelY = 14;
         const movable = e.key === 'child' && !!onMoveChild;
         return (
           <g key={e.key} className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.2 + i * 0.12}s` }}>
             <line x1={x} x2={bx} y1={labelY + 8} y2={y - 9} stroke="var(--line-strong)" strokeWidth="1" />
             <rect
-              x={bx - 42} y={labelY - 9} width="84" height="19" rx="9"
+              x={bx - bw} y={labelY - 9} width={bw * 2} height="19" rx="9"
               fill="var(--card)" stroke="var(--line)"
             />
             <text x={bx} y={labelY + 4} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)">
@@ -391,22 +470,25 @@ export default function JourneyRibbon({
 
       {/* Nejnižší bod: menší puntík a popisek pod stuhou, aby nesoupeřil
           s událostmi. Je to údaj, ne událost. */}
-      {lowest && (
+      {lowest && lowestLabel && (
         <g className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.2 + named.length * 0.12}s` }}>
+          {/* Když popisek uhnul stranou, spojí ho s bodem čárka. Bez ní by
+              vypadal jako údaj k jinému místu na stuze. */}
+          {lowestLabel.shifted && (
+            <line
+              x1={lowestLabel.x} x2={lowestLabel.edge}
+              y1={lowestLabel.y} y2={lowestLabel.ty - 4}
+              stroke="var(--danger)" strokeWidth="1" strokeOpacity="0.4"
+            />
+          )}
           <circle
-            cx={geom.xs(lowest.month)}
-            cy={geom.ys(data.minCash)}
+            cx={lowestLabel.x}
+            cy={lowestLabel.y}
             r="5"
             fill="var(--card)" stroke="var(--danger)" strokeWidth="2.5"
           />
-          {/* Popisek jde nad bod, když je bod dole u osy: pod ním by se tloukl
-              s popiskem roku. U kraje se zároveň zarovná dovnitř, jinak text
-              přeteče viewBox a ořízne se. */}
           <text
-            x={Math.min(Math.max(geom.xs(lowest.month), PAD.left + 44), W - PAD.right - 44)}
-            y={geom.ys(data.minCash) > H - PAD.bottom - 34
-              ? geom.ys(data.minCash) - 14
-              : geom.ys(data.minCash) + 22}
+            x={lowestLabel.tx} y={lowestLabel.ty}
             textAnchor="middle" fontSize="11" fill="var(--danger)"
           >
             {lowest.label}

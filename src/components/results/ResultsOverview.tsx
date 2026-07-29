@@ -111,9 +111,17 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
         })(),
         {
           label: 'Rezerva po koupi vydrží',
-          tooltip: 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu, počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.',
+          tooltip: 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu, počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.'
+            + (downPaymentGap(state) > 0
+              ? ' Počítá se z dnešních úspor, tedy jako byste kupovali hned. Cesta vedle počítá s tím, že do koupě ještě něco naspoříte, proto tam vychází víc.'
+              : ''),
           value: runwayLabel,
           unit: 'měs.',
+          // Bez akontace se kupovat nedá, takže je to odpověď na „co kdybych
+          // koupil dnes". Cesta počítá s koupí až v okamžiku, kdy je na ni
+          // naspořeno, a dá jiné číslo. Dvě různá čísla o téže věci vedle sebe
+          // vypadají jako chyba, dokud se nenapíše, čeho se každé týká.
+          sub: downPaymentGap(state) > 0 ? 'kdybyste kupovali dnes' : undefined,
           tone: runwayTone,
           months: runway === Infinity ? 6 : runway,
         },
@@ -209,6 +217,16 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           data={journeyData}
           onMoveChild={state.goals.includes('child') ? setChildOffset : undefined}
         />
+        {/* Bez tohohle vypadá cesta u někoho, kdo na akontaci zatím nedosáhne,
+            jako klidná zelená čára, zatímco verdikt nad ní říká „zatím na to
+            nemáte". Ta čára je správně, jen kreslí život bez koupě; musí se
+            u ní říct proč. */}
+        {hasProperty && !journeyData.events.some((e) => e.key === 'purchase') && (
+          <p className="mt-3 text-sm text-caution">
+            Koupě na cestě není: na akontaci v horizontu deseti let zatím
+            nedosáhnete, takže cesta ukazuje život bez ní.
+          </p>
+        )}
       </div>
 
       {/* Stav jednotlivých cílů */}

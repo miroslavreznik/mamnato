@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Stav ke commitu `29eecb0`. Testy: 313 jednotkových, 44 e2e.
+Stav ke commitu `29eecb0`. Testy: 318 jednotkových, 54 e2e.
 
 ---
 
@@ -93,7 +93,7 @@ Obsah vychází zhruba na 10,5 stránky A4.
 
 ## B. Co se ještě neudělalo
 
-### B1. Tři persony
+### ~~B1. Tři persony~~ (hotovo)
 
 Redesign změnil obrazovky, ne výpočty, ale změnil i to, **co je vidět první**
 a co je schované. To se ověřuje průchodem, ne testem.
@@ -103,6 +103,38 @@ a co je schované. To se ověřuje průchodem, ne testem.
 | Jednotlivec, nájem, bez cílů | Prázdný stav, verdikt bez bydlení, náhled v průvodci od prvního kroku |
 | Pár, bydlení + dítě + rodičovská | Stuha se všemi událostmi, uchopitelný puntík, nejtěsnější místo, Co kdyby |
 | Rodina, schodek | Červená stuha, verdikt „nevychází", že rady odkazují na místa, kam se dá kliknout |
+
+Průchody jsou zapsané v `e2e/persony.e2e.ts`, aby se daly zopakovat. Nic
+z nich netvrdí, že je obrazovka správně; jen ji projdou a udělají otisk,
+posuzuje se okem.
+
+**Prázdný stav je nedosažitelný.** Krok Cíle nepustí dál, dokud není vybraný
+aspoň jeden cíl, takže „jednotlivec bez cílů" v appce vzniknout nemůže.
+Persona 1 proto míří na nejbližší skutečnou variantu, „bydlení neřeším".
+
+Našlo se šest věcí, všechny opravené:
+
+1. **Dvě rady říkaly totéž.** Rezerva na horší časy měla v `tips.ts` dva
+   samostatné tipy; u jednotlivce bez bydlení vyšly hned pod sebou.
+2. **Nejtěsnější místo v měsíci nula lhalo.** Text tvrdil, že úspory klesly,
+   i když od začátku jen rostly. Nula je zvláštní případ: není to propad,
+   ale výchozí stav, a formuluje se jinak.
+3. **Dlaždice rezervy si odporovala se svou nápovědou** („0 měs." proti
+   „87 815 Kč, což jsou 3 měsíce"). Dlaždice počítá rezervu po zaplacení
+   akontace, nápověda před ní; chybělo to říct.
+4. **Zmizela poznámka „koupě je za horizontem".** Když se na akontaci
+   v deseti letech nedosáhne, cesta ukazuje život bez koupě a neřekne proč.
+5. **Bubliny událostí se překrývaly.** Koupě a dítě rok po ní skončily
+   na sobě. Řešilo se to střídáním dvou řádků, jenže rozestup řádků byl
+   menší než výška bubliny. Nově se bubliny rozestrkají do stran a šířka
+   pilulky se odvozuje od délky textu; „Konec rodičovské" se do pevných
+   84 jednotek nevešel a text z pilulky vytekl.
+6. **Částka nejnižšího bodu ležela na kroužku úchopu.** Uhýbá se stranou,
+   a to na tu, kde je místo, s ohledem na všechny puntíky, ne jen nejbližší.
+
+Body 5 a 6 hlídá nový test `popisky na stuze se nepřekrývají` v `ribbon.e2e.ts`.
+Šířky se počítají z odhadu šířky písma, takže se to jinak rozejde tiše:
+nic nespadne, jen se to překryje.
 
 ### B2. WebKit
 
@@ -130,7 +162,7 @@ Pořadí je zvolené tak, aby nejlevnější kontrola padla první.
 ```bash
 npx tsc -b          # typy; POZOR: tsc --noEmit nekontroluje nic
 npm run lint
-npm run test        # 313 jednotkových testů
+npm run test        # 318 jednotkových testů
 npm run build       # ověří i CSP hlavičku
 ```
 
@@ -145,7 +177,8 @@ Co které soubory hlídají:
 | Soubor | Co ověřuje |
 |---|---|
 | `wizard.e2e.ts` | průchod appkou, sdílení, tisk dat, průběžný náhled |
-| `ribbon.e2e.ts` | pohyb, úchop, dotykový cíl 44 px, tisk a vypnutý pohyb |
+| `ribbon.e2e.ts` | pohyb, úchop, dotykový cíl 44 px, tisk, vypnutý pohyb, překryv popisků |
+| `persony.e2e.ts` | průchod třemi scénáři, otisky k posouzení okem |
 | `cokdyby.e2e.ts` | duch původního scénáře, delta, izolace od Cesty |
 | `tooltip.e2e.ts` | nápověda je čitelná, ne jen otevřená |
 | `kontrast.e2e.ts` | nikde nesplývá text s pozadím, oba režimy |
@@ -167,7 +200,8 @@ k „změnilo se přesně tohle": otisk před zásahem, otisk po něm, rozdíl.
 
 ### C3. Ruční, na závěr
 
-1. **Tři persony** podle tabulky v B1, v obou režimech.
+1. **Tři persony** podle tabulky v B1. Hotovo ve světlém režimu; tmavý zatím
+   projitý není, hlídá ho jen `kontrast.e2e.ts`, což je kontrast, ne rozvržení.
 2. **Tisk do PDF** ze skutečného prohlížeče, ne jen z Playwrightu.
 3. **Klávesnice**: projít celou appku tabulátorem, ověřit pořadí, fokusový
    prstenec a že se dá ovládat stuha i posuvníky.
@@ -176,7 +210,7 @@ k „změnilo se přesně tohle": otisk před zásahem, otisk po něm, rozdíl.
 
 ### C4. Co se neověřuje a proč
 
-- Výpočty. Ty hlídá 313 jednotkových testů a redesign se jich nedotkl.
+- Výpočty. Ty hlídá 318 jednotkových testů a redesign se jich nedotkl.
 - Rychlost. Appka počítá desítky čísel nad polem 120 měsíců; není co měřit.
 - Prohlížeče starší než dva roky. `@theme inline`, `clamp()` a
   `ResizeObserver` jsou podmínka, ne volba.

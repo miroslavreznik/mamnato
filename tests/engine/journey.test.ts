@@ -94,3 +94,24 @@ describe('journey', () => {
     expect(j.tension).toHaveLength(j.points.length);
   });
 });
+
+describe('journey: nejtěsnější místo na startu', () => {
+  it('neříká „úspory klesnou", když jen rostou', () => {
+    // Bez událostí úspory od začátku jen přibývají, takže nejnižší bod je
+    // start. Věta o poklesu by tvrdila něco, co se nestalo.
+    const j = journey(makeState({ savings: { totalSavings: 20000 } }), { months: 60 });
+    expect(j.minCashMonth).toBe(0);
+    expect(j.tightest?.title).toBe('Nejtěsnější je teď');
+    expect(j.tightest?.explanation).not.toMatch(/klesn/);
+    expect(j.tightest?.explanation).toMatch(/rostou/);
+  });
+
+  it('rozliší, jestli startovní rezerva stačí na měsíc výdajů', () => {
+    const chudy = journey(makeState({ savings: { totalSavings: 1000 } }), { months: 24 });
+    expect(chudy.tightest?.tension).toBe('tense');
+
+    const bohaty = journey(makeState({ savings: { totalSavings: 900000 } }), { months: 24 });
+    expect(bohaty.tightest?.tension).toBe('calm');
+    expect(bohaty.tightest?.title).toBe('Nejtěsnější je teď');
+  });
+});
