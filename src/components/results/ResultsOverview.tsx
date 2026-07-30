@@ -13,6 +13,7 @@ import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
 import JourneyRibbon from './JourneyRibbon';
+import NextStepCard from './NextStepCard';
 import JourneyRange, { JourneyRangeNote } from './JourneyRange';
 import TightestPoint from './TightestPoint';
 import HeroNumber from '../ui/HeroNumber';
@@ -213,6 +214,11 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           </div>
         )}
       </div>
+
+      {/* „A co teď": jeden krok s částkou a termínem, hned pod odpovědí.
+          Druhá otázka po „mám na to" je „tak co mám udělat", a na tu přehled
+          dosud odpovídal jen seznamem možností v pravém sloupci. */}
+      <NextStepCard state={state} allocations={allocations} onOpenSection={onOpenSection} />
 
       {/* Časová osa: život až do důchodu jako jedna stuha. Hrdina obrazovky. */}
       <div className="rounded-2xl bg-sunken p-5 sm:p-6">

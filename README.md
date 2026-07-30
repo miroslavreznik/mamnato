@@ -42,6 +42,7 @@ Přehled je rozdělený do **záložek**, na širokém okně jako sloupec vlevo,
 **Většinu čísel jde přepsat přímo ve výsledcích** a přehled se přepočítá včetně odpovědi nahoře: výdaje, akontace, sazba, částky u cílů, délka rodičovské i termín narození dítěte na časové ose.
 
 #### Přehled
+- **A co teď**: jeden konkrétní krok s částkou a termínem („Dospořte akontaci, chybí 220 000 Kč. 28 500 Kč měsíčně, hotovo v březnu 2027"), vybraný v pořadí, ve kterém se ty věci musí řešit: nevyrovnaný rozpočet, splátka nad limitem banky, akontace, nouzová rezerva, důchod
 - **Odpověď jako první**: *Máte na to* / *Máte na to, ale bude to napjaté* / *Zatím na to nemáte, ale je to o koupi, ne o dnešku* / *Zatím na to nemáte*, s jednou větou proč a s rozpadem na dílčí otázky („Dosáhnete na vlastní bydlení?", „Zbyde vám pak na zbytek?")
 - **Časová osa** jako jedna stuha od dneška do důchodu: měsíc po měsíci přes spoření na akontaci, koupi (pokles o akontaci, nájem → hypotéka a náklady na vlastnictví), narození dítěte (náklady dle věku), rodičovskou a **doplacení hypotéky**. Barví se podle napětí rozpočtu, ne podle výše úspor, takže rok se schodkem je vidět dřív, než peníze dojdou. Události jsou na ní pojmenované, termínem narození dítěte jde táhnout.
 - **Výřez osy** (10 let / 20 let / celý plán) pro ty, koho zajímají nejbližší roky zblízka; co zůstalo za výřezem, se dopíše větou pod grafem
@@ -153,6 +154,7 @@ src/
 │   ├── rateGuidance.ts  LTV pásma a orientační přirážky bank k sazbě
 │   ├── purchaseCosts.ts jednorázové náklady při koupi
 │   ├── downPayment.ts   rozvaha nad akontací: bezpečné maximum, cena i alternativa
+│   ├── nextStep.ts      „a co teď": jeden krok s částkou a termínem
 │   ├── renovation.ts    rekonstrukce a souběh nájmu s úrokem
 │   ├── taxRelief.ts     odpočet úroků a daňové zvýhodnění na dítě
 │   ├── wealthTimeline.ts vývoj úspor přes plánované události, horizont plánu
@@ -203,9 +205,9 @@ npm run test:watch # testy v watch režimu
 
 ## Testy a kontrola kvality
 
-Výpočetní jádro je pokryté unit testy (Vitest), **374 testů ve 33 souborech** pokrývá cash flow, hypotéku, sazby podle LTV, úspory a důchodovou projekci, časovou osu, scénáře, souhrn a verdikt, náklady na dítě, rodičovskou, daňové úlevy, rozpad zbytných výdajů, formátování i validaci uloženého stavu.
+Výpočetní jádro je pokryté unit testy (Vitest), **381 testů ve 34 souborech** pokrývá cash flow, hypotéku, sazby podle LTV, úspory a důchodovou projekci, časovou osu, scénáře, souhrn a verdikt, náklady na dítě, rodičovskou, daňové úlevy, rozpad zbytných výdajů, formátování i validaci uloženého stavu.
 
-Průchod aplikací hlídá **68 e2e testů (Playwright)** v Chromiu i ve WebKitu (jádro Safari): celý průvodce, dynamické přepočty, editace výdajů ve výsledcích, časová osa a její výřez, „Co kdyby", odkládání cílů, kontrast textu ve světlém i tmavém režimu, ovládání klávesnicí, tisk, záchranná obrazovka při chybě a sdílení odkazem.
+Průchod aplikací hlídá **70 e2e testů (Playwright)** v Chromiu i ve WebKitu (jádro Safari): celý průvodce, dynamické přepočty, editace výdajů ve výsledcích, časová osa a její výřez, „Co kdyby", odkládání cílů, kontrast textu ve světlém i tmavém režimu, ovládání klávesnicí, tisk, záchranná obrazovka při chybě a sdílení odkazem.
 
 Dvě sady se schválně přeskakují a pouštějí se ručně, protože nic netvrdí a slouží k posouzení okem: pixelové porovnání (`VISUAL=1`) a otisky deseti person (`PERSONY=1`).
 

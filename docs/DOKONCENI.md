@@ -8,7 +8,7 @@ patří sem, ne do commit message, kterou nikdo znovu nenajde.
 Aktuální popis toho, co appka umí, je v `README.md`; pravidla pro práci
 s kódem v `CLAUDE.md`.
 
-Testy: 374 jednotkových, 68 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 381 jednotkových, 70 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -863,3 +863,47 @@ jedno pole a chtěl zpátky, musel se proklikat zbytkem kroků. Tlačítko
 dostane jen ten, kdo z výsledků přišel; kdo průvodce teprve vyplňuje, žádný
 přehled ještě nemá. Stav se ukládá po každé změně, takže přehled je po
 návratu aktuální.
+
+---
+
+## B18. Grafy na mobilu a „a co teď"
+
+**Stuha byla na telefonu nečitelná.** `viewBox` měl pevných 700×250 a SVG se
+škálovalo na šířku rodiče: na desktopu vyšla jednotka na 1,26 px, na mobilu
+na 0,5 px. Text psaný na 11 jednotek se tak vykreslil jednou jako 14 px
+a podruhé jako 5 px, popisky událostí i částky byly na telefonu k nepřečtení
+a graf sám jen 125 px vysoký.
+
+Škálovat text zpětně (`fontSize / scale`) by šlo, ale musely by se tak ošetřit
+i tloušťky čar, poloměry puntíků, výšky pilulek a všechna odsazení, tedy skoro
+každé číslo v souboru. `viewBox` se proto řídí naměřenou šířkou a **jedna
+jednotka je vždy jeden pixel**; výška má spodní mez 200, aby z grafu na mobilu
+nebyl proužek. Popisky roků navíc nově řídí šířka, ne jen délka horizontu:
+letopočet potřebuje kolem 38 px, takže se na telefonu kreslí po deseti letech
+místo po pěti.
+
+Vyplavalo u toho, že **popisky braly pointer události**. Text „nejníž
+525 024 Kč" ležel přes úchop dítěte a chytal ho celou svou šířkou, takže se
+s puntíkem nedalo hýbat. Bublina, vodicí čára, popisek nejnižšího bodu i roky
+na ose jsou teď `pointer-events: none`; interaktivní je jen úchop.
+
+**Karta „A co teď"** je jeden krok s částkou a termínem, hned pod odpovědí.
+Schválně to není seznam: rady „co můžete udělat" v pravém sloupci zůstávají,
+ale seznam možností není úkol, a kdo si má vybrat, odejde bez rozhodnutí.
+Pořadí je dané tím, v jakém se ty věci musí řešit: nevyrovnaný rozpočet →
+splátka, na kterou banka nepůjčí → akontace → nouzová rezerva → důchod →
+peníze ležící ladem. Splátka je před akontací proto, že spořit na akontaci
+k ceně, na kterou banka nepůjčí, je práce nazmar; akontace je před rezervou
+proto, že je to aktivní spořicí cíl, a rezerva po koupi se k ní připočte ve
+vysvětlení, ať se na ni nezapomene.
+
+Věta neopakuje částku, kterou karta sází velkým písmem, a termín je datum
+(„v březnu 2027"), ne počet měsíců: „za 41 měsíců" si nikdo nepřevede, datum
+si zapíše do kalendáře.
+
+### Co se u toho našlo
+
+Test tažení puntíkem začal padat, ale ne kvůli `viewBox`. `boundingBox()`
+vrací souřadnice v dokumentu, kdežto myš se hýbe v okně, a přidáním karty
+„A co teď" se stuha posunula pod ohyb. Klik dopadl jinam. Test se nově
+odscrolluje; appka byla v pořádku.

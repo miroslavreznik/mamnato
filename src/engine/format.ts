@@ -87,3 +87,24 @@ export function formatMonths(months: number, short = false): string {
 export function endSentence(text: string): string {
   return /[.!?…]$/.test(text.trimEnd()) ? text.trimEnd() : `${text.trimEnd()}.`;
 }
+
+const MONTHS_CS = [
+  'lednu', 'únoru', 'březnu', 'dubnu', 'květnu', 'červnu',
+  'červenci', 'srpnu', 'září', 'říjnu', 'listopadu', 'prosinci',
+] as const;
+
+/**
+ * Kdy to bude, ve tvaru do věty: „v květnu 2029".
+ *
+ * Termín se čte líp než počet měsíců: „za 41 měsíců" si nikdo nepřevede,
+ * „v květnu 2029" si zapíše do kalendáře. Šestý pád proto, že se to vždycky
+ * používá po předložce „v".
+ */
+export function monthYearIn(monthsFromNow: number): string {
+  if (!isFinite(monthsFromNow)) return '';
+  const now = new Date();
+  const target = new Date(now.getFullYear(), now.getMonth() + Math.max(0, Math.round(monthsFromNow)), 1);
+  // Včetně předložky: všechny české měsíce ji mají v šestém pádě „v",
+  // žádný nevyžaduje „ve", takže se to nemusí rozlišovat.
+  return `v ${MONTHS_CS[target.getMonth()]} ${target.getFullYear()}`;
+}

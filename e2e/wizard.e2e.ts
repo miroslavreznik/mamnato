@@ -857,3 +857,47 @@ test('kdo průvodce teprve vyplňuje, návrat na přehled nevidí', async ({ pag
   await start(page)
   await expect(page.getByTestId('wizard-back-to-results')).toHaveCount(0)
 })
+
+test('„A co teď" dá jeden krok s částkou a termínem', async ({ page }) => {
+  // Přehled odpovídal na „mám na to", ale ne na „co s tím teď". Rady v pravém
+  // sloupci jsou možnosti k promyšlení, ne úkol.
+  await start(page)
+  await next(page) // → Příjmy
+  await page.getByRole('textbox', { name: 'Můj věk', exact: true }).fill('31')
+  await page.getByRole('textbox', { name: 'Můj čistý měsíční příjem', exact: true }).fill('70000')
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await page.getByRole('textbox', { name: 'Celkové úspory', exact: true }).fill('400000')
+  await next(page) // → Cíle
+  await pickGoal(page, 'property')
+  await next(page) // → Vlastní bydlení
+  await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('6000000')
+  await finish(page)
+  await expectResults(page)
+
+  const card = page.locator('#souhrn').getByText('A co teď').locator('..')
+  await expect(card).toBeVisible()
+  // Chybí akontace, takže krok je o ní a nese měsíční částku i termín.
+  await expect(card).toContainText('akontaci')
+  await expect(card).toContainText('odkládat měsíčně')
+  // `\w` v JS neumí česká písmena bez unicode escapes, proto `\S`.
+  await expect(card).toContainText(/hotovo v \S+ 20\d\d/)
+
+  // Tlačítko vede na místo, kde se to nastavuje.
+  await card.getByRole('button', { name: /Nastavit odkládání/ }).click()
+  await expect(page.locator('#tab-bydleni')).toHaveAttribute('aria-selected', 'true')
+})
+
+test('bez rezervy je na řadě rezerva, ne cíle', async ({ page }) => {
+  await start(page)
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await page.getByRole('textbox', { name: 'Celkové úspory', exact: true }).fill('10000')
+  await next(page) // → Cíle
+  await pickGoal(page, 'retirement')
+  await finish(page)
+
+  const card = page.locator('#souhrn').getByText('A co teď').locator('..')
+  await expect(card).toContainText('nouzovou rezervu')
+})

@@ -23,8 +23,27 @@ import { czk, formatMonths } from '../../engine/format';
  * ne od rem.
  */
 
-const W = 700;
-const H = 250;
+/**
+ * Rozměry `viewBox` se řídí skutečnou šířkou, takže **jedna jednotka je vždy
+ * jeden pixel**.
+ *
+ * Dřív tu stálo pevných 700×250 a SVG se škálovalo na šířku rodiče. Na
+ * desktopu vyšla jednotka na 1,26 px, na mobilu na 0,5 px, takže text psaný
+ * na 11 jednotek se vykreslil jednou jako 14 px a podruhé jako 5 px. Popisky
+ * událostí i částky byly na telefonu nečitelné a graf sám jen 125 px vysoký.
+ *
+ * Škálovat text zpětně (`fontSize / scale`) by šlo, ale musely by se tak
+ * ošetřit i tloušťky čar, poloměry puntíků, výšky pilulek a všechny odsazení,
+ * tedy skoro každé číslo v souboru. Přepočítat viewBox je jednodušší i
+ * poctivější: velikosti pak znamenají to, co je v nich napsané.
+ */
+const MIN_W = 300;
+const MAX_W = 900;
+/** Poměr stran. Na mobilu by z něj byl proužek, proto spodní mez výšky. */
+const RATIO = 0.36;
+const MIN_H = 200;
+const MAX_H = 260;
+
 const PAD = { top: 34, right: 16, bottom: 30, left: 16 };
 
 const TENSION_VAR: Record<Tension, string> = {
@@ -90,24 +109,23 @@ export default function JourneyRibbon({
   const { points, tension, events } = inView;
   const svgRef = useRef<SVGSVGElement>(null);
 
-  // Poměr mezi jednotkami `viewBox` a skutečnými pixely. Potřebuje ho dotyková
-  // plocha úchopu: pevný poloměr je na desktopu jiný počet pixelů než na
-  // mobilu, kde je SVG užší, takže by pravidlo o 44px cíli splnil jen na jedné
-  // šířce okna.
-  const [scale, setScale] = useState(1);
+  // Skutečná šířka v pixelech. Z ní je `viewBox`, takže se nic nepřeškáluje
+  // a rozměry uvnitř znamenají pixely.
+  const [W, setW] = useState(700);
   useEffect(() => {
     const el = svgRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
       const w = entry.contentRect.width;
-      if (w > 0) setScale(w / W);
+      if (w > 0) setW(Math.round(Math.min(MAX_W, Math.max(MIN_W, w))));
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
+  const H = Math.round(Math.min(MAX_H, Math.max(MIN_H, W * RATIO)));
   // 23, ne 22: přesný průměr 44 se zaokrouhlením rozměru elementu srazí těsně
   // pod hranici (naměřeno 43,996 px). Pár desetin navíc to drží nad ní.
-  const hitRadius = 23 / scale;
+  const hitRadius = 23;
 
   // Bod, na který uživatel ukazuje. Kreslí se u něj vodicí linka a částka.
   const [hover, setHover] = useState<number | null>(null);
@@ -120,7 +138,7 @@ export default function JourneyRibbon({
     const x = ((clientX - box.left) / box.width) * W;
     const t = (x - PAD.left) / (W - PAD.left - PAD.right);
     return Math.round(Math.min(1, Math.max(0, t)) * horizonMonths);
-  }, [horizonMonths]);
+  }, [horizonMonths, W]);
 
   const clampChild = useCallback(
     (m: number) => Math.min(childRange.max, Math.max(childRange.min, m)),
@@ -205,15 +223,21 @@ export default function JourneyRibbon({
       .map((r) => ({ from: xs(r.from * horizonMonths), to: xs(r.to * horizonMonths) }));
 
     return { xs, ys, path, fill, stops, lo, ghostPath, deficitRanges };
-  }, [points, tension, horizonMonths, inView.ghostPoints]);
+  }, [points, tension, horizonMonths, inView.ghostPoints, W, H]);
 
-  // Roky na ose. Krok se řídí délkou horizontu, ať se popisky nelepí: přes
-  // dvacet let by jich po dvou letech bylo na sedmi stech jednotkách šířky
-  // sedmnáct a slily by se v pruh.
-  const yearStep = horizonMonths > 240 ? 60 : horizonMonths > 60 ? 24 : 12;
+  // Roky na ose. Krok se řídí tím, kolik se jich na danou šířku vejde, ne jen
+  // délkou horizontu: letopočet potřebuje kolem osmatřiceti pixelů i s mezerou
+  // a na telefonu je plochy třetina proti desktopu. Dokud se počítalo jen
+  // z horizontu, mačkalo se osm letopočtů do tří set pixelů.
   const thisYear = new Date().getFullYear();
-  const ticks = [];
-  for (let m = 0; m <= horizonMonths; m += yearStep) ticks.push(m);
+  const ticks = useMemo(() => {
+    const usable = W - PAD.left - PAD.right;
+    const fits = Math.max(2, Math.floor(usable / 38));
+    const step = [12, 24, 60, 120].find((s) => horizonMonths / s + 1 <= fits) ?? 120;
+    const out: number[] = [];
+    for (let m = 0; m <= horizonMonths; m += step) out.push(m);
+    return out;
+  }, [horizonMonths, W]);
 
   const named = useMemo(() => events.filter((e) => e.key !== 'lowest'), [events]);
 
@@ -254,7 +278,7 @@ export default function JourneyRibbon({
       xs[i] = Math.max(min + hs[i], Math.min(xs[i], limit));
     }
     return xs.map((x, i) => ({ x, half: hs[i] }));
-  }, [named, geom]);
+  }, [named, geom, W]);
 
   const lowest = events.find((e) => e.key === 'lowest');
 
@@ -333,7 +357,7 @@ export default function JourneyRibbon({
       edge: best.tx > x ? best.tx - halfText : best.tx + halfText,
       shifted: Math.abs(best.tx - x) > 2,
     };
-  }, [lowest, geom, data.minCash, named, points, horizonMonths]);
+  }, [lowest, geom, data.minCash, named, points, horizonMonths, W, H]);
 
   return (
     <svg
@@ -379,6 +403,7 @@ export default function JourneyRibbon({
           key={m}
           x={geom.xs(m)} y={H - PAD.bottom + 24}
           textAnchor="middle" fontSize="11" fill="var(--ink-muted)"
+          pointerEvents="none"
         >
           {thisYear + m / 12}
         </text>
@@ -468,22 +493,27 @@ export default function JourneyRibbon({
                 události popisek patří; teprve nad ním se odbočí k bublině.
                 Samotná úhlopříčka od puntíku u levého okraje k bublině o dvě
                 stě jednotek dál neukazovala na nic. */}
-            <path
-              /* Rameno leží pod bublinou, ale nikdy nad puntíkem: u události
-                 na samém vrcholu křivky by čára jinak nejdřív klesla a pak
-                 se vrátila nahoru. */
-              d={`M ${x} ${y - 9} L ${x} ${Math.min(labelY + 20, y - 9)} L ${bx} ${labelY + 9}`}
-              fill="none"
-              stroke="var(--line-strong)"
-              strokeWidth="1"
-            />
-            <rect
-              x={bx - bw} y={labelY - 9} width={bw * 2} height="19" rx="9"
-              fill="var(--card)" stroke="var(--line)"
-            />
-            <text x={bx} y={labelY + 4} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)">
-              {e.label}
-            </text>
+            {/* Bublina, čára i text jsou popisek. Kdyby braly pointer
+                události, přebily by úchop sousední události, který pod nimi
+                leží; `<text>` je na to nejhorší, chytá celou svou šířku. */}
+            <g pointerEvents="none">
+              <path
+                /* Rameno leží pod bublinou, ale nikdy nad puntíkem: u události
+                   na samém vrcholu křivky by čára jinak nejdřív klesla a pak
+                   se vrátila nahoru. */
+                d={`M ${x} ${y - 9} L ${x} ${Math.min(labelY + 20, y - 9)} L ${bx} ${labelY + 9}`}
+                fill="none"
+                stroke="var(--line-strong)"
+                strokeWidth="1"
+              />
+              <rect
+                x={bx - bw} y={labelY - 9} width={bw * 2} height="19" rx="9"
+                fill="var(--card)" stroke="var(--line)"
+              />
+              <text x={bx} y={labelY + 4} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)">
+                {e.label}
+              </text>
+            </g>
             {movable && (
               <>
                 {/* Přerušovaný kroužek je jediný signál „dá se s tím hýbat".
@@ -534,8 +564,12 @@ export default function JourneyRibbon({
 
       {/* Nejnižší bod: menší puntík a popisek pod stuhou, aby nesoupeřil
           s událostmi. Je to údaj, ne událost. */}
+      {/* `pointerEvents="none"`: je to popisek, ne ovládací prvek. Bez toho
+          text „nejníž 525 024 Kč" ležel přes úchop dítěte a bral mu kliknutí,
+          takže se s puntíkem nedalo hýbat. Chytal ho `<text>`, který je
+          neviditelně široký přes celou svou délku. */}
       {lowest && lowestLabel && (
-        <g className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.0 + named.length * 0.08}s` }}>
+        <g pointerEvents="none" className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.0 + named.length * 0.08}s` }}>
           {/* Když popisek uhnul stranou, spojí ho s bodem čárka. Bez ní by
               vypadal jako údaj k jinému místu na stuze. */}
           {lowestLabel.shifted && (

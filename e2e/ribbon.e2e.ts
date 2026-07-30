@@ -74,6 +74,10 @@ test('puntík dítěte jde posunout klávesnicí a hlásí hodnotu česky', asyn
 test('tažením se puntík dítěte posune po ose', async ({ page }) => {
   await toResults(page, 'child')
   const handle = childHandle(page)
+  // `boundingBox()` vrací souřadnice v dokumentu, ale myš se hýbe v okně:
+  // dokud je stuha pod ohybem, klik dopadne úplně jinam. Nad stuhou přibyla
+  // karta „A co teď", takže se to začalo dít.
+  await handle.scrollIntoViewIfNeeded()
   const before = await handle.getAttribute('aria-valuenow')
 
   const box = (await handle.boundingBox())!
@@ -93,9 +97,9 @@ test('úchop dostane jen událost, se kterou opravdu jde hýbat', async ({ page 
   await expect(page.getByRole('slider')).toHaveCount(0)
 })
 
-// Stuha má pevný viewBox, takže se jednotky uvnitř škálují podle šířky okna.
-// Poloměr úchopu se proto přepočítává; napevno zadaná hodnota by pravidlo
-// o 44px cíli splnila jen na jedné šířce.
+// `viewBox` stuhy se řídí skutečnou šířkou, takže jedna jednotka je jeden
+// pixel a poloměr úchopu je prostě 23. Dokud byl viewBox pevný, musel se
+// přepočítávat, jinak by pravidlo o 44px cíli platilo jen na jedné šířce.
 //
 // Každá šířka je vlastní test, ne cyklus v jednom: po prvním průchodu je
 // v localStorage uložený stav a uvítací obrazovka pak nabízí „Pokračovat"
