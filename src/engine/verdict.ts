@@ -191,6 +191,10 @@ function buildAnswer(
   // „na cíl Bydlení a Důchod" je dva cíle v jednotném čísle. Skloňuje se to
   // podle počtu, ne podle toho, jak se věta psala.
   const goalWord = (labels: string[]) => (labels.length === 1 ? 'cíl' : 'cíle');
+  // Totéž ve druhém pádu, po předložce „u". Jednotné číslo se jinak četlo
+  // „Podrobnosti najdete u cíl níže" a množné „u cíle níže", tedy obojí
+  // špatně; `goalWord` je psaný pro „na cíl X", což je čtvrtý pád.
+  const goalWordOf = (labels: string[]) => (labels.length === 1 ? 'cíle' : 'cílů');
 
   // Dočasný schodek během rodičovské krytý úsporami je vlastní příběh: je to
   // „ano, ale budete sahat do úspor", ne obecné „bude to napjaté".
@@ -237,7 +241,7 @@ function buildAnswer(
         headline: 'Máte na to',
         qualifier: 'ale bude to napjaté',
         reason: shaky.length > 0
-          ? `Rozpočet i rezerva jsou v pořádku, na hraně ${shaky.length === 1 ? 'je' : 'jsou'} ${list(shaky)}. Podrobnosti najdete u ${goalWord(shaky)} níže.`
+          ? `Rozpočet i rezerva jsou v pořádku, na hraně ${shaky.length === 1 ? 'je' : 'jsou'} ${list(shaky)}. Podrobnosti najdete u ${goalWordOf(shaky)} níže.`
           : 'Na cíle vám to vyjde, ale bez velké rezervy navíc.',
       };
     }

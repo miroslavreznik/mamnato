@@ -5,6 +5,7 @@ import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
+import { DEFAULTS } from './defaults';
 import { formatMonths, czk, czkMonthly } from './format';
 
 /**
@@ -96,20 +97,28 @@ export function retirementReadiness(state: WizardState, allocations: GoalAllocat
   // Do projekce patří i to, co už je naspořeno. Bez toho vycházela renta
   // u lidí s velkými úsporami tak nízko, že se verdikt překlápěl na „zatím
   // spíš doplněk" i tomu, kdo měl na účtu dva miliony.
+  //
+  // Počítá se **v dnešních cenách**, tedy s výnosem sníženým o inflaci.
+  // Bez toho stálo u třicátníka „v důchodu to vyjde na 95 962 Kč měsíčně",
+  // jenže to byly koruny roku 2060; dnešními penězi je to zhruba třetina.
+  // Vedle časové osy, která je v dnešních cenách celá, to bylo dvojí měřítko
+  // v jednom přehledu, a hranice „pod 8 000 Kč je to spíš doplněk" se
+  // porovnávala s číslem, které ve skutečnosti znamenalo necelé tři tisíce.
   const projection = retirementProjection(
-    monthly, years, 0.07, undefined, retirementStartingCapital(state)
+    monthly, years, 0.07, DEFAULTS.averageCzInflation, retirementStartingCapital(state)
   );
   const finalValue = projection[projection.length - 1]?.portfolioValue ?? 0;
   const monthlyRent = finalValue * 0.04 / 12;
   // Renta pod ~8 000 Kč/měs je spíš doplněk k důchodu než plnohodnotný příjem.
   const modest = monthlyRent < 8000;
+  const sentence = `Spoříte ${czkMonthly(monthly)}, v důchodu to v dnešních cenách vyjde zhruba na ${czkMonthly(monthlyRent)}.`;
   return {
     key: 'retirement',
     label: 'Důchod',
     status: modest ? 'caution' : 'good',
     headline: modest
-      ? `Spoříte ${czkMonthly(monthly)}, v důchodu to vyjde zhruba na ${czkMonthly(monthlyRent)}. Zatím spíš doplněk než plnohodnotný příjem.`
-      : `Spoříte ${czkMonthly(monthly)}, v důchodu to vyjde zhruba na ${czkMonthly(monthlyRent)}.`,
+      ? `${sentence} Zatím spíš doplněk než plnohodnotný příjem.`
+      : sentence,
   };
 }
 
@@ -133,11 +142,19 @@ export function leaveReadiness(state: WizardState): GoalReadiness | null {
     : leave.disposableDuringLeave;
 
   if (relevant >= 0) {
+    // Posuzuje se nejhorší měsíc volna, ne průměr. Mateřská je vyšší a kratší
+    // než rodičovský příspěvek, takže průměr slibuje částku, která platí jen
+    // prvního půl roku; „zbyde vám 13 790 Kč" u volna, kde po půl roce zbývá
+    // 9 548 Kč, není pravda, jen průměr.
+    const worst = Math.min(relevant, leave.worstMonthlyDisposable);
+    const varies = Math.round(worst) !== Math.round(relevant);
     return {
       key: 'leave',
       label: 'Rodičovská',
-      status: relevant < 3000 ? 'caution' : 'good',
-      headline: `Během volna vám měsíčně zbyde ${czk(relevant)}.`,
+      status: worst < 3000 ? 'caution' : 'good',
+      headline: varies
+        ? `Během volna vám měsíčně zbyde nejméně ${czk(worst)}, na mateřské víc než na rodičovském příspěvku.`
+        : `Během volna vám měsíčně zbyde ${czk(worst)}.`,
     };
   }
 

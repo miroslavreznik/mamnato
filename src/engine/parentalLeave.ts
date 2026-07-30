@@ -158,6 +158,16 @@ export interface LeaveImpact {
   disposableDuringLeave: number;
   // Disponibilní částka během volna už po koupi (splátka místo nájmu), jen když je cíl nemovitost
   disposableDuringLeaveAfterPurchase: number | null;
+  /**
+   * Nejhorší měsíc volna, ne průměr.
+   *
+   * Průměr je vážený délkou fází, takže krátká vysoká mateřská ho vytáhne
+   * nahoru: u volna 36 měsíců stálo „měsíčně vám zbyde 13 790 Kč", ale
+   * platilo to jen 6,4 měsíce a po zbylých 29,6 měsíce zbývalo o čtyři
+   * tisíce míň. Tenhle soubor si přitom sám v komentáři zakazuje mluvit
+   * o volnu průměrem.
+   */
+  worstMonthlyDisposable: number;
   savingsLostTotal: number; // o kolik méně naspoříte za celé volno
   // Krytí schodku z rezervy: kolik úspor zbyde (po akontaci, když se kupuje),
   // měsíční schodek během volna a kolik měsíců volna rezerva pokryje.
@@ -212,11 +222,13 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   // je nejhorší měsíc, aby se dalo říct „až tolik".
   let shortfallTotal = 0;
   let shortfallPerMonth = 0;
+  let worstMonthlyDisposable = Infinity;
   let monthsUntilReserveGone = 0;
   let reserveLeft = reserveAfter;
   let reserveRanOut = false;
   for (const phase of phases) {
     const disposable = incomeNow - lostSalary + phase.monthlyBenefit - relevantExpenses;
+    worstMonthlyDisposable = Math.min(worstMonthlyDisposable, disposable);
     const monthly = Math.max(0, -disposable);
     shortfallTotal += monthly * phase.months;
     shortfallPerMonth = Math.max(shortfallPerMonth, monthly);
@@ -255,6 +267,9 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
     disposableNow,
     disposableDuringLeave,
     disposableDuringLeaveAfterPurchase,
+    worstMonthlyDisposable: isFinite(worstMonthlyDisposable)
+      ? worstMonthlyDisposable
+      : incomeDuringLeave - relevantExpenses,
     savingsLostTotal,
     reserveAfter,
     shortfallPerMonth,

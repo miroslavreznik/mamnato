@@ -231,3 +231,55 @@ describe('co zůstane mimo zobrazený úsek', () => {
     expect(beyondView(j, 120)).toBeNull();
   });
 })
+
+describe('nejtěsnější místo nepojmenuje příčinu, kterou nezná', () => {
+  // Rodina, která na koupi nedosáhne: schodek přijde až s náklady na
+  // patnáctiletého potomka, tedy patnáct let po jeho narození.
+  const pozde = () => makeState({
+    goals: ['property', 'retirement', 'child'],
+    person1Age: 31,
+    person2Age: 29,
+    income: { person1NetMonthly: 30000, person2NetMonthly: 26000 },
+    expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
+    savings: { totalSavings: 200000 },
+    property: { targetPrice: 7000000, mortgageRate: 0.048, loanTermYears: 30 },
+  });
+  const alloc = { downPayment: 1367, retirement: 0, child: 11333, custom: [] };
+
+  it('schodek roky po narození dítěte není rodičovská', () => {
+    // Bez zapnuté rodičovské se schodek jmenoval „Rodičovská 2042", protože
+    // se brala poslední proběhlá událost bez ohledu na to, jak dávno byla.
+    const j = journey(pozde(), { allocations: alloc });
+    expect(j.tightest!.tension).toBe('deficit');
+    expect(j.tightest!.month).toBeGreaterThan(120);
+    expect(j.tightest!.title).not.toMatch(/Rodičovská/);
+    expect(j.tightest!.title).toMatch(/Rozpočet/);
+  });
+
+  it('neříká, že úspory klesnou na částku, ze které se vycházelo', () => {
+    // Globální minimum bývá na startu. U někoho, komu úspory celou dobu jen
+    // rostou, stálo u schodku v roce 2042 „klesnou na 200 000 Kč", což byla
+    // výše úspor v roce 2026 a nikdy neklesla.
+    const j = journey(pozde(), { allocations: alloc });
+    const atWorst = j.points.find((p) => p.month === j.tightest!.month)!;
+    expect(j.minCashMonth).toBe(0);
+    expect(atWorst.cash).toBeGreaterThan(j.minCash);
+    expect(j.tightest!.explanation).not.toContain('200 000');
+    // Uvedená částka je nejnižší zůstatek od schodku dál, ne od začátku.
+    const lowAfter = Math.min(...j.points.filter((p) => p.month >= j.tightest!.month).map((p) => p.cash));
+    expect(j.tightest!.explanation).toContain(lowAfter.toLocaleString('cs-CZ'));
+  });
+
+  it('během opravdové rodičovské se schodek jmenuje po ní', () => {
+    const state = makeState({
+      goals: ['property', 'child'],
+      person1Age: 30,
+      income: { person1NetMonthly: 45000, person2NetMonthly: 30000 },
+      savings: { totalSavings: 1050000 },
+      property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
+      parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
+    });
+    const j = journey(state, { allocations: { downPayment: 0, retirement: 0, child: 0, custom: [] } });
+    expect(j.tightest!.title).toMatch(/Rodičovská/);
+  });
+});

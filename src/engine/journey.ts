@@ -113,22 +113,40 @@ function findTightest(
     if (p.month > 0 && p.flow < worst.flow) worst = p;
   }
 
-  // Co se v tu chvíli děje. Bere se poslední událost, která už nastala:
-  // schodek během rodičovské se jmenuje po rodičovské, ne po koupi před ní.
+  // Co se v tu chvíli děje. Bere se poslední událost, která už nastala,
+  // ale jen dokud je čerstvá: „Po koupi 2042" u schodku patnáct let po
+  // koupi je popisek, který lže o příčině.
+  const RECENT_MONTHS = 24;
   const before = events
     .filter((e) => e.key !== 'lowest' && e.month <= worst.month)
     .sort((a, b) => b.month - a.month)[0];
 
   if (worst.flow < 0) {
-    const what = before?.key === 'child' || before?.key === 'leaveEnd' ? 'Rodičovská' :
-      before?.key === 'purchase' ? 'Po koupi' : 'Rozpočet';
+    // Rodičovská se pozná podle toho, že v tu chvíli opravdu běží, ne podle
+    // toho, že se někdy předtím narodilo dítě. Bez toho dostal schodek
+    // z nákladů na patnáctiletého potomka nadpis „Rodičovská 2042“, a to
+    // i tam, kde uživatel žádnou rodičovskou vůbec nezadal.
+    const child = events.find((e) => e.key === 'child');
+    const leaveEnd = events.find((e) => e.key === 'leaveEnd');
+    const onLeave = child !== undefined && leaveEnd !== undefined
+      && worst.month >= child.month && worst.month < leaveEnd.month;
+    const recent = before !== undefined && worst.month - before.month <= RECENT_MONTHS;
+    const what = onLeave ? 'Rodičovská'
+      : recent && before?.key === 'purchase' ? 'Po koupi'
+        : 'Rozpočet';
+
+    // Jak hluboko úspory kvůli tomuhle schodku klesnou. Musí se měřit až od
+    // něj: globální minimum bývá na startu, takže u někoho, komu úspory celou
+    // dobu jen rostou, stálo „klesnou na 200 000 Kč“ o částce, ze které se
+    // vycházelo a která nikdy neklesla.
+    const lowAfter = Math.min(...points.filter((p) => p.month >= worst.month).map((p) => p.cash));
     return {
       month: worst.month,
       title: `${what} ${yearOf(worst.month)}`,
       explanation: `Rozpočet by byl ${czkMonthly(Math.abs(worst.flow))} v mínusu. `
-        + (minCash < 0
+        + (lowAfter < 0
           ? 'Úspory to nepokryjí, plán v této podobě neprojde.'
-          : `Úspory to pokryjí, ale klesnou na ${czk(Math.max(0, minCash))}.`),
+          : `Úspory to pokryjí, ale klesnou na ${czk(lowAfter)}.`),
       tension: 'deficit',
     };
   }

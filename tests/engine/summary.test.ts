@@ -215,3 +215,59 @@ describe('napjatý verdikt vysvětluje svůj vlastní důvod', () => {
     expect(v.reason).toMatch(/Důchod/);
   });
 });
+
+describe('tvrzení musí platit, ne jen znít dobře', () => {
+  it('renta se uvádí v dnešních cenách, ne v korunách roku 2060', () => {
+    // Dřív se projekce počítala nominálně: třicátníkovi appka slíbila
+    // 95 962 Kč měsíčně, jenže to byly koruny roku 2060. Vedle časové osy,
+    // která je v dnešních cenách celá, to bylo dvojí měřítko v jednom
+    // přehledu. Hranice „pod 8 000 Kč je to spíš doplněk" se navíc
+    // porovnávala s číslem, které dnešními penězi znamenalo necelé tři tisíce.
+    const state = makeState({ goals: ['retirement'], person1Age: 31, savings: { totalSavings: 1100000 } });
+    const s = evaluateOverall(state, allocs({ retirement: 14910 }));
+    const rent = s.goals.find((g) => g.key === 'retirement')!;
+    expect(rent.headline).toContain('v dnešních cenách');
+    // Reálný výnos 7 % nad 3% inflací dá zhruba polovinu nominální renty.
+    // Oddělovač tisíců se liší podle verze ICU (U+00A0 vs U+202F), proto se
+    // z věty vytahují jen číslice.
+    const amount = Number((rent.headline.match(/na (.+?) Kč měsíčně/)?.[1] ?? '').replace(/\D/g, ''));
+    expect(amount).toBeGreaterThan(20000);
+    expect(amount).toBeLessThan(70000);
+  });
+
+  it('u rodičovské se slibuje nejhorší měsíc, ne průměr za celé volno', () => {
+    // Mateřská je vyšší a kratší než rodičovský příspěvek, takže vážený
+    // průměr slibuje částku platnou jen prvního půl roku. „Zbyde vám
+    // 13 790 Kč" u volna, kde po půl roce zbývá 9 548 Kč, není pravda.
+    const state = makeState({
+      mode: 'couple',
+      goals: ['property', 'child'],
+      person1Age: 31,
+      person2Age: 29,
+      income: { person1NetMonthly: 52000, person2NetMonthly: 41000 },
+      expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
+      savings: { totalSavings: 1100000 },
+      property: { targetPrice: 6200000, loanTermYears: 30 },
+      parentalLeave: { enabled: true, parent: 2, durationMonths: 36 },
+    });
+    const leave = evaluateOverall(state, allocs()).goals.find((g) => g.key === 'leave')!;
+    expect(leave.headline).toMatch(/nejméně/);
+    expect(leave.headline).toMatch(/na mateřské víc/);
+  });
+
+  it('věta o cíli na hraně se skloňuje po předložce „u"', () => {
+    const state = makeState({
+      goals: ['property'],
+      person1Age: 42,
+      person2Age: 45,
+      mode: 'couple',
+      income: { person1NetMonthly: 52000, person2NetMonthly: 41000 },
+      expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
+      savings: { totalSavings: 1100000 },
+      property: { targetPrice: 6200000, loanTermYears: 30 },
+    });
+    const v = evaluateOverall(state, allocs({ downPayment: 24850 })).verdict;
+    expect(v.reason).toContain('u cíle níže');
+    expect(v.reason).not.toContain('u cíl ');
+  });
+});

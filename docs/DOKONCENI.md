@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 352 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 358 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -600,3 +600,65 @@ výřezu: `budgetNow` je rozpočet **dneška**, kdy se ještě platí nájem, ne
 splátka. Vedle dlaždice „Měsíční splátka −6 611" to ale čte jako rozpor.
 Je to tentýž rozdíl mezi snímkem a časovou osou, který je popsaný v B7;
 srovnat ho znamená dát do rozpočtové karty čas, což je její opak.
+
+---
+
+## B13. Přepočet enginu a pravdivost výroků
+
+Nezávislý přepočet šesti scénářů (pár, levnější byt, starší žadatelé,
+rodičovská, jednotlivec před důchodem, napjatý rozpočet) mimo engine,
+jinými vzorci, proti dumpu z enginu.
+
+**Aritmetika sedí.** Bez neshody prošly: příjmy a výdaje, nezbytné výdaje,
+disponibilní částka, míra úspor, rezerva v měsících, cena včetně
+rekonstrukce, podíl a výše akontace, výše úvěru, anuitní splátka (počítaná
+druhým tvarem vzorce), náklady na vlastnictví, výdaje po koupi, DSTI, DTI,
+celkové úroky, rezerva po koupi, základ důchodového portfolia, počet let
+do důchodu, projekce portfolia, horizont plánu a tok v prvním měsíci časové
+osy. Ověřeno i zvlášť: úroky prvního roku (265 978,82 Kč amortizací měsíc
+po měsíci, engine dává totéž), odpočet úroků (strop 150 000 Kč × 15 %),
+srovnání koupě vs. nájem (rok 1 nezávisle 891 337 vlastník / 800 845
+nájemník, engine shodně) a průměrné náklady na dítě (2 448 000 Kč za 18 let,
+tedy 11 333 Kč měsíčně).
+
+**Pět výroků ale neplatilo.**
+
+1. **„Rodičovská 2042" u domácnosti, která žádnou rodičovskou nezadala.**
+   Nejtěsnější místo pojmenovávalo poslední proběhlou událost bez ohledu
+   na to, jak dávno byla, takže schodek z nákladů na patnáctiletého potomka
+   zdědil jméno po narození dítěte o patnáct let dřív. Rodičovská se teď
+   pozná podle toho, že v tu chvíli opravdu běží, a „Po koupi" platí jen
+   dva roky po koupi.
+2. **„Úspory to pokryjí, ale klesnou na 200 000 Kč"** u domácnosti, jejíž
+   úspory nikdy neklesly: 200 000 Kč byla částka, se kterou začínala.
+   Globální minimum bývá na startu, takže se hloubka propadu měří až od
+   schodku dál. Táž chyba byla u napjatého místa už dřív ošetřená, u schodku
+   ne.
+3. **Renta v korunách roku 2060.** `retirementReadiness` počítala nominálně
+   (7 % bez inflace) a psala „v důchodu to vyjde zhruba na 95 962 Kč
+   měsíčně", zatímco Cesta vedle je celá v dnešních cenách. Dvojí měřítko
+   v jednom přehledu, a hranice „pod 8 000 Kč je to spíš doplněk" se
+   porovnávala s číslem, které dnešními penězi znamenalo necelé tři tisíce.
+   Projekce teď jede reálným výnosem a věta říká „v dnešních cenách"; z
+   95 962 Kč je 46 579 Kč.
+4. **„Během volna vám měsíčně zbyde 13 790 Kč"** platilo 6,4 měsíce z 36.
+   Byl to průměr vážený délkou fází, který krátká vysoká mateřská vytáhla
+   nahoru; po ní zbývalo 9 548 Kč. `parentalLeave.ts` si přitom v komentáři
+   sám zakazuje mluvit o volnu průměrem. Nově se uvádí nejhorší měsíc.
+5. **„Podrobnosti najdete u cíl níže."** `goalWord()` je psaný pro čtvrtý
+   pád („na cíl X") a byl použitý po předložce „u", která žádá druhý.
+
+Doplněno ještě k srovnání koupě vs. nájem: graf je nominální (3 % zhodnocení,
+7 % výnos, 3 % růst nájmu), takže rozdíl „o 4 809 556 Kč líp" jsou koruny za
+třicet let. Na to, která čára je výš, to nemá vliv, obě jsou počítané stejně,
+ale bez poznámky to vedle dnešních cen jinde v appce mate. Poznámka doplněna.
+
+### Co zůstává nesrovnané
+
+Verdikt u rodičovské říká „cíle se do rozpočtu vejdou", zatímco karta
+nejtěsnějšího místa hlásí, že na cíle bude v roce 2027 chybět 13 362 Kč.
+Obojí je vlastním způsobem správně: verdikt staví na `budgetNow` a
+`budgetAfterPurchase`, což jsou snímky, které o rodičovské nevědí. Je to
+tentýž rozdíl mezi snímkem a časovou osou jako v B7 a B12 a srovnat ho
+znamená dát do rozpočtové karty čas. Informace uživateli nechybí: karta
+nejtěsnějšího místa i řádek cíle „Rodičovská" ji říkají obě.

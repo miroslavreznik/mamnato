@@ -148,7 +148,10 @@ export default function InvestmentComparisonChart({ state }: Props) {
         </p>
         <p className="mt-2 text-xs text-ink-muted">
           Rozdíl mezi čarami je citlivý na tři čísla nahoře. Zkuste si je změnit, pořadí se často otočí.
-          Výnosy jsou dlouhodobé průměry, ne záruka.
+          Výnosy jsou dlouhodobé průměry, ne záruka. Částky jsou v cenách za {HORIZON} let,
+          ne v dnešních: při tříprocentní inflaci má koruna za {HORIZON} let zhruba
+          {Math.round(100 / Math.pow(1.03, HORIZON))} % dnešní kupní síly. Na to, která čára je výš,
+          to nemá vliv, obě jsou počítané stejně.
         </p>
       </div>
 
