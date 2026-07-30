@@ -119,7 +119,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           value: runwayLabel,
           unit: 'měs.',
           // Bez akontace se kupovat nedá, takže je to odpověď na „co kdybych
-          // koupil dnes". Cesta počítá s koupí až v okamžiku, kdy je na ni
+          // koupil dnes". Časová osa počítá s koupí až v okamžiku, kdy je na ni
           // naspořeno, a dá jiné číslo. Dvě různá čísla o téže věci vedle sebe
           // vypadají jako chyba, dokud se nenapíše, čeho se každé týká.
           sub: downPaymentGap(state) > 0 ? 'kdybyste kupovali dnes' : undefined,
@@ -214,7 +214,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
         )}
       </div>
 
-      {/* Cesta: život až do důchodu jako jedna stuha. Hrdina obrazovky. */}
+      {/* Časová osa: život až do důchodu jako jedna stuha. Hrdina obrazovky. */}
       <div className="rounded-2xl bg-sunken p-5 sm:p-6">
         {/* Animace se hlídat nemusí. Panely záložek zůstávají připojené
             (`hidden`, ne odpojení), takže se stuha vykreslí jednou při vstupu

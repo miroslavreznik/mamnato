@@ -1,9 +1,14 @@
-# Dokončení redesignu: co zbývá a jak to ověřit
+# Dokončení redesignu: nálezy, opravy a co se schválně nechává být
 
-Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
-kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
+Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument začal jako plán
+poslední kontroly a je z něj **průběžný zápisník**: co se při procházení
+appky našlo, co se opravilo a hlavně co se opravit nemá a proč. Poslední
+patří sem, ne do commit message, kterou nikdo znovu nenajde.
 
-Testy: 367 jednotkových, 68 e2e (plus 10 otisků person za `PERSONY=1`).
+Aktuální popis toho, co appka umí, je v `README.md`; pravidla pro práci
+s kódem v `CLAUDE.md`.
+
+Testy: 374 jednotkových, 68 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 

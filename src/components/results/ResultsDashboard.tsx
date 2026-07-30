@@ -279,7 +279,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           <h1 className="type-section text-ink">MámNaTo? Finanční přehled</h1>
           <p className="text-xs text-ink-muted">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
         </div>
-        {/* Cesta: hlavní odpověď „vyjde mi to?" a plán v čase, až k důchodu.
+        {/* Přehled: hlavní odpověď „vyjde mi to?" a plán v čase, až k důchodu.
             Id zůstává `souhrn`: je v uložených odkazech i v kotvách testů
             a přejmenovat ho by rozbilo sdílené adresy kvůli popisku. */}
         <ResultsSection id="souhrn" title="Přehled" subtitle="Odpověď, váš plán v čase a stav vašich cílů" active={isVisible('souhrn')}>

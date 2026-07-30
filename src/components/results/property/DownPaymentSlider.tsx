@@ -3,26 +3,20 @@ import {
   effectiveDownPayment,
   downPaymentFraction,
   loanAmount as loanAmountOf,
-  mortgagePayment,
   mortgageRate,
   loanTermYears,
-  ownershipCosts as ownershipCostsOf,
   totalProjectCost,
-  totalLoanInterest,
-  monthlyMortgagePayment,
 } from '../../../engine/mortgage';
-import { necessaryMonthlyExpenses } from '../../../engine/cashflow';
+import {
+  downPaymentTradeoff, STOCK_RETURN, COMPARISON_STEP, MIN_RESERVE_MONTHS,
+} from '../../../engine/downPayment';
 import { czk, czkPerMonth, formatNumber as fmt, formatRate } from '../../../engine/format';
 import { StepButton, SliderCard } from './shared';
 
-// Orientační dlouhodobý výnos akcií pro srovnání alternativy k akontaci.
-const STOCK_RETURN = 0.07;
 // O kolik se hýbe krokovacími tlačítky a jaký krok má posuvník.
+// Zbytek konstant (výnos akcií, modelová částka, minimální rezerva) je
+// v `engine/downPayment.ts` u výpočtu, který je používá.
 const STEP = 10000;
-// Modelová částka, na které se ukazuje, co akontace navíc přinese.
-const COMPARISON_STEP = 100000;
-// Rezerva, pod kterou už se akontace přestává vyplácet (měsíců výdajů).
-const MIN_RESERVE_MONTHS = 6;
 
 /**
  * Kolik z úspor dát na akontaci.
@@ -43,37 +37,17 @@ export default function DownPaymentSlider({ state, onChange }: {
   const dpValue = effectiveDownPayment(state);
   const dpPct = Math.round(downPaymentFraction(state) * 100);
   const dpOfPrice = projectCost > 0 ? (dpValue / projectCost) * 100 : 0;
-  const reserve = totalSavings - dpValue;
 
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
   const loanAmount = loanAmountOf(state);
-  const payment = mortgagePayment(state);
 
-  // Bezpečné maximum akontace: po koupi musí zbýt rezerva na šest měsíců
-  // nezbytných výdajů (s hypotékou místo nájmu).
-  const monthlyNeedAfter = Math.max(
-    1,
-    necessaryMonthlyExpenses(state) - state.expenses.rent - state.expenses.utilities
-      + payment + ownershipCostsOf(state)
-  );
-  const safeMax = Math.max(0, Math.min(totalSavings, totalSavings - MIN_RESERVE_MONTHS * monthlyNeedAfter));
-  const safePct = totalSavings > 0 ? Math.round((safeMax / totalSavings) * 100) : 0;
-  const reserveMonths = reserve / monthlyNeedAfter;
-
-  // Co udělá dalších 100 000 Kč akontace: nižší splátka a ušetřené úroky.
-  const paymentDelta = loanAmount > COMPARISON_STEP
-    ? payment - monthlyMortgagePayment(loanAmount - COMPARISON_STEP, rate, term)
-    : payment;
-  const interestDelta = totalLoanInterest(loanAmount, rate, term)
-    - totalLoanInterest(Math.max(0, loanAmount - COMPARISON_STEP), rate, term);
-
-  // Alternativa: co by zbylé peníze mohly vydělat v akciích vs. jistá úspora
-  // na úrocích, kdyby šly do akontace.
-  const stockValue = reserve > 0 ? reserve * Math.pow(1 + STOCK_RETURN, term) : 0;
-  const interestSavedByReserve = reserve > 0
-    ? totalLoanInterest(loanAmount, rate, term) - totalLoanInterest(Math.max(0, loanAmount - reserve), rate, term)
-    : 0;
+  // Matematika kolem posuvníku je v enginu: rozhoduje o největší jednorázové
+  // částce v plánu a patří k ní testy, ne jen prohlížeč.
+  const {
+    reserve, reserveMonths, safeMax, safePct,
+    paymentDelta, interestDelta, stockValue, interestSavedByReserve,
+  } = downPaymentTradeoff(state);
 
   return (
     <SliderCard>

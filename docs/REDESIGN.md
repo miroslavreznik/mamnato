@@ -1,5 +1,12 @@
 # Podklad pro redesign
 
+> **Hotovo, archiv.** Redesign je dokončený a appka se od té doby posunula dál
+> (záložky jsou sloupec vlevo, „Cesta" se jmenuje „Přehled", grafy „Vývoj jmění
+> v čase" a „Výhled s koupí vs. bez" zmizely, protože je nahradila časová osa
+> a „Co kdyby"). Tenhle dokument zůstává jako záznam **záměru a rozhodnutí**,
+> ne jako popis současného stavu; ten je v `README.md` a v `CLAUDE.md`.
+> Nálezy a opravy po redesignu vede `DOKONCENI.md`.
+
 Tenhle dokument je pro toho, kdo bude nový vzhled implementovat. Popisuje, co
 se v appce **může** změnit, co se změnit **nesmí**, a co v současném kódu
 redesignu půjde proti srsti.

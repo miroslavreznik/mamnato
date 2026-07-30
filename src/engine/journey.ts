@@ -6,7 +6,7 @@ import type { GoalAllocations } from './allocation';
 import { czk, czkMonthly, formatMonths } from './format';
 
 /**
- * Podklad pro záložku Cesta: časová osa života jako jeden příběh.
+ * Podklad pro časovou osu v Přehledu: život jako jeden příběh.
  *
  * Engine to počítá, ne komponenta. Platí to i pro věty („Nejtěsnější bude rok
  * 2029"), protože formulace verdiktů patří sem, kde k nim jdou napsat testy.

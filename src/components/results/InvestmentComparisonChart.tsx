@@ -7,7 +7,9 @@ import NumField from '../ui/NumField';
 // Recharts má vlastní Tooltip, proto se ten náš importuje jako HelpTip.
 import HelpTip from '../ui/Tooltip';
 import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
-import { czk } from '../../engine/format';
+import { czk, percentCompact } from '../../engine/format';
+import { DEFAULTS } from '../../engine/defaults';
+import { purchasingPowerAfter } from '../../engine/savings';
 import Card from '../ui/Card';
 import { fieldClass } from '../ui/fieldClass';
 
@@ -149,9 +151,9 @@ export default function InvestmentComparisonChart({ state }: Props) {
         <p className="mt-2 text-xs text-ink-muted">
           Rozdíl mezi čarami je citlivý na tři čísla nahoře. Zkuste si je změnit, pořadí se často otočí.
           Výnosy jsou dlouhodobé průměry, ne záruka. Částky jsou v cenách za {HORIZON} let,
-          ne v dnešních: při tříprocentní inflaci má koruna za {HORIZON} let zhruba
-          {Math.round(100 / Math.pow(1.03, HORIZON))} % dnešní kupní síly. Na to, která čára je výš,
-          to nemá vliv, obě jsou počítané stejně.
+          ne v dnešních: při průměrné inflaci {percentCompact(DEFAULTS.averageCzInflation)} má
+          koruna za {HORIZON} let zhruba {percentCompact(purchasingPowerAfter(HORIZON))} dnešní
+          kupní síly. Na to, která čára je výš, to nemá vliv, obě jsou počítané stejně.
         </p>
       </div>
 

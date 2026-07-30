@@ -37,31 +37,41 @@ Krok za krokem se zeptá na vše potřebné. Kroky se přizpůsobují podle rež
 7. **Vlastní cíle** *(jen při cíli „jiné")*, co chci, kolik potřebuji a za jak dlouho
 
 ### Výsledky (dashboard)
-Přehled je uspořádaný do **sbalitelných tematických sekcí** (Souhrn, Bydlení a hypotéka, Cíle, Slovníček) se sticky navigací „Přejít na". Souhrn s verdiktem je otevřený, zbytek je detail na kliknutí.
+Přehled je rozdělený do **záložek**, na širokém okně jako sloupec vlevo, na mobilu jako pruh nahoře: **Přehled**, **Rozpočet**, **Bydlení** *(jen při cíli nemovitost)*, záložka pojmenovaná podle vašich cílů (**Důchod**, **Dítě a důchod**, jméno vlastního cíle…), **Co kdyby** a **Slovníček**.
 
-- **Verdikt na základě cílů**, srozumitelné shrnutí („v dosahu" / „napjaté" / „zatím ne" / „nejdřív vyrovnat rozpočet") s konkrétními tipy
-- **Rozpočet: kam jde váš příjem**, jeden graf rozdělí příjem na výdaje, spoření na jednotlivé cíle a volnou rezervu; částky na cíle jdou upravovat živě
-- **Vývoj jmění v čase**, časová osa úspor přes plánované události: spoření na akontaci, koupě (pokles o akontaci, nájem → hypotéka), narození dítěte (náklady dle věku) a rodičovská (výpadek příjmu); zvýrazní, kdyby úspory klesly pod nulu
-- **Zbytné výdaje: za co utrácíte**, rozpad podrobného rozpisu po skupinách *(když je vyplněn)*
-- Graf rozpočtu jde přepnout i na **tabulku s přesnými částkami** (příjem − výdaje − spoření = volná rezerva)
-- **Kalkulačka nemovitosti**, akontace (dynamicky 10 % / 20 % dle věku), výše hypotéky, měsíční splátka, čas na naspoření, připomínka refixace
+**Většinu čísel jde přepsat přímo ve výsledcích** a přehled se přepočítá včetně odpovědi nahoře: výdaje, akontace, sazba, částky u cílů, délka rodičovské i termín narození dítěte na časové ose.
+
+#### Přehled
+- **Odpověď jako první**: *Máte na to* / *Máte na to, ale bude to napjaté* / *Zatím na to nemáte, ale je to o koupi, ne o dnešku* / *Zatím na to nemáte*, s jednou větou proč a s rozpadem na dílčí otázky („Dosáhnete na vlastní bydlení?", „Zbyde vám pak na zbytek?")
+- **Časová osa** jako jedna stuha od dneška do důchodu: měsíc po měsíci přes spoření na akontaci, koupi (pokles o akontaci, nájem → hypotéka a náklady na vlastnictví), narození dítěte (náklady dle věku), rodičovskou a **doplacení hypotéky**. Barví se podle napětí rozpočtu, ne podle výše úspor, takže rok se schodkem je vidět dřív, než peníze dojdou. Události jsou na ní pojmenované, termínem narození dítěte jde táhnout.
+- **Výřez osy** (10 let / 20 let / celý plán) pro ty, koho zajímají nejbližší roky zblízka; co zůstalo za výřezem, se dopíše větou pod grafem
+- **Nejtěsnější místo plánu** s vysvětlením, co se v tu chvíli děje
+- **Stav jednotlivých cílů** a měsíční rozpočet dnes i po koupi
+
+#### Rozpočet
+- **Kam jde váš příjem**: jeden graf rozdělí příjem na výdaje, spoření na cíle a volnou rezervu. Klepnutím položku vypnete a hned vidíte, jestli by pak odpověď vyšla jinak
+- **Zbytné výdaje po skupinách** *(když je rozpis vyplněn)*, vypnout jde i jednotlivá položka
+- **Vaše výdaje**: pole pro každou kategorii se součtem hned pod nimi
+
+#### Bydlení *(jen při cíli nemovitost)*
+- **Kalkulačka nemovitosti**, akontace (10 % / 20 % dle věku), výše hypotéky, měsíční splátka, čas na naspoření, jednorázové náklady při koupi, připomínka refixace
 - **Ukazatele DTI a DSTI**, orientační bankovní vodítka (viz [Metodika](#metodika-a-zdroje))
-- **Vývoj úspor** a **cash flow po koupi**
-- **Koupě vs. nájem**, vývoj čistého jmění při koupi vs. investování rozdílu
-- **Důchodový plánovač**, projekce portfolia, pravidlo 4 %, porovnání výnosů
-- **Kalkulačka nákladů na dítě** a **plánovač vlastních cílů** (priority, odklad, doporučené nástroje)
-- **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)*, po dobu volna nahradí mzdu pečujícího rodiče dávky; ukáže příjem a volnou rezervu během volna, jestli během něj vyjde i splátka hypotéky, a celkový výpadek příjmu
-- **Slovníček pojmů**, LTV, akontace, DTI/DSTI, fixace…
+- **Celkové náklady na bydlení**, nájem dnes proti splátce a nákladům na vlastnictví
+- **Koupě vs. nájem**, vývoj čistého jmění při koupi proti investování rozdílu, se závěrem slovy
+- **Daňové úlevy**, odpočet úroků z hypotéky a daňové zvýhodnění na dítě
 
-### Co přehled odpoví jako první
-Výsledky začínají přímou odpovědí na otázku z názvu: **Máte na to** / **Máte na to, ale bude to napjaté** / **Zatím na to nemáte, ale máte kam sáhnout** / **Zatím na to nemáte**, vždy s jednořádkovým zdůvodněním a klíčovými čísly (splátka a její podíl na příjmu, chybějící akontace, rezerva po koupi).
+#### Vaše cíle
+- **Důchodový plánovač**, projekce portfolia z toho, co už máte naspořeno, pravidlo 4 %, porovnání nástrojů, přepínač nominálních a reálných částek
+- **Náklady na dítě** dle věku
+- **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)*, mateřská a rodičovský příspěvek zvlášť, protože se výrazně liší; ukáže, co zbyde v nejhorším měsíci a jestli rezerva pokryje celou dobu
+- **Plánovač vlastních cílů**, cíl je měsíční částka z volných peněz a appka řekne, jestli s ní termín vyjde
 
-### Co kdyby
-Rozpočet slouží k modelování: klepnutím vypnete výdaj nebo celý cíl a hned uvidíte, jestli by pak odpověď vyšla jinak. Když se verdikt nezmění, aplikace vysvětlí proč, například že vysokou splátku vůči příjmu škrtáním výdajů nespravíte. Kdo si vyplnil podrobný rozpis zbytných výdajů, může vypnout i jednotlivou položku.
+#### Co kdyby
+Samostatné pískoviště: každý cíl má **přepínač** (včetně „nekupovat"), pod zapnutým cílem jsou jeho parametry (cena nemovitosti, sazba, délka rodičovské). Živá časová osa se překresluje hned a původní scénář zůstává vidět jako přerušovaný obrys, takže je poznat, jestli si člověk pomohl. Dlaždice pod grafem ukazují rozdíl proti původnímu scénáři.
 
 ### Napříč aplikací
 - 🌗 **Tmavý / světlý režim**
-- 🔗 **Sdílet přehled odkazem**, celý scénář se zakóduje do adresy (nic na server); příjemce si otevře stejná čísla a může si je upravit
+- 🔗 **Sdílet přehled odkazem**, celý scénář se zakóduje do adresy (nic na server). Před zkopírováním appka vypíše, co v odkazu bude, protože odkaz nejde zneplatnit; příjemci se cizí scénář nikdy neuloží sám, dokud se nerozhodne
 - 🖨️ **Vytisknout / uložit do PDF**, přehled bez aplikačního rámu, s hlavičkou a datem
 - 💾 **Automatické ukládání** do prohlížeče (lze se vrátit a pokračovat)
 - 📱 Responzivní design pro mobil i desktop
@@ -86,7 +96,7 @@ Průvodce (React UI)  →  Výpočetní jádro (čisté funkce)  →  Výsledky 
 
 ## Metodika a zdroje
 
-Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum platnosti v `src/engine/defaults.ts`, aktuálně `2025-01`). Uživatel může vše přepsat.
+Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum platnosti v `src/engine/defaults.ts`, aktuálně `2026-07`). Uživatel může vše přepsat.
 
 **Regulace ČNB (úvěrové ukazatele).** Aplikace odráží stav, kdy je závazný už jen limit **LTV** (poměr výše úvěru k ceně):
 - max **80 %**, u žadatelů **do 36 let až 90 %** → povinná akontace **20 %**, resp. **10 %**.
@@ -95,9 +105,10 @@ Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum 
 **Další výpočty:**
 - **Hypotéka**, standardní anuitní splátka.
 - **Věk žadatele**, nejmladší do 36 let → nižší akontace (10 %); horizont spoření na důchod se počítá do 65 let; upozornění, pokud by hypotéka byla splacena až po ~70 letech.
-- **Rodičovská**, po dobu volna se mzda pečujícího rodiče nahradí dávkami (výchozí odhad = rodičovský příspěvek 350 000 Kč / doba čerpání, nastavitelné); počítá příjem a rezervu během volna i to, jestli vyjde splátka hypotéky.
+- **Rodičovská**, mzda pečujícího rodiče se nahradí dávkami ve dvou fázích: mateřská (70 % redukovaného denního vyměřovacího základu dle ČSSZ, 28 týdnů) a po ní rodičovský příspěvek 350 000 Kč rozložený na zbytek. Průměr za celou dobu by realitu posunul, protože mateřská je vyšší a kratší.
 - **Důchod / investice**, složené úročení; reálný výnos přes Fisherovu rovnici (očištění o inflaci), pravidlo bezpečného výběru 4 %.
-- **Cíle**, prioritní alokace disponibilní částky; u nesplnitelných cílů návrhy (prodloužit horizont, snížit částku, přesunout prioritu).
+- **Cíle**, každý cíl je měsíční částka z volných peněz, kterou si uživatel nastaví; appka počítá, jestli s ní termín vyjde, a nabízí, co s tím.
+- **Časová osa**, konstantní příjmy i výdaje, bez výnosů a inflace, tedy **všechno v dnešních cenách**. Není to čisté jmění: akontace z úspor odejde a hodnota nemovitosti se zpátky nepřičte (to ukazuje graf koupě vs. nájem). Horizont sahá k odchodu do důchodu, nejméně deset let a nejvýš čtyřicet.
 
 > ⚠️ Regulatorní pravidla se mění, před reálným rozhodnutím si aktuální limity a sazby ověřte u ČNB nebo své banky.
 
@@ -109,6 +120,8 @@ Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum 
 - Všechny zadané údaje zůstávají v `localStorage` daného prohlížeče a zařízení.
 - Odkaz na živou ukázku je veřejný, ale data, která do ní kdokoli zadá, zůstávají jen v jeho prohlížeči, nejsou nikde sdílená ani viditelná ostatním.
 - Tlačítko **„Začít znovu"** data z prohlížeče smaže.
+- **Produkční build to vynucuje technicky.** Do hlavičky se vkládá CSP s `connect-src 'none'`, `script-src 'self'` a `font-src 'self'`, takže stránka nemá kam data odeslat, i kdyby chtěla. Žádné CDN, externí fonty ani analytika.
+- **Sdílený odkaz** nese data zakódovaná v adrese, ne na serveru. Než se zkopíruje, appka vypíše, co v něm bude. Komu se přehled otevře z cizího odkazu a má vlastní uložená data, tomu se cizí scénář neuloží sám: zápis zůstane zamčený, dokud se nerozhodne.
 
 ---
 
@@ -129,17 +142,32 @@ src/
 ├── engine/              Výpočetní jádro (čisté funkce, bez Reactu):
 │   ├── cashflow.ts      příjmy, výdaje, disponibilní částka, míra úspor, rezerva
 │   ├── mortgage.ts      splátka, akontace (dle věku), DTI, DSTI, čas na naspoření
-│   ├── savings.ts       projekce úspor, koupě vs. nájem, důchod, alokace cílů
-│   ├── allocation.ts    výchozí rozdělení disponibilní částky na cíle
-│   ├── expenseBreakdown.ts  rozpad příjmu pro graf rozpočtu
+│   ├── savings.ts       projekce úspor, koupě vs. nájem, důchod
+│   ├── allocation.ts    výchozí rozdělení volných peněz na cíle
+│   ├── budget.ts        rozpočet dnes a po koupi
+│   ├── expenseBreakdown.ts  rozpad příjmu pro graf rozpočtu, vypínání položek
+│   ├── expenseFields.ts katalog výdajových kategorií (průvodce i výsledky)
 │   ├── discretionary.ts katalog a součty zbytných výdajů po skupinách
 │   ├── childCost.ts     náklady na dítě dle věku
 │   ├── scenarios.ts     rule-based scénáře dostupnosti nemovitosti
 │   ├── rateGuidance.ts  LTV pásma a orientační přirážky bank k sazbě
-│   ├── wealthTimeline.ts vývoj jmění přes plánované události
-│   ├── parentalLeave.ts  dopad rodičovské na rozpočet
-│   ├── summary.ts       celkový verdikt „Máte na to" a stav jednotlivých cílů
-│   ├── format.ts        skloňování času (1 rok / 2 roky / 5 let)
+│   ├── purchaseCosts.ts jednorázové náklady při koupi
+│   ├── downPayment.ts   rozvaha nad akontací: bezpečné maximum, cena i alternativa
+│   ├── renovation.ts    rekonstrukce a souběh nájmu s úrokem
+│   ├── taxRelief.ts     odpočet úroků a daňové zvýhodnění na dítě
+│   ├── wealthTimeline.ts vývoj úspor přes plánované události, horizont plánu
+│   ├── journey.ts       podklad pro časovou osu: napětí, události, nejtěsnější místo
+│   ├── whatIf.ts        porovnání scénáře před a po změně
+│   ├── parentalLeave.ts  dopad rodičovské na rozpočet, mateřská a příspěvek zvlášť
+│   ├── readiness.ts     stav jednotlivých cílů
+│   ├── verdict.ts       formulace odpovědi „Máte na to"
+│   ├── summary.ts       celkový verdikt a stav cílů dohromady
+│   ├── tips.ts          co s tím: konkrétní rady podle situace
+│   ├── assumptions.ts   předpoklady výpočtu pro uživatele i pro tisk
+│   ├── goalNames.ts     jak se cíle jmenují směrem k uživateli
+│   ├── estimate.ts      „appka to odhadne, ale jde to přepsat"
+│   ├── preview.ts       průběžný náhled v průvodci
+│   ├── format.ts        všechna čísla, částky a časové údaje pro uživatele
 │   └── defaults.ts      předvyplněné hodnoty a konstanty (ČSÚ/ČNB/ČBA)
 ├── store/               Stav průvodce (reducer) + ukládání do localStorage s validací
 └── types/               Sdílené TypeScript typy
@@ -175,9 +203,17 @@ npm run test:watch # testy v watch režimu
 
 ## Testy a kontrola kvality
 
-Výpočetní jádro je pokryté unit testy (Vitest), **155 testů v 15 souborech** pokrývá cash flow, hypotéku, sazby podle LTV, úspory, scénáře, souhrn a verdikt, náklady na dítě, rozpad zbytných výdajů, formátování i validaci uloženého stavu.
+Výpočetní jádro je pokryté unit testy (Vitest), **374 testů ve 33 souborech** pokrývá cash flow, hypotéku, sazby podle LTV, úspory a důchodovou projekci, časovou osu, scénáře, souhrn a verdikt, náklady na dítě, rodičovskou, daňové úlevy, rozpad zbytných výdajů, formátování i validaci uloženého stavu.
 
-Průchod aplikací hlídá **18 e2e testů (Playwright)** v Chromiu i ve WebKitu (jádro Safari): celý průvodce, dynamické přepočty, posuvníky akontace a sazby, ovládání na mobilu, záchranná obrazovka při chybě a sdílení odkazem.
+Průchod aplikací hlídá **68 e2e testů (Playwright)** v Chromiu i ve WebKitu (jádro Safari): celý průvodce, dynamické přepočty, editace výdajů ve výsledcích, časová osa a její výřez, „Co kdyby", odkládání cílů, kontrast textu ve světlém i tmavém režimu, ovládání klávesnicí, tisk, záchranná obrazovka při chybě a sdílení odkazem.
+
+Dvě sady se schválně přeskakují a pouštějí se ručně, protože nic netvrdí a slouží k posouzení okem: pixelové porovnání (`VISUAL=1`) a otisky deseti person (`PERSONY=1`).
+
+```bash
+npm run test        # jednorázově
+npm run test:watch  # ve watch režimu
+npm run test:e2e    # Playwright
+```
 
 ```bash
 npm run test

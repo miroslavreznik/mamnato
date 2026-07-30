@@ -84,6 +84,15 @@ Klíčové moduly a jejich role:
   jednotlivých cílů je v prvním, formulace odpovědi ve druhém.
 - `whatIf.ts`: režim „co kdyby". Porovnává verdikt před a po vypnutí položky
   a vysvětluje, proč se nehnul.
+- `wealthTimeline.ts` + `journey.ts`: časová osa úspor a její čtení. První simuluje
+  měsíc po měsíci (spoření na akontaci, koupě, dítě dle věku, rodičovská, doplacení
+  hypotéky), druhý z toho dělá napětí, události a nejtěsnější místo. **Není to čisté
+  jmění**: akontace z `cash` odejde a hodnota nemovitosti se zpátky nepřičte.
+  Horizont dává `planHorizonMonths()`, k důchodu, nejméně deset let a nejvýš čtyřicet.
+- `goalNames.ts`: jak se cíle jmenují směrem k uživateli, včetně popisku záložky.
+  Bylo to rozepsané na třech místech, pokaždé jinak.
+- `expenseFields.ts`: katalog výdajových kategorií. Berou si ho průvodce
+  (krok Výdaje) i výsledky (editor v Rozpočtu), aby se dva opisy nerozešly.
 - `estimate.ts`: vzorec „appka to umí odhadnout, ale uživatel může přepsat".
   Používá ho sazba, náklady na vlastnictví i dávky na rodičovské. Rozlišuje
   přes `!= null`, takže zadaná nula je platná hodnota, ne „nevyplněno".
@@ -91,6 +100,12 @@ Klíčové moduly a jejich role:
   `czk()`, `czkPerMonth()` (do dlaždic), `czkMonthly()` (do vět), `formatRate()`,
   `percentCompact()`, `formatMonths()`, `formatYears()`. Nikdy neskládej „1 let"
   ani „12 345 Kč/měs." ručně a nedefinuj si vlastní `fmt`, bylo jich devět.
+
+**Záložky výsledků.** `Přehled` (id `souhrn`), `Rozpočet`, `Bydlení`, záložka
+pojmenovaná podle cílů (`goalsTabLabel()`), `Co kdyby`, `Slovníček`. Na širokém okně
+je z lišty sloupec vlevo, na úzkém řádek nahoře; je to **jedna** komponenta ve dvou
+podobách, protože `id` záložek drží `aria-controls` i kotvy testů. Id `souhrn` zůstává
+i po přejmenování na „Přehled": je ve sdílených odkazech.
 
 **Reaktivita výsledků.** `ResultsDashboard` drží stav (`state`, `allocations`,
 `excludedExpenses`, `excludedGoals`) a odvozuje z něj `activeState` a `activeAllocations`.
@@ -102,6 +117,11 @@ stav, aby šlo vypnutou položku zase zapnout; částky si dopočítá sám z up
 s `normalizeState()`, která validuje a migruje uložený stav. Rozbitý zápis se zahodí
 a spadne se na výchozí hodnoty, takže poškozený `localStorage` appku neshodí.
 `store/shareLink.ts` kóduje stav do `#s=` (base64url).
+
+**Většina výsledků je editovatelná** a zapisuje se do `state`, ne do „co kdyby":
+výdaje (`ExpenseEditor`), akontace, sazba, částky u cílů, délka rodičovské. Jsou to
+skutečné údaje, takže se ukládají a přepočítá se z nich celý přehled. Posuvníky
+v „Co kdyby" jsou naopak jen úvaha nad grafem a neukládají se nikdy.
 
 **Sdílený přehled se nikdy neukládá sám.** Když příjemce už něco uloženého má,
 cizí scénář se jen zobrazí a zápis se zamkne přes `setPersistenceEnabled(false)`,
@@ -175,6 +195,10 @@ vymyslíš teorii.
 Vývoj probíhá na větvi `claude/czech-calculator-questions-8vxvvb`, odtud se dělá
 fast-forward merge do `main` a pushne se obojí. Commit messages jsou česky a popisují
 **proč**, ne jen co.
+
+`docs/DOKONCENI.md` je průběžný zápisník nálezů: co se našlo, co se opravilo a co
+se schválně neopravilo a proč. Když najdeš něco, co se nechává být, patří to tam,
+ne do commit message, kterou nikdo znovu nenajde.
 
 ## Závislosti
 

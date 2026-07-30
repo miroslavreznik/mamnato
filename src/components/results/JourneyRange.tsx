@@ -1,7 +1,7 @@
 /**
  * Výřez z cesty: nejbližší roky, nebo celý plán.
  *
- * Cesta teď sahá k důchodu, což je u třicátníka pětatřicet let. Odpovídá to
+ * Časová osa teď sahá k důchodu, což je u třicátníka pětatřicet let. Odpovídá to
  * na otázku „vyjde to celé", ale platí za to tím, že se první roky srazí
  * do prvních pár procent šířky: koupě a narození dítěte splynou v jeden
  * shluk u levého okraje a jejich bublinky se odsouvají daleko od svých

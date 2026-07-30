@@ -59,7 +59,7 @@ export default function WhatIfTab() {
   const currentJourney = journey(current, { allocations: currentAllocations });
   const baselineJourney = journey(baseline, { allocations: baselineAllocations });
 
-  // Vlastní výřez, ne sdílený se záložkou Cesta. Tady se člověk dívá na
+  // Vlastní výřez, ne sdílený se záložkou Přehled. Tady se člověk dívá na
   // rozdíl proti původnímu scénáři, a ten se v prvních letech skoro nepozná,
   // takže se hodí jiný úsek než při čtení verdiktu.
   const [viewMonths, setViewMonths] = useState(currentJourney.horizonMonths);

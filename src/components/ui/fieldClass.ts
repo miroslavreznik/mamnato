@@ -22,7 +22,7 @@
  * přepíná podle chyby (`border-danger`), takže napevno zadaný
  * `border-line-strong` by mu chybový stav sebral. Prstenec má ale stejný.
  */
-export const FIELD =
+const FIELD =
   'border border-line-strong bg-card text-ink rounded-lg '
   + 'focus:outline-none focus:ring-2 focus:ring-ink focus:border-ink';
 

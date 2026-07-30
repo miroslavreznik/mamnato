@@ -44,7 +44,7 @@ export interface WealthPoint {
    * Kolik ten měsíc přiteklo nebo odteklo (příjem − výdaje). Jednorázový
    * výdej akontace se sem nezapočítává, ten není opakovaný tok.
    *
-   * Vystavuje se kvůli stuze na záložce Cesta, která barví průběh podle
+   * Vystavuje se kvůli stuze v Přehledu, která barví průběh podle
    * napětí rozpočtu, ne podle výše úspor: rok se schodkem vypadá na křivce
    * zůstatku stejně jako rok bez něj, dokud jsou úspory dost velké.
    */

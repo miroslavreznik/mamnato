@@ -176,6 +176,18 @@ export function investmentComparison(
 
 // Počet let do důchodu z věku žadatele (min. 1 rok). Když věk není znám,
 // vrací výchozích 30 let.
+/**
+ * Kolik z dnešní kupní síly koruně zbyde za daný počet let.
+ *
+ * Používá se všude, kde se ukazují budoucí částky nominálně: bez tohohle
+ * čísla se „o 4 809 556 Kč líp za třicet let" čte jako dnešní peníze.
+ * Vzorec stál v komponentě s natvrdo zapsanou trojkou vedle
+ * `DEFAULTS.averageCzInflation`, tedy dvě verze téhož předpokladu.
+ */
+export function purchasingPowerAfter(years: number, inflation = DEFAULTS.averageCzInflation): number {
+  return 1 / Math.pow(1 + inflation, years);
+}
+
 export function yearsUntilRetirement(age: number | undefined): number {
   if (age === undefined || age <= 0) return 30;
   return Math.max(1, Math.round(DEFAULTS.retirementAge - age));

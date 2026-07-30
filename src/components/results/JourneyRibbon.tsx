@@ -4,7 +4,7 @@ import type { Journey, Tension } from '../../engine/journey';
 import { czk, formatMonths } from '../../engine/format';
 
 /**
- * Cesta: život až do důchodu jako jedna stuha.
+ * Časová osa: život až do důchodu jako jedna stuha.
  *
  * Nahrazuje graf v roli hrdiny výsledků. Proti čárovému grafu úspor umí dvě
  * věci navíc, kvůli kterým vznikla:
@@ -58,7 +58,7 @@ interface Props {
   /**
    * Kolik měsíců z cesty ukázat. Bez něj celý horizont.
    *
-   * Je to **výřez, ne jiný výpočet**. Cesta se počítá pořád celá, jen se
+   * Je to **výřez, ne jiný výpočet**. Osa se počítá pořád celá, jen se
    * kreslí její začátek; verdikt i karta nejtěsnějšího místa proto dál mluví
    * o celém plánu a nemůžou si s obrázkem odporovat. Když nejnižší bod padne
    * mimo výřez, jeho popisek se prostě nekreslí, protože by ukazoval mimo
