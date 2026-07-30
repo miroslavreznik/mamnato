@@ -204,6 +204,34 @@ function findTightest(
   };
 }
 
+/**
+ * Co z cesty zůstane mimo zobrazený úsek.
+ *
+ * Bez tohohle by si zkrácený výřez a karta vedle něj odporovaly: stuha
+ * v deseti letech klidně zelená, a karta u ní „Po koupi 2042, rozpočet by
+ * byl v mínusu". Výřez je způsob dívání, ne jiný plán, takže když se něco
+ * podstatného ořízne, musí to být napsané.
+ *
+ * Napjaté místo má přednost před událostmi: „za výřezem to skřípe" je jiná
+ * zpráva než „za výřezem doplatíte hypotéku".
+ */
+export function beyondView(j: Journey, viewMonths: number): string | null {
+  if (viewMonths >= j.horizonMonths) return null;
+
+  const t = j.tightest;
+  if (t && t.month > viewMonths && t.tension !== 'calm') {
+    return `Za zobrazeným úsekem plán ještě něco čeká: ${t.title}. ${t.explanation}`;
+  }
+
+  const later = j.events.filter((e) => e.key !== 'lowest' && e.month > viewMonths);
+  if (later.length === 0) return null;
+  const names = later.map((e) => e.detail ?? e.label);
+  const list = names.length === 1
+    ? names[0]
+    : `${names.slice(0, -1).join(', ')} a ${names.at(-1)}`;
+  return `Za zobrazeným úsekem cesta pokračuje: ${list.toLowerCase()}.`;
+}
+
 export function journey(
   state: WizardState,
   opts: {

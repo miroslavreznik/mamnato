@@ -724,3 +724,37 @@ test('cesta dohlédne až k důchodu a ukáže doplacení hypotéky', async ({ p
   expect(let_).toBe(35)
   expect(popis).toContain('Splaceno')
 })
+
+test('výřez cesty zkrátí pohled, ale neschová, co je za ním', async ({ page }) => {
+  // Výřez je způsob dívání, ne jiný plán. Když se ořízne doplacení hypotéky,
+  // musí to být pod stuhou napsané, jinak si obrázek a karta vedle něj
+  // odporují.
+  await start(page)
+  await next(page) // → Příjmy
+  await page.getByRole('textbox', { name: 'Můj věk', exact: true }).fill('30')
+  await page.getByRole('textbox', { name: 'Můj čistý měsíční příjem', exact: true }).fill('70000')
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await page.getByRole('textbox', { name: 'Celkové úspory', exact: true }).fill('1500000')
+  await next(page) // → Cíle
+  await pickGoal(page, 'property')
+  await next(page) // → Vlastní bydlení
+  await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('4000000')
+  await page.getByLabel('Délka hypotéky').selectOption('15')
+  await finish(page)
+  await expectResults(page)
+
+  const stuha = page.getByRole('img', { name: /Vývoj úspor na/ })
+  const roky = async () => Number(
+    ((await stuha.getAttribute('aria-label')) ?? '').match(/Vývoj úspor na (\d+) let/)?.[1]
+  )
+  expect(await roky()).toBe(35)
+
+  await page.getByRole('button', { name: '10 let', exact: true }).click()
+  expect(await roky()).toBe(10)
+  await expect(page.getByText(/Za zobrazeným úsekem/)).toBeVisible()
+
+  await page.getByRole('button', { name: 'Celý plán', exact: true }).click()
+  expect(await roky()).toBe(35)
+  await expect(page.getByText(/Za zobrazeným úsekem/)).toHaveCount(0)
+})

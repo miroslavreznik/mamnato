@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 348 jednotkových, 62 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 352 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -558,3 +558,45 @@ takže se v poměru vykrátí a všechno je v dnešních cenách; naspořená č
 neúročí, což je konzervativní. Stojí to v předpokladech („Horizont plánu")
 i pod grafem jmění. Alternativa by vyrobila čísla, která vypadají přesně
 a stojí na odhadu inflace na třicet let dopředu.
+
+---
+
+## B12. Výřez z cesty
+
+Prodloužený horizont něco získal a něco ztratil. Průchod obojím ukázal, kde
+je hranice.
+
+**Získalo se to hlavní na Co kdyby.** Rozdíl proti původnímu scénáři se
+v prvních letech skoro nepozná; obě křivky leží na sobě a přerušovaný obrys
+je k ničemu. Teprve na dvaceti a víc letech se rozevřou tak, že je vidět,
+co změna ceny nebo odložení cíle udělá.
+
+**Ztratily se nejbližší roky.** U třicátníka je koupě, narození dítěte
+i konec rodičovské v prvních čtyřech letech z pětatřiceti, tedy v prvních
+deseti procentech šířky. Puntíky splynou v jeden shluk u levého okraje,
+bublinky se odsouvají daleko od nich a k popisku „nejníž" vede tečkovaná
+čára přes půl grafu. Přitom právě těch pár let je jediná část plánu, se
+kterou se dá něco udělat.
+
+Řešením je výřez: přepínač „10 let / 20 let / Celý plán" nad stuhou, potichu
+vpravo nahoře. Ukáže se, jen když je co přepínat; komu je do důchodu sedm
+let, ten má horizont na minimu a přepínač nevidí. Výchozí je celek.
+
+Klíčové je, že **výřez je způsob dívání, ne jiný výpočet**. Cesta se počítá
+pořád celá, jen se kreslí její začátek, takže verdikt a karta nejtěsnějšího
+místa dál mluví o celém plánu a nemůžou si s obrázkem odporovat. Aby ani
+zkrácená stuha nemlčela o tom, co ořízla, doplňuje ji `beyondView()` jednou
+větou: „Za zobrazeným úsekem plán ještě něco čeká: Po koupi 2042…". Napjaté
+místo má přednost před událostmi, protože je to jiná zpráva.
+
+Záložky mají výřez každá vlastní. Na Cestě se čte verdikt a hodí se nejbližší
+roky, v Co kdyby se porovnávají dva scénáře a hodí se celek.
+
+### Co se u toho našlo a neopravilo
+
+V Co kdyby hlásí dlaždice „Volných měsíčně" **beze změny** i po zlevnění
+nemovitosti o 1,4 milionu, přestože splátka klesla o 6 611 Kč. Není to chyba
+výřezu: `budgetNow` je rozpočet **dneška**, kdy se ještě platí nájem, ne
+splátka. Vedle dlaždice „Měsíční splátka −6 611" to ale čte jako rozpor.
+Je to tentýž rozdíl mezi snímkem a časovou osou, který je popsaný v B7;
+srovnat ho znamená dát do rozpočtové karty čas, což je její opak.

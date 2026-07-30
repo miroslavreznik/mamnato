@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useWhatIf } from '../../store/whatIfStore';
 import { compareScenarios } from '../../engine/whatIf';
 import { answerText } from '../../engine/verdict';
@@ -6,6 +7,7 @@ import { mortgagePayment, postPurchaseRunwayMonths } from '../../engine/mortgage
 import { budgetNow } from '../../engine/budget';
 import { czk, formatNumber as fmt, formatMonths } from '../../engine/format';
 import JourneyRibbon from './JourneyRibbon';
+import JourneyRange, { JourneyRangeNote } from './JourneyRange';
 import WhatIfPanel from './WhatIfPanel';
 import Callout from '../ui/Callout';
 
@@ -54,6 +56,12 @@ export default function WhatIfTab() {
   const comparison = compareScenarios(baseline, baselineAllocations, current, currentAllocations);
   const currentJourney = journey(current, { allocations: currentAllocations });
   const baselineJourney = journey(baseline, { allocations: baselineAllocations });
+
+  // Vlastní výřez, ne sdílený se záložkou Cesta. Tady se člověk dívá na
+  // rozdíl proti původnímu scénáři, a ten se v prvních letech skoro nepozná,
+  // takže se hodí jiný úsek než při čtení verdiktu.
+  const [viewMonths, setViewMonths] = useState(currentJourney.horizonMonths);
+  const view = Math.min(viewMonths, currentJourney.horizonMonths);
 
   // Dlaždice se řídí zadaným scénářem, aby po odložení bydlení nezmizely
   // a bylo vidět, co odložení udělalo. Samotné číslo ale musí jít na nulu:
@@ -148,11 +156,18 @@ export default function WhatIfTab() {
           )}
           {/* Animace tady ne: stuha se překresluje při každém pohybu posuvníku
               a rozjíždět ji od začátku by z toho udělalo blikání. */}
+          <JourneyRange
+            horizonMonths={currentJourney.horizonMonths}
+            value={view}
+            onChange={setViewMonths}
+          />
           <JourneyRibbon
             data={currentJourney}
             animate={false}
+            viewMonths={view}
             ghost={touched && shapeChanged ? baselineJourney : undefined}
           />
+          <JourneyRangeNote data={currentJourney} viewMonths={view} />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

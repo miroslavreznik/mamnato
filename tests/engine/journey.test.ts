@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { journey } from '../../src/engine/journey';
+import { journey, beyondView } from '../../src/engine/journey';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -191,3 +191,43 @@ describe('cesta sahá až k důchodu', () => {
     expect(journey(state).events.some((e) => e.key === 'payoff')).toBe(false);
   });
 });
+
+describe('co zůstane mimo zobrazený úsek', () => {
+  const buyer = () => makeState({
+    goals: ['property'],
+    person1Age: 30,
+    savings: { totalSavings: 1500000 },
+    property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 15 },
+  });
+
+  it('u celého plánu mlčí', () => {
+    const j = journey(buyer());
+    expect(beyondView(j, j.horizonMonths)).toBeNull();
+  });
+
+  it('jmenuje událost, která se do výřezu nevešla', () => {
+    const j = journey(buyer());
+    const note = beyondView(j, 120);
+    expect(note).toMatch(/hypotéka splacena/);
+  });
+
+  it('napjaté místo za výřezem má přednost před událostmi', () => {
+    // Bez tohohle si stuha a karta odporovaly: v deseti letech klidná zelená
+    // a vedle ní karta „Po koupi 2042, rozpočet by byl v mínusu".
+    const state = makeState({
+      goals: ['property', 'child'],
+      person1Age: 30,
+      savings: { totalSavings: 300000 },
+      property: { targetPrice: 8000000, mortgageRate: 0.052, loanTermYears: 30 },
+    });
+    const j = journey(state, { childOffsetMonths: 180 });
+    expect(j.tightest!.tension).not.toBe('calm');
+    expect(j.tightest!.month).toBeGreaterThan(120);
+    expect(beyondView(j, 120)).toContain(j.tightest!.title);
+  });
+
+  it('klidný plán bez událostí za výřezem nic nedodává', () => {
+    const j = journey(makeState({ savings: { totalSavings: 2000000 }, person1Age: 30 }));
+    expect(beyondView(j, 120)).toBeNull();
+  });
+})

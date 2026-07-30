@@ -13,6 +13,7 @@ import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
 import JourneyRibbon from './JourneyRibbon';
+import JourneyRange, { JourneyRangeNote } from './JourneyRange';
 import TightestPoint from './TightestPoint';
 import HeroNumber from '../ui/HeroNumber';
 import MonthsMeter from '../ui/MonthsMeter';
@@ -165,6 +166,12 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   const [childOffset, setChildOffset] = useState(12);
   const journeyData = journey(state, { childOffsetMonths: childOffset, allocations });
 
+  // Výřez z cesty. Drží se v obrazovce, ne v uloženém stavu: je to způsob
+  // dívání, ne údaj o plánu. Výchozí je celek, protože otázka zní „vyjde
+  // to celé"; kdo chce vidět nejbližší roky zblízka, přepne.
+  const [viewMonths, setViewMonths] = useState(journeyData.horizonMonths);
+  const view = Math.min(viewMonths, journeyData.horizonMonths);
+
   return (
     // Dva sloupce: vlevo odpověď a cíle, vpravo čísla a co s tím. Návrh dává
     // pravému sloupci 340 px; do jednoho sloupce se to vešlo, dokud byla
@@ -213,10 +220,17 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             (`hidden`, ne odpojení), takže se stuha vykreslí jednou při vstupu
             na výsledky a přepínání záložek ji nerozjede znovu. Přepočet při
             tažení posuvníku mění jen atribut `d`, ne uzel, takže taky ne. */}
+        <JourneyRange
+          horizonMonths={journeyData.horizonMonths}
+          value={view}
+          onChange={setViewMonths}
+        />
         <JourneyRibbon
           data={journeyData}
+          viewMonths={view}
           onMoveChild={state.goals.includes('child') ? setChildOffset : undefined}
         />
+        <JourneyRangeNote data={journeyData} viewMonths={view} />
         {/* Bez tohohle vypadá cesta u někoho, kdo na akontaci zatím nedosáhne,
             jako klidná zelená čára, zatímco verdikt nad ní říká „zatím na to
             nemáte". Ta čára je správně, jen kreslí život bez koupě; musí se

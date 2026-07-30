@@ -55,6 +55,16 @@ interface Props {
    * vypadá každý scénář rozumně; teprve proti čemu se rozdíl ukáže.
    */
   ghost?: Journey;
+  /**
+   * Kolik měsíců z cesty ukázat. Bez něj celý horizont.
+   *
+   * Je to **výřez, ne jiný výpočet**. Cesta se počítá pořád celá, jen se
+   * kreslí její začátek; verdikt i karta nejtěsnějšího místa proto dál mluví
+   * o celém plánu a nemůžou si s obrázkem odporovat. Když nejnižší bod padne
+   * mimo výřez, jeho popisek se prostě nekreslí, protože by ukazoval mimo
+   * plochu.
+   */
+  viewMonths?: number;
 }
 
 export default function JourneyRibbon({
@@ -63,9 +73,21 @@ export default function JourneyRibbon({
   onMoveChild,
   childRange = { min: 0, max: 96 },
   ghost,
+  viewMonths,
 }: Props) {
   const uid = useId().replace(/:/g, '');
-  const { points, tension, events, horizonMonths } = data;
+  const horizonMonths = Math.max(12, Math.min(viewMonths ?? data.horizonMonths, data.horizonMonths));
+  const full = horizonMonths === data.horizonMonths;
+  const inView = useMemo(() => {
+    const pts = data.points.filter((p) => p.month <= horizonMonths);
+    return {
+      points: pts,
+      tension: data.tension.slice(0, pts.length),
+      events: data.events.filter((e) => e.month <= horizonMonths),
+      ghostPoints: ghost?.points.filter((p) => p.month <= horizonMonths) ?? null,
+    };
+  }, [data, horizonMonths, ghost]);
+  const { points, tension, events } = inView;
   const svgRef = useRef<SVGSVGElement>(null);
 
   // Poměr mezi jednotkami `viewBox` a skutečnými pixely. Potřebuje ho dotyková
@@ -123,8 +145,8 @@ export default function JourneyRibbon({
 
     // Osa Y se vztahuje k rozsahu dat, ale nula je vždy uvnitř: bez ní by
     // propad pod nulu vypadal jako mírný pokles.
-    const values = ghost
-      ? [...points.map((p) => p.cash), ...ghost.points.map((p) => p.cash)]
+    const values = inView.ghostPoints
+      ? [...points.map((p) => p.cash), ...inView.ghostPoints.map((p) => p.cash)]
       : points.map((p) => p.cash);
     const hi = Math.max(...values, 0);
     const lo = Math.min(...values, 0);
@@ -168,11 +190,11 @@ export default function JourneyRibbon({
 
     // Duch se kreslí ve stejné ose jako živá stuha. Vlastní měřítko by rozdíl
     // schovalo: obě křivky by vyplnily plochu stejně a vypadaly by shodně.
-    const ghostPath = ghost
+    const ghostPath = inView.ghostPoints
       ? line<{ month: number; cash: number }>()
         .x((p) => xs(p.month))
         .y((p) => ys(p.cash))
-        .curve(curveMonotoneX)(ghost.points) ?? ''
+        .curve(curveMonotoneX)(inView.ghostPoints) ?? ''
       : null;
 
     // Úseky se schodkem. Kreslí se do nich vzorek, aby se stav nenesl jen
@@ -183,7 +205,7 @@ export default function JourneyRibbon({
       .map((r) => ({ from: xs(r.from * horizonMonths), to: xs(r.to * horizonMonths) }));
 
     return { xs, ys, path, fill, stops, lo, ghostPath, deficitRanges };
-  }, [points, tension, horizonMonths, ghost]);
+  }, [points, tension, horizonMonths, inView.ghostPoints]);
 
   // Roky na ose. Krok se řídí délkou horizontu, ať se popisky nelepí: přes
   // dvacet let by jich po dvou letech bylo na sedmi stech jednotkách šířky
@@ -315,7 +337,8 @@ export default function JourneyRibbon({
       className="w-full h-auto block touch-pan-y"
       role="img"
       aria-label={
-        `Vývoj úspor na ${Math.round(horizonMonths / 12)} let. `
+        `Vývoj úspor na ${Math.round(horizonMonths / 12)} let`
+        + (full ? '. ' : ` z celkových ${Math.round(data.horizonMonths / 12)}. `)
         + named.map((e) => `${e.label} za ${Math.round(e.month / 12)} let`).join(', ')
         + `. Nejníže ${czk(Math.max(0, data.minCash))}.`
       }
