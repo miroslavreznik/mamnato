@@ -46,7 +46,13 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
         //
         // Zaoblení jde s tím: dokonale kulatý obal vypadá u dvou řádků jako
         // omyl, proto se plné kolečko nechává až na desktop, kde je řádek jeden.
-        className="flex flex-wrap lg:flex-nowrap justify-center gap-0.5 p-1 rounded-2xl lg:rounded-full bg-shell"
+        //
+        // `w-fit` a zarovnání doleva: obal se drží obsahu a začíná na stejné
+        // svislici jako značka nad ním a jako obsah pod ním. Dokud lišta
+        // seděla uprostřed hlavičky, dávalo vystředění smysl; ve vlastním
+        // pruhu přes celou šířku z toho byl proužek podkladu plovoucí
+        // uprostřed, zatímco všechno ostatní na stránce bylo u levého okraje.
+        className="flex flex-wrap lg:flex-nowrap w-fit gap-0.5 p-1 rounded-2xl lg:rounded-full bg-shell"
         onKeyDown={(e) => {
           if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
           if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }

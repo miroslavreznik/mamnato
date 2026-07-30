@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 365 jednotkových, 64 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 365 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -745,7 +745,10 @@ se tam vejde pod řádek bublin, jinak pod něj.
 
 **Lišta záložek dolů pod hlavičku.** V hlavičce se mačkala mezi značkou
 a ikonami. Vlastní pruh přes celou šířku má místa dost a lepí se pod
-hlavičku, takže zůstává po ruce.
+hlavičku, takže zůstává po ruce. Obal se drží obsahu (`w-fit`) a začíná na
+stejné svislici jako značka nad ním a nadpis pod ním: dokud lišta seděla
+uprostřed hlavičky, dávalo vystředění smysl, ve vlastním pruhu z toho byl
+proužek plovoucí uprostřed, zatímco všechno ostatní bylo u levého okraje.
 
 **Záložka se jmenuje podle cílů**, ne „Ostatní cíle". Jeden cíl dá „Důchod",
 dva „Dítě a důchod", vlastní cíl své jméno; u tří a víc, nebo když by se
