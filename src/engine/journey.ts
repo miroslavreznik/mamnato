@@ -247,7 +247,7 @@ export function beyondView(j: Journey, viewMonths: number): string | null {
   const list = names.length === 1
     ? names[0]
     : `${names.slice(0, -1).join(', ')} a ${names.at(-1)}`;
-  return `Za zobrazeným úsekem cesta pokračuje: ${list.toLowerCase()}.`;
+  return `Za zobrazeným úsekem časová osa pokračuje: ${list.toLowerCase()}.`;
 }
 
 export function journey(

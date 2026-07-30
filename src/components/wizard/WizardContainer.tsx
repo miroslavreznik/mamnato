@@ -24,9 +24,18 @@ interface WizardContainerProps {
   onComplete: () => void;
   returnToStep?: number | null;
   resumeSavedState?: boolean;
+  /**
+   * Zpátky na přehled bez doklikání zbytku kroků.
+   *
+   * Dostane ho jen ten, kdo do průvodce přišel z výsledků tlačítkem
+   * „Upravit". Opravit jedno pole a pak se proklikat čtyřmi kroky, aby se
+   * člověk dostal tam, odkud vyšel, je daň, kterou platit nemusí: stav se
+   * ukládá po každé změně, takže přehled je aktuální hned.
+   */
+  onBackToResults?: () => void;
 }
 
-export default function WizardContainer({ onComplete, returnToStep, resumeSavedState }: WizardContainerProps) {
+export default function WizardContainer({ onComplete, returnToStep, resumeSavedState, onBackToResults }: WizardContainerProps) {
   // Počáteční stav odvodíme rovnou z prohlížeče (líný inicializátor), takže
   // není potřeba efekt na načtení ani příznak „initialized".
   const [state, dispatch] = useReducer(wizardReducer, { returnToStep, resumeSavedState }, (init) => {
@@ -84,6 +93,19 @@ export default function WizardContainer({ onComplete, returnToStep, resumeSavedS
           vzdálí tak, že se ztratí, co k čemu patří. */}
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,640px)_320px] gap-6 items-start lg:justify-center">
         <div className="min-w-0 bg-card rounded-2xl shadow-sm ring-1 ring-line border border-transparent p-6 sm:p-8">
+          {onBackToResults && (
+            <button
+              type="button"
+              onClick={onBackToResults}
+              data-testid="wizard-back-to-results"
+              className="inline-flex items-center gap-1.5 -ml-2 mb-3 px-2 min-h-[44px] rounded-lg text-sm font-semibold text-brand hover:bg-sunken focus:outline-none focus:ring-2 focus:ring-ink"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Zpět na přehled
+            </button>
+          )}
           <StepIndicator
             currentStep={state.currentStep}
             steps={stepItems}

@@ -147,7 +147,7 @@ export default function WhatIfTab() {
                 <>Odpověď zůstává <strong>{answerNow.toLowerCase()}</strong>. {comparison.hint}</>
               )
             ) : (
-              'Posuvníky vpravo mění cenu, sazbu a délku rodičovské. Cesta se překreslí hned a původní scénář zůstane vidět jako přerušovaný obrys, takže je poznat, jestli jste si pomohli.'
+              'Posuvníky vpravo mění cenu, sazbu a délku rodičovské. Časová osa se překreslí hned a původní scénář zůstane vidět jako přerušovaný obrys, takže je poznat, jestli jste si pomohli.'
             )}
           </p>
         </div>
@@ -211,9 +211,9 @@ export default function WhatIfTab() {
 
         {touched && postponed.length > 0 && !shapeChanged && (
           <Callout tone="neutral">
-            Na cestě to nevypadá jinak, a je to tak správně: spoření na cíl
+            Na časové ose to nevypadá jinak, a je to tak správně: spoření na cíl
             zůstává vaším jměním, jen leží jinde. Odložením se uvolní peníze
-            v rozpočtu, a teprve když je dáte někam jinam, změní se i cesta.
+            v rozpočtu, a teprve když je dáte někam jinam, změní se i ona.
           </Callout>
         )}
 

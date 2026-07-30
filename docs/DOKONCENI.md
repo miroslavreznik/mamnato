@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 367 jednotkových, 64 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 367 jednotkových, 68 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -828,3 +828,33 @@ se dřív nebo později rozešly.
 cíl, takže se koupě nekoná, nájem i energie zůstávají mezi výdaji a měsíční
 tok je 49 700 Kč místo 38 724 Kč po koupi. Rozdíl 34 476 Kč je splátka
 29 276 Kč plus 5 200 Kč nákladů na vlastnictví minus nájem 23 500 Kč.
+
+---
+
+## B17. Přehled místo Cesty, a tři věci z uživatelského průchodu
+
+**Záložka „Cesta" se jmenuje „Přehled".** S ní se přejmenovala i prose:
+kde stálo „Cesta vlevo se překreslí", stojí „Časová osa vlevo", protože
+slovo „cesta" bylo ukotvené názvem záložky a bez něj zůstalo viset ve
+vzduchu. `id` sekce zůstává `souhrn`, je ve sdílených odkazech i v kotvách
+testů.
+
+**Není poznat, že se do přehledu dá sáhnout.** Editovatelná je skoro celá
+stránka (akontace, sazba, výdaje, částky u cílů, délka rodičovské, termín
+dítěte na stuze), ale vypadá jako report, takže se uživatel vracel do
+průvodce i tam, kde stačilo přepsat pole před sebou. Nahoře je proto
+nápověda, která to říká; zavírá se křížkem a zavření si pamatuje
+`localStorage` pod vlastním klíčem (je to předvolba zobrazení, ne zadaný
+údaj, takže do sdíleného odkazu nepatří).
+
+**Sdílení řekne, co v odkazu bude, než ho zkopíruje.** Je to jediná akce
+v appce, která pustí data z prohlížeče ven, a dělala se jedním kliknutím.
+Odkaz navíc nejde zneplatnit: komu se jednou pošle, tomu zůstane. Seznam
+(příjmy, výdaje, úspory, cíle, parametry hypotéky, rodičovská) se proto
+vypisuje **před** zkopírováním, ne po něm.
+
+**Z průvodce se jde vrátit na přehled.** Kdo klikl na „Upravit", opravil
+jedno pole a chtěl zpátky, musel se proklikat zbytkem kroků. Tlačítko
+dostane jen ten, kdo z výsledků přišel; kdo průvodce teprve vyplňuje, žádný
+přehled ještě nemá. Stav se ukládá po každé změně, takže přehled je po
+návratu aktuální.

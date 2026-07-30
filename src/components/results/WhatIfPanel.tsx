@@ -202,7 +202,7 @@ export default function WhatIfPanel() {
       </div>
       <p className="text-[13px] text-ink-body leading-relaxed">
         Vypněte cíl a uvidíte plán bez něj, nebo si pohrajte s jeho parametry.
-        Cesta vlevo se překreslí hned, a když se změní její tvar, zůstane ten
+        Časová osa vlevo se překreslí hned, a když se změní její tvar, zůstane ten
         původní vidět jako přerušovaný obrys.
       </p>
 

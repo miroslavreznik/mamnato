@@ -137,7 +137,7 @@ export function buildAssumptions(state: WizardState): Assumption[] {
     label: 'Horizont plánu',
     value: formatYears(Math.round(planHorizonMonths(state) / 12)),
     source: 'estimate',
-    note: 'Cesta počítá do odchodu do důchodu, kde ji přebírá důchodová projekce, nejméně ale deset let, '
+    note: 'Časová osa počítá do odchodu do důchodu, kde ji přebírá důchodová projekce, nejméně ale deset let, '
       + 'aby měl plán co ukázat i těsně před ním. '
       + 'Příjmy i výdaje drží konstantní, takže jsou všechny částky v dnešních cenách: '
       + 'mzdy a výdaje rostou s inflací zhruba stejně a v poměru se vykrátí. '

@@ -22,6 +22,8 @@ import WhatIfTab from './WhatIfTab';
 import { WhatIfProvider } from './WhatIfProvider';
 import ResultsTabs, { type TabDef } from './ResultsTabs';
 import ExpenseEditor from './ExpenseEditor';
+import EditableHint from './EditableHint';
+import ShareConfirm from './ShareConfirm';
 import { goalsTabLabel } from '../../engine/goalNames';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
@@ -59,7 +61,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
   // Části výsledků jako záložky, jen ty, které dávají smysl podle cílů.
   const sectionDefs: TabDef[] = [
-    { id: 'souhrn', label: 'Cesta' },
+    { id: 'souhrn', label: 'Přehled' },
     { id: 'rozpocet', label: 'Rozpočet' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
     ...(hasGoalPlanners ? [{ id: 'cile', label: goalsTabLabel(state) }] : []),
@@ -181,9 +183,15 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
   };
 
   // Sdílení přehledu odkazem, stav se zakóduje do URL, nic se neposílá na server.
+  //
+  // Kopíruje se až na druhé kliknutí: první ukáže, co v odkazu bude. Je to
+  // jediná akce, která data pustí z prohlížeče ven, a odkaz nejde vzít zpět,
+  // takže seznam patří **před** zkopírování, ne za něj.
   const [shareCopied, setShareCopied] = useState(false);
+  const [shareAsking, setShareAsking] = useState(false);
   const handleShare = async () => {
     const url = buildShareUrl(state);
+    setShareAsking(false);
     try {
       await navigator.clipboard.writeText(url);
       setShareCopied(true);
@@ -219,7 +227,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         actions={
           <ResultsHeader
             shareCopied={shareCopied}
-            onShare={handleShare}
+            onShare={() => setShareAsking((v) => !v)}
             onPrint={handlePrint}
             onEdit={onEdit}
             onReset={onReset}
@@ -259,6 +267,14 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
           <div className="min-w-0">
         {banner}
+        {shareAsking && (
+          <ShareConfirm
+            state={state}
+            onCopy={handleShare}
+            onCancel={() => setShareAsking(false)}
+          />
+        )}
+        <EditableHint />
         <div className="print-only mb-4">
           <h1 className="type-section text-ink">MámNaTo? Finanční přehled</h1>
           <p className="text-xs text-ink-muted">Vytištěno {new Date().toLocaleDateString('cs-CZ')} · orientační přehled, data zůstávají ve vašem prohlížeči.</p>
@@ -266,7 +282,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         {/* Cesta: hlavní odpověď „vyjde mi to?" a plán v čase, až k důchodu.
             Id zůstává `souhrn`: je v uložených odkazech i v kotvách testů
             a přejmenovat ho by rozbilo sdílené adresy kvůli popisku. */}
-        <ResultsSection id="souhrn" title="Cesta" subtitle="Odpověď, váš plán v čase a stav vašich cílů" active={isVisible('souhrn')}>
+        <ResultsSection id="souhrn" title="Přehled" subtitle="Odpověď, váš plán v čase a stav vašich cílů" active={isVisible('souhrn')}>
           <ResultsOverview state={activeState} allocations={activeAllocations} onOpenSection={selectTab} />
           {hasNoGoals && (
             <div className="bg-tint-caution border border-line rounded-xl p-6 text-center">

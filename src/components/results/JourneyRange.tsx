@@ -45,7 +45,7 @@ export default function JourneyRange({ horizonMonths, value, onChange }: Props) 
       {/* Popisek skupiny jde přes `aria-label`, ne přes schovaný text.
           Zbytek appky to dělá stejně a kontrastní test schovaný text
           nepozná: ořízlý `sr-only` span vyhodnotí jako 1,29:1. */}
-      <div role="group" aria-label="Jak dlouhý úsek cesty ukázat" className="inline-flex gap-1">
+      <div role="group" aria-label="Jak dlouhý úsek časové osy ukázat" className="inline-flex gap-1">
         {options.map((o) => {
           const active = o.months === value;
           return (

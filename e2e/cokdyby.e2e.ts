@@ -120,7 +120,7 @@ test.describe('odkládání cílů', () => {
     // Tvar se nezmění, takže se ani neslibuje duch, který by nebyl vidět.
     expect(await ribbonPath(page).getAttribute('d')).toBe(before)
     await expect(ghost(page)).toHaveCount(0)
-    await expect(page.getByText(/Na cestě to nevypadá jinak/)).toBeVisible()
+    await expect(page.getByText(/Na časové ose to nevypadá jinak/)).toBeVisible()
 
     // Zato volných peněz přibude, a to je celý účinek odložení.
     // Popisek dlaždice říká, k jakému stavu se váže: scénář kupuje,

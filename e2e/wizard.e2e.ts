@@ -447,7 +447,9 @@ test('sdílený odkaz reprodukuje scénář v čistém prohlížeči', async ({ 
   await next(page) // → Cíle
   await pickGoal(page, 'retirement')
   await finish(page)
+  // Sdílení se od té doby ptá, co v odkazu bude; kopíruje až potvrzení.
   await page.getByRole('button', { name: /Sdílet přehled/ }).click()
+  await page.getByRole('button', { name: 'Zkopírovat odkaz' }).click()
   await expect(page.getByText('Odkaz zkopírován')).toBeVisible()
   const url = await page.evaluate(() => navigator.clipboard.readText())
   expect(url).toContain('#s=')
@@ -621,6 +623,7 @@ test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ bro
   await pickGoal(sender, 'retirement')
   await finish(sender)
   await sender.getByRole('button', { name: /Sdílet přehled/ }).click()
+  await sender.getByRole('button', { name: 'Zkopírovat odkaz' }).click()
   const sharedUrl = await sender.evaluate(() => navigator.clipboard.readText())
 
   // Příjemce si nejdřív udělá vlastní přehled s jiným příjmem.
@@ -795,4 +798,62 @@ test('výdaje jdou přepsat rovnou ve výsledcích a přehled se přepočítá',
   // A promítne se to i do odpovědi nahoře, ne jen do téhle karty.
   await openTab(page, 'souhrn')
   await expect(page.getByText(/Po všech výdajích vám měsíčně zbývá/)).toContainText('17 000')
+})
+
+test('sdílení nejdřív řekne, co v odkazu bude, a teprve pak kopíruje', async ({ page }) => {
+  // Sdílení je jediná akce, která data pustí z prohlížeče ven, a odkaz nejde
+  // vzít zpět. Seznam patří před zkopírování, ne za něj.
+  await goToGoals(page)
+  await pickGoal(page, 'retirement')
+  await finish(page)
+  await expectResults(page)
+
+  await page.getByRole('button', { name: 'Sdílet přehled' }).click()
+  await expect(page.getByText('Odkaz ponese vaše údaje')).toBeVisible()
+  await expect(page.getByText('čisté příjmy domácnosti')).toBeVisible()
+  await expect(page.getByText(/vaše cíle: důchod/)).toBeVisible()
+  // Dokud uživatel nepotvrdí, nekopíruje se: potvrzení o zkopírování nikde.
+  await expect(page.getByText('Odkaz zkopírován')).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Zrušit' }).click()
+  await expect(page.getByText('Odkaz ponese vaše údaje')).toHaveCount(0)
+})
+
+test('nápověda o editovatelnosti jde zavřít a nevrátí se', async ({ page }) => {
+  await goToGoals(page)
+  await pickGoal(page, 'retirement')
+  await finish(page)
+
+  const hint = page.getByText(/Čísla v přehledu nejsou jen k prohlížení/)
+  await expect(hint).toBeVisible()
+  await page.getByRole('button', { name: 'Skrýt nápovědu' }).click()
+  await expect(hint).toHaveCount(0)
+
+  // Zavření přežije i načtení stránky: je to předvolba, ne stav obrazovky.
+  // Po reloadu je uživatel zpátky na uvítání, odkud se pokračuje do průvodce
+  // a z něj na výsledky.
+  await page.reload()
+  // Uložený stav je za posledním krokem, takže průvodce rovnou propustí dál.
+  await page.getByRole('button', { name: /Pokračovat tam, kde jste skončili/ }).click()
+  await expectResults(page)
+  await expect(page.getByText(/Čísla v přehledu nejsou jen k prohlížení/)).toHaveCount(0)
+})
+
+test('z průvodce se jde vrátit na přehled bez doklikání kroků', async ({ page }) => {
+  // Opravit jedno pole a pak se proklikat čtyřmi kroky zpátky je daň, kterou
+  // platit nemusí: stav se ukládá po každé změně.
+  await goToGoals(page)
+  await pickGoal(page, 'retirement')
+  await finish(page)
+  await expectResults(page)
+
+  await page.getByRole('button', { name: 'Upravit údaje' }).click()
+  await expect(page.getByTestId('wizard-next')).toBeVisible()
+  await page.getByTestId('wizard-back-to-results').click()
+  await expectResults(page)
+})
+
+test('kdo průvodce teprve vyplňuje, návrat na přehled nevidí', async ({ page }) => {
+  await start(page)
+  await expect(page.getByTestId('wizard-back-to-results')).toHaveCount(0)
 })

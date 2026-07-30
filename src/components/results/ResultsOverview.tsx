@@ -114,7 +114,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           label: 'Rezerva po koupi vydrží',
           tooltip: 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu, počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.'
             + (downPaymentGap(state) > 0
-              ? ' Počítá se z dnešních úspor, tedy jako byste kupovali hned. Cesta vedle počítá s tím, že do koupě ještě něco naspoříte, proto tam vychází víc.'
+              ? ' Počítá se z dnešních úspor, tedy jako byste kupovali hned. Časová osa vedle počítá s tím, že do koupě ještě něco naspoříte, proto tam vychází víc.'
               : ''),
           value: runwayLabel,
           unit: 'měs.',
@@ -247,8 +247,8 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
             u ní říct proč. */}
         {hasProperty && !journeyData.events.some((e) => e.key === 'purchase') && (
           <p className="mt-3 text-sm text-caution">
-            Koupě na cestě není: na akontaci do {Math.round(journeyData.horizonMonths / 12)} let
-            zatím nedosáhnete, takže cesta ukazuje život bez ní.
+            Koupě na časové ose není: na akontaci do {Math.round(journeyData.horizonMonths / 12)} let
+            zatím nedosáhnete, takže osa ukazuje život bez ní.
           </p>
         )}
       </div>

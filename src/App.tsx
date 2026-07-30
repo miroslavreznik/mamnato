@@ -118,7 +118,14 @@ function App() {
           <main className={`mx-auto px-4 py-8 sm:py-10 ${view === 'wizard' ? 'max-w-app' : 'max-w-wizard'}`}>
             {conflictBanner}
             {view === 'wizard' ? (
-              <WizardContainer onComplete={handleComplete} returnToStep={returnToStep} resumeSavedState={!returnToStep} />
+              <WizardContainer
+                onComplete={handleComplete}
+                returnToStep={returnToStep}
+                resumeSavedState={!returnToStep}
+                // Zpátky na přehled jen tomu, kdo z něj přišel. Kdo průvodce
+                // teprve vyplňuje, žádný přehled ještě nemá.
+                onBackToResults={returnToStep ? () => setView('results') : undefined}
+              />
             ) : (
               <WelcomeScreen onStart={handleStart} onResume={handleResume} />
             )}
