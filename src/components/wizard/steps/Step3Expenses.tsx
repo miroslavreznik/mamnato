@@ -7,17 +7,8 @@ import NumField from '../../ui/NumField';
 import StepNavigation from '../StepNavigation';
 import { formatNumber as fmt } from '../../../engine/format';
 import { fieldClass } from '../../ui/fieldClass';
+import { NECESSARY_EXPENSE_FIELDS, DISCRETIONARY_EXPENSE_FIELD } from '../../../engine/expenseFields';
 import Callout from '../../ui/Callout';
-
-const categories: { field: string; label: string; tooltip: string; step: number; familyOnly?: boolean }[] = [
-  { field: 'rent', label: 'Nájem (bez energií a poplatků)', tooltip: 'Zadejte čistou výši nájmu, tedy částku, kterou platíte pronajímateli za byt. Energie a zálohy zadejte do pole níže.', step: 1000 },
-  { field: 'utilities', label: 'Energie, voda a poplatky za bydlení', tooltip: 'Zálohy na elektřinu, plyn, vodu, internet a případné zálohy do SVJ nebo správci domu.', step: 500 },
-  { field: 'existingLoans', label: 'Stávající splátky úvěrů', tooltip: 'Splátky spotřebitelských úvěrů, leasingů, kreditních karet.', step: 500 },
-  { field: 'insurance', label: 'Pojistky', tooltip: 'Životní pojištění, havarijní pojištění, cestovní pojištění.', step: 500 },
-  { field: 'food', label: 'Jídlo a potraviny', tooltip: 'Nákupy potravin, obědy v práci, restaurace.', step: 500 },
-  { field: 'transport', label: 'Doprava', tooltip: 'Pohonné hmoty, MHD, údržba auta, pojistka vozidla.', step: 500 },
-  { field: 'children', label: 'Výdaje na děti', tooltip: 'Školka, kroužky, oblečení, kapesné, jídlo pro děti.', step: 500, familyOnly: true },
-];
 
 // Kompaktní řádek pro jednu položku rozpisu (název + částka v Kč).
 function ItemInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
@@ -50,7 +41,7 @@ export default function Step3Expenses() {
   const [showBreakdown, setShowBreakdown] = useState(hasDiscretionaryBreakdown(breakdown));
   const groups = discretionaryGroupTotals(breakdown);
 
-  const visibleCategories = categories.filter((c) => !c.familyOnly || isFamily);
+  const visibleCategories = NECESSARY_EXPENSE_FIELDS.filter((c) => !c.familyOnly || isFamily);
 
 
   return (
@@ -73,11 +64,11 @@ export default function Step3Expenses() {
       {/* Zbytné výdaje, buď jedním polem, nebo podrobným rozpisem do skupin */}
       <h3 className="text-sm font-semibold text-ink-label mb-3 mt-6 pt-6 border-t border-line">Zbytné výdaje</h3>
       <NumberInput
-        label="Zbytné výdaje (zábava, dovolená, koníčky, předplatné)"
+        label={DISCRETIONARY_EXPENSE_FIELD.label}
         value={state.expenses.other}
         onChange={(v) => dispatch({ type: 'UPDATE_EXPENSES', field: 'other', value: v })}
-        tooltip="Výdaje, které lze při výpadku příjmů omezit: zábava, sport, dovolená, restaurace nad rámec běžné stravy, předplatné služeb. Slouží k výpočtu doporučené rezervy a odolnosti rozpočtu."
-        step={500}
+        tooltip={DISCRETIONARY_EXPENSE_FIELD.tooltip}
+        step={DISCRETIONARY_EXPENSE_FIELD.step}
         disabled={showBreakdown}
       />
 

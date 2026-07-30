@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 365 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 367 jednotkových, 64 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -788,3 +788,43 @@ místa.
 
 S nimi šla `cashFlowAfterPurchase()` z enginu a její testy; nic jiného ji
 nepoužívalo.
+
+---
+
+## B16. Navigace, kroky průvodce a výdaje k přepsání
+
+**Záložky jsou sloupec vlevo.** Vodorovná lišta pod hlavičkou sice měla
+místa dost, ale využila z něj třetinu a zbytek byl prázdný pruh nad obsahem.
+Ve sloupci má každá záložka svůj řádek a čte se jako obsah. Na úzkém okně
+sloupec nedává smysl, tam zůstává řádek nahoře přilepený pod hlavičkou; je
+to jedna komponenta ve dvou podobách, ne dvě, protože `id` záložek drží
+`aria-controls` i kotvy testů a dvakrát vykreslené by se rozešly. Šipky
+fungují v obou osách.
+
+**Kroky průvodce mají zase jména.** Zbyl z nich holý proužek s počítadlem,
+což bylo úsporné, ale ztratilo se tím, co který dílek je: kdo se z výsledků
+vrátil tlačítkem „Upravit", uviděl „Krok 5 z 6" a pruh beze jmen a neměl
+podle čeho kliknout, když se chtěl přesunout na výdaje. Jména jsou zpátky
+jako popisek dílku, ne jako druhá řada koleček. Na úzkém okně se zalomí do
+dvou řádků; uříznutí nešlo, „Vlastní bydlení" i „Vlastní cíle" končily jako
+„Vlastní…".
+
+**Výdaje jdou přepsat rovnou v Rozpočtu.** Průvodce je nasbírá jednou a pak
+se k nim uživatel dostal jen tlačítkem „Upravit", které ho vyhodí do
+formuláře a připraví o kontext. Přitom „kolik by se změnilo, kdybych utrácel
+o dva tisíce míň za jídlo" je otázka nad výsledky, ne nad formulářem. Nová
+karta píše do **zadaného** stavu, ne do toho po „co kdyby": jsou to skutečné
+údaje, takže se ukládají a přepočítá se z nich celý přehled včetně odpovědi
+nahoře. Součet je hned pod poli, aby se po každé úpravě nemuselo scrollovat
+nahoru.
+
+Zbytné výdaje jsou jedním polem, dokud si je uživatel nerozepsal; s rozpisem
+je pole součtem a upravují se položky, jinak by se dvě čísla o téže věci
+přetlačovala. Definice kategorií (popisky, nápovědy, kroky) jsou nově
+v `engine/expenseFields.ts` a berou si je průvodce i výsledky; dva opisy by
+se dřív nebo později rozešly.
+
+**Odložené bydlení dál platí nájem** (ověřeno testem). Přepínač odloží celý
+cíl, takže se koupě nekoná, nájem i energie zůstávají mezi výdaji a měsíční
+tok je 49 700 Kč místo 38 724 Kč po koupi. Rozdíl 34 476 Kč je splátka
+29 276 Kč plus 5 200 Kč nákladů na vlastnictví minus nájem 23 500 Kč.

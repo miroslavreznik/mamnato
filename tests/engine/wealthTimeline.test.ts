@@ -250,3 +250,36 @@ describe('přidání cíle se na křivce projeví tak, jak má', () => {
     expect(bez.points.at(-1)!.flowAfterGoals - s.points.at(-1)!.flowAfterGoals).toBe(14910);
   });
 });
+
+describe('odložené bydlení znamená, že se dál platí nájem', () => {
+  const rodina = (goals: WizardState['goals']) => makeState({
+    goals,
+    person1Age: 31,
+    person2Age: 29,
+    income: { person1NetMonthly: 52000, person2NetMonthly: 41000 },
+    expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
+    savings: { totalSavings: 1100000 },
+    property: { targetPrice: 6200000, loanTermYears: 30 },
+  });
+
+  it('bez koupě zůstane nájem i energie mezi výdaji', () => {
+    // Přepínač v „Co kdyby" odloží celý cíl, ne jen spoření na akontaci.
+    // Koupě se pak nekoná a domácnost bydlí dál v nájmu, takže se nájem
+    // z výdajů nesmí ztratit; kdyby ano, vypnutí bydlení by vypadalo, jako
+    // by se bydlelo zadarmo.
+    const bez = wealthTimeline(rodina([]), { months: 120 });
+    expect(bez.purchaseMonth).toBeNull();
+    // 93 000 příjem − 43 300 výdajů (v tom 19 000 nájem a 4 500 energie).
+    expect(bez.points[1].flow).toBe(49700);
+  });
+
+  it('s koupí nájem vystřídá splátka a náklady na vlastnictví', () => {
+    const s = wealthTimeline(rodina(['property']), { months: 120 });
+    expect(s.purchaseMonth).toBe(0);
+    const bezKoupe = 49700;
+    const najemAEnergie = 19000 + 4500;
+    const splatkaANaklady = bezKoupe + najemAEnergie - s.points[1].flow;
+    // Splátka 29 276 Kč plus 5 200 Kč nákladů na vlastnictví.
+    expect(Math.round(splatkaANaklady)).toBe(34476);
+  });
+});

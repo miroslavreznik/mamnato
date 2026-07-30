@@ -21,6 +21,7 @@ import AppBar from '../ui/AppBar';
 import WhatIfTab from './WhatIfTab';
 import { WhatIfProvider } from './WhatIfProvider';
 import ResultsTabs, { type TabDef } from './ResultsTabs';
+import ExpenseEditor from './ExpenseEditor';
 import { goalsTabLabel } from '../../engine/goalNames';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
@@ -153,6 +154,24 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     saveState(next);
   };
 
+  // Výdaje jdou přepsat přímo v Rozpočtu. Zapisuje se do zadaného stavu,
+  // ne do toho po „co kdyby": jsou to skutečné údaje, ne úvaha nad grafem.
+  const handleChangeExpense = (field: string, value: number) => {
+    const next = { ...state, expenses: { ...state.expenses, [field]: Math.max(0, value) } };
+    setState(next);
+    saveState(next);
+  };
+
+  // Položka podrobného rozpisu zbytných výdajů. Souhrnné `other` je jejich
+  // součet, takže se musí přepočítat s ní, jinak by se rozešly.
+  const handleChangeDiscretionaryItem = (key: string, value: number) => {
+    const breakdown = { ...(state.expenses.discretionaryBreakdown ?? {}), [key]: Math.max(0, value) };
+    const other = Object.values(breakdown).reduce((sum, v) => sum + (v ?? 0), 0);
+    const next = { ...state, expenses: { ...state.expenses, discretionaryBreakdown: breakdown, other } };
+    setState(next);
+    saveState(next);
+  };
+
   // Úroková sazba jde stejně jako akontace ladit přímo ve výsledcích.
   const handleChangeRate = (value: number) => {
     const clamped = Math.max(0.001, Math.min(value, 0.20));
@@ -208,17 +227,6 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         }
       />
 
-      {/* Lišta záložek pod hlavičkou, ne v ní.
-          V hlavičce se mačkala mezi značkou a ovládacími ikonami a při šesti
-          záložkách, kde se jedna jmenuje podle cílů („Dítě a důchod"), se do
-          zbylého místa nevešla. Vlastní pruh přes celou šířku má místa dost
-          a lepí se pod hlavičku, takže je pořád po ruce. */}
-      <div className="no-print sticky top-16 z-30 backdrop-blur-md bg-card/80 border-b border-line">
-        <div className="mx-auto max-w-app px-4 py-1.5">
-          <ResultsTabs tabs={sectionDefs} active={activeTab} onSelect={selectTab} />
-        </div>
-      </div>
-
       {/* Název stránky nese `aria-label`, ne nadpis. Nadpis „Váš finanční plán"
           stál v samostatné kartě nad obsahem, kterou lišta nahradila; pro čtečku
           ale stránka pojmenovaná zůstat musí. */}
@@ -227,6 +235,29 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         aria-label="Váš finanční plán"
         className="mx-auto max-w-app px-4 py-6 sm:py-8"
       >
+        {/* Navigace jako sloupec vlevo, ne pruh nahoře.
+            V hlavičce se mačkala mezi značkou a ikonami; vlastní pruh přes
+            celou šířku sice místo měl, ale využil z něj třetinu a zbytek byl
+            prázdný podklad nad obsahem. Ve sloupci má každá záložka svůj
+            řádek, čte se jako obsah a stránce zbyde svislý prostor.
+
+            Na úzkém okně sloupec nedává smysl, tam zůstává řádek nahoře,
+            přilepený pod hlavičkou. Je to jedna komponenta ve dvou
+            podobách, ne dvě: `id` záložek drží `aria-controls` i kotvy
+            testů a dvakrát vykreslené by se rozešly. */}
+        <div className="lg:grid lg:grid-cols-[190px_minmax(0,1fr)] lg:gap-8 lg:items-start">
+          <div
+            className={
+              'no-print sticky top-16 z-30 -mx-4 mb-4 px-4 py-2 '
+              + 'bg-page/90 backdrop-blur-md border-b border-line '
+              + 'lg:top-20 lg:mx-0 lg:mb-0 lg:px-0 lg:py-0 lg:bg-transparent '
+              + 'lg:backdrop-blur-none lg:border-0'
+            }
+          >
+            <ResultsTabs tabs={sectionDefs} active={activeTab} onSelect={selectTab} />
+          </div>
+
+          <div className="min-w-0">
         {banner}
         <div className="print-only mb-4">
           <h1 className="type-section text-ink">MámNaTo? Finanční přehled</h1>
@@ -246,7 +277,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
         {/* Rozpočet: kam jde příjem a jak se úspory vyvíjejí v čase. Dřív viselo
             pod souhrnem a dělalo z něj pět tisíc pixelů. */}
-        <ResultsSection id="rozpocet" title="Rozpočet" subtitle="Kam jde váš příjem a co by se stalo, kdybyste některou položku škrtli" active={isVisible('rozpocet')}>
+        <ResultsSection id="rozpocet" title="Rozpočet" subtitle="Kam jde váš příjem, co by se stalo bez některé položky a kde se dají výdaje přepsat" active={isVisible('rozpocet')}>
           <ExpenseBreakdownChart
             state={state}
             allocations={allocations}
@@ -258,6 +289,11 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
             <DiscretionaryBreakdownChart state={activeState} />
           )}
+          <ExpenseEditor
+            state={state}
+            onChange={handleChangeExpense}
+            onChangeDiscretionaryItem={handleChangeDiscretionaryItem}
+          />
         </ResultsSection>
 
         {/* Bydlení a hypotéka */}
@@ -340,6 +376,8 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         </div>
 
         <Disclaimer />
+          </div>
+        </div>
       </main>
     </>
   );

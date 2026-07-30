@@ -379,8 +379,10 @@ test('s podrobným rozpisem jde vypnout jedna zbytná položka', async ({ page }
     return Number((m?.[1] ?? '').replace(/[^\d]/g, ''))
   }
   const before = await free()
-  // Vypnutím položky za 4 000 Kč vzroste volná rezerva přesně o 4 000 Kč
-  await page.getByRole('button', { name: /Zahraniční rekreace/ }).click()
+  // Vypnutím položky za 4 000 Kč vzroste volná rezerva přesně o 4 000 Kč.
+  // Přepínač v grafu se pozná podle částky v závorce: editor výdajů níž má
+  // u téže položky krokovací tlačítka „Snížit: …" a „Zvýšit: …".
+  await page.getByRole('button', { name: /^Zahraniční rekreace \(/ }).click()
   await expect.poll(free).toBe(before + 4000)
 })
 
@@ -757,4 +759,40 @@ test('výřez cesty zkrátí pohled, ale neschová, co je za ním', async ({ pag
   await page.getByRole('button', { name: 'Celý plán', exact: true }).click()
   expect(await roky()).toBe(35)
   await expect(page.getByText(/Za zobrazeným úsekem/)).toHaveCount(0)
+})
+
+test('výdaje jdou přepsat rovnou ve výsledcích a přehled se přepočítá', async ({ page }) => {
+  // Dřív se k výdajům dalo dostat jen tlačítkem „Upravit", které uživatele
+  // vyhodí do průvodce a připraví o kontext. Otázka „co kdybych utrácel míň
+  // za jídlo" ale patří k výsledkům, ne k formuláři.
+  await start(page)
+  await next(page) // → Příjmy
+  await page.getByRole('textbox', { name: 'Můj čistý měsíční příjem', exact: true }).fill('60000')
+  await next(page) // → Výdaje
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await pickGoal(page, 'retirement')
+  await finish(page)
+  await expectResults(page)
+
+  // Čísla, ne řetězce: oddělovač tisíců se liší podle verze ICU.
+  const numbersIn = (text: string) =>
+    (text.match(/[\d\u00a0\u202f ]+(?=\s*Kč)/g) ?? []).map((m) => Number(m.replace(/\D/g, '')))
+
+  const disposableText = async () => {
+    const el = page.locator('#rozpocet').getByText('Zbývá').locator('..')
+    return (await el.textContent()) ?? ''
+  }
+
+  await openTab(page, 'rozpocet')
+  const before = numbersIn(await disposableText())[0]
+
+  await page.getByRole('textbox', { name: 'Jídlo a potraviny', exact: true }).fill('20000')
+  const after = numbersIn(await disposableText())[0]
+  // Jídlo z 6 000 na 20 000 ubere z volných peněz 14 000.
+  expect(before - after).toBe(14000)
+
+  // A promítne se to i do odpovědi nahoře, ne jen do téhle karty.
+  await openTab(page, 'souhrn')
+  await expect(page.getByText(/Po všech výdajích vám měsíčně zbývá/)).toContainText('17 000')
 })

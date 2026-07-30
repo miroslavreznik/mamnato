@@ -47,15 +47,20 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
         // Zaoblení jde s tím: dokonale kulatý obal vypadá u dvou řádků jako
         // omyl, proto se plné kolečko nechává až na desktop, kde je řádek jeden.
         //
-        // `w-fit` a zarovnání doleva: obal se drží obsahu a začíná na stejné
-        // svislici jako značka nad ním a jako obsah pod ním. Dokud lišta
-        // seděla uprostřed hlavičky, dávalo vystředění smysl; ve vlastním
-        // pruhu přes celou šířku z toho byl proužek podkladu plovoucí
-        // uprostřed, zatímco všechno ostatní na stránce bylo u levého okraje.
-        className="flex flex-wrap lg:flex-nowrap w-fit gap-0.5 p-1 rounded-2xl lg:rounded-full bg-shell"
+        // Na širokém okně sloupec vlevo, na úzkém řádek nahoře. Vodorovná
+        // lišta se při šesti záložkách rvala o místo s obsahem stránky
+        // a zabírala pruh přes celou šířku, ze kterého byla využitá třetina;
+        // ve sloupci má každá záložka svůj řádek a čte se jako obsah.
+        //
+        // `w-fit` na úzkém okně: obal se drží obsahu a začíná na stejné
+        // svislici jako značka nad ním. Ve sloupci naopak `w-full`, aby
+        // sloupec měl svou šířku a záložky se v něm zarovnaly.
+        className="flex flex-wrap lg:flex-col lg:flex-nowrap w-fit lg:w-full gap-0.5 p-1 rounded-2xl lg:rounded-xl bg-shell"
+        // Šipky fungují v obou osách: na širokém okně je lišta sloupec vlevo,
+        // na úzkém řádek nahoře, a uživatel klávesnice nemá poznat rozdíl.
         onKeyDown={(e) => {
-          if (e.key === 'ArrowRight') { e.preventDefault(); move(1); }
-          if (e.key === 'ArrowLeft') { e.preventDefault(); move(-1); }
+          if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); move(1); }
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
         }}
       >
         {tabs.map((tab) => {
@@ -73,7 +78,7 @@ export default function ResultsTabs({ tabs, active, onSelect }: {
               // Šířka podle textu, ne rovným dílem. Rovné dělení fungovalo,
               // dokud byly záložky tři; u šesti by z „Rozpočet" a „Cíle" byly
               // stejně široké pilulky a kratší popisek by plaval v prázdnu.
-              className={`shrink-0 whitespace-nowrap px-3 min-h-[44px] lg:min-h-[40px] text-[13px] font-semibold rounded-full transition-colors ${
+              className={`shrink-0 whitespace-nowrap px-3 min-h-[44px] lg:min-h-[40px] text-[13px] font-semibold rounded-full lg:rounded-lg lg:w-full lg:text-left transition-colors ${
                 selected
                   ? 'bg-raised text-ink shadow-sm'
                   : 'text-ink-muted hover:text-ink-body'
