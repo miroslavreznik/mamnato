@@ -235,9 +235,9 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           )}
         </ResultsSection>
 
-        {/* Rozpočet: kam jde příjem a jak se jmění vyvíjí v čase. Dřív viselo
+        {/* Rozpočet: kam jde příjem a jak se úspory vyvíjejí v čase. Dřív viselo
             pod souhrnem a dělalo z něj pět tisíc pixelů. */}
-        <ResultsSection id="rozpocet" title="Rozpočet" subtitle="Kam jde váš příjem, co kdyby a vývoj jmění v čase" active={isVisible('rozpocet')}>
+        <ResultsSection id="rozpocet" title="Rozpočet" subtitle="Kam jde váš příjem, co kdyby a vývoj úspor v čase" active={isVisible('rozpocet')}>
           <ExpenseBreakdownChart
             state={state}
             allocations={allocations}

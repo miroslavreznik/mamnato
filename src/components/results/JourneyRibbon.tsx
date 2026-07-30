@@ -232,7 +232,12 @@ export default function JourneyRibbon({
   // osmdesáti jednotek nevejde a text z pilulky vytekl na obě strany.
   const bubbles = useMemo(() => {
     // Odhad šířky písmene v `viewBox` jednotkách při fontSize 11 a tučném řezu.
-    const half = (label: string) => Math.max(42, label.length * 3.2 + 10);
+    //
+    // Spodní mez byla 42, tedy pilulka 84 široká i pro slovo „Dítě". Na
+    // desetiletém horizontu to nevadilo, na horizontu do důchodu ano: události
+    // se mačkají v prvních letech a každá zbytečná jednotka šířky odstrčí
+    // bublinu dál od jejího puntíku. Dvacet je čtyřznakové slovo s okraji.
+    const half = (label: string) => Math.max(20, label.length * 3.2 + 10);
     const min = PAD.left;
     const max = W - PAD.right;
     const hs = named.map((e) => half(e.label));
@@ -411,6 +416,11 @@ export default function JourneyRibbon({
         strokeWidth="9"
         strokeLinecap="round"
         strokeLinejoin="round"
+        /* Normalizovaná délka dráhy: `stroke-dasharray: 1` v CSS pak znamená
+           „celá stuha", ať měří cokoli. Bez toho byla v CSS pevná trojtisícovka
+           proti dráze dlouhé sedm set, takže se stuha dokreslila za desetinu
+           doby animace a zbytek se čekalo. */
+        pathLength={1}
         className={animate ? 'ribbon-draw' : undefined}
       />
 
@@ -471,8 +481,21 @@ export default function JourneyRibbon({
         const labelY = 14;
         const movable = e.key === 'child' && !!onMoveChild;
         return (
-          <g key={e.key} className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.2 + i * 0.12}s` }}>
-            <line x1={x} x2={bx} y1={labelY + 8} y2={y - 9} stroke="var(--line-strong)" strokeWidth="1" />
+          <g key={e.key} className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.0 + i * 0.08}s` }}>
+            {/* Vodicí čára jako loket, ne jedna dlouhá úhlopříčka.
+                Svislý úsek vyrůstá přímo z puntíku, takže je vidět, ke které
+                události popisek patří; teprve nad ním se odbočí k bublině.
+                Samotná úhlopříčka od puntíku u levého okraje k bublině o dvě
+                stě jednotek dál neukazovala na nic. */}
+            <path
+              /* Rameno leží pod bublinou, ale nikdy nad puntíkem: u události
+                 na samém vrcholu křivky by čára jinak nejdřív klesla a pak
+                 se vrátila nahoru. */
+              d={`M ${x} ${y - 9} L ${x} ${Math.min(labelY + 20, y - 9)} L ${bx} ${labelY + 9}`}
+              fill="none"
+              stroke="var(--line-strong)"
+              strokeWidth="1"
+            />
             <rect
               x={bx - bw} y={labelY - 9} width={bw * 2} height="19" rx="9"
               fill="var(--card)" stroke="var(--line)"
@@ -531,7 +554,7 @@ export default function JourneyRibbon({
       {/* Nejnižší bod: menší puntík a popisek pod stuhou, aby nesoupeřil
           s událostmi. Je to údaj, ne událost. */}
       {lowest && lowestLabel && (
-        <g className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.2 + named.length * 0.12}s` }}>
+        <g className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.0 + named.length * 0.08}s` }}>
           {/* Když popisek uhnul stranou, spojí ho s bodem čárka. Bez ní by
               vypadal jako údaj k jinému místu na stuze. */}
           {lowestLabel.shifted && (

@@ -58,8 +58,8 @@ export default function WealthTimelineChart({ state, allocations }: Props) {
   return (
     <Card>
       <h3 className="type-section text-ink mb-1 flex items-center">
-        Vývoj jmění v čase
-        <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Bez výnosů z investic a inflace, konzervativní odhad." />
+        Vývoj úspor v čase
+        <Tooltip text="Měsíc po měsíci: úspory rostou o disponibilní částku, při koupi klesnou o akontaci a nájem nahradí splátka, s dítětem přibudou náklady dle věku a během rodičovské klesne příjem. Je to hotovost a odložené peníze, ne čisté jmění: hodnota koupené nemovitosti v křivce není. Bez výnosů z investic a inflace, konzervativní odhad." />
       </h3>
       <p className="text-sm text-ink-muted mb-4">
         Jak se vaše úspory vyvinou přes plánované události: spoření, koupi, dítě, rodičovskou i doplacení hypotéky. Nejde o předpověď, ale o kontrolu, jestli plán projde bez pádu pod nulu.
@@ -137,7 +137,9 @@ export default function WealthTimelineChart({ state, allocations }: Props) {
       )}
 
       <p className="mt-2 text-xs text-ink-faint">
-        Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace, tedy všechno v dnešních cenách. Spoření na cíle zůstává součástí jmění.
+        Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace, tedy všechno v dnešních cenách.
+        Spoření na cíle z křivky nemizí, peníze se jen přesouvají. Hodnota nemovitosti v ní naopak není:
+        akontace z úspor odejde a zpátky se nepřičte. Kolik po koupi vlastníte, ukazuje graf koupě vs. nájem.
       </p>
     </Card>
   );

@@ -192,3 +192,61 @@ describe('doplacení hypotéky', () => {
     expect(tl.mortgagePaidOffMonth).toBeNull();
   });
 });
+
+describe('přidání cíle se na křivce projeví tak, jak má', () => {
+  const rodina = (goals: WizardState['goals']) => makeState({
+    goals,
+    person1Age: 31,
+    person2Age: 29,
+    income: { person1NetMonthly: 52000, person2NetMonthly: 41000 },
+    expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
+    savings: { totalSavings: 1100000 },
+    property: { targetPrice: 6200000, loanTermYears: 30 },
+  });
+
+  it('dítě ubere z úspor přesně tolik, kolik stojí do osmnácti', () => {
+    // Nejsilnější křížová kontrola, jakou na tenhle model jde udělat: rozdíl
+    // koncových úspor musí sednout na součet nákladů z tabulky ČSÚ.
+    const bez = wealthTimeline(rodina(['property']), { months: 432, childOffsetMonths: 12 });
+    const s = wealthTimeline(rodina(['property', 'child']), { months: 432, childOffsetMonths: 12 });
+    const rozdil = bez.points.at(-1)!.cash - s.points.at(-1)!.cash;
+    const doOsmnacti = (3 * 8000 + 3 * 10000 + 9 * 12000 + 3 * 14000) * 12;
+    expect(doOsmnacti).toBe(2448000);
+    expect(rozdil).toBe(doOsmnacti);
+  });
+
+  it('náklad na dítě se láme přesně na hranicích věkových pásem', () => {
+    const tl = wealthTimeline(rodina(['property', 'child']), { months: 432, childOffsetMonths: 12 });
+    const flow = (m: number) => tl.points.find((p) => p.month === m)!.flow;
+    const bezDitete = flow(12); // ještě před narozením
+    expect(bezDitete - flow(13)).toBe(8000); // 0–3 roky
+    expect(bezDitete - flow(60)).toBe(10000); // 3–6 let
+    expect(bezDitete - flow(120)).toBe(12000); // 6–15 let
+    expect(bezDitete - flow(200)).toBe(14000); // 15–18 let
+    expect(bezDitete - flow(360)).toBe(0); // odrostlé
+  });
+
+  it('posun narození posune celý náklad, ne jen popisek', () => {
+    const brzy = wealthTimeline(rodina(['property', 'child']), { months: 432, childOffsetMonths: 0 });
+    const pozdeji = wealthTimeline(rodina(['property', 'child']), { months: 432, childOffsetMonths: 60 });
+    expect(brzy.childMonth).toBe(0);
+    expect(pozdeji.childMonth).toBe(60);
+    // Do osmnácti to stojí stejně, jen o pět let později, takže na konci
+    // horizontu (kdy je dítě v obou případech odrostlé) vyjde totéž.
+    expect(brzy.points.at(-1)!.cash).toBe(pozdeji.points.at(-1)!.cash);
+    // V průběhu se ale liší: kdo má dítě hned, má za pět let míň.
+    const at = (tl: typeof brzy, m: number) => tl.points.find((p) => p.month === m)!.cash;
+    expect(at(brzy, 60)).toBeLessThan(at(pozdeji, 60));
+  });
+
+  it('důchod křivkou úspor nehne, ubere jen z toho, co zbývá na cíle', () => {
+    // Odložené peníze jsou pořád vaše, jen leží jinde. Vidět je to na
+    // `flowAfterGoals`, ne na `cash`; kdyby se odečítaly od `cash`, tvrdila
+    // by osa, že spořením chudnete.
+    const bez = wealthTimeline(rodina(['property']), { months: 432 });
+    const s = wealthTimeline(rodina(['property', 'retirement']), { months: 432 });
+    expect(s.points.at(-1)!.cash).toBe(bez.points.at(-1)!.cash);
+    expect(s.points.at(-1)!.flow).toBe(bez.points.at(-1)!.flow);
+    expect(bez.points.at(-1)!.flowAfterGoals - s.points.at(-1)!.flowAfterGoals).toBe(14910);
+  });
+});

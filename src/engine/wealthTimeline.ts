@@ -6,7 +6,7 @@ import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave'
 import { yearsUntilRetirement } from './savings';
 import { calculateDefaultAllocations, type GoalAllocations } from './allocation';
 
-// Časová osa jmění: měsíc po měsíci simuluje vývoj úspor domácnosti přes
+// Časová osa úspor: měsíc po měsíci simuluje vývoj úspor domácnosti přes
 // plánované životní události, spoření na akontaci, koupi (jednorázový pokles
 // o akontaci a přechod z nájmu na hypotéku), narození dítěte (náklady dle
 // věku) a rodičovskou (výpadek mzdy nahrazený dávkami).
@@ -14,6 +14,12 @@ import { calculateDefaultAllocations, type GoalAllocations } from './allocation'
 // Záměrná zjednodušení: příjmy a výdaje jsou konstantní, výnosy z investic
 // a inflaci nepočítáme (konzervativní odhad). Spoření na cíle zůstává součástí
 // jmění (peníze se jen přesouvají), proto se od `cash` neodečítá.
+//
+// **Není to čisté jmění.** Akontace z `cash` při koupi odejde a hodnota
+// nemovitosti se zpátky nepřičte, takže po koupi je řada nižší než majetek
+// domácnosti o celou vloženou částku i o splacenou jistinu. Čisté jmění
+// počítá `investmentComparison`. Kdo tuhle řadu pojmenuje „jmění", slíbí
+// o dva miliony víc, než ukazuje.
 //
 // Konstantní částky znamenají, že **celá osa je v dnešních cenách**. Mzdy
 // i výdaje rostou s inflací zhruba stejně, takže se v poměru vykrátí a to,

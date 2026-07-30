@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 358 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 362 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -662,3 +662,67 @@ Obojí je vlastním způsobem správně: verdikt staví na `budgetNow` a
 tentýž rozdíl mezi snímkem a časovou osou jako v B7 a B12 a srovnat ho
 znamená dát do rozpočtové karty čas. Informace uživateli nechybí: karta
 nejtěsnějšího místa i řádek cíle „Rodičovská" ji říkají obě.
+
+---
+
+## B14. Přidání cíle na grafu, popisky a animace
+
+### Přidání cíle se počítá správně
+
+Ověřeno porovnáním časové osy se stejným zadáním a různými cíli.
+
+**Dítě** je namodelované přesně. Rozdíl koncových úspor mezi „bez dítěte"
+a „s dítětem" je 2 448 000 Kč, což je na korunu součet tabulky ČSÚ do
+osmnácti let ((3×8 000 + 3×10 000 + 9×12 000 + 3×14 000) × 12). Náklad se
+láme přesně na hranicích věkových pásem (8 000 → 10 000 → 12 000 → 14 000 →
+0 po osmnáctinách) a posun narození posune celý náklad, ne jen popisek: kdo
+má dítě hned, má za pět let míň, ale na konci horizontu vyjde totéž. Na
+stuze přibude událost, v grafu úspor svislice.
+
+**Ostatní cíle** křivkou nehnou vůbec, a je to tak správně: odložené peníze
+jsou pořád vaše, jen leží jinde. Projeví se na `flowAfterGoals`, tedy na
+barvě stuhy, a v rozpočtu. Zamlčené to není, „Co kdyby" to říká vlastní
+větou. Uzamčeno testy.
+
+### Křivka se jmenovala jinak, než co ukazuje
+
+Karta se jmenovala **„Vývoj jmění v čase"**, jenže řada žádné jmění není:
+akontace z ní při koupi odejde a hodnota nemovitosti se zpátky nepřičte.
+U páru s bytem za 6,2 milionu tak vedle sebe stálo 14,4 milionu („jmění"
+= jen úspory) a 16,6 milionu (skutečné čisté jmění z grafu koupě vs. nájem)
+o téže domácnosti. Přejmenováno na „Vývoj úspor v čase" a v poznámce pod
+grafem je napsané, že hodnota nemovitosti v křivce není a kde ji hledat.
+
+### Popisky ukazovaly vedle
+
+Bublina má minimální šířku, kterou si nese od doby desetiletého horizontu:
+84 jednotek i pro slovo „Dítě". Na horizontu do důchodu se události mačkají
+v prvních letech a každá zbytečná jednotka šířky odstrčí bublinu dál od
+jejího puntíku, takže „Dítě" viselo dvě stě jednotek vpravo od události,
+kterou popisuje. Minimum sníženo na skutečnou šířku textu.
+
+Vodicí čára byla jedna dlouhá úhlopříčka od puntíku k bublině, která
+neukazovala na nic. Teď je to loket: svislý úsek vyrůstá přímo z puntíku
+a teprve pod bublinou se odbočí. Rameno nikdy neleží nad puntíkem, aby
+u události na vrcholu křivky čára nejdřív neklesala.
+
+### Animace se zadrhávala
+
+`.ribbon-draw` měla `stroke-dasharray: 3000`, ale dráha stuhy měří kolem
+700 (naměřeno 704,25). Stuha byla proto dokreslená po zhruba devadesáti
+milisekundách z jedné a půl vteřiny; zbytek animace byla prodleva, po které
+teprve naskákaly popisky. Vypadalo to jako zadrhnutí, ne jako kreslení.
+
+Délka se nově normalizuje atributem `pathLength="1"` na prvku, takže
+`stroke-dasharray: 1` znamená „celá stuha", ať měří cokoli. Kreslení trvá
+1,1 s a opravdu celou dobu kreslí; popisky nabíhají od 1,0 s po 0,08 s.
+
+### Co zůstává k rozvaze
+
+Řada `cash` počítá i peníze odložené na důchod, a z ní se odvozuje „rezerva
+vydrží X měsíců" i barva stuhy. U někoho, kdo dvacet let odkládá na
+důchodové portfolio, je pak polovina „rezervy" ve skutečnosti v akciích na
+třicet let. Prakticky to skoro nevadí, protože nejtěsnější místo bývá brzy,
+kdy je portfolio ještě malé, ale rozlišit likvidní rezervu od investic by
+znamenalo vést v časové ose dva hrnce místo jednoho. Není to oprava textu,
+je to změna modelu.
