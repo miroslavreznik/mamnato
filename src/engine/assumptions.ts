@@ -106,13 +106,13 @@ export function buildAssumptions(state: WizardState): Assumption[] {
       label: 'Na rodičovské zůstane',
       value: `Osoba ${leave.parent} (příjem ${czkMonthly(leave.lostSalary)})`,
       source: 'user',
-      note: 'Právě tenhle příjem během volna vypadne. U druhé osoby by výsledek vypadal jinak.',
+      note: 'Právě tenhle příjem během rodičovské vypadne. U druhé osoby by výsledek vypadal jinak.',
     });
-    rows.push({ label: 'Délka volna', value: formatMonths(leave.durationMonths), source: 'user' });
+    rows.push({ label: 'Délka rodičovské', value: formatMonths(leave.durationMonths), source: 'user' });
 
     const manualBenefit = state.parentalLeave?.monthlyBenefit != null;
     rows.push({
-      label: 'Dávky během volna',
+      label: 'Dávky během rodičovské',
       value: manualBenefit
         ? `${czkMonthly(leave.monthlyBenefit)} po celou dobu`
         : leave.phases.map((p) => `${p.label}: ${czk(p.monthlyBenefit)}`).join('; '),

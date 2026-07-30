@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateOverall } from '../../src/engine/summary';
+import { goalsTabLabel } from '../../src/engine/goalNames';
 import type { WizardState } from '../../src/types';
 import type { GoalAllocations } from '../../src/engine/allocation';
 
@@ -269,5 +270,43 @@ describe('tvrzení musí platit, ne jen znít dobře', () => {
     const v = evaluateOverall(state, allocs({ downPayment: 24850 })).verdict;
     expect(v.reason).toContain('u cíle níže');
     expect(v.reason).not.toContain('u cíl ');
+  });
+});
+
+describe('záložka s cíli se jmenuje podle cílů', () => {
+  const st = (goals: WizardState['goals'], custom?: WizardState['customGoals']) =>
+    makeState({ goals, customGoals: custom });
+
+  it('u jednoho cíle nese jeho jméno', () => {
+    expect(goalsTabLabel(st(['property', 'retirement']))).toBe('Důchod');
+    expect(goalsTabLabel(st(['child']))).toBe('Dítě');
+  });
+
+  it('u dvou je spojí a druhý dá malým písmenem', () => {
+    expect(goalsTabLabel(st(['child', 'retirement']))).toBe('Dítě a důchod');
+  });
+
+  it('vlastní cíl se jmenuje, jak si ho uživatel pojmenoval', () => {
+    const s = st(['other'], [{ id: 'a', name: 'Dovolená', targetAmount: 100000, targetMonths: 24 }]);
+    expect(goalsTabLabel(s)).toBe('Dovolená');
+  });
+
+  it('nepojmenovaný vlastní cíl dostane náhradu', () => {
+    const s = st(['other'], [{ id: 'a', name: '  ', targetAmount: 100000, targetMonths: 24 }]);
+    expect(goalsTabLabel(s)).toBe('Vlastní cíl 1');
+  });
+
+  it('u tří a víc cílů, i u dlouhého názvu, sáhne po obecném', () => {
+    const tri = st(['child', 'retirement', 'other'], [{ id: 'a', name: 'Auto', targetAmount: 1, targetMonths: 1 }]);
+    expect(goalsTabLabel(tri)).toBe('Vaše cíle');
+    const dlouhy = st(['other'], [
+      { id: 'a', name: 'Rekonstrukce chalupy na Vysočině', targetAmount: 1, targetMonths: 1 },
+      { id: 'b', name: 'Auto', targetAmount: 1, targetMonths: 1 },
+    ]);
+    expect(goalsTabLabel(dlouhy)).toBe('Vaše cíle');
+  });
+
+  it('bydlení mezi ně nepatří, má vlastní záložku', () => {
+    expect(goalsTabLabel(st(['property']))).toBe('Cíle');
   });
 });

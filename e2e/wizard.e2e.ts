@@ -121,7 +121,7 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await openTab(page, 'cile')
   await expect(page.getByText('Rodičovská: co udělá s rozpočtem')).toBeVisible()
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
-  await expect(page.getByText('Volná rezerva během volna')).toBeVisible()
+  await expect(page.getByText('Volná rezerva během rodičovské')).toBeVisible()
 
   // Volno má dvě fáze: mateřská je vyšší a kratší, rodičovský příspěvek nižší.
   // Rozpis fází je i v kartě předpokladů, proto se míří jen do téhle karty.
@@ -131,10 +131,10 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await expect(phases.getByText(/Rodičovský příspěvek \(\d+ měs\.\)/)).toBeVisible()
 
   // Fixní balík rodičovské: kratší volno → vyšší dávka ve druhé fázi.
-  const benefit = page.getByRole('textbox', { name: 'Měsíční příjem během volna', exact: true })
+  const benefit = page.getByRole('textbox', { name: 'Měsíční příjem během rodičovské', exact: true })
   const asNumber = async () => Number((await benefit.inputValue()).replace(/\D/g, ''))
   const before = await asNumber()
-  await page.getByRole('textbox', { name: 'Délka volna v měsících', exact: true }).fill('18')
+  await page.getByRole('textbox', { name: 'Délka rodičovské v měsících', exact: true }).fill('18')
   await expect.poll(asNumber).toBeGreaterThan(before)
 })
 
@@ -533,7 +533,7 @@ test('schodek na rodičovské krytý úsporami neshodí verdikt', async ({ page 
   await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('12500000')
   await finish(page)
 
-  // Doma zůstane ten s vyšším příjmem → během volna vzniká měsíční schodek,
+  // Doma zůstane ten s vyšším příjmem → během rodičovské vzniká měsíční schodek,
   // rezerva po akontaci ho ale pokryje. Verdikt to musí zohlednit.
   await openTab(page, 'cile')
   await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()

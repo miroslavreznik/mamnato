@@ -119,7 +119,7 @@ export default function RateSlider({ state, onChange }: {
               <>
                 {' '}<span className="text-caution">
                   Fixace vám navíc skončí ve chvíli, kdy podle svého plánu můžete být na rodičovské
-                  (volno máte nastavené na {formatMonths(leaveMonths)}). Skokové zvýšení splátky by
+                  (rodičovskou máte nastavenou na {formatMonths(leaveMonths)}). Skokové zvýšení splátky by
                   tak padlo do nejtenčího období rozpočtu. Delší fixace tomu předejde, i za cenu
                   o něco vyšší sazby.
                 </span>

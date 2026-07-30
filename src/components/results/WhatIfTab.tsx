@@ -3,8 +3,10 @@ import { useWhatIf } from '../../store/whatIfStore';
 import { compareScenarios } from '../../engine/whatIf';
 import { answerText } from '../../engine/verdict';
 import { journey } from '../../engine/journey';
+import { GOAL_LABELS, customGoalName } from '../../engine/goalNames';
 import { mortgagePayment, postPurchaseRunwayMonths } from '../../engine/mortgage';
-import { budgetNow } from '../../engine/budget';
+import { emergencyRunwayMonths } from '../../engine/cashflow';
+import { budgetNow, budgetAfterPurchase } from '../../engine/budget';
 import { czk, formatNumber as fmt, formatMonths } from '../../engine/format';
 import JourneyRibbon from './JourneyRibbon';
 import JourneyRange, { JourneyRangeNote } from './JourneyRange';
@@ -72,16 +74,26 @@ export default function WhatIfTab() {
 
   const paymentNow = buysNow ? mortgagePayment(current) : 0;
   const paymentBefore = hasProperty ? mortgagePayment(baseline) : 0;
-  const runwayNow = buysNow ? postPurchaseRunwayMonths(current) : 0;
-  const runwayBefore = hasProperty ? postPurchaseRunwayMonths(baseline) : 0;
+
+  // Rezerva i volné peníze se počítají pro **stav, kdy plán běží**: když se
+  // kupuje, tak po koupi, jinak podle dneška.
+  //
+  // Bez toho si dlaždice odporovaly, jakmile šla nemovitost vypnout jedním
+  // tlačítkem. Zrušení koupě sundalo splátku o 29 276 Kč, a hned vedle stálo
+  // u volných peněz „beze změny" (protože `budgetNow` je rozpočet dneška,
+  // kdy se ještě platí nájem) a u rezervy „0 měsíců" (protože rezerva po
+  // koupi, která se nekoná, je nesmysl). Takhle měří obě varianty totéž
+  // a rozdíl mezi nimi je právě to, co uživatel právě udělal.
+  const runwayNow = buysNow ? postPurchaseRunwayMonths(current) : emergencyRunwayMonths(current);
+  const runwayBefore = hasProperty ? postPurchaseRunwayMonths(baseline) : emergencyRunwayMonths(baseline);
 
   // Volné peníze, ne disponibilní částka.
   //
   // Disponibilní částka cíle nezná, takže odložením cíle nehne ani o korunu
   // a všechny tři dlaždice hlásily „beze změny" i po odložení důchodu.
   // Přitom právě uvolněné peníze jsou to, co odložení dělá.
-  const freeNow = budgetNow(current, currentAllocations).surplus;
-  const freeBefore = budgetNow(baseline, baselineAllocations).surplus;
+  const freeNow = (buysNow ? budgetAfterPurchase : budgetNow)(current, currentAllocations).surplus;
+  const freeBefore = (hasProperty ? budgetAfterPurchase : budgetNow)(baseline, baselineAllocations).surplus;
 
   // Odložení cíle křivkou jmění nehne: spoření na cíl je pořád jmění, jen
   // leží jinde. Duch původní cesty by pak byl přesně pod živou stuhou
@@ -98,16 +110,15 @@ export default function WhatIfTab() {
   const answerChanged = answerBefore !== answerNow;
 
   // Co je zrovna odložené, pojmenované tak, jak to stojí v přepínačích.
-  const GOAL_NAMES: Record<string, string> = {
-    property: 'vlastní bydlení',
-    retirement: 'spoření na důchod',
-    child: 'rezerva na dítě',
-  };
+  // Jména jsou z `goalNames`, aby se věta a přepínač nerozešly.
   const postponed = [
-    ...Object.entries(GOAL_NAMES).filter(([k]) => excludedGoals.has(k)).map(([, v]) => v),
+    ...['property', 'child', 'retirement']
+      .filter((k) => excludedGoals.has(k))
+      .map((k) => GOAL_LABELS[k].toLowerCase()),
     ...(baseline.customGoals ?? [])
-      .filter((g) => excludedGoals.has(`other:${g.id}`) || excludedGoals.has('other'))
-      .map((g, i) => g.name.trim() || `vlastní cíl ${i + 1}`),
+      .map((g, i) => ({ g, name: customGoalName(baseline, i) }))
+      .filter(({ g }) => excludedGoals.has(`other:${g.id}`) || excludedGoals.has('other'))
+      .map(({ name }) => name.toLowerCase()),
   ];
 
   return (
@@ -181,7 +192,7 @@ export default function WhatIfTab() {
             />
           )}
           <Delta
-            label="Volných měsíčně"
+            label={buysNow ? 'Volných po koupi' : 'Volných měsíčně'}
             value={fmt(freeNow)}
             unit="Kč"
             diff={freeNow - freeBefore}
@@ -189,7 +200,7 @@ export default function WhatIfTab() {
           />
           {hasProperty && (
             <Delta
-              label="Rezerva po koupi"
+              label={buysNow ? 'Rezerva po koupi' : 'Rezerva vydrží'}
               value={runwayNow === Infinity ? '∞' : runwayNow.toLocaleString('cs-CZ', { maximumFractionDigits: 1 })}
               unit="měs."
               diff={runwayNow === Infinity || runwayBefore === Infinity ? 0 : runwayNow - runwayBefore}

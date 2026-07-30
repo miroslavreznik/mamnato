@@ -46,7 +46,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
 
   if (!enabled || !impact) {
     return (
-      <Card title="Rodičovská: co udělá s rozpočtem" subtitle="Když jeden z vás zůstane doma s dítětem, na čas klesne příjem (mateřská a rodičovská bývají nižší než mzda). Spočítejte si, jestli to rozpočet, a hlavně splátka hypotéky, během volna zvládne.">        <button
+      <Card title="Rodičovská: co udělá s rozpočtem" subtitle="Když jeden z vás zůstane doma s dítětem, na čas klesne příjem (mateřská a rodičovská bývají nižší než mzda). Spočítejte si, jestli to rozpočet, a hlavně splátka hypotéky, během rodičovské zvládne.">        <button
           onClick={enable}
           className="px-4 py-2 text-sm font-medium rounded-lg bg-ink hover:opacity-90 text-page min-h-[44px]"
         >
@@ -85,7 +85,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         </button>
       </div>
       <p className="text-sm text-ink-muted mb-4">
-        Budoucí scénář: po dobu volna nahradí mzdu pečujícího rodiče dávky. Parametry si upravte podle sebe.
+        Budoucí scénář: po dobu rodičovské nahradí mzdu pečujícího rodiče dávky. Parametry si upravte podle sebe.
       </p>
 
       {/* Ovládání scénáře */}
@@ -113,24 +113,24 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           </div>
         </div>
         <div>
-          <label className="block text-xs text-ink-muted mb-1">Délka volna (měsíce)</label>
+          <label className="block text-xs text-ink-muted mb-1">Délka rodičovské (měsíce)</label>
           <NumField
             value={impact.durationMonths}
             onChange={changeDuration}
             min={1}
             max={48}
-            ariaLabel="Délka volna v měsících"
+            ariaLabel="Délka rodičovské v měsících"
             step={1}
             className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
         </div>
         <div>
-          <label className="block text-xs text-ink-muted mb-1">Příjem během volna (dávky)</label>
+          <label className="block text-xs text-ink-muted mb-1">Příjem během rodičovské (dávky)</label>
           <NumField
             value={impact.monthlyBenefit}
             onChange={(v) => update({ monthlyBenefit: v })}
             min={0}
-            ariaLabel="Měsíční příjem během volna"
+            ariaLabel="Měsíční příjem během rodičovské"
             step={1000}
             suffix="Kč"
             className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
@@ -138,8 +138,8 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           <EstimateNote
             overridden={benefitOverridden}
             className="mt-1 text-[10px] text-ink-faint"
-            explanation="Průměr za celé volno. Skutečný průběh je rozepsaný níže."
-            suggestion="Zadáno ručně, platí po celé volno."
+            explanation="Průměr za celou rodičovskou. Skutečný průběh je rozepsaný níže."
+            suggestion="Zadáno ručně, platí po celou rodičovskou."
             revertLabel="Vrátit odhad"
             onRevert={resetBenefit}
           />
@@ -152,7 +152,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         <div className="mb-4 p-3 rounded-lg bg-sunken">
           <p className="text-xs font-medium text-ink-label mb-2">
             Dávky se v čase mění
-            <Tooltip text={`Mateřská (peněžitá pomoc v mateřství) se vyplácí ${PPM_WEEKS} týdnů a činí 70 % redukovaného denního vyměřovacího základu, takže u vyšších příjmů je výrazně vyšší než rodičovský příspěvek. Počítáme ji z čisté mzdy pečujícího rodiče přes odhad hrubé mzdy, přesnou částku určí ČSSZ. Po jejím konci se čerpá rodičovský příspěvek 350 000 Kč, rozložený na zbytek volna.`} />
+            <Tooltip text={`Mateřská (peněžitá pomoc v mateřství) se vyplácí ${PPM_WEEKS} týdnů a činí 70 % redukovaného denního vyměřovacího základu, takže u vyšších příjmů je výrazně vyšší než rodičovský příspěvek. Počítáme ji z čisté mzdy pečujícího rodiče přes odhad hrubé mzdy, přesnou částku určí ČSSZ. Po jejím konci se čerpá rodičovský příspěvek 350 000 Kč, rozložený na zbytek rodičovské.`} />
           </p>
           <div className="space-y-1">
             {impact.phases.map((phase) => (
@@ -174,9 +174,9 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
       {/* Dopad */}
       <div className="grid grid-cols-2 gap-3 mb-3">
         {tile('Příjem nyní', impact.incomeNow, { tooltip: 'Součet současných čistých měsíčních příjmů domácnosti.' })}
-        {tile('Příjem během volna', impact.incomeDuringLeave, { tooltip: 'Příjem domácnosti, kde mzdu pečujícího rodiče nahradí dávky (mateřská/rodičovská).' })}
+        {tile('Příjem během rodičovské', impact.incomeDuringLeave, { tooltip: 'Příjem domácnosti, kde mzdu pečujícího rodiče nahradí dávky (mateřská/rodičovská).' })}
         {tile('Volná rezerva nyní', impact.disposableNow, { negativeBad: true, tooltip: 'Co měsíčně zbyde po zaplacení všech výdajů (příjem − výdaje) při současných příjmech.' })}
-        {tile('Volná rezerva během volna', impact.disposableDuringLeave, { negativeBad: true, tooltip: 'Co měsíčně zbyde po výdajích v období rodičovské se sníženým příjmem, ještě před případnou splátkou hypotéky.' })}
+        {tile('Volná rezerva během rodičovské', impact.disposableDuringLeave, { negativeBad: true, tooltip: 'Co měsíčně zbyde po výdajích v období rodičovské se sníženým příjmem, ještě před případnou splátkou hypotéky.' })}
       </div>
 
       {hasProperty && afterPurchase !== null && (
@@ -187,13 +187,13 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
               {impact.reserveAfter <= 0 ? (
                 <>Po zaplacení akontace vám přitom <strong>nezbude žádná rezerva</strong>, ze které byste schodek kryli. Počítejte s došetřením, levnější nemovitostí nebo kratším volnem.</>
               ) : impact.monthsCovered !== null && impact.monthsCovered >= impact.durationMonths ? (
-                <>Rezerva, která vám po akontaci zbyde (~<strong>{fmt(impact.reserveAfter)} Kč</strong>), schodek za celé volno ({fmt(impact.shortfallTotal)} Kč) <strong>pokryje</strong>, ale z velké části na něj padne.</>
+                <>Rezerva, která vám po akontaci zbyde (~<strong>{fmt(impact.reserveAfter)} Kč</strong>), schodek za celou rodičovskou ({fmt(impact.shortfallTotal)} Kč) <strong>pokryje</strong>, ale z velké části na něj padne.</>
               ) : (
-                <>Rezerva po akontaci (~<strong>{fmt(impact.reserveAfter)} Kč</strong>) pokryje jen asi <strong>{impact.monthsCovered} z {impact.durationMonths} měsíců</strong> volna, na zbytek schodku ({fmt(Math.max(0, impact.shortfallTotal - impact.reserveAfter))} Kč) je potřeba došetřit, zlevnit nemovitost nebo volno zkrátit.</>
+                <>Rezerva po akontaci (~<strong>{fmt(impact.reserveAfter)} Kč</strong>) pokryje jen asi <strong>{impact.monthsCovered} z {impact.durationMonths} měsíců</strong> rodičovské, na zbytek schodku ({fmt(Math.max(0, impact.shortfallTotal - impact.reserveAfter))} Kč) je potřeba došetřit, zlevnit nemovitost nebo rodičovskou zkrátit.</>
               )}
             </>
           ) : (
-            <>I po koupi byste během rodičovské měli <strong>+{fmt(afterPurchase)} Kč/měs.</strong> po zaplacení splátky a nezbytných výdajů. Rozpočet volno ustojí.</>
+            <>I po koupi byste během rodičovské měli <strong>+{fmt(afterPurchase)} Kč/měs.</strong> po zaplacení splátky a nezbytných výdajů. Rozpočet rodičovskou ustojí.</>
           )}
         </Callout>
       )}
@@ -203,9 +203,9 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
           Během rodičovské by výdaje převýšily příjem o <strong>{fmt(Math.abs(impact.disposableDuringLeave))} Kč/měs.</strong>.{' '}
           {impact.reserveAfter > 0 && impact.monthsCovered !== null ? (
             impact.monthsCovered >= impact.durationMonths ? (
-              <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) schodek za celé volno ({fmt(impact.shortfallTotal)} Kč) pokryjí.</>
+              <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) schodek za celou rodičovskou ({fmt(impact.shortfallTotal)} Kč) pokryjí.</>
             ) : (
-              <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) pokryjí jen asi {impact.monthsCovered} z {impact.durationMonths} měsíců volna.</>
+              <>Vaše úspory ({fmt(impact.reserveAfter)} Kč) pokryjí jen asi {impact.monthsCovered} z {impact.durationMonths} měsíců rodičovské.</>
             )
           ) : (
             <>Nemáte rezervu, ze které byste schodek kryli. Budete ji potřebovat vytvořit.</>
@@ -214,7 +214,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
       )}
 
       <p className="text-sm text-ink-body">
-        Za celé volno ({impact.durationMonths} měs.) klesne příjem dohromady o{' '}
+        Za celou rodičovskou ({impact.durationMonths} měs.) klesne příjem dohromady o{' '}
         <span className="font-semibold text-ink">{fmt(impact.savingsLostTotal)} Kč</span>
         {', o tolik méně naspoříte (nebo tolik budete potřebovat v rezervě).'}
       </p>

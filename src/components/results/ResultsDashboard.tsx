@@ -3,13 +3,11 @@ import { useState, useMemo, useCallback } from 'react';
 import type { WizardState } from '../../types';
 import ResultsOverview from './ResultsOverview';
 import ExpenseBreakdownChart from './ExpenseBreakdownChart';
-import WealthTimelineChart from './WealthTimelineChart';
 import DiscretionaryBreakdownChart from './DiscretionaryBreakdownChart';
 import SavingsChart from './SavingsChart';
 import PropertyAffordability from './PropertyAffordability';
 import DtiDstiIndicator from './DtiDstiIndicator';
 import MortgageVsRent from './MortgageVsRent';
-import CashFlowAfterChart from './CashFlowAfterChart';
 import InvestmentComparisonChart from './InvestmentComparisonChart';
 import RetirementPlanner from './RetirementPlanner';
 import CustomGoalPlanner from './CustomGoalPlanner';
@@ -23,6 +21,7 @@ import AppBar from '../ui/AppBar';
 import WhatIfTab from './WhatIfTab';
 import { WhatIfProvider } from './WhatIfProvider';
 import ResultsTabs, { type TabDef } from './ResultsTabs';
+import { goalsTabLabel } from '../../engine/goalNames';
 import { calculateDefaultAllocations } from '../../engine/allocation';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
@@ -62,7 +61,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     { id: 'souhrn', label: 'Cesta' },
     { id: 'rozpocet', label: 'Rozpočet' },
     ...(hasProperty ? [{ id: 'bydleni', label: 'Bydlení' }] : []),
-    ...(hasGoalPlanners ? [{ id: 'cile', label: 'Ostatní cíle' }] : []),
+    ...(hasGoalPlanners ? [{ id: 'cile', label: goalsTabLabel(state) }] : []),
     { id: 'cokdyby', label: 'Co kdyby' },
     { id: 'slovnicek', label: 'Slovníček' },
   ];
@@ -198,7 +197,6 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
       <AppBar
         onHome={onHome}
         chip={<ModeChip mode={state.mode} />}
-        center={<ResultsTabs tabs={sectionDefs} active={activeTab} onSelect={selectTab} />}
         actions={
           <ResultsHeader
             shareCopied={shareCopied}
@@ -209,6 +207,17 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           />
         }
       />
+
+      {/* Lišta záložek pod hlavičkou, ne v ní.
+          V hlavičce se mačkala mezi značkou a ovládacími ikonami a při šesti
+          záložkách, kde se jedna jmenuje podle cílů („Dítě a důchod"), se do
+          zbylého místa nevešla. Vlastní pruh přes celou šířku má místa dost
+          a lepí se pod hlavičku, takže je pořád po ruce. */}
+      <div className="no-print sticky top-16 z-30 backdrop-blur-md bg-card/80 border-b border-line">
+        <div className="mx-auto max-w-app px-4 py-1.5">
+          <ResultsTabs tabs={sectionDefs} active={activeTab} onSelect={selectTab} />
+        </div>
+      </div>
 
       {/* Název stránky nese `aria-label`, ne nadpis. Nadpis „Váš finanční plán"
           stál v samostatné kartě nad obsahem, kterou lišta nahradila; pro čtečku
@@ -237,7 +246,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
         {/* Rozpočet: kam jde příjem a jak se úspory vyvíjejí v čase. Dřív viselo
             pod souhrnem a dělalo z něj pět tisíc pixelů. */}
-        <ResultsSection id="rozpocet" title="Rozpočet" subtitle="Kam jde váš příjem, co kdyby a vývoj úspor v čase" active={isVisible('rozpocet')}>
+        <ResultsSection id="rozpocet" title="Rozpočet" subtitle="Kam jde váš příjem a co by se stalo, kdybyste některou položku škrtli" active={isVisible('rozpocet')}>
           <ExpenseBreakdownChart
             state={state}
             allocations={allocations}
@@ -249,7 +258,6 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
             <DiscretionaryBreakdownChart state={activeState} />
           )}
-          <WealthTimelineChart state={activeState} allocations={activeAllocations} />
         </ResultsSection>
 
         {/* Bydlení a hypotéka */}
@@ -265,7 +273,6 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             />
             <DtiDstiIndicator state={activeState} />
             <MortgageVsRent state={activeState} />
-            <CashFlowAfterChart state={activeState} />
             <InvestmentComparisonChart state={activeState} />
             <TaxReliefCard state={activeState} />
           </ResultsSection>
@@ -273,7 +280,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
         {/* Cíle */}
         {hasGoalPlanners && (
-          <ResultsSection id="cile" title="Ostatní cíle" subtitle="Důchod, dítě, rodičovská a vlastní cíle" active={isVisible('cile')}>
+          <ResultsSection id="cile" title={goalsTabLabel(state)} subtitle="Důchod, dítě, rodičovská a vlastní cíle" active={isVisible('cile')}>
             {hasRetirement && (
               <RetirementPlanner
                 state={activeState}

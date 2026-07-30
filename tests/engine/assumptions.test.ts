@@ -50,7 +50,7 @@ describe('předpoklady výpočtu', () => {
   });
 
   it('dávky rozepíšou po fázích, když je nezadal uživatel', () => {
-    const r = row(base(), 'Dávky během volna')!;
+    const r = row(base(), 'Dávky během rodičovské')!;
     expect(r.source).toBe('estimate');
     expect(r.value).toContain('Mateřská');
     expect(r.value).toContain('Rodičovský příspěvek');
@@ -58,7 +58,7 @@ describe('předpoklady výpočtu', () => {
 
   it('ručně zadaná dávka se označí jako uživatelská', () => {
     const manual = base({ parentalLeave: { enabled: true, parent: 2, durationMonths: 36, monthlyBenefit: 9722 } });
-    expect(row(manual, 'Dávky během volna')!.source).toBe('user');
+    expect(row(manual, 'Dávky během rodičovské')!.source).toBe('user');
   });
 
   it('rekonstrukce se objeví jen když se rekonstruuje', () => {

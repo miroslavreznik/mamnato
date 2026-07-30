@@ -231,6 +231,16 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           onMoveChild={state.goals.includes('child') ? setChildOffset : undefined}
         />
         <JourneyRangeNote data={journeyData} viewMonths={view} />
+        {/* Z čeho je stuha složená.
+            Stálo to pod grafem „Vývoj úspor v čase" na záložce Rozpočet;
+            ten graf kreslil tutéž řadu podruhé, jen v jiné barvě, a při jeho
+            zrušení by se ta poznámka ztratila. Patří k řadě, ne ke kartě. */}
+        <p className="mt-3 text-xs text-ink-faint">
+          Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace,
+          tedy všechno v dnešních cenách. Spoření na cíle z křivky nemizí, peníze se jen
+          přesouvají. Hodnota nemovitosti v ní naopak není: akontace z úspor odejde a zpátky
+          se nepřičte. Kolik po koupi vlastníte, ukazuje graf koupě vs. nájem v sekci Bydlení.
+        </p>
         {/* Bez tohohle vypadá cesta u někoho, kdo na akontaci zatím nedosáhne,
             jako klidná zelená čára, zatímco verdikt nad ní říká „zatím na to
             nemáte". Ta čára je správně, jen kreslí život bez koupě; musí se

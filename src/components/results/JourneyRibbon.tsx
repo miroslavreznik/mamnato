@@ -452,25 +452,6 @@ export default function JourneyRibbon({
         onPointerLeave={() => setHover(null)}
       />
 
-      {/* Vodicí linka a částka pod kurzorem. */}
-      {hover !== null && points[hover] && (
-        <g pointerEvents="none" className="no-print">
-          <line
-            x1={geom.xs(hover)} x2={geom.xs(hover)}
-            y1={PAD.top - 6} y2={H - PAD.bottom + 8}
-            stroke="var(--line-strong)" strokeWidth="1"
-          />
-          <circle cx={geom.xs(hover)} cy={geom.ys(points[hover].cash)} r="4" fill="var(--ink)" />
-          <text
-            x={Math.min(Math.max(geom.xs(hover), PAD.left + 50), W - PAD.right - 50)}
-            y={PAD.top - 12}
-            textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)"
-          >
-            {czk(points[hover].cash)} · {formatMonths(hover)}
-          </text>
-        </g>
-      )}
-
       {/* Události: puntík na stuze, vodicí linka nahoru a bublina s názvem.
           Bubliny jsou v jednom řádku a u blízkých událostí se rozestrkají
           do stran. */}
@@ -578,6 +559,42 @@ export default function JourneyRibbon({
           </text>
         </g>
       )}
+
+      {/* Odečet pod kurzorem. Kreslí se **jako poslední**, takže leží nad
+          bublinami událostí, a drží se u svého bodu na stuze místo pevného
+          řádku nahoře. Dřív seděl na y = 22, což je přesně řádek bublin:
+          u události se schoval za popisek „Dítě" a částka nebyla vidět.
+          Pilulka pod textem ho oddělí i od stuhy a od výplně pod ní. */}
+      {hover !== null && points[hover] && (() => {
+        const hx = geom.xs(hover);
+        const hy = geom.ys(points[hover].cash);
+        const text = `${czk(points[hover].cash)} · ${formatMonths(hover)}`;
+        const half = text.length * 2.9 + 9;
+        const tx = Math.min(Math.max(hx, PAD.left + half), W - PAD.right - half);
+        // Nad bodem, pokud se tam vejde pod řádek bublin; jinak pod něj.
+        const above = hy - 18;
+        const ty = above > PAD.top + 4 ? above : Math.min(hy + 26, H - PAD.bottom + 2);
+        return (
+          <g pointerEvents="none" className="no-print">
+            <line
+              x1={hx} x2={hx}
+              y1={PAD.top - 6} y2={H - PAD.bottom + 8}
+              stroke="var(--line-strong)" strokeWidth="1"
+            />
+            <circle cx={hx} cy={hy} r="4" fill="var(--ink)" />
+            <rect
+              x={tx - half} y={ty - 10} width={half * 2} height="15" rx="7.5"
+              fill="var(--card)" stroke="var(--line)"
+            />
+            <text
+              x={tx} y={ty + 1}
+              textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--ink)"
+            >
+              {text}
+            </text>
+          </g>
+        );
+      })()}
     </svg>
   );
 }

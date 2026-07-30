@@ -115,7 +115,7 @@ test.describe('odkládání cílů', () => {
     await toWhatIf(page)
     const before = await ribbonPath(page).getAttribute('d')
 
-    await page.getByRole('checkbox', { name: /důchod/i }).uncheck()
+    await page.getByTestId('whatif-goal-retirement').click()
 
     // Tvar se nezmění, takže se ani neslibuje duch, který by nebyl vidět.
     expect(await ribbonPath(page).getAttribute('d')).toBe(before)
@@ -123,7 +123,9 @@ test.describe('odkládání cílů', () => {
     await expect(page.getByText(/Na cestě to nevypadá jinak/)).toBeVisible()
 
     // Zato volných peněz přibude, a to je celý účinek odložení.
-    const tile = page.getByText('Volných měsíčně').locator('..')
+    // Popisek dlaždice říká, k jakému stavu se váže: scénář kupuje,
+    // takže „po koupi".
+    const tile = page.getByText('Volných po koupi').locator('..')
     await expect(tile).toBeVisible()
     const delta = await tile.locator('p').last().textContent()
     expect(delta, 'dlaždice volných peněz neukázala přírůstek').toMatch(/^\+/)
@@ -133,7 +135,7 @@ test.describe('odkládání cílů', () => {
     await toWhatIf(page)
     const before = await ribbonPath(page).getAttribute('d')
 
-    await page.getByRole('checkbox', { name: /akontaci/i }).uncheck()
+    await page.getByTestId('whatif-goal-property').click()
 
     expect(await ribbonPath(page).getAttribute('d')).not.toBe(before)
     await expect(ghost(page)).toHaveCount(1)
@@ -142,11 +144,11 @@ test.describe('odkládání cílů', () => {
 
   test('vrácení scénáře zapne odložené cíle zpátky', async ({ page }) => {
     await toWhatIf(page)
-    await page.getByRole('checkbox', { name: /důchod/i }).uncheck()
+    await page.getByTestId('whatif-goal-retirement').click()
     await expect(page.getByRole('button', { name: 'Vrátit původní scénář' })).toBeEnabled()
 
     await page.getByRole('button', { name: 'Vrátit původní scénář' }).click()
-    await expect(page.getByRole('checkbox', { name: /důchod/i })).toBeChecked()
+    await expect(page.getByTestId('whatif-goal-retirement')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('button', { name: 'Vrátit původní scénář' })).toBeDisabled()
   })
 })

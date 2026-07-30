@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { savingsProjection, cashFlowAfterPurchase, investmentComparison, retirementProjection, retirementStartingCapital, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
+import { savingsProjection, investmentComparison, retirementProjection, retirementStartingCapital, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
 import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
 import { effectiveDownPayment } from '../../src/engine/mortgage';
 import type { CustomGoal } from '../../src/types';
@@ -45,29 +45,6 @@ describe('savingsProjection', () => {
     const state = makeState({ income: { person1NetMonthly: 20000 } });
     const projection = savingsProjection(state, 6);
     expect(projection[6].savings).toBeLessThan(projection[0].savings);
-  });
-});
-
-describe('cashFlowAfterPurchase', () => {
-  it('returns two series starting at month 0', () => {
-    const data = cashFlowAfterPurchase(makeState(), 12);
-    expect(data).toHaveLength(13);
-    expect(data[0].month).toBe(0);
-  });
-
-  it('currentCashFlow starts at savings amount', () => {
-    const data = cashFlowAfterPurchase(makeState(), 1);
-    expect(data[0].currentCashFlow).toBe(500000);
-  });
-
-  it('afterPurchaseCashFlow starts at leftover savings after down payment', () => {
-    // With a partial down payment, both lines share the same baseline (current savings)
-    const state = makeState({ savings: { totalSavings: 800000, downPaymentFromSavings: 500000 } });
-    const data = cashFlowAfterPurchase(state, 1);
-    // current starts at total savings
-    expect(data[0].currentCashFlow).toBe(800000);
-    // after purchase starts at savings minus down payment = 300000
-    expect(data[0].afterPurchaseCashFlow).toBe(300000);
   });
 });
 

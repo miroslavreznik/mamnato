@@ -3,7 +3,7 @@
 Kroky 1 až 9 z `REDESIGN.md` jsou hotové. Tenhle dokument je plán posledního
 kroku, tedy kontroly, a soupis toho, co se ještě neudělalo.
 
-Testy: 362 jednotkových, 63 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 365 jednotkových, 64 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -726,3 +726,62 @@ třicet let. Prakticky to skoro nevadí, protože nejtěsnější místo bývá 
 kdy je portfolio ještě malé, ale rozlišit likvidní rezervu od investic by
 znamenalo vést v časové ose dva hrnce místo jednoho. Není to oprava textu,
 je to změna modelu.
+
+---
+
+## B15. Úklid podle zpětné vazby
+
+Šest věcí najednou, většina z nich důsledek toho, že Cesta mezitím vyrostla.
+
+**„Volno" místo rodičovské.** „Po dobu volna vám bude chybět" znělo jako
+dovolená. Uživatelské texty mluví o rodičovské, ne o volnu; přejmenováno
+v enginu (verdikt, připravenost, předpoklady) i v kartě rodičovské.
+
+**Odečet pod kurzorem se schovával za bubliny.** Seděl na pevném řádku
+nahoře, což je přesně řádek bublin s událostmi: u „Dítě" nebyla částka
+vidět. Teď se drží u svého bodu na stuze, má pod sebou pilulku a kreslí se
+jako poslední, takže leží nad vším ostatním. Nad bod jde jen tehdy, když
+se tam vejde pod řádek bublin, jinak pod něj.
+
+**Lišta záložek dolů pod hlavičku.** V hlavičce se mačkala mezi značkou
+a ikonami. Vlastní pruh přes celou šířku má místa dost a lepí se pod
+hlavičku, takže zůstává po ruce.
+
+**Záložka se jmenuje podle cílů**, ne „Ostatní cíle". Jeden cíl dá „Důchod",
+dva „Dítě a důchod", vlastní cíl své jméno; u tří a víc, nebo když by se
+dlouhý název nevešel, „Vaše cíle". Jména cílů jsou nově na jednom místě
+(`engine/goalNames.ts`), dřív byla rozepsaná ve třech.
+
+**„Co kdyby" jsou přepínače cílů a pod nimi jejich parametry.** Dřív stály
+posuvníky nahoře a odkládání cílů pod nimi jako zaškrtávátka, takže nešlo
+poznat, že „Cena nemovitosti" patří k bydlení. Přepínač bydlení přitom nikdy
+nebyl jen o spoření: odloží celý cíl, koupě se nekoná a dál se platí nájem.
+Jmenoval se ale „Spoření na akontaci", což slibovalo mnohem míň, než co dělá.
+Vypnutý cíl své parametry schová, protože sazba u nemovitosti, kterou
+nekupujete, je otázka bez smyslu.
+
+S tím se musely srovnat i dlaždice pod grafem. Zrušení koupě sundalo splátku
+o 29 276 Kč, a hned vedle stálo „Volných měsíčně: beze změny" (protože
+`budgetNow` je rozpočet dneška, kdy se ještě platí nájem) a „Rezerva po
+koupi: 0 měsíců" (rezerva po koupi, která se nekoná). Obojí se teď počítá
+pro stav, kdy plán běží: když se kupuje, tak po koupi, jinak podle dneška,
+a popisek dlaždice to říká.
+
+### Dva grafy pryč
+
+**„Vývoj úspor v čase" v Rozpočtu** kreslil tutéž řadu jako Cesta, jen jinou
+barvou a bez barvení podle napětí. Před smazáním jsem prošel, co uměl navíc:
+pole „Dítě čekáme za" (Cesta má tažný puntík i ovládání šipkami), svislice
+událostí (Cesta má bubliny), hlášku o nejnižším bodu (karta nejtěsnějšího
+místa říká víc), varování o nedosažitelné akontaci (stojí i pod stuhou)
+a odečet po najetí (Cesta má taky). Jediné, co nikde jinde nebylo, je
+poznámka o modelu; ta se přesunula pod stuhu.
+
+**„Výhled: vývoj úspor s koupí vs. bez" v Bydlení** je přesně to, co dnes
+dělá přepínač bydlení v „Co kdyby": živá cesta proti přerušovanému obrysu
+původního scénáře, navíc přes celý horizont místo deseti let. Varování
+o trvalém poklesu úspor po koupi nese barva stuhy a karta nejtěsnějšího
+místa.
+
+S nimi šla `cashFlowAfterPurchase()` z enginu a její testy; nic jiného ji
+nepoužívalo.

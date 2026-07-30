@@ -110,7 +110,7 @@ export function leavePhases(state: WizardState): LeavePhase[] {
 
   // Ručně zadaná dávka vypne odhad: uživatel ví víc než my.
   if (pl.monthlyBenefit != null) {
-    return [{ key: 'rodicovska', label: 'Dávky během volna', months: duration, monthlyBenefit: pl.monthlyBenefit }];
+    return [{ key: 'rodicovska', label: 'Dávky během rodičovské', months: duration, monthlyBenefit: pl.monthlyBenefit }];
   }
 
   return suggestedPhases(state);

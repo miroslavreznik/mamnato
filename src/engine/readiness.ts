@@ -153,12 +153,12 @@ export function leaveReadiness(state: WizardState): GoalReadiness | null {
       label: 'Rodičovská',
       status: worst < 3000 ? 'caution' : 'good',
       headline: varies
-        ? `Během volna vám měsíčně zbyde nejméně ${czk(worst)}, na mateřské víc než na rodičovském příspěvku.`
-        : `Během volna vám měsíčně zbyde ${czk(worst)}.`,
+        ? `Během rodičovské vám měsíčně zbyde nejméně ${czk(worst)}, na mateřské víc než na rodičovském příspěvku.`
+        : `Během rodičovské vám měsíčně zbyde ${czk(worst)}.`,
     };
   }
 
-  const perMonth = `Během volna vám bude chybět ${czkMonthly(Math.abs(relevant))}, za ${formatMonths(leave.durationMonths)} celkem ${czk(leave.shortfallTotal)}.`;
+  const perMonth = `Během rodičovské vám bude chybět ${czkMonthly(Math.abs(relevant))}, za ${formatMonths(leave.durationMonths)} celkem ${czk(leave.shortfallTotal)}.`;
 
   if (!leave.coversWholeLeave) {
     const covered = leave.monthsCovered ?? 0;
@@ -168,7 +168,7 @@ export function leaveReadiness(state: WizardState): GoalReadiness | null {
       status: 'warning',
       headline: leave.reserveAfter <= 0
         ? `${perMonth} Nemáte rezervu, ze které byste to pokryli.`
-        : `${perMonth} Rezerva vydrží ${covered} z ${leave.durationMonths} měsíců volna.`,
+        : `${perMonth} Rezerva vydrží ${covered} z ${leave.durationMonths} měsíců rodičovské.`,
     };
   }
 

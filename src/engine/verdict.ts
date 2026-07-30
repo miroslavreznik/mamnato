@@ -204,7 +204,7 @@ function buildAnswer(
       answer: 'yes_but',
       headline: 'Máte na to',
       qualifier: 'ale během rodičovské budete sahat do úspor',
-      reason: `Po dobu volna vám bude chybět ${czkMonthly(leave.shortfallPerMonth)}, celkem ${czk(leave.shortfallTotal)}. Rezerva to pokryje a zbyde vám ${czk(leave.reserveLeftAfterLeave)}.`,
+      reason: `Během rodičovské vám bude chybět ${czkMonthly(leave.shortfallPerMonth)}, celkem ${czk(leave.shortfallTotal)}. Rezerva to pokryje a zbyde vám ${czk(leave.reserveLeftAfterLeave)}.`,
     };
   }
 
@@ -251,7 +251,7 @@ function buildAnswer(
           answer: 'no_but',
           headline: 'Zatím na to nemáte',
           qualifier: 'chybí rezerva na dobu rodičovské',
-          reason: `Během volna vám bude chybět ${czkMonthly(leave.shortfallPerMonth)} a rezerva vydrží ${leave.monthsCovered ?? 0} z ${leave.durationMonths} měsíců. Pomůže došetřit, zkrátit volno nebo hledat levnější nemovitost.`,
+          reason: `Během rodičovské vám bude chybět ${czkMonthly(leave.shortfallPerMonth)} a rezerva vydrží ${leave.monthsCovered ?? 0} z ${leave.durationMonths} měsíců. Pomůže došetřit, zkrátit rodičovskou nebo hledat levnější nemovitost.`,
         };
       }
       // Rozpočet dnes vychází, ale po koupi ne. Bez tohohle rozlišení appka

@@ -1,13 +1,12 @@
 import type { WizardState, CustomGoal } from '../types';
 import { DEFAULTS } from './defaults';
-import { monthlyDisposable, totalMonthlyIncome, necessaryMonthlyExpenses } from './cashflow';
+import { monthlyDisposable, necessaryMonthlyExpenses } from './cashflow';
 import {
   effectiveDownPayment,
   mortgageRate,
   loanTermYears,
   loanAmount,
   mortgagePayment,
-  expensesAfterPurchase,
   totalProjectCost,
   ownershipCosts,
 } from './mortgage';
@@ -85,27 +84,6 @@ export function savingsProjection(
   return Array.from({ length: months + 1 }, (_, i) => ({
     month: i,
     savings: initial + perMonth * i,
-  }));
-}
-
-export function cashFlowAfterPurchase(
-  state: WizardState,
-  months: number = 120
-): Array<{ month: number; currentCashFlow: number; afterPurchaseCashFlow: number }> {
-  const currentDisposable = monthlyDisposable(state);
-  // After purchase: remove rent + utilities, add mortgage + ownership costs
-  const disposableAfter = totalMonthlyIncome(state) - expensesAfterPurchase(state);
-
-  // Obě řady vycházejí ze srovnatelné základny, dnešní výše úspor.
-  // Když nekoupím, úspory dál rostou disponibilní částkou.
-  // Když koupím, utratím akontaci a dál spořím (nižší) disponibilní částkou po koupi.
-  const startSavings = state.savings.totalSavings;
-  const downPayment = effectiveDownPayment(state);
-
-  return Array.from({ length: months + 1 }, (_, i) => ({
-    month: i,
-    currentCashFlow: startSavings + currentDisposable * i,
-    afterPurchaseCashFlow: (startSavings - downPayment) + disposableAfter * i,
   }));
 }
 

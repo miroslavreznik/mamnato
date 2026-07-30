@@ -95,9 +95,9 @@ test('odložení cíle v Co kdyby uvolní peníze a přepočítá celý přehled
   await slider(page, 1).fill('5000')
 
   await page.locator('#tab-cokdyby').click()
-  const first = page.getByRole('checkbox').first()
-  await expect(first).toBeChecked()
-  await first.uncheck()
+  const first = page.locator('#cokdyby [data-testid^="whatif-goal-other:"]').first()
+  await expect(first).toHaveAttribute('aria-pressed', 'true')
+  await first.click()
 
   // Odložený cíl přestane ukrajovat z rozpočtu: zbývá měsíčně víc než předtím.
   await page.locator('#tab-cile').click()
