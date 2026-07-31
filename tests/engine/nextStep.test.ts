@@ -101,3 +101,33 @@ describe('a co teď', () => {
     }
   });
 });
+
+describe('doporučená částka musí jít udržet', () => {
+  const par = (o: Partial<WizardState> = {}): WizardState => makeState({
+    goals: ['property', 'child'],
+    income: { person1NetMonthly: 45000, person2NetMonthly: 38000 },
+    expenses: { rent: 17000, utilities: 4000, food: 8000, transport: 3500, insurance: 1500, existingLoans: 0, children: 0, other: 4000 },
+    savings: { totalSavings: 900000 },
+    property: { targetPrice: 5500000, loanTermYears: 30 },
+    parentalLeave: { enabled: true, parent: 2, durationMonths: 36 },
+    ...o,
+  });
+
+  it('kdo kupuje hned, dostane rozpočet po koupi, ne dnešní', () => {
+    // Dřív se počítalo z `budgetNow`, takže páru kupujícímu tenhle měsíc
+    // appka radila rozhodnout se o 33 667 Kč, jenže po splátce jim zbyde míň.
+    const state = par({ parentalLeave: undefined });
+    const s = nextStep(state, calculateDefaultAllocations(state));
+    expect(s.monthly).toBeLessThan(33667);
+    expect(Math.round(s.monthly!)).toBe(24096);
+  });
+
+  it('s rodičovskou se řídí nejhorším měsícem, a řekne to', () => {
+    const state = par();
+    const s = nextStep(state, calculateDefaultAllocations(state));
+    // Během rodičovského příspěvku zbývá 1 253 Kč; doporučit 24 096 Kč
+    // by znamenalo slíbit trvalý příkaz, který za rok nejde platit.
+    expect(Math.round(s.monthly!)).toBe(1253);
+    expect(s.why).toMatch(/nejhorší.*měsíc.*rodičovské/i);
+  });
+});

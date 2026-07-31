@@ -1,5 +1,21 @@
 import { CHILD_COSTS_CZ } from './defaults';
 
+/**
+ * Měsíční náklad na dítě v daném věku (v letech), dle tabulky ČSÚ.
+ *
+ * Vysokoškolské pásmo (18–26) sem záměrně nepatří: používá se to tam, kde se
+ * počítá běžný rozpočet domácnosti s dítětem, a dospělé dítě na VŠ je jiná
+ * úvaha než dítě, které živíte.
+ *
+ * Bylo to schované jako privátní funkce v `wealthTimeline`, takže karta
+ * rodičovské o nákladech na dítě nevěděla a tvrdila, kolik rodině zbyde,
+ * jako by to dítě nestálo nic.
+ */
+export function monthlyChildCostAtAge(ageYears: number): number {
+  const bracket = CHILD_COSTS_CZ.find((r) => r.to <= 18 && ageYears >= r.from && ageYears < r.to);
+  return bracket?.monthlyCost ?? 0;
+}
+
 export interface ChildCostResult {
   monthlyAverage: number;
   totalCost: number;

@@ -2,6 +2,7 @@ import type { WizardState } from '../types';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
 import { effectiveDownPayment, expensesAfterPurchase } from './mortgage';
 import { estimate, type Estimate } from './estimate';
+import { monthlyChildCostAtAge } from './childCost';
 
 // Rodičovský příspěvek na jedno dítě (od 2024), celkový balík na celou dobu.
 export const RODICOVSKA_POOL = 350000;
@@ -184,6 +185,20 @@ export interface LeaveImpact {
 
 // Mimo React testovatelné vyhodnocení dopadu rodičovské. Vrací null, když
 // scénář není zapnutý.
+/**
+ * Průměrný náklad na dítě v daném úseku rodičovské.
+ *
+ * Počítá se po měsících ze stejné tabulky jako časová osa, aby se obě čísla
+ * nemohla rozejít. U volna delšího než tři roky přejde dítě do dražšího
+ * pásma a průměr to zachytí.
+ */
+function childCostOverPhase(fromMonth: number, months: number): number {
+  const whole = Math.max(1, Math.round(months));
+  let sum = 0;
+  for (let i = 0; i < whole; i++) sum += monthlyChildCostAtAge((fromMonth + i) / 12);
+  return sum / whole;
+}
+
 export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   const pl = state.parentalLeave;
   if (!pl || !pl.enabled) return null;
@@ -199,16 +214,23 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   const expenses = totalMonthlyExpenses(state);
 
   const disposableNow = incomeNow - expenses;
-  const disposableDuringLeave = incomeDuringLeave - expenses;
+  const childCostAvg = childCostOverPhase(0, pl.durationMonths);
+  const disposableDuringLeave = incomeDuringLeave - expenses - childCostAvg;
 
-  // Výdaje, se kterými se během volna reálně počítá: po koupi mizí nájem
+  // Výdaje, se kterými se během rodičovské reálně počítá: po koupi mizí nájem
   // a energie, přibývá splátka a náklady na vlastnictví.
+  //
+  // **A přibude dítě.** Rodičovská je z definice doba, kdy je doma miminko,
+  // a to podle tabulky ČSÚ stojí osm tisíc měsíčně. Dokud se nepočítalo,
+  // tvrdila karta „během rodičovské vám zbyde nejméně 9 253 Kč" o rodině,
+  // které časová osa hned vedle počítala 1 253 Kč. Obojí bylo aritmeticky
+  // správně, jenže jedno z těch čísel mluvilo o rodičovské bez dítěte.
   const isBuying = state.goals.includes('property');
   const relevantExpenses = isBuying ? expensesAfterPurchase(state) : expenses;
 
   let disposableDuringLeaveAfterPurchase: number | null = null;
   if (isBuying) {
-    disposableDuringLeaveAfterPurchase = incomeDuringLeave - relevantExpenses;
+    disposableDuringLeaveAfterPurchase = incomeDuringLeave - relevantExpenses - childCostAvg;
   }
 
   const savingsLostTotal = Math.max(0, disposableNow - disposableDuringLeave) * pl.durationMonths;
@@ -226,8 +248,11 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   let monthsUntilReserveGone = 0;
   let reserveLeft = reserveAfter;
   let reserveRanOut = false;
+  let elapsedMonths = 0;
   for (const phase of phases) {
-    const disposable = incomeNow - lostSalary + phase.monthlyBenefit - relevantExpenses;
+    const disposable = incomeNow - lostSalary + phase.monthlyBenefit - relevantExpenses
+      - childCostOverPhase(elapsedMonths, phase.months);
+    elapsedMonths += phase.months;
     worstMonthlyDisposable = Math.min(worstMonthlyDisposable, disposable);
     const monthly = Math.max(0, -disposable);
     shortfallTotal += monthly * phase.months;
@@ -269,7 +294,7 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
     disposableDuringLeaveAfterPurchase,
     worstMonthlyDisposable: isFinite(worstMonthlyDisposable)
       ? worstMonthlyDisposable
-      : incomeDuringLeave - relevantExpenses,
+      : incomeDuringLeave - relevantExpenses - childCostAvg,
     savingsLostTotal,
     reserveAfter,
     shortfallPerMonth,

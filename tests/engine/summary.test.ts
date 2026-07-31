@@ -99,12 +99,14 @@ describe('evaluateOverall', () => {
   });
 
   it('adds a parental-leave readiness row and downgrades the verdict when leave goes negative', () => {
-    // Rezerva po akontaci (200 000 Kč) schodek za celé volno (~168 000 Kč)
-    // pokryje, takže „pozor", ne „nevychází". Verdikt ale zelený být nesmí.
+    // Rezerva po akontaci schodek za celé volno pokryje, takže „pozor",
+    // ne „nevychází". Verdikt ale zelený být nesmí. Schodek zahrnuje i náklad
+    // na dítě (8 000 Kč měsíčně), proto vyšší úspory než u ostatních případů.
     const state = makeState({
       mode: 'couple',
       goals: ['property', 'child'],
       income: { person1NetMonthly: 45000, person2NetMonthly: 30000 },
+      savings: { totalSavings: 1500000 },
       property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
     });

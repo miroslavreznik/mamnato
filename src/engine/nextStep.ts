@@ -3,7 +3,8 @@ import type { GoalAllocations } from './allocation';
 import { monthlyDisposable, necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
 import { downPaymentGap, postPurchaseRunwayMonths, dsti, mortgagePayment, totalProjectCost } from './mortgage';
 import { evaluateScenario } from './scenarios';
-import { budgetNow } from './budget';
+import { budgetNow, budgetAfterPurchase } from './budget';
+import { evaluateParentalLeave } from './parentalLeave';
 import { DEFAULTS } from './defaults';
 import { czk, czkMonthly, monthYearIn, formatMonths } from './format';
 
@@ -62,9 +63,37 @@ const RESERVE_MONTHS = 3;
  * Bere se volná rezerva, tedy to, co zbývá po výdajích **i po cílech**.
  * Kdyby se počítalo z disponibilní částky, radila by appka odkládat peníze,
  * které už jsou slíbené jinam.
+ *
+ * A hlavně: musí to být částka, kterou domácnost **udrží**, protože krok zní
+ * „nastavte si trvalý příkaz". Proto se bere ta nižší ze dvou:
+ *
+ *  - rozpočet po koupi, když se kupuje hned. Dokud se počítalo z dneška,
+ *    radila appka páru, který kupuje tenhle měsíc, rozhodnout se o 33 667 Kč,
+ *    jenže po zaplacení splátky jim zbyde 24 096 Kč.
+ *  - nejhorší měsíc rodičovské, když je v plánu. Tam u téhož páru zbývá
+ *    1 253 Kč, tedy dvacetina toho, co appka doporučovala odkládat.
  */
 function spare(state: WizardState, allocations: GoalAllocations): number {
-  return Math.max(0, budgetNow(state, allocations).surplus);
+  // Kupuje se hned, když je akontace pokrytá; pak platí rozpočet po koupi.
+  const buysNow = state.goals.includes('property') && downPaymentGap(state) <= 0;
+  const budget = buysNow ? budgetAfterPurchase(state, allocations) : budgetNow(state, allocations);
+
+  const leave = evaluateParentalLeave(state);
+  if (!leave) return Math.max(0, budget.surplus);
+
+  // Rezerva na dítě se narozením mění ve skutečný výdaj, se kterým
+  // `worstMonthlyDisposable` už počítá; podruhé se odečítat nesmí.
+  const goalsDuringLeave = budget.allocated - allocations.child;
+  return Math.max(0, Math.min(budget.surplus, leave.worstMonthlyDisposable - goalsDuringLeave));
+}
+
+/** Je v plánu rodičovská, kvůli které je doporučená částka nižší? */
+function leaveLimits(state: WizardState, allocations: GoalAllocations): boolean {
+  const leave = evaluateParentalLeave(state);
+  if (!leave) return false;
+  const buysNow = state.goals.includes('property') && downPaymentGap(state) <= 0;
+  const budget = buysNow ? budgetAfterPurchase(state, allocations) : budgetNow(state, allocations);
+  return leave.worstMonthlyDisposable - (budget.allocated - allocations.child) < budget.surplus;
 }
 
 export function nextStep(state: WizardState, allocations: GoalAllocations): NextStep {
@@ -172,7 +201,10 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
         ? 'Založte si důchodové spoření a nastavte si trvalý příkaz.'
         : 'Na důchod zatím nezbývá nic. Vraťte se k tomu, až se uvolní peníze.',
       why: 'U důchodu rozhoduje spíš to, kdy začnete, než kolik odkládáte: '
-        + 'tisícovka měsíčně je za deset let asi 170 tisíc, ale za třicet let přes milion.',
+        + 'tisícovka měsíčně je za deset let asi 170 tisíc, ale za třicet let přes milion.'
+        + (leaveLimits(state, allocations)
+          ? ' Částka je podle nejhoršího měsíce rodičovské, aby se dala udržet i tehdy.'
+          : ''),
       monthly: monthly > 0 ? monthly : undefined,
       section: 'cile',
       actionLabel: 'Nastavit částku',
@@ -188,6 +220,9 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
     why: free > 0
       ? 'Plán vychází a rezervu máte. Peníze, které jen leží na běžném účtu, '
         + 'ztrácejí inflací; ať už půjdou na cíle, nebo do investic, měly by někde pracovat.'
+        + (leaveLimits(state, allocations)
+          ? ' Částka je podle nejhoršího měsíce rodičovské, aby se dala udržet i tehdy; po jejím skončení jí bude výrazně víc.'
+          : '')
       : 'Cíle i rezerva jsou pokryté. Ověřte si plán znovu, až se změní příjem, nájem nebo sazba.',
     monthly: free > 0 ? free : undefined,
     section: free > 0 ? 'cile' : undefined,

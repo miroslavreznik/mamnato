@@ -8,7 +8,7 @@ patří sem, ne do commit message, kterou nikdo znovu nenajde.
 Aktuální popis toho, co appka umí, je v `README.md`; pravidla pro práci
 s kódem v `CLAUDE.md`.
 
-Testy: 381 jednotkových, 70 e2e (plus 10 otisků person za `PERSONY=1`).
+Testy: 385 jednotkových, 70 e2e (plus 10 otisků person za `PERSONY=1`).
 
 ---
 
@@ -907,3 +907,69 @@ Test tažení puntíkem začal padat, ale ne kvůli `viewBox`. `boundingBox()`
 vrací souřadnice v dokumentu, kdežto myš se hýbe v okně, a přidáním karty
 „A co teď" se stuha posunula pod ohyb. Klik dopadl jinam. Test se nově
 odscrolluje; appka byla v pořádku.
+
+---
+
+## B19. Průchod jedním scénářem: pár, dítě a vlastní byt
+
+Kontrola čísel i výroků na jednom konkrétním zadání. Pár 30 a 30 let, čisté
+příjmy 45 000 a 38 000 Kč, výdaje 38 000 Kč (z toho 17 000 nájem a 4 000
+energie), naspořeno 900 000 Kč, byt za 5 500 000 Kč na 30 let, dítě za rok
+a tříletá rodičovská na osobu 2.
+
+**Aritmetika sedí do koruny.** Ověřeno nezávislým přepočtem: akontace 10 %
+(oběma je pod 36) = 550 000 Kč, úvěr 4 950 000 Kč, splátka 25 970,94 Kč,
+náklady na vlastnictví 4 600 Kč, DSTI 31,3 %, DTI 4,97, úroky za celou dobu
+4 399 538 Kč, rezerva po koupi 8,03 měsíce, horizont 420 měsíců (35 let do
+důchodu). Na časové ose sedí i každý zlom: koupě v měsíci 0, narození ve 12,
+konec rodičovské ve 48, doplacení ve 360, a toky mezi nimi odpovídají
+pásmům nákladů na dítě (8 000 → 10 000 → 12 000 → 14 000 → 0) i fázím dávek
+(mateřská 33 652 Kč po 6,4 měsíce, pak rodičovský příspěvek 11 824 Kč).
+
+**Dva výroky ale neplatily.**
+
+### Karta rodičovské počítala rodičovskou bez dítěte
+
+Stálo tam „Během rodičovské vám měsíčně zbyde nejméně 9 253 Kč", zatímco
+časová osa hned vedle počítala pro tutéž dobu 1 253 Kč. Rozdíl je přesně
+8 000 Kč, tedy náklad na dítě do tří let podle tabulky ČSÚ:
+`evaluateParentalLeave` počítala výdaje po koupi, ale dítě do nich nezahrnula.
+Rodičovská je přitom z definice doba, kdy je doma miminko.
+
+Náklad se teď bere ze stejné funkce jako na časové ose
+(`monthlyChildCostAtAge`, přesunutá z `wealthTimeline` do `childCost`), a to
+po fázích, aby u volna delšího než tři roky zachytila přechod do dražšího
+pásma. Obě čísla teď musí sedět, hlídá to test.
+
+Následek je správný a dost velký: `leaveReadiness` u téhle rodiny padne
+z „v pořádku" na „pozor" (1 253 < 3 000) a verdikt se z „Máte na to" změní
+na **„Máte na to, ale bude to napjaté, na hraně je Rodičovská"**. Což je
+přesně to, co ta rodina potřebuje vědět.
+
+### „A co teď" doporučovalo částku, kterou nejde udržet
+
+Karta radila „Rozhodněte, kam půjde volná rezerva, 33 667 Kč měsíčně". Jenže
+33 667 Kč je rozpočet **dneška**, kdy se ještě platí nájem, a tenhle pár
+kupuje hned: po splátce jim zbyde 24 096 Kč. A během rodičovské, tedy tři
+z následujících čtyř let, jen 1 253 Kč.
+
+`spare()` bere nově tu nižší ze dvou: rozpočet po koupi, když se kupuje hned,
+a nejhorší měsíc rodičovské, když je v plánu. Krok zní „nastavte si trvalý
+příkaz", takže to musí být částka, kterou domácnost udrží; a `why` dodá, že
+po skončení rodičovské jí bude výrazně víc.
+
+### Co se ověřilo a je v pořádku
+
+Daňové zvýhodnění na dítě se sice počítá dřív, než se dítě narodí, ale karta
+u toho výslovně říká „Zvýhodnění na dítě až po jeho narození". Jednorázové
+náklady při koupi (11 600 až 31 000 Kč), rozvaha nad akontací (bezpečné
+maximum 638 574 Kč při vložených 550 000 Kč) i odpočet úroků (v prvním roce
+235 949 Kč, odečíst jde 150 000, úspora 22 500 Kč) sedí.
+
+### Co se nechává být
+
+Stuha je po celý horizont klidná, i když tři roky rodičovské jede rodina na
+1 253 Kč měsíčně. Model napětí zná schodek, chybějící rezervu a nefinancované
+cíle, ale nezná „tenký, i když kladný tok". S 973 000 Kč na účtu to opravdu
+není ohrožení a karta nejtěsnějšího místa by lhala, kdyby tvrdila opak.
+Informace uživateli nechybí, říká ji řádek cíle „Rodičovská" a nově i verdikt.

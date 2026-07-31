@@ -106,7 +106,7 @@ Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum 
 **Další výpočty:**
 - **Hypotéka**, standardní anuitní splátka.
 - **Věk žadatele**, nejmladší do 36 let → nižší akontace (10 %); horizont spoření na důchod se počítá do 65 let; upozornění, pokud by hypotéka byla splacena až po ~70 letech.
-- **Rodičovská**, mzda pečujícího rodiče se nahradí dávkami ve dvou fázích: mateřská (70 % redukovaného denního vyměřovacího základu dle ČSSZ, 28 týdnů) a po ní rodičovský příspěvek 350 000 Kč rozložený na zbytek. Průměr za celou dobu by realitu posunul, protože mateřská je vyšší a kratší.
+- **Rodičovská**, mzda pečujícího rodiče se nahradí dávkami ve dvou fázích: mateřská (70 % redukovaného denního vyměřovacího základu dle ČSSZ, 28 týdnů) a po ní rodičovský příspěvek 350 000 Kč rozložený na zbytek. Průměr za celou dobu by realitu posunul, protože mateřská je vyšší a kratší. Do výdajů během rodičovské patří i náklad na dítě dle věku (stejná tabulka jako na časové ose), jinak by karta počítala rodičovskou bez dítěte.
 - **Důchod / investice**, složené úročení; reálný výnos přes Fisherovu rovnici (očištění o inflaci), pravidlo bezpečného výběru 4 %.
 - **Cíle**, každý cíl je měsíční částka z volných peněz, kterou si uživatel nastaví; appka počítá, jestli s ní termín vyjde, a nabízí, co s tím.
 - **Časová osa**, konstantní příjmy i výdaje, bez výnosů a inflace, tedy **všechno v dnešních cenách**. Není to čisté jmění: akontace z úspor odejde a hodnota nemovitosti se zpátky nepřičte (to ukazuje graf koupě vs. nájem). Horizont sahá k odchodu do důchodu, nejméně deset let a nejvýš čtyřicet.
@@ -205,7 +205,7 @@ npm run test:watch # testy v watch režimu
 
 ## Testy a kontrola kvality
 
-Výpočetní jádro je pokryté unit testy (Vitest), **381 testů ve 34 souborech** pokrývá cash flow, hypotéku, sazby podle LTV, úspory a důchodovou projekci, časovou osu, scénáře, souhrn a verdikt, náklady na dítě, rodičovskou, daňové úlevy, rozpad zbytných výdajů, formátování i validaci uloženého stavu.
+Výpočetní jádro je pokryté unit testy (Vitest), **385 testů ve 34 souborech** pokrývá cash flow, hypotéku, sazby podle LTV, úspory a důchodovou projekci, časovou osu, scénáře, souhrn a verdikt, náklady na dítě, rodičovskou, daňové úlevy, rozpad zbytných výdajů, formátování i validaci uloženého stavu.
 
 Průchod aplikací hlídá **70 e2e testů (Playwright)** v Chromiu i ve WebKitu (jádro Safari): celý průvodce, dynamické přepočty, editace výdajů ve výsledcích, časová osa a její výřez, „Co kdyby", odkládání cílů, kontrast textu ve světlém i tmavém režimu, ovládání klávesnicí, tisk, záchranná obrazovka při chybě a sdílení odkazem.
 

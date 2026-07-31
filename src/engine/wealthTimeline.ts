@@ -1,5 +1,5 @@
 import type { WizardState } from '../types';
-import { CHILD_COSTS_CZ } from './defaults';
+import { monthlyChildCostAtAge } from './childCost';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
 import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment, youngestApplicantAge } from './mortgage';
 import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
@@ -95,12 +95,6 @@ export function planHorizonMonths(state: WizardState): number {
   const age = youngestApplicantAge(state);
   const months = yearsUntilRetirement(age) * 12;
   return Math.min(MAX_HORIZON_MONTHS, Math.max(MIN_HORIZON_MONTHS, months));
-}
-
-// Měsíční náklady na dítě dle věku (0–18 let; VŠ do časové osy nezahrnujeme).
-function childCostAt(ageYears: number): number {
-  const bracket = CHILD_COSTS_CZ.find((r) => r.to <= 18 && ageYears >= r.from && ageYears < r.to);
-  return bracket?.monthlyCost ?? 0;
 }
 
 export function wealthTimeline(
@@ -200,7 +194,7 @@ export function wealthTimeline(
       const repaid = mortgagePaidOffMonth !== null && m >= mortgagePaidOffMonth;
       expenses = expenses - rent + (repaid ? 0 : mortgage) + ownership;
     }
-    if (childMonth !== null && m >= childMonth) expenses += childCostAt((m - childMonth) / 12);
+    if (childMonth !== null && m >= childMonth) expenses += monthlyChildCostAtAge((m - childMonth) / 12);
 
     const flow = income - expenses;
     cash += flow;

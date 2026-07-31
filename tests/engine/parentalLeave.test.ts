@@ -4,6 +4,9 @@ import {
   defaultCaringParent,
   parentalLeaveApplicable,
 } from '../../src/engine/parentalLeave';
+import { wealthTimeline } from '../../src/engine/wealthTimeline';
+import { calculateDefaultAllocations } from '../../src/engine/allocation';
+import { expensesAfterPurchase } from '../../src/engine/mortgage';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -50,8 +53,9 @@ describe('evaluateParentalLeave', () => {
     // income now = 75000; during leave = 75000 - 30000 (person2) + 12000 = 57000
     expect(r.incomeNow).toBe(75000);
     expect(r.incomeDuringLeave).toBe(57000);
-    // savings lost total = (lostSalary - benefit) * months = (30000-12000)*24
-    expect(r.savingsLostTotal).toBe(18000 * 24);
+    // Kolik se za volno nenaspoří: výpadek mzdy proti dávce (30 000 − 12 000)
+    // a k tomu náklad na dítě, které je tou dobou doma (8 000 dle ČSÚ).
+    expect(r.savingsLostTotal).toBe((18000 + 8000) * 24);
     // no property goal → after-purchase disposable is null
     expect(r.disposableDuringLeaveAfterPurchase).toBeNull();
   });
@@ -90,5 +94,43 @@ describe('evaluateParentalLeave', () => {
     expect(r.disposableDuringLeaveAfterPurchase).not.toBeNull();
     // mortgage on a 5M home makes it much tighter than the pre-purchase leave disposable
     expect(r.disposableDuringLeaveAfterPurchase!).toBeLessThan(r.disposableDuringLeave);
+  });
+});
+
+describe('dítě je součástí rodičovské, ne až po ní', () => {
+  const par = (): WizardState => makeState({
+    mode: 'couple',
+    goals: ['property', 'child'],
+    person1Age: 30,
+    person2Age: 30,
+    income: { person1NetMonthly: 45000, person2NetMonthly: 38000 },
+    expenses: { rent: 17000, utilities: 4000, food: 8000, transport: 3500, insurance: 1500, existingLoans: 0, children: 0, other: 4000 },
+    savings: { totalSavings: 900000 },
+    property: { targetPrice: 5500000, loanTermYears: 30 },
+    parentalLeave: { enabled: true, parent: 2, durationMonths: 36 },
+  });
+
+  it('to, co zbyde během rodičovské, sedí s časovou osou', () => {
+    // Karta rodičovské tvrdila „zbyde nejméně 9 253 Kč" o rodině, které
+    // časová osa hned vedle počítala 1 253 Kč. Obojí bylo aritmeticky
+    // správně, jenže jedno z těch čísel mluvilo o rodičovské bez dítěte.
+    const state = par();
+    const leave = evaluateParentalLeave(state)!;
+    const tl = wealthTimeline(state, { childOffsetMonths: 12, allocations: calculateDefaultAllocations(state) });
+    // Měsíc 24 padne doprostřed rodičovské, do fáze rodičovského příspěvku.
+    const naOse = tl.points.find((p) => p.month === 24)!.flow;
+    expect(Math.round(leave.worstMonthlyDisposable)).toBe(Math.round(naOse));
+  });
+
+  it('náklad na dítě je ten z tabulky ČSÚ, ne odhad', () => {
+    const state = par();
+    const leave = evaluateParentalLeave(state)!;
+    // Nejhorší měsíc je ve fázi rodičovského příspěvku: příjem domácnosti
+    // bez mzdy pečujícího rodiče, plus dávka, minus výdaje po koupi
+    // a minus 8 000 Kč na dítě do tří let.
+    const rodicovska = leave.phases.find((p) => p.key === 'rodicovska')!;
+    const rucne = leave.incomeNow - leave.lostSalary + rodicovska.monthlyBenefit
+      - expensesAfterPurchase(state) - 8000;
+    expect(Math.round(leave.worstMonthlyDisposable)).toBe(Math.round(rucne));
   });
 });
