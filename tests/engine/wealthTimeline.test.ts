@@ -283,3 +283,57 @@ describe('odložené bydlení znamená, že se dál platí nájem', () => {
     expect(Math.round(splatkaANaklady)).toBe(34476);
   });
 });
+
+describe('odklad koupě', () => {
+  const kupujici = (savings: number) => makeState({
+    goals: ['property'],
+    person1Age: 31,
+    person2Age: 29,
+    income: { person1NetMonthly: 52000, person2NetMonthly: 41000 },
+    expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
+    savings: { totalSavings: savings },
+    property: { targetPrice: 6200000, loanTermYears: 30 },
+  });
+
+  it('kdo má naspořeno, může koupit hned, nebo až za rok', () => {
+    const hned = wealthTimeline(kupujici(1100000), { months: 120 });
+    expect(hned.purchaseMonth).toBe(0);
+
+    const zaRok = wealthTimeline(kupujici(1100000), { months: 120, purchaseNotBeforeMonth: 12 });
+    expect(zaRok.purchaseMonth).toBe(12);
+    // Nejdřívější možný termín se odkladem nemění, jinak by mez úchopu
+    // utíkala doprava spolu s ním a doleva by se už nedalo vrátit.
+    expect(zaRok.earliestPurchaseMonth).toBe(0);
+  });
+
+  it('během odkladu se platí dál nájem a spoří se', () => {
+    const zaRok = wealthTimeline(kupujici(1100000), { months: 120, purchaseNotBeforeMonth: 12 });
+    const hned = wealthTimeline(kupujici(1100000), { months: 120 });
+    // Nájem a energie místo splátky: měsíční tok je před koupí ten původní.
+    expect(zaRok.points[1].flow).toBe(49700);
+    expect(zaRok.points[13].flow).toBe(hned.points[1].flow);
+    // A do koupě se stihne naspořit o rok víc, takže po ní zbyde větší rezerva.
+    expect(zaRok.points[13].cash).toBeGreaterThan(hned.points[1].cash);
+  });
+
+  it('dřív, než je na akontaci, se koupit nedá ani na přání', () => {
+    // Akontace chybí, koupě proto přijde až s naspořením. Odklad na dřívější
+    // měsíc s tím nehne: peníze na ni nejsou.
+    const pozdeji = wealthTimeline(kupujici(500000), { months: 240, purchaseNotBeforeMonth: 1 });
+    const sam = wealthTimeline(kupujici(500000), { months: 240 });
+    expect(sam.purchaseMonth).toBeGreaterThan(1);
+    expect(pozdeji.purchaseMonth).toBe(sam.purchaseMonth);
+    expect(pozdeji.earliestPurchaseMonth).toBe(sam.purchaseMonth);
+  });
+
+  it('odklad nemění akontaci ani splátku, jen termín', () => {
+    // Kdyby se odklad tvářil jako vyšší akontace, rozešla by se časová osa
+    // se splátkou a DSTI, které počítají z akontace zadané v Bydlení.
+    const state = kupujici(1100000);
+    const hned = wealthTimeline(state, { months: 120 });
+    const pozdeji = wealthTimeline(state, { months: 120, purchaseNotBeforeMonth: 24 });
+    const splatkaHned = hned.points[1].flow;
+    const splatkaPozdeji = pozdeji.points[25].flow;
+    expect(splatkaPozdeji).toBe(splatkaHned);
+  });
+});

@@ -91,10 +91,26 @@ test('tažením se puntík dítěte posune po ose', async ({ page }) => {
 })
 
 test('úchop dostane jen událost, se kterou opravdu jde hýbat', async ({ page }) => {
-  // U samotného bydlení je koupě odvozená od naspoření akontace, takže
-  // se s ní přímo hýbat nedá a přerušovaný kroužek by sliboval, co neplatí.
+  // Koupě a dítě jsou otázka „kdy". Konec rodičovské plyne z délky volna
+  // a doplacení z koupě plus splatnosti, takže tam by kroužek sliboval,
+  // co neplatí.
   await toResults(page, 'property')
-  await expect(page.getByRole('slider')).toHaveCount(0)
+  await expect(page.getByRole('slider')).toHaveCount(1)
+  await expect(page.getByRole('slider', { name: 'Za jak dlouho chcete koupit' })).toBeVisible()
+})
+
+test('koupi jde odsunout na později a stuha se přepočítá', async ({ page }) => {
+  await toResults(page, 'property')
+  const handle = page.getByRole('slider', { name: 'Za jak dlouho chcete koupit' })
+  const from = Number(await handle.getAttribute('aria-valuenow'))
+
+  await handle.focus()
+  await page.keyboard.press('PageUp')
+  await expect(handle).toHaveAttribute('aria-valuenow', String(from + 12))
+
+  // Dřív než na akontaci naspoří se koupit nedá, mez to drží.
+  for (let i = 0; i < 5; i++) await page.keyboard.press('PageDown')
+  await expect(handle).toHaveAttribute('aria-valuenow', String(from))
 })
 
 // `viewBox` stuhy se řídí skutečnou šířkou, takže jedna jednotka je jeden

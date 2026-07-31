@@ -63,6 +63,12 @@ export interface WealthPoint {
 export interface WealthTimelineResult {
   points: WealthPoint[];
   purchaseMonth: number | null; // null = koupě se v horizontu nekoná
+  /**
+   * Nejdřívější měsíc, kdy by se dalo koupit, tedy kdy je na akontaci
+   * naspořeno. Bez odkladu je stejný jako `purchaseMonth`; s odkladem říká,
+   * jak daleko doleva má smysl pustit úchop na stuze.
+   */
+  earliestPurchaseMonth: number | null;
   childMonth: number | null;
   leaveEndMonth: number | null;
   /** Měsíc poslední splátky. null = v horizontu se nedoplatí (nebo se nekupuje). */
@@ -102,6 +108,21 @@ export function wealthTimeline(
   opts: {
     months?: number;
     childOffsetMonths?: number;
+    /**
+     * Nejdřív v tomhle měsíci, ne hned jak bude naspořeno.
+     *
+     * Koupě se jinak odvozuje: nastane, jakmile fond na akontaci dosáhne
+     * cílové částky. To odpovídá na „kdy nejdřív", ale ne na „co kdybych
+     * ještě rok počkal", což je otázka, kterou si člověk s naspořenou
+     * akontací klade jako první.
+     *
+     * Odklad **nemění akontaci ani splátku**: to, co se mezitím naspoří,
+     * zůstane v hotovosti jako rezerva. Kdyby se odklad tvářil jako vyšší
+     * akontace, rozešla by se časová osa se splátkou, DSTI i verdiktem,
+     * které počítají z akontace zadané v Bydlení. Kdo chce vidět nižší
+     * splátku, hýbe akontací; tímhle se hýbe termínem.
+     */
+    purchaseNotBeforeMonth?: number;
     /**
      * Kolik měsíčně jde na cíle. Bez toho by časová osa kupovala z peněz,
      * které jsou určené jinam, a stuha by barvila podle toku, ve kterém cíle
@@ -157,6 +178,8 @@ export function wealthTimeline(
   // odkládá. Kupuje se z něj, ne z celého jmění.
   let downPaymentFund = effectiveDownPayment(state);
   let purchaseMonth: number | null = null;
+  let earliestPurchaseMonth: number | null = null;
+  const notBefore = Math.max(0, Math.round(opts.purchaseNotBeforeMonth ?? 0));
   // Doplacení se odvozuje od koupě, ne od nuly: kdo kupuje za tři roky,
   // doplácí o tři roky později.
   let mortgagePaidOffMonth: number | null = null;
@@ -169,12 +192,16 @@ export function wealthTimeline(
 
   for (let m = 0; m < horizon; m++) {
     // Koupě: jakmile je na cílovou akontaci naspořeno (dynamicky, zohlední
-    // i to, že dítě nebo rodičovská spoření zpomalí).
+    // i to, že dítě nebo rodičovská spoření zpomalí), nejdřív ale v měsíci,
+    // na který si ji uživatel posunul.
     if (hasProperty && purchaseMonth === null && downPaymentFund >= targetDownPayment) {
-      purchaseMonth = m;
-      cash -= targetDownPayment;
-      const payoff = m + term * 12;
-      if (payoff <= horizon) mortgagePaidOffMonth = payoff;
+      if (earliestPurchaseMonth === null) earliestPurchaseMonth = m;
+      if (m >= notBefore) {
+        purchaseMonth = m;
+        cash -= targetDownPayment;
+        const payoff = m + term * 12;
+        if (payoff <= horizon) mortgagePaidOffMonth = payoff;
+      }
     }
 
     let income = baseIncome;
@@ -224,6 +251,7 @@ export function wealthTimeline(
   return {
     points,
     purchaseMonth,
+    earliestPurchaseMonth,
     childMonth,
     leaveEndMonth,
     mortgagePaidOffMonth,

@@ -165,7 +165,26 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   // Stejnou hodnotu má i graf vývoje úspor v záložce Bydlení; sjednotit je
   // patří ke kroku, kde vznikne sdílený stav pro „co kdyby".
   const [childOffset, setChildOffset] = useState(12);
-  const journeyData = journey(state, { childOffsetMonths: childOffset, allocations });
+
+  // Kdy koupit: taky úvaha nad grafem. Nula znamená „hned, jak to půjde",
+  // tedy jakmile je na akontaci naspořeno; odsud se dá koupě odsouvat.
+  // Neukládá se ze stejného důvodu jako dítě a nemění akontaci ani splátku,
+  // jen termín. Co se mezitím naspoří, zůstane v rezervě.
+  const [purchaseAt, setPurchaseAt] = useState(0);
+  const journeyData = journey(state, {
+    childOffsetMonths: childOffset,
+    purchaseNotBeforeMonth: purchaseAt,
+    allocations,
+  });
+
+  // Doleva jen k měsíci, kdy je na akontaci naspořeno: dřív koupit nejde.
+  // Doprava deset let, ale ne až k důchodu; za obzorem plánu už odklad
+  // není rozhodnutí, ale jiný plán.
+  const earliest = journeyData.earliestPurchaseMonth;
+  const purchaseRange = earliest === null ? null : {
+    min: earliest,
+    max: Math.max(earliest, Math.min(earliest + 120, journeyData.horizonMonths - 12)),
+  };
 
   // Výřez z cesty. Drží se v obrazovce, ne v uloženém stavu: je to způsob
   // dívání, ne údaj o plánu. Výchozí je celek, protože otázka zní „vyjde
@@ -235,6 +254,8 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
           data={journeyData}
           viewMonths={view}
           onMoveChild={state.goals.includes('child') ? setChildOffset : undefined}
+          onMovePurchase={purchaseRange ? setPurchaseAt : undefined}
+          purchaseRange={purchaseRange ?? undefined}
         />
         <JourneyRangeNote data={journeyData} viewMonths={view} />
         {/* Z čeho je stuha složená.

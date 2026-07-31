@@ -60,13 +60,19 @@ interface Props {
    * Posun události v čase. Dostane ho jen událost, která je opravdu volný
    * parametr; ostatní se z něčeho odvozují a táhnout jimi by lhalo.
    *
-   * Koupě nastane, jakmile je naspořeno na akontaci, takže se s ní hýbe
-   * cenou nebo akontací, ne přímo. Konec rodičovské plyne z délky volna,
-   * což je skutečný zadaný údaj, ne úvaha nad grafem.
+   * Koupě a dítě jsou obojí otázka „kdy", takže obojí jde chytit. Konec
+   * rodičovské plyne z délky volna, což je zadaný údaj, ne úvaha nad grafem,
+   * a doplacení hypotéky je koupě plus splatnost.
    */
   onMoveChild?: (month: number) => void;
   /** Mez posunu dítěte v měsících. */
   childRange?: { min: number; max: number };
+  /**
+   * Posun koupě. Doleva jen k měsíci, kdy je na akontaci naspořeno: dřív
+   * koupit nejde, protože není z čeho.
+   */
+  onMovePurchase?: (month: number) => void;
+  purchaseRange?: { min: number; max: number };
   /**
    * Původní scénář jako přerušovaný obrys pod živou stuhou.
    *
@@ -91,6 +97,8 @@ export default function JourneyRibbon({
   animate = true,
   onMoveChild,
   childRange = { min: 0, max: 96 },
+  onMovePurchase,
+  purchaseRange = { min: 0, max: 120 },
   ghost,
   viewMonths,
 }: Props) {
@@ -130,6 +138,27 @@ export default function JourneyRibbon({
   // Bod, na který uživatel ukazuje. Kreslí se u něj vodicí linka a částka.
   const [hover, setHover] = useState<number | null>(null);
 
+  /**
+   * Vstupní animace patří k prvnímu zobrazení, ne ke každé změně.
+   *
+   * Události se kreslí v pořadí podle měsíce. Když se koupě posune za dítě,
+   * React uzly přeskládá, a přesun uzlu v DOM spustí CSS animaci znovu:
+   * popisek na celou vteřinu zmizí, protože `backwards` drží počáteční stav
+   * po dobu zpoždění. Uprostřed tažení to vypadá, že událost zmizela.
+   *
+   * Po odeznění úvodu se proto animace vypne inline (stejně, jako to dělá
+   * pravidlo pro vypnutý pohyb a pro tisk), a hned při prvním doteku úchopu:
+   * kdo už s grafem pracuje, nemá co dodívat.
+   */
+  const [intro, setIntro] = useState(animate);
+  useEffect(() => {
+    if (!intro) return;
+    const t = setTimeout(() => setIntro(false), 2500);
+    return () => clearTimeout(t);
+  }, [intro]);
+  const eventStyle = (delay: number) =>
+    intro ? { animationDelay: `${delay}s` } : { animation: 'none' };
+
   /** Měsíc pod kurzorem. Počítá se z pozice v SVG, ne z pozice v okně. */
   const monthAt = useCallback((clientX: number) => {
     const el = svgRef.current;
@@ -140,23 +169,41 @@ export default function JourneyRibbon({
     return Math.round(Math.min(1, Math.max(0, t)) * horizonMonths);
   }, [horizonMonths, W]);
 
-  const clampChild = useCallback(
-    (m: number) => Math.min(childRange.max, Math.max(childRange.min, m)),
-    [childRange.max, childRange.min]
-  );
+  /**
+   * Co se dá s kterou událostí dělat. Dřív to bylo natvrdo dítě; jakmile
+   * přibyla druhá pohyblivá událost, musí si posun, mez i popisek nést
+   * každá sama, jinak by tažení za koupi posouvalo dítě.
+   */
+  const movers = useMemo(() => {
+    const m: Partial<Record<string, {
+      move: (month: number) => void;
+      range: { min: number; max: number };
+      label: string;
+      text: (month: number) => string;
+    }>> = {};
+    if (onMoveChild) {
+      m.child = {
+        move: onMoveChild,
+        range: childRange,
+        label: 'Za jak dlouho čekáte dítě',
+        text: (month) => `za ${formatMonths(month)}`,
+      };
+    }
+    if (onMovePurchase) {
+      m.purchase = {
+        move: onMovePurchase,
+        range: purchaseRange,
+        label: 'Za jak dlouho chcete koupit',
+        // Nula je „hned teď", ne „za 0 měsíců": u koupě je to ta
+        // nejčastější odpověď a zní jinak než všechny ostatní.
+        text: (month) => (month <= 0 ? 'hned teď' : `za ${formatMonths(month)}`),
+      };
+    }
+    return m;
+  }, [onMoveChild, childRange, onMovePurchase, purchaseRange]);
 
-  // Tažení běží na `pointer` událostech, takže myš i dotyk jdou jednou cestou.
-  // `setPointerCapture` drží tažení i když kurzor sjede mimo puntík; bez toho
-  // se táhnutí přeruší, jakmile se ujede o pár pixelů.
-  const startDrag = (e: React.PointerEvent) => {
-    if (!onMoveChild) return;
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-  const drag = (e: React.PointerEvent) => {
-    if (!onMoveChild || !e.currentTarget.hasPointerCapture(e.pointerId)) return;
-    onMoveChild(clampChild(monthAt(e.clientX)));
-  };
+  const clampTo = (m: number, range: { min: number; max: number }) =>
+    Math.min(range.max, Math.max(range.min, m));
 
   const geom = useMemo(() => {
     const xs = (m: number) => PAD.left + (m / horizonMonths) * (W - PAD.left - PAD.right);
@@ -485,9 +532,9 @@ export default function JourneyRibbon({
         const { x: bx, half: bw } = bubbles[i];
         const y = geom.ys(points[Math.min(e.month, points.length - 1)].cash);
         const labelY = 14;
-        const movable = e.key === 'child' && !!onMoveChild;
+        const mover = movers[e.key];
         return (
-          <g key={e.key} className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.0 + i * 0.08}s` }}>
+          <g key={e.key} className={animate ? 'ribbon-event' : undefined} style={eventStyle(1.0 + i * 0.08)}>
             {/* Vodicí čára jako loket, ne jedna dlouhá úhlopříčka.
                 Svislý úsek vyrůstá přímo z puntíku, takže je vidět, ke které
                 události popisek patří; teprve nad ním se odbočí k bublině.
@@ -514,7 +561,7 @@ export default function JourneyRibbon({
                 {e.label}
               </text>
             </g>
-            {movable && (
+            {mover && (
               <>
                 {/* Přerušovaný kroužek je jediný signál „dá se s tím hýbat".
                     Dostane ho jen událost, kterou opravdu jde posunout. */}
@@ -525,28 +572,40 @@ export default function JourneyRibbon({
                   className="no-print"
                 />
                 {/* Dotyková plocha. Poloměr se přepočítá podle skutečné šířky
-                    SVG, aby cíl měl 44 px i na mobilu, kde je stuha užší. */}
+                    SVG, aby cíl měl 44 px i na mobilu, kde je stuha užší.
+
+                    Tažení běží na `pointer` událostech, takže myš i dotyk
+                    jdou jednou cestou. `setPointerCapture` drží tažení i když
+                    kurzor sjede mimo puntík; bez toho se přeruší, jakmile se
+                    ujede o pár pixelů. */}
                 <circle
                   cx={x} cy={y} r={hitRadius}
                   fill="transparent"
                   className="ribbon-grip no-print cursor-ew-resize touch-none"
                   role="slider"
                   tabIndex={0}
-                  aria-label="Za jak dlouho čekáte dítě"
-                  aria-valuemin={childRange.min}
-                  aria-valuemax={childRange.max}
+                  aria-label={mover.label}
+                  aria-valuemin={mover.range.min}
+                  aria-valuemax={mover.range.max}
                   aria-valuenow={e.month}
-                  aria-valuetext={`za ${formatMonths(e.month)}`}
-                  onPointerDown={startDrag}
-                  onPointerMove={drag}
+                  aria-valuetext={mover.text(e.month)}
+                  onPointerDown={(ev) => {
+                    ev.preventDefault();
+                    setIntro(false);
+                    ev.currentTarget.setPointerCapture(ev.pointerId);
+                  }}
+                  onPointerMove={(ev) => {
+                    if (!ev.currentTarget.hasPointerCapture(ev.pointerId)) return;
+                    mover.move(clampTo(monthAt(ev.clientX), mover.range));
+                  }}
                   onKeyDown={(ev) => {
-                    if (!onMoveChild) return;
                     const step = ev.key === 'PageUp' || ev.key === 'PageDown' ? 12 : 1;
                     const dir = ev.key === 'ArrowRight' || ev.key === 'ArrowUp' || ev.key === 'PageUp' ? 1
                       : ev.key === 'ArrowLeft' || ev.key === 'ArrowDown' || ev.key === 'PageDown' ? -1 : 0;
                     if (dir === 0) return;
                     ev.preventDefault();
-                    onMoveChild(clampChild(e.month + dir * step));
+                    setIntro(false);
+                    mover.move(clampTo(e.month + dir * step, mover.range));
                   }}
                 />
               </>
@@ -569,7 +628,7 @@ export default function JourneyRibbon({
           takže se s puntíkem nedalo hýbat. Chytal ho `<text>`, který je
           neviditelně široký přes celou svou délku. */}
       {lowest && lowestLabel && (
-        <g pointerEvents="none" className={animate ? 'ribbon-event' : undefined} style={{ animationDelay: `${1.0 + named.length * 0.08}s` }}>
+        <g pointerEvents="none" className={animate ? 'ribbon-event' : undefined} style={eventStyle(1.0 + named.length * 0.08)}>
           {/* Když popisek uhnul stranou, spojí ho s bodem čárka. Bez ní by
               vypadal jako údaj k jinému místu na stuze. */}
           {lowestLabel.shifted && (

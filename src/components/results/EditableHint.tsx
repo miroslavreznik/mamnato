@@ -4,7 +4,8 @@ import { useState } from 'react';
  * „Do těch čísel se dá sáhnout."
  *
  * Přehled vypadá jako report, ale editovatelný je skoro celý: akontace,
- * sazba, výdaje, částky u cílů, délka rodičovské, termín dítěte na časové ose.
+ * sazba, výdaje, částky u cílů, délka rodičovské, termín koupě i dítěte
+ * na časové ose.
  * Nikde to není napsané, takže uživatel se vracel do průvodce tlačítkem
  * „Upravit" i tam, kde stačilo přepsat pole před sebou.
  *
@@ -51,7 +52,8 @@ export default function EditableHint() {
         <span className="font-semibold text-ink">Čísla v přehledu nejsou jen k prohlížení.</span>{' '}
         Kde je pole, posuvník nebo přepínač, dá se do něj sáhnout: výdaje v Rozpočtu,
         akontace a sazba v Bydlení, částky u cílů. Přehled se přepočítá hned a změna se uloží.
-        Do průvodce se kvůli tomu vracet nemusíte.
+        Do průvodce se kvůli tomu vracet nemusíte. Puntíkem na časové ose navíc posunete
+        termín koupě nebo narození dítěte; to je úvaha nad grafem a neukládá se.
       </p>
       <button
         type="button"

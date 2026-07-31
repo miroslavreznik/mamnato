@@ -44,6 +44,8 @@ export interface Journey {
   firstNegativeMonth: number | null;
   tightest: TightestPoint | null;
   horizonMonths: number;
+  /** Nejdřívější možný měsíc koupě, tedy mez pro posun události po ose. */
+  earliestPurchaseMonth: number | null;
 }
 
 /**
@@ -343,6 +345,8 @@ export function journey(
   opts: {
     months?: number;
     childOffsetMonths?: number;
+    /** Odklad koupě. Viz `wealthTimeline`. */
+    purchaseNotBeforeMonth?: number;
     /** Kolik měsíčně jde na cíle. Viz `wealthTimeline`. */
     allocations?: GoalAllocations;
   } = {}
@@ -392,5 +396,6 @@ export function journey(
     firstNegativeMonth: tl.firstNegativeMonth,
     tightest,
     horizonMonths,
+    earliestPurchaseMonth: tl.earliestPurchaseMonth,
   };
 }

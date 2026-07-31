@@ -1034,3 +1034,47 @@ Rada „mějte stranou nouzový fond, ideálně 3–6 měsíců výdajů (pro v�
 stály dvě různé částky pro tutéž věc. Rada teď uvádí celý rozsah ze stejného
 základu (128 063 až 256 125 Kč), jehož spodní hranice je přesně to, co
 požaduje karta.
+
+## B21. Termín koupě jde posunout po ose
+
+Dítě šlo na stuze chytit a posunout, koupě ne: nastávala, jakmile byla
+naspořená akontace, a v komentáři u komponenty stálo, že se s ní hýbe cenou
+nebo akontací, ne přímo. Jenže „koupit hned, nebo počkat rok?" je vlastní
+otázka, kterou nejde položit ani cenou, ani akontací.
+
+Koupě proto dostala stejný úchop jako dítě, s dvěma mezemi:
+
+- **doleva jen k měsíci, kdy je na akontaci naspořeno.** Dřív koupit nejde,
+  není z čeho. Ten měsíc vrací `wealthTimeline` jako `earliestPurchaseMonth`
+  a počítá se nezávisle na odkladu, jinak by mez utíkala doprava spolu
+  s úchopem a zpátky by se už nedalo.
+- **doprava deset let**, ne až k důchodu. Za obzorem plánu už odklad není
+  rozhodnutí, ale jiný plán.
+
+**Odklad nemění akontaci ani splátku, jen termín.** Co se mezitím naspoří,
+zůstane v hotovosti jako rezerva. Vypadá to jako promarněná příležitost
+(vyšší akontace by snížila splátku), ale je to jediná varianta, která
+neroztrhne přehled: splátka, DSTI i verdikt počítají z akontace zadané
+v Bydlení, a kdyby si osa počítala vlastní, začala by si s nimi odporovat.
+Kdo chce vidět nižší splátku, hýbe akontací; tímhle se hýbe termínem.
+
+### Popisek při posunu mizel na vteřinu
+
+Našlo se u toho: události se kreslí v pořadí podle měsíce, takže když koupě
+přeskočí dítě, React uzly v DOM přeskládá. **Přesun uzlu spustí CSS animaci
+znovu**, a protože má `backwards` fill a vteřinové zpoždění, popisek uprostřed
+tažení na celou vteřinu zmizel. Platilo to i pro dítě, jen se to skoro nedalo
+vyvolat: muselo by se přetáhnout přes koupi.
+
+Vstupní animace se proto po odeznění vypne inline (stejně, jako to dělá
+pravidlo pro vypnutý pohyb a pro tisk), a hned při prvním doteku úchopu. Kdo
+už s grafem pracuje, nemá co dodívat.
+
+### Co se nechává být
+
+Na úzkém mobilu se úchopy koupě a dítěte překrývají, když jsou obě události
+v prvních letech: na 320 px je celý horizont k důchodu široký jako palec.
+Chytí se ten, který se kreslí později. Odpověď na to je výřez („10 let"),
+ne menší dotykové cíle; zmenšit je na polovinu odstupu by u dvou událostí
+dva roky od sebe znamenalo cíl pod deset pixelů, tedy nechytitelný obojí.
+Klávesnicí jsou dosažitelné vždy, každý úchop je vlastní `slider`.
