@@ -123,6 +123,21 @@ export function expensesAfterPurchase(state: WizardState): number {
     + mortgagePayment(state) + ownershipCosts(state);
 }
 
+/**
+ * Totéž jen z nezbytných výdajů, tedy měsíc, na který musí stačit rezerva.
+ *
+ * Je to jiné číslo než `necessaryMonthlyExpenses` a rozdíl bývá skoro
+ * dvojnásobný, protože splátka je zpravidla vyšší než nájem. Kdo to plete,
+ * slíbí delší runway, než jaká je: v přehledu stálo u nejnižšího bodu
+ * „151 312 Kč, což je 5 měsíců nezbytných výdajů" a o dva centimetry vedle
+ * „rezerva po koupi vydrží 2,8 měsíce". Obojí o týchž penězích.
+ */
+export function necessaryExpensesAfterPurchase(state: WizardState): number {
+  return necessaryMonthlyExpenses(state)
+    - state.expenses.rent - state.expenses.utilities
+    + mortgagePayment(state) + ownershipCosts(state);
+}
+
 // Věk žadatelů (kladné hodnoty), seřazeno není potřeba.
 function applicantAges(state: WizardState): number[] {
   return [state.person1Age, state.person2Age].filter(
@@ -184,9 +199,7 @@ export function totalLoanInterest(loanAmount: number, annualRate: number, termYe
 // a místo nájmu se platí (obvykle vyšší) hypotéka + náklady na vlastnictví.
 export function postPurchaseRunwayMonths(state: WizardState): number {
   const reserveAfter = Math.max(0, state.savings.totalSavings - effectiveDownPayment(state));
-  const necessaryAfter =
-    necessaryMonthlyExpenses(state) - state.expenses.rent - state.expenses.utilities
-    + mortgagePayment(state) + ownershipCosts(state);
+  const necessaryAfter = necessaryExpensesAfterPurchase(state);
   if (necessaryAfter <= 0) return Infinity;
   return reserveAfter / necessaryAfter;
 }

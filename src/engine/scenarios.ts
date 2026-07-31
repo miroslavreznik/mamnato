@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
-import { monthlyDisposable, totalMonthlyExpenses } from './cashflow';
-import { dsti, dti, downPaymentGap, monthsToSaveDownPayment } from './mortgage';
+import { monthlyDisposable } from './cashflow';
+import { dsti, dti, downPaymentGap, monthsToSaveDownPayment, necessaryExpensesAfterPurchase } from './mortgage';
 
 export type ScenarioId =
   | 'cannot_afford_cashflow'
@@ -20,7 +20,12 @@ export interface Scenario {
 }
 
 function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
-  const emergencyFund = Math.round(totalMonthlyExpenses(state) * 4).toLocaleString('cs-CZ');
+  // Nouzový fond z nezbytných výdajů PO koupi. Slovníček i karta „A co teď"
+  // ho počítají takhle, tady se počítal ze všech dnešních výdajů, takže na
+  // jedné obrazovce stály dvě různé částky pro tutéž věc. Uvádí se celý
+  // rozsah, ať se číslo nerozejde s tou kartou, která staví na spodní hranici.
+  const need = necessaryExpensesAfterPurchase(state);
+  const emergencyFund = `${Math.round(need * 3).toLocaleString('cs-CZ')} až ${Math.round(need * 6).toLocaleString('cs-CZ')}`;
 
   return {
     cannot_afford_cashflow: {
@@ -66,7 +71,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       description:
         'Čísla vycházejí: na hypotéku dosáhnete a úspory na akontaci naspoříte v rozumném horizontu. Zároveň ale nebude mnoho prostoru pro neočekávané výdaje. Je důležité mít před koupí vytvořenou finanční rezervu.',
       tips: [
-        `Před podpisem smlouvy mějte stranou nouzový fond, ideálně 3–6 měsíců výdajů (pro vás to je cca ${emergencyFund} Kč). Tuto částku nezapočítávejte do akontace.`,
+        `Před podpisem smlouvy mějte stranou nouzový fond, ideálně 3–6 měsíců nezbytných výdajů (pro vás to je ${emergencyFund} Kč, už se splátkou místo nájmu). Tuto částku nezapočítávejte do akontace.`,
         'Zvažte fixaci úrokové sazby na delší období (7–10 let). Ochráníte se před růstem sazeb v době, kdy bude váš rozpočet napnutý.',
         'Při schvalování hypotéky banky hodnotí i pracovní stabilitu. Smlouva na dobu neurčitou výrazně pomůže.',
       ],

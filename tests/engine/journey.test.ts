@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { journey, beyondView } from '../../src/engine/journey';
+import { necessaryExpensesAfterPurchase } from '../../src/engine/mortgage';
+import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
+import { formatMonths } from '../../src/engine/format';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -133,6 +136,79 @@ describe('nejtěsnější místo a stuha si neodporují', () => {
     const j = journey(state, { allocations: { downPayment: 0, retirement: 1000, child: 0, custom: [] } });
     expect(j.tension.every((t) => t === 'calm')).toBe(true);
     expect(j.tightest?.tension).toBe('calm');
+  });
+});
+
+describe('tenký, i když kladný tok', () => {
+  it('nulový tok v nultém měsíci není napětí', () => {
+    // Nultý bod je výchozí stav, žádný tok se v něm nestal. Nula z něj se
+    // nesmí číst jako „nic nezbývá".
+    const j = journey(makeState(), { months: 12 });
+    expect(j.points[0].flow).toBe(0);
+    expect(j.tension[0]).toBe('calm');
+  });
+
+  it('když po výdajích zbyde skoro nic, stuha to ukáže', () => {
+    // Rozpočet vychází, rezerva je velká, na cíle se nic neodkládá. Přesto
+    // je to plán, který neunese jednu návštěvu servisu.
+    const state = makeState({ income: { person1NetMonthly: 35000, person2NetMonthly: 0 } });
+    const j = journey(state, { months: 24 });
+    expect(j.points[1].flow).toBe(1000);
+    expect(j.tension[1]).toBe('tense');
+    expect(j.tightest?.tension).toBe('tense');
+    expect(j.tightest?.explanation).toContain('zbyde jen');
+  });
+
+  it('pohodlný přebytek zůstává klidný', () => {
+    // Práh je z příjmu, ne pevná částka: 41 000 Kč z 75 000 je jiná situace
+    // než 1 000 Kč z 35 000, i když obojí je kladné.
+    const j = journey(makeState(), { months: 24 });
+    expect(j.tension.every((t) => t === 'calm')).toBe(true);
+    expect(j.tightest?.tension).toBe('calm');
+  });
+
+  it('tenký tok během rodičovské se jmenuje po ní', () => {
+    // Pár, který koupí hned a za rok má dítě: po vyčerpání mateřské jede
+    // rodina tři roky na pár tisících měsíčně. Dřív u toho stála klidná
+    // zelená stuha a karta „plán drží po celou dobu".
+    const state = makeState({
+      goals: ['property', 'child'],
+      person1Age: 30,
+      person2Age: 30,
+      income: { person1NetMonthly: 45000, person2NetMonthly: 38000 },
+      expenses: { rent: 18000, existingLoans: 0, insurance: 1500, food: 8000, transport: 3000, children: 0, utilities: 4500, other: 3000 },
+      savings: { totalSavings: 900000 },
+      property: { targetPrice: 5500000, mortgageRate: 0.048, loanTermYears: 30 },
+      parentalLeave: { enabled: true, parent: 2, durationMonths: 36 },
+    });
+    const j = journey(state, { childOffsetMonths: 12 });
+    expect(j.tightest!.tension).toBe('tense');
+    expect(j.tightest!.title).toMatch(/^Rodičovská \d{4}$/);
+    expect(j.tightest!.explanation).toMatch(/zbyde jen/);
+    // A stuha to musí ukázat po celou tu dobu, ne jen karta vedle ní.
+    const leaveEnd = j.events.find((e) => e.key === 'leaveEnd')!.month;
+    expect(j.tension.slice(j.tightest!.month, leaveEnd).every((t) => t === 'tense')).toBe(true);
+  });
+});
+
+describe('rezerva se poměřuje výdaji, které v tu dobu platí', () => {
+  it('po koupi počítá se splátkou, ne s nájmem', () => {
+    // Dlaždice „rezerva po koupi vydrží" dělí týmiž výdaji. Dokud tady stály
+    // dnešní výdaje, tvrdila karta u nejnižšího bodu skoro dvojnásobek toho,
+    // co dlaždice o dva centimetry vedle ní.
+    const state = makeState({ goals: ['property'], savings: { totalSavings: 1200000 } });
+    const j = journey(state, { months: 120 });
+    const purchase = j.events.find((e) => e.key === 'purchase')!;
+    expect(j.minCashMonth).toBeGreaterThanOrEqual(purchase.month);
+    expect(j.tightest!.explanation)
+      .toContain(formatMonths(j.minCash / necessaryExpensesAfterPurchase(state)));
+  });
+
+  it('kdo nekupuje, zůstává u dnešních výdajů', () => {
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 900000 } });
+    const j = journey(state, { months: 120 });
+    expect(j.tightest!.explanation)
+      .toContain(formatMonths(j.minCash / necessaryMonthlyExpenses(state)));
   });
 });
 

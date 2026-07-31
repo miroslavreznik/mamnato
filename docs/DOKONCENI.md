@@ -966,10 +966,71 @@ náklady při koupi (11 600 až 31 000 Kč), rozvaha nad akontací (bezpečné
 maximum 638 574 Kč při vložených 550 000 Kč) i odpočet úroků (v prvním roce
 235 949 Kč, odečíst jde 150 000, úspora 22 500 Kč) sedí.
 
-### Co se nechává být
+### Co se nechávalo být, a proč už ne
 
-Stuha je po celý horizont klidná, i když tři roky rodičovské jede rodina na
-1 253 Kč měsíčně. Model napětí zná schodek, chybějící rezervu a nefinancované
-cíle, ale nezná „tenký, i když kladný tok". S 973 000 Kč na účtu to opravdu
-není ohrožení a karta nejtěsnějšího místa by lhala, kdyby tvrdila opak.
-Informace uživateli nechybí, říká ji řádek cíle „Rodičovská" a nově i verdikt.
+Stuha byla po celý horizont klidná, i když tři roky rodičovské jela rodina na
+1 253 Kč měsíčně. Napsalo se sem, že to není ohrožení. Není, ale „plán drží
+po celou dobu" u rozpočtu, kde zbývá tisícovka, je věta, kterou by nikdo
+nenapsal, kdyby to číslo viděl. Opraveno v B20.
+
+## B20. Výroky, které si odporovaly s čísly pod sebou
+
+Pokračování B19. Zadání znělo „oprav ty výroky, ať to funguje správně",
+takže padlo i to, co se v B19 nechávalo být, a při té příležitosti se našly
+další tři případy téhož: věta a číslo vedle ní o téže věci, jen jinak
+spočítané.
+
+### Tenký, i když kladný tok
+
+Model napětí uměl schodek, chybějící rezervu a nefinancované cíle. Neuměl
+„vyjde to, ale o vlásek". Přibyl proto čtvrtý důvod k napětí: **kladný tok
+pod 5 % čistého příjmu** (nejméně 1 000 Kč, aby to dávalo smysl i u nízkých
+příjmů). Práh se schválně měří na `flow`, ne na `flowAfterGoals`: kdo
+dobrovolně posílá všechno na cíle, si napětí nezpůsobil, kdežto během
+rodičovské klesne sám příjem.
+
+U páru z B19 se tím stuha od 20. měsíce do konce rodičovské zbarví a karta
+místo „Nejníže 2026, plán drží po celou dobu" říká **„Rodičovská 2027:
+Rozpočet vyjde, ale zbyde jen 2 753 Kč měsíčně. Odkládat se v tu dobu skoro
+nedá a nečekaný výdaj musí z úspor."** Verdikt nad tím mluví o téže
+rodičovské, takže si obrázek, nadpis i karta konečně říkají totéž.
+
+Pojmenování období (`Rodičovská` / `Po koupi` / jinak) se vytáhlo ze schodkové
+větve do `whatHappensAt()`, aby obě větve popisovaly tutéž chvíli stejně.
+
+### Rezerva měřená výdaji, které v tu dobu neplatí
+
+V přehledu stálo u nejnižšího bodu „Úspory klesnou na 151 312 Kč, což je
+5 měsíců nezbytných výdajů" a o dva centimetry vedle „rezerva po koupi
+vydrží 2,8 měsíce". Obojí o týchž penězích. Časová osa dělila **dnešními**
+nezbytnými výdaji, dlaždice těmi **po koupi**, a rozdíl mezi nájmem
+a splátkou je skoro dvojnásobek.
+
+Vzorec byl navíc rozepsaný na třech místech (`mortgage`, `downPayment`,
+`nextStep`). Je teď jednou v `necessaryExpensesAfterPurchase()` a časová osa
+si podle měsíce vybírá, který z obou dělitelů platí.
+
+Zbývá rozdíl jednoho měsíce přebytku: dlaždice mluví o okamžiku po zaplacení
+akontace, osa o konci toho měsíce, kdy už přiteklo. Obojí je pravda o jiné
+chvíli a obojí je tak i popsané; sjednotit by šlo jen tak, že by minimum osy
+přestalo odpovídat nakreslené křivce.
+
+### „Chybí 5 855 Kč, tedy 3 měsíce nezbytných výdajů"
+
+Ne. Tři měsíce byla ta cílová částka, ne to, co do ní scházelo. Věta teď zní
+„To jsou 3 měsíce nezbytných výdajů, chybí do nich 8 063 Kč", a kdo nemá
+stranou nic, čte „a chybí celá" místo téhož čísla dvakrát pod sebou.
+
+Ke stejné rodině: cíl rezervy se u kupujícího počítá z výdajů po koupi.
+Dřív se počet měsíců po koupi násobil dnešními výdaji, což **rozhodlo
+správně** (poměr vyjde stejně), ale ukazovalo částku o čtvrtinu nižší, než
+na jakou se ve skutečnosti spoří.
+
+### Nouzový fond ve dvou různých částkách
+
+Rada „mějte stranou nouzový fond, ideálně 3–6 měsíců výdajů (pro vás cca
+136 000 Kč)" počítala se všemi dnešními výdaji, zatímco slovníček i karta
+„A co teď" mluví o nezbytných výdajích po koupi. Na jedné obrazovce tak
+stály dvě různé částky pro tutéž věc. Rada teď uvádí celý rozsah ze stejného
+základu (128 063 až 256 125 Kč), jehož spodní hranice je přesně to, co
+požaduje karta.

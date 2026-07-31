@@ -1,7 +1,7 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
 import { monthlyDisposable, necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
-import { downPaymentGap, postPurchaseRunwayMonths, dsti, mortgagePayment, totalProjectCost } from './mortgage';
+import { downPaymentGap, postPurchaseRunwayMonths, dsti, mortgagePayment, necessaryExpensesAfterPurchase, totalProjectCost } from './mortgage';
 import { evaluateScenario } from './scenarios';
 import { budgetNow, budgetAfterPurchase } from './budget';
 import { evaluateParentalLeave } from './parentalLeave';
@@ -147,7 +147,7 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
       const monthly = allocations.downPayment > 0 ? allocations.downPayment : free;
       const thinAfter = postPurchaseRunwayMonths(state) < RESERVE_MONTHS;
       const reserveNote = thinAfter
-        ? ` Počítejte k tomu ještě s rezervou ${czk(necessary * RESERVE_MONTHS)}: po zaplacení akontace by vám jinak nezbylo na nečekané výdaje.`
+        ? ` Počítejte k tomu ještě s rezervou ${czk(necessaryExpensesAfterPurchase(state) * RESERVE_MONTHS)}: po zaplacení akontace by vám jinak nezbylo na nečekané výdaje.`
         : '';
       return {
         key: 'down_payment',
@@ -169,10 +169,15 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
   }
 
   // 4. Nouzová rezerva. U toho, kdo kupuje, se počítá z toho, co po koupi
-  // zbyde, protože akontace většinu úspor odnese.
-  const reserveTarget = necessary * RESERVE_MONTHS;
+  // zbyde, protože akontace většinu úspor odnese, a poměřuje se výdaji po
+  // koupi: splátka bývá skoro dvojnásobek nájmu, takže tatáž rezerva vydrží
+  // kratší dobu. Dřív se násobil počet měsíců po koupi dnešními výdaji, což
+  // rozhodlo správně (poměr vyjde stejně), ale ukazovalo částky o polovinu
+  // nižší, než na jaké se v tu chvíli spoří.
+  const monthlyNeed = buying ? necessaryExpensesAfterPurchase(state) : necessary;
+  const reserveTarget = monthlyNeed * RESERVE_MONTHS;
   const reserveNow = buying
-    ? postPurchaseRunwayMonths(state) * necessary
+    ? postPurchaseRunwayMonths(state) * monthlyNeed
     : state.savings.totalSavings;
   if (reserveNow < reserveTarget) {
     const missing = reserveTarget - reserveNow;
@@ -182,7 +187,14 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
       action: monthly > 0
         ? `Postavte nouzovou rezervu ${czk(reserveTarget)}.`
         : `Postavte nouzovou rezervu ${czk(reserveTarget)}. Zatím na ni nic nezbývá.`,
-      why: `Chybí ${czk(missing)}, tedy ${formatMonths(RESERVE_MONTHS)} nezbytných výdajů. `
+      // Pozor na pořadí: „Chybí 5 855 Kč, tedy 3 měsíce nezbytných výdajů"
+      // říkalo, že tři měsíce výdajů stojí necelých šest tisíc. Měsíců je
+      // ta cílová částka, ne to, co do ní schází.
+      //
+      // Kdo nemá stranou nic, ať nečte tutéž částku dvakrát pod sebou.
+      why: (reserveNow > 0
+        ? `To jsou ${formatMonths(RESERVE_MONTHS)} nezbytných výdajů, chybí do nich ${czk(missing)}. `
+        : `To jsou ${formatMonths(RESERVE_MONTHS)} nezbytných výdajů a chybí celá. `)
         + 'Bez rezervy se každá nečekaná rána řeší drahou půjčkou, i když jinak plán vychází.'
         + (buying ? ' Počítá se s tím, co zbyde po zaplacení akontace.' : ''),
       monthly: monthly > 0 ? monthly : undefined,

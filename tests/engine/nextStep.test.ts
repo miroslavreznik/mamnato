@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { nextStep } from '../../src/engine/nextStep';
 import { calculateDefaultAllocations, type GoalAllocations } from '../../src/engine/allocation';
+import { necessaryExpensesAfterPurchase } from '../../src/engine/mortgage';
+import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -99,6 +101,44 @@ describe('a co teď', () => {
       expect(s.action.length).toBeGreaterThan(10);
       expect(s.why.length).toBeGreaterThan(20);
     }
+  });
+});
+
+describe('nouzová rezerva se počítá z výdajů, které v tu dobu platí', () => {
+  // Akontace je pokrytá, takže se kupuje hned, ale po jejím zaplacení zbyde
+  // sotva měsíc výdajů.
+  const kupujici = () => makeState({ goals: ['property'], savings: { totalSavings: 700000 } });
+
+  it('u kupujícího je cíl tři měsíce výdajů po koupi, ne dnešních', () => {
+    // Dřív se počet měsíců po koupi násobil dnešními výdaji, takže rozhodnutí
+    // vyšlo správně, ale částka byla o čtvrtinu nižší, než na jakou se spoří.
+    const state = kupujici();
+    const s = nextStep(state, calculateDefaultAllocations(state));
+    expect(s.key).toBe('reserve');
+    expect(hasAmount(s.action, Math.round(necessaryExpensesAfterPurchase(state) * 3))).toBe(true);
+    expect(hasAmount(s.action, Math.round(necessaryMonthlyExpenses(state) * 3))).toBe(false);
+  });
+
+  it('měsíce popisují cíl, ne to, co do něj chybí', () => {
+    // „Chybí 5 855 Kč, tedy 3 měsíce nezbytných výdajů" tvrdilo, že tři
+    // měsíce života stojí necelých šest tisíc.
+    const state = kupujici();
+    const s = nextStep(state, calculateDefaultAllocations(state));
+    expect(s.why).toMatch(/^To jsou 3 měsíce nezbytných výdajů, chybí do nich/);
+  });
+
+  it('kdo nemá stranou nic, nečte tutéž částku dvakrát', () => {
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 0 } });
+    const s = nextStep(state, alloc({ retirement: 5000 }));
+    expect(s.why).toMatch(/a chybí celá/);
+    expect(hasAmount(s.why, Math.round(necessaryMonthlyExpenses(state) * 3))).toBe(false);
+  });
+
+  it('kdo nekupuje, poměřuje se dnešními výdaji', () => {
+    const state = makeState({ goals: ['retirement'], savings: { totalSavings: 20000 } });
+    const s = nextStep(state, alloc({ retirement: 5000 }));
+    expect(s.key).toBe('reserve');
+    expect(hasAmount(s.action, Math.round(necessaryMonthlyExpenses(state) * 3))).toBe(true);
   });
 });
 

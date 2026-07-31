@@ -1,12 +1,11 @@
 import type { WizardState } from '../types';
-import { necessaryMonthlyExpenses } from './cashflow';
 import {
   effectiveDownPayment,
   loanAmount as loanAmountOf,
   mortgagePayment,
   mortgageRate,
   loanTermYears,
-  ownershipCosts,
+  necessaryExpensesAfterPurchase,
   totalLoanInterest,
   monthlyMortgagePayment,
 } from './mortgage';
@@ -69,13 +68,8 @@ export function downPaymentTradeoff(state: WizardState): DownPaymentTradeoff {
   const loan = loanAmountOf(state);
   const payment = mortgagePayment(state);
 
-  // Nezbytné výdaje po koupi: nájem a energie zmizí, přibude splátka
-  // a náklady na vlastnictví. Minimum 1, aby dělení nikdy nespadlo.
-  const monthlyNeedAfter = Math.max(
-    1,
-    necessaryMonthlyExpenses(state) - state.expenses.rent - state.expenses.utilities
-      + payment + ownershipCosts(state)
-  );
+  // Nezbytné výdaje po koupi. Minimum 1, aby dělení nikdy nespadlo.
+  const monthlyNeedAfter = Math.max(1, necessaryExpensesAfterPurchase(state));
 
   const safeMax = Math.max(0, Math.min(totalSavings, totalSavings - MIN_RESERVE_MONTHS * monthlyNeedAfter));
 

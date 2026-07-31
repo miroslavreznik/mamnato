@@ -2,6 +2,7 @@ import type { WizardState } from '../types';
 import { wealthTimeline, planHorizonMonths } from './wealthTimeline';
 import type { WealthPoint } from './wealthTimeline';
 import { necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
+import { necessaryExpensesAfterPurchase } from './mortgage';
 import type { GoalAllocations } from './allocation';
 import { czk, czkMonthly, formatMonths } from './format';
 
@@ -52,42 +53,129 @@ export interface Journey {
 const yearOf = (month: number) => new Date().getFullYear() + Math.floor(month / 12);
 
 /**
+ * Hranice, od kterých se rozpočet počítá za napjatý.
+ *
+ * Jsou tři a každá popisuje jinou tíseň, proto jdou pohromadě: stuha i karta
+ * nejtěsnějšího místa musí soudit podle týchž čísel, jinak si obrázek
+ * a věta pod ním začnou odporovat.
+ */
+interface TensionLimits {
+  /**
+   * Měsíc nezbytných výdajů. Pod tím rezerva neunese nic nečekaného.
+   *
+   * Po koupi je to jiné číslo: splátka bývá skoro dvojnásobek nájmu. Proto
+   * jsou dvě a vybírá se podle měsíce; se starou jedinou hodnotou tvrdila
+   * karta u nejnižšího bodu „151 312 Kč, což je 5 měsíců nezbytných výdajů"
+   * a dlaždice vedle ní „rezerva po koupi vydrží 2,8 měsíce".
+   */
+  oneMonthOfExpenses: number;
+  oneMonthAfterPurchase: number;
+  /** Od kdy platí ta druhá. null = v horizontu se nekupuje. */
+  purchaseMonth: number | null;
+  /**
+   * Od kolika se schodek na cílech počítá za napětí.
+   *
+   * Bez prahu obarvila stuha třetinu horizontu jantarovou kvůli sedmnácti
+   * korunám a karta u ní hlásila poplach. Rozdíl v řádu desetikorun je
+   * zaokrouhlení, ne problém. Práh je relativní, aby dával stejný smysl
+   * u příjmu 30 000 i 150 000 Kč, se spodní hranicí pro velmi nízké příjmy.
+   */
+  goalShortfall: number;
+  /**
+   * Pod kolik je i kladný tok jen tak tak.
+   *
+   * Model napětí znal schodek, chybějící rezervu a nefinancované cíle, ale
+   * neznal „tenký, i když kladný tok". Rodina, které po narození dítěte
+   * zbývalo 1 253 Kč měsíčně, měla proto tři roky klidnou zelenou stuhu
+   * a kartu „plán drží po celou dobu". Drží, ale o vlásek: tisícikoruna je
+   * jedna návštěva servisu.
+   *
+   * Práh je z čistého příjmu, ne z výdajů: říká „kolik z toho, co domácnost
+   * vydělá, jí zbývá", což je stejná otázka u nájemníka i u vlastníka.
+   */
+  thinFlow: number;
+}
+
+function tensionLimits(state: WizardState, purchaseMonth: number | null): TensionLimits {
+  const income = totalMonthlyIncome(state);
+  return {
+    oneMonthOfExpenses: necessaryMonthlyExpenses(state),
+    oneMonthAfterPurchase: necessaryExpensesAfterPurchase(state),
+    purchaseMonth,
+    goalShortfall: Math.max(200, income * 0.01),
+    thinFlow: Math.max(1000, income * 0.05),
+  };
+}
+
+/** Kolik stojí měsíc nezbytných výdajů v daném měsíci plánu. */
+function monthOfExpensesAt(month: number, limits: TensionLimits): number {
+  return limits.purchaseMonth !== null && month >= limits.purchaseMonth
+    ? limits.oneMonthAfterPurchase
+    : limits.oneMonthOfExpenses;
+}
+
+/**
  * Napětí rozpočtu v daném měsíci.
  *
  * Schodek je schodek: měsíc, kdy výdaje přerostou příjem. Napjato je, když
- * sice tok vychází, ale úspory nepokryjí ani měsíc nezbytných výdajů, takže
- * první nečekaná událost plán rozhodí. Zbytek je klid.
+ * sice tok vychází, ale jen tak tak: buď úspory nepokryjí ani měsíc
+ * nezbytných výdajů, nebo nezbývá na cíle, nebo nezbývá skoro nic.
+ * Zbytek je klid.
  *
  * Rozhoduje tok, ne zůstatek. Rok se schodkem vypadá na křivce zůstatku
  * stejně jako rok bez něj, dokud jsou úspory dost velké, a právě to je věc,
  * kterou má stuha ukázat dřív, než dojdou.
  */
-/**
- * Od kolika se schodek na cílech počítá za napětí.
- *
- * Bez prahu obarvila stuha třetinu horizontu jantarovou kvůli sedmnácti
- * korunám a karta u ní hlásila poplach. Rozdíl v řádu desetikorun je
- * zaokrouhlení, ne problém. Práh je relativní, aby dával stejný smysl
- * u příjmu 30 000 i 150 000 Kč, se spodní hranicí pro velmi nízké příjmy.
- */
-function goalShortfallTolerance(state: WizardState): number {
-  return Math.max(200, totalMonthlyIncome(state) * 0.01);
-}
-
-function tensionAt(point: WealthPoint, oneMonthOfExpenses: number, tolerance: number): Tension {
+function tensionAt(point: WealthPoint, limits: TensionLimits): Tension {
+  const oneMonth = monthOfExpensesAt(point.month, limits);
+  // Nultý měsíc je výchozí stav, žádný tok se v něm nestal. Nulu z něj nesmí
+  // nikdo číst jako „nic nezbývá".
+  if (point.month === 0) return point.cash < oneMonth ? 'tense' : 'calm';
   // Schodek je jen skutečný schodek: víc odteče, než přiteče, a rozdíl se
   // bere z úspor.
   if (point.flow < 0) return 'deficit';
-  // Napětí má dva důvody a oba znamenají „unese to jen za dobrého počasí":
-  // buď nejsou úspory ani na měsíc, nebo na cíle nezbývá.
+  // Napětí má tři důvody a všechny znamenají „unese to jen za dobrého počasí":
+  // buď nejsou úspory ani na měsíc, nebo na cíle nezbývá, nebo nezbývá vůbec nic.
   //
-  // Ten druhý tu dřív nebyl a stuha kvůli tomu odporovala nadpisu nad sebou.
+  // Ten prostřední tu dřív nebyl a stuha kvůli tomu odporovala nadpisu nad sebou.
   // Verdikt hlásil „po koupi by na cíle chybělo 924 Kč měsíčně" a stuha pod
   // ním byla celou dobu klidná zelená, protože počítala s tokem, ve kterém
   // cíle vůbec nejsou.
-  if (point.cash < oneMonthOfExpenses) return 'tense';
-  if (point.flowAfterGoals < -tolerance) return 'tense';
+  if (point.cash < oneMonth) return 'tense';
+  if (point.flowAfterGoals < -limits.goalShortfall) return 'tense';
+  if (point.flow < limits.thinFlow) return 'tense';
   return 'calm';
+}
+
+/**
+ * Co se v daném měsíci děje. Slouží jako nadpis karty.
+ *
+ * Bere se poslední událost, která už nastala, ale jen dokud je čerstvá:
+ * „Po koupi 2042" u schodku patnáct let po koupi je popisek, který lže
+ * o příčině.
+ *
+ * Rodičovská se pozná podle toho, že v tu chvíli opravdu běží, ne podle
+ * toho, že se někdy předtím narodilo dítě. Bez toho dostal schodek
+ * z nákladů na patnáctiletého potomka nadpis „Rodičovská 2042", a to
+ * i tam, kde uživatel žádnou rodičovskou vůbec nezadal.
+ *
+ * `Rozpočet` znamená „nic zvláštního se neděje, je to prostě takhle
+ * nastavené"; volající si podle toho volí jiný nadpis.
+ */
+function whatHappensAt(month: number, events: JourneyEvent[]): 'Rodičovská' | 'Po koupi' | 'Rozpočet' {
+  const RECENT_MONTHS = 24;
+  const before = events
+    .filter((e) => e.key !== 'lowest' && e.month <= month)
+    .sort((a, b) => b.month - a.month)[0];
+
+  const child = events.find((e) => e.key === 'child');
+  const leaveEnd = events.find((e) => e.key === 'leaveEnd');
+  if (child !== undefined && leaveEnd !== undefined
+    && month >= child.month && month < leaveEnd.month) return 'Rodičovská';
+
+  const recent = before !== undefined && month - before.month <= RECENT_MONTHS;
+  if (recent && before?.key === 'purchase') return 'Po koupi';
+  return 'Rozpočet';
 }
 
 /**
@@ -103,37 +191,20 @@ function findTightest(
   events: JourneyEvent[],
   minCash: number,
   minCashMonth: number,
-  oneMonthOfExpenses: number,
-  tolerance: number
+  limits: TensionLimits
 ): TightestPoint | null {
   if (points.length < 2) return null;
+  // Rezerva se poměřuje výdaji, které v tu chvíli platí: po koupi je měsíc
+  // dražší o rozdíl mezi splátkou a nájmem.
+  const oneMonthOfExpenses = monthOfExpensesAt(minCashMonth, limits);
 
   let worst = points[1];
   for (const p of points) {
     if (p.month > 0 && p.flow < worst.flow) worst = p;
   }
 
-  // Co se v tu chvíli děje. Bere se poslední událost, která už nastala,
-  // ale jen dokud je čerstvá: „Po koupi 2042" u schodku patnáct let po
-  // koupi je popisek, který lže o příčině.
-  const RECENT_MONTHS = 24;
-  const before = events
-    .filter((e) => e.key !== 'lowest' && e.month <= worst.month)
-    .sort((a, b) => b.month - a.month)[0];
-
   if (worst.flow < 0) {
-    // Rodičovská se pozná podle toho, že v tu chvíli opravdu běží, ne podle
-    // toho, že se někdy předtím narodilo dítě. Bez toho dostal schodek
-    // z nákladů na patnáctiletého potomka nadpis „Rodičovská 2042“, a to
-    // i tam, kde uživatel žádnou rodičovskou vůbec nezadal.
-    const child = events.find((e) => e.key === 'child');
-    const leaveEnd = events.find((e) => e.key === 'leaveEnd');
-    const onLeave = child !== undefined && leaveEnd !== undefined
-      && worst.month >= child.month && worst.month < leaveEnd.month;
-    const recent = before !== undefined && worst.month - before.month <= RECENT_MONTHS;
-    const what = onLeave ? 'Rodičovská'
-      : recent && before?.key === 'purchase' ? 'Po koupi'
-        : 'Rozpočet';
+    const what = whatHappensAt(worst.month, events);
 
     // Jak hluboko úspory kvůli tomuhle schodku klesnou. Musí se měřit až od
     // něj: globální minimum bývá na startu, takže u někoho, komu úspory celou
@@ -190,13 +261,30 @@ function findTightest(
   for (const p of points) {
     if (p.month > 0 && p.flowAfterGoals < leanest.flowAfterGoals) leanest = p;
   }
-  if (leanest.flowAfterGoals < -tolerance) {
+  if (leanest.flowAfterGoals < -limits.goalShortfall) {
     return {
       month: leanest.month,
       title: `Nejtěsněji ${yearOf(leanest.month)}`,
       explanation: 'Rozpočet vychází a úspory rostou, ale na cíle by chybělo '
         + `${czkMonthly(Math.abs(leanest.flowAfterGoals))}. `
         + 'Buď se na ně bude odkládat míň, nebo je potřeba ubrat jinde.',
+      tension: 'tense',
+    };
+  }
+
+  // Poslední důvod: rozpočet vyjde, cíle se ufinancují, rezerva je, a přesto
+  // zbývá tak málo, že tam není prostor na nic.
+  //
+  // Tohle byla poslední věta, která si se stuhou odporovala: rodina jela
+  // tři roky na 1 253 Kč měsíčně a karta u toho hlásila „plán drží po celou
+  // dobu". Drží, ale to není totéž jako „je to v pohodě".
+  if (worst.flow < limits.thinFlow) {
+    const what = whatHappensAt(worst.month, events);
+    return {
+      month: worst.month,
+      title: what === 'Rozpočet' ? `Nejtěsněji ${yearOf(worst.month)}` : `${what} ${yearOf(worst.month)}`,
+      explanation: `Rozpočet vyjde, ale zbyde jen ${czkMonthly(worst.flow)}. `
+        + 'Odkládat se v tu dobu skoro nedá a nečekaný výdaj musí z úspor.',
       tension: 'tense',
     };
   }
@@ -261,10 +349,9 @@ export function journey(
 ): Journey {
   const horizonMonths = opts.months ?? planHorizonMonths(state);
   const tl = wealthTimeline(state, { ...opts, months: horizonMonths });
-  const oneMonthOfExpenses = necessaryMonthlyExpenses(state);
 
-  const tolerance = goalShortfallTolerance(state);
-  const tension = tl.points.map((p) => tensionAt(p, oneMonthOfExpenses, tolerance));
+  const limits = tensionLimits(state, tl.purchaseMonth);
+  const tension = tl.points.map((p) => tensionAt(p, limits));
 
   const events: JourneyEvent[] = [];
   if (tl.purchaseMonth !== null) {
@@ -286,9 +373,7 @@ export function journey(
   }
   events.sort((a, b) => a.month - b.month);
 
-  const tightest = findTightest(
-    tl.points, events, tl.minCash, tl.minCashMonth, oneMonthOfExpenses, tolerance
-  );
+  const tightest = findTightest(tl.points, events, tl.minCash, tl.minCashMonth, limits);
 
   // Nejnižší bod je událost až nakonec, aby nepřebil koupi a dítě v pořadí.
   // Kreslí se jinak (menší puntík, popisek pod osou), proto má vlastní klíč.
