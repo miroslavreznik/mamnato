@@ -65,7 +65,6 @@ test('persona 2: pár, bydlení a dítě s rodičovskou', async ({ page }) => {
   await page.getByTestId('wizard-next').click()
 
   await page.locator('#tab-cile').click()
-  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await page.locator('#tab-souhrn').click()
   await page.waitForTimeout(2200)
   await shot(page, '2-par-dite')
@@ -128,7 +127,6 @@ test('persona 8: mladý pár do 36 let, LTV 90 % a rodičovská', async ({ page 
   await shot(page, '8-bydleni')
 
   await page.locator('#tab-cile').click()
-  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await page.waitForTimeout(2200)
   await shot(page, '8-rodicovska')
 })

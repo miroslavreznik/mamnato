@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { savingsProjection, investmentComparison, retirementProjection, retirementStartingCapital, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
 import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
-import { effectiveDownPayment } from '../../src/engine/mortgage';
+import { effectiveDownPayment, necessaryExpensesAfterPurchase } from '../../src/engine/mortgage';
 import type { CustomGoal } from '../../src/types';
 import type { WizardState } from '../../src/types';
 
@@ -223,13 +223,17 @@ describe('yearOfReachingTarget', () => {
 });
 
 describe('retirementStartingCapital', () => {
-  it('odečte akontaci a tříměsíční rezervu', () => {
+  it('odečte akontaci a tříměsíční rezervu, u kupujícího podle výdajů po koupi', () => {
     // Bez toho by se tytéž peníze počítaly dvakrát: jednou jako nouzová
-    // rezerva, podruhé jako investované portfolio.
+    // rezerva, podruhé jako investované portfolio. A rezerva se u kupujícího
+    // poměřuje splátkou, ne nájmem, takže je vyšší; s dnešními výdaji tady
+    // vycházel důchodový kapitál větší, než kolik doopravdy zbývá.
     const state = makeState({ goals: ['property', 'retirement'], savings: { totalSavings: 2000000 } });
-    const reserve = necessaryMonthlyExpenses(state) * 3;
+    const reserve = necessaryExpensesAfterPurchase(state) * 3;
+    // Celé koruny: je to částka do pole, ne mezivýsledek.
     expect(retirementStartingCapital(state))
-      .toBe(2000000 - effectiveDownPayment(state) - reserve);
+      .toBe(Math.round(2000000 - effectiveDownPayment(state) - reserve));
+    expect(reserve).toBeGreaterThan(necessaryMonthlyExpenses(state) * 3);
   });
 
   it('bez bydlení se akontace neodečítá', () => {

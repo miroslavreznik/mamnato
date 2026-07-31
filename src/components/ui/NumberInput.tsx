@@ -185,7 +185,7 @@ export default function NumberInput({
             onFocus={handleFocus}
             onBlur={handleBlur}
             disabled={disabled}
-            className={`w-full px-3 py-2.5 pr-12 border rounded-lg text-base focus:outline-none focus:ring-2 bg-card  disabled:opacity-60 disabled:cursor-not-allowed ${
+            className={`w-full px-3 py-2.5 pr-12 border rounded-lg text-base focus:outline-none focus:ring-2 bg-card text-ink disabled:opacity-60 disabled:cursor-not-allowed ${
               isInvalid
                 ? 'border-danger focus:ring-danger'
                 : 'border-line-strong focus:ring-ink focus:border-ink'

@@ -184,7 +184,6 @@ test('popisky na stuze se nepřekrývají', async ({ page }) => {
   await page.getByTestId('wizard-next').click()
   await page.getByTestId('wizard-next').click()
   await page.locator('#tab-cile').click()
-  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await page.locator('#tab-souhrn').click()
   await expect(page.getByTestId('results')).toBeVisible()
 

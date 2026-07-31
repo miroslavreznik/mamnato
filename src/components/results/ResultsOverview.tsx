@@ -8,7 +8,7 @@ import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../eng
 import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
 import { monthsToSaveAtAllocation } from '../../engine/allocation';
 import { DEFAULTS } from '../../engine/defaults';
-import { formatMonths, formatNumber as fmt } from '../../engine/format';
+import { decimal, formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
@@ -72,7 +72,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
     ? '∞'
     : runway < 0.05
       ? '0'
-      : runway.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+      : decimal(runway);
   const runwayTone: Tone = runway >= 6 ? 'good' : runway >= 3 ? 'caution' : 'danger';
 
   // Dlaždice se liší podle toho, co uživatel řeší. U hypotéky jsou nejdůležitější
@@ -139,7 +139,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
         {
           label: 'Míra úspor',
           tooltip: 'Jaký podíl čistého příjmu vám po výdajích zbývá (disponibilní částka ÷ příjem). Zdravé bývá aspoň 10–20 %.',
-          value: (rate * 100).toFixed(1),
+          value: decimal(rate * 100),
           unit: '%',
           tone: rate >= 0.2 ? 'good' : rate >= 0.1 ? 'plain' : 'caution',
           meter: rate / 0.2,

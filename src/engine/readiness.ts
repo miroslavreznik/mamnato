@@ -3,7 +3,7 @@ import type { GoalAllocations } from './allocation';
 import { downPaymentGap, postPurchaseRunwayMonths } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
-import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement } from './savings';
+import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement, retirementAge } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
 import { DEFAULTS } from './defaults';
 import { formatMonths, czk, czkMonthly } from './format';
@@ -93,7 +93,7 @@ export function retirementReadiness(state: WizardState, allocations: GoalAllocat
   if (monthly <= 0) {
     return { key: 'retirement', label: 'Důchod', status: 'warning', headline: 'Zatím na důchod nespoříte nic.' };
   }
-  const years = yearsUntilRetirement(state.person1Age);
+  const years = yearsUntilRetirement(retirementAge(state));
   // Do projekce patří i to, co už je naspořeno. Bez toho vycházela renta
   // u lidí s velkými úsporami tak nízko, že se verdikt překlápěl na „zatím
   // spíš doplněk" i tomu, kdo měl na účtu dva miliony.

@@ -9,6 +9,8 @@ import {
   mortgagePayment,
   totalProjectCost,
   ownershipCosts,
+  oldestApplicantAge,
+  necessaryExpensesAfterPurchase,
 } from './mortgage';
 
 /**
@@ -193,6 +195,24 @@ export function yearsUntilRetirement(age: number | undefined): number {
   return Math.max(1, Math.round(DEFAULTS.retirementAge - age));
 }
 
+/**
+ * Čí věk rozhoduje o tom, kdy plán končí a kolik let zbývá do důchodu.
+ *
+ * **Starší z dvojice.** Model počítá se mzdou po celý horizont a rentu neumí,
+ * takže dál než k prvnímu odchodu do důchodu nedohlédne: od té chvíle by
+ * jeden příjem musel nahradit důchod, a to je jiná úloha. U páru 55 a 30 let
+ * by mladší věk sliboval pětatřicet let dvou platů, z toho pětadvacet po tom,
+ * co jeden z nich přestane chodit do práce.
+ *
+ * Je to jedno místo pro celou appku: horizont časové osy, věta o rentě
+ * v Přehledu i pole „počet let do důchodu" v Důchodu. Dřív si horizont bral
+ * mladšího a projekce renty `person1Age`, takže na jedné obrazovce stálo
+ * „plán na 35 let" a „do důchodu 31 let" o téže domácnosti.
+ */
+export function retirementAge(state: WizardState): number | undefined {
+  return oldestApplicantAge(state);
+}
+
 // Cílová hodnota portfolia pro požadovanou měsíční rentu dle pravidla bezpečného výběru.
 // Při 4 % ročně: portfolio × 0,04 = roční renta → portfolio = měsíční renta × 12 / 0,04 (= × 300).
 export function fourPercentTarget(monthlyIncome: number, withdrawalRate: number = 0.04): number {
@@ -223,9 +243,18 @@ export function yearOfReachingTarget(
  * i verdikt překlápěl na „zatím spíš doplněk".
  */
 export function retirementStartingCapital(state: WizardState): number {
-  const reserve = necessaryMonthlyExpenses(state) * 3;
-  const tiedInDownPayment = state.goals.includes('property') ? effectiveDownPayment(state) : 0;
-  return Math.max(0, state.savings.totalSavings - tiedInDownPayment - reserve);
+  // Kdo kupuje, tomu se rezerva poměřuje výdaji po koupi: splátka bývá skoro
+  // dvojnásobek nájmu, takže „tři měsíce" znamenají skoro dvakrát tolik peněz.
+  // S dnešními výdaji tady vycházel důchodový kapitál vyšší, než kolik po
+  // odečtení opravdové rezervy zbývá, a karta „A co teď" vedle toho počítala
+  // tu větší rezervu.
+  const buying = state.goals.includes('property');
+  const monthlyNeed = buying ? necessaryExpensesAfterPurchase(state) : necessaryMonthlyExpenses(state);
+  const reserve = monthlyNeed * 3;
+  const tiedInDownPayment = buying ? effectiveDownPayment(state) : 0;
+  // Zaokrouhleně: je to částka do pole, ne mezivýsledek. Bez toho v něm
+  // stálo „526 787,195 Kč", protože splátka hypotéky má haléře.
+  return Math.round(Math.max(0, state.savings.totalSavings - tiedInDownPayment - reserve));
 }
 
 export function retirementProjection(

@@ -1,6 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { WizardState, UserMode, FinancialGoal, SavingsBreakdown, ParentalLeave } from '../types';
 import { DEFAULTS } from '../engine/defaults';
+import { defaultCaringParent } from '../engine/parentalLeave';
 
 export function createInitialState(): WizardState {
   return {
@@ -144,8 +145,24 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     }
     case 'UPDATE_DEBT_PRINCIPAL':
       return { ...state, existingDebtPrincipal: action.value };
-    case 'SET_GOALS':
-      return { ...state, goals: action.goals };
+    case 'SET_GOALS': {
+      /**
+       * S cílem „dítě" se rovnou zapne rodičovská.
+       *
+       * Byla to nejdražší položka plánu schovaná za tlačítkem na podzáložce:
+       * kdo si zvolil dítě a nenašel „Spočítat dopad rodičovské", dostal plán,
+       * ve kterém se dítě narodí, ale příjem domácnosti se nezmění. To je
+       * o desítky tisíc měsíčně vedle a verdikt z toho vycházel růžově.
+       *
+       * Zapíná se jen při volbě cíle a jen když si uživatel nic nezvolil.
+       * Kdo rodičovskou v kartě skryje, tomu se sama nevrátí.
+       */
+      const addsChild = action.goals.includes('child') && !state.goals.includes('child');
+      const parentalLeave = addsChild && state.parentalLeave === undefined
+        ? { enabled: true, parent: defaultCaringParent(state), durationMonths: 36 }
+        : state.parentalLeave;
+      return { ...state, goals: action.goals, parentalLeave };
+    }
     case 'UPDATE_PROPERTY':
       return { ...state, property: { ...state.property, [action.field]: action.value } };
     case 'CLEAR_PROPERTY_ESTIMATE': {

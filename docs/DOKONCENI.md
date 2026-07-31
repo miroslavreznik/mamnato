@@ -1078,3 +1078,98 @@ Chytí se ten, který se kreslí později. Odpověď na to je výřez („10 let
 ne menší dotykové cíle; zmenšit je na polovinu odstupu by u dvou událostí
 dva roky od sebe znamenalo cíl pod deset pixelů, tedy nechytitelný obojí.
 Klávesnicí jsou dosažitelné vždy, každý úchop je vlastní `slider`.
+
+## B22. Revize funkcí, výpočtů a vzhledu
+
+Systematický průchod: nejdřív engine modul po modulu proti nezávislému
+přepočtu, pak appka na obrazovce (světlý i tmavý režim, 1280 a 390 px,
+průvodce i všech šest záložek). Nález následuje čtrnáct.
+
+### Co bylo špatně ve výpočtech a výrocích
+
+**Důchodová projekce porovnávala nominální jablka s dnešními hruškami.**
+Cíl renty („chci 30 000 Kč měsíčně") zadává uživatel v dnešních penězích,
+graf i tabulka ale ve výchozím stavu ukazovaly nominální hodnotu, takže
+u SP500 stálo „cíle dosáhnete za 19 let" o částce, která za 19 let koupí
+zhruba půlku toho, co dnes. Ve skutečnosti je to 26 let. Zbytek appky
+(časová osa, věta o rentě v Přehledu) přitom počítá v dnešních cenách,
+takže tahle karta byla jediné místo s druhým měřítkem. Výchozí je teď
+dnešní kupní síla a přepínač volí měřítko, ne „ukázat navíc": graf kreslil
+obě sady čar naráz, deset čar a legendu na tři řádky.
+
+**Dvě definice „do důchodu".** Horizont časové osy se řídil mladším
+z dvojice, projekce renty `person1Age`. U páru 34 a 31 let stálo na jedné
+obrazovce „plán na 34 let" a „do důchodu 31 let". Nově je to jedno místo
+(`retirementAge`) a rozhoduje **starší**: model počítá se mzdou po celý
+horizont a rentu neumí, takže dál než k prvnímu odchodu do důchodu
+nedohlédne. U páru 55 a 30 sliboval mladší věk pětatřicet let dvou platů,
+z toho pětadvacet po tom, co jeden z nich přestane chodit do práce.
+
+**Rodičovská byla vypnutá, dokud ji uživatel nenašel.** Kdo si zvolil cíl
+„dítě", dostal plán, ve kterém se dítě narodí, ale příjem domácnosti se
+nezmění; zapínala se tlačítkem „Spočítat dopad rodičovské" na podzáložce
+Dítě a důchod. Je to nejdražší položka celého plánu (u modelového páru
+1 029 971 Kč za tři roky) a verdikt bez ní vycházel růžově. Zapíná se teď
+s volbou cíle a dá se skrýt.
+
+**Důchodový kapitál počítal s menší rezervou, než appka jinde požaduje.**
+`retirementStartingCapital` odečítala tři měsíce dnešních nezbytných výdajů
+i tomu, kdo kupuje; po koupi je ale měsíc skoro dvakrát dražší. Táž chyba
+jako v B20, jen o jedno místo dál.
+
+**Zaokrouhlení.** Do pole „Už mám naspořeno" se dostávaly haléře
+(„526 787,195 Kč"), protože se od úspor odečítala trojnásobná splátka.
+
+### Co bylo špatně na obrazovce
+
+**V tmavém režimu nebyla vidět čísla v polích průvodce.** `NumberInput` měl
+`bg-card`, ale žádnou barvu textu, takže input zdědil černou z prohlížeče:
+kontrast 1,29:1, tedy prakticky prázdné pole. Týkalo se to **všech čísel,
+která uživatel v průvodci zadá**. Totéž v tabulce nákladů na dítě (1,4:1)
+a u výnosů v tabulce důchodu, kde navíc chyběl fokusový prstenec, protože
+obě tabulky obcházely `fieldClass`.
+
+Test kontrastu to nemohl chytit: procházel textové uzly a hodnota pole není
+textový uzel. Nově se dívá i na `input`, s výjimkou posuvníků
+a zaškrtávátek, kde `value` („on", „4.8") nikdo nevidí. A do procházky
+přibyl cíl „dítě", jinak se karta s tabulkou vůbec nevykreslila.
+
+**Přepínač inflace nešel ovládat klávesnicí.** Byl to `div` s `onClick`:
+myší fungoval, tabulátor ho přeskočil. Je to jediný ovladač, který v té
+kartě rozhoduje, co čísla znamenají. Teď je to `button` s `role="switch"`.
+Puntík na něm navíc vyjížděl osmnáct pixelů za pilulku a překryl první
+písmeno popisku, takže tam stálo „očítat v dnešních cenách": absolutně
+umístěný prvek bez `left` se řídí statickou pozicí, a ta uvnitř `span`
+vychází jinam než uvnitř `div`.
+
+**Desetinná tečka místo čárky.** „26.6 %" (míra úspor), „4.9×" (DTI),
+„30.9 %" (DSTI), „~15.8 měs." (rezerva po akontaci), „2.4 mil. Kč"
+(náklady na dítě) a osy grafů „16.0 M". Všechno `toFixed()`, který českou
+čárku neumí. Nově přes `decimal()` ve `format.ts`. Táž rezerva přitom
+o kus vedle stála správně jako „15,8 měs.", takže si dvě dlaždice
+odporovaly i v tom, jak se píše číslo.
+
+**Skloňování.** „Daňové zvýhodnění na 5 děti" (nově `childWord()`)
+a „cíle dosáhnete za 0 roky" v tabulce důchodu, kde se plurál skládal
+ručně místo `formatYears()`.
+
+**Trojí „Co kdyby" na jedné obrazovce.** Nadpis záložky, nadpis vlevo
+a nadpis panelu vpravo, a k tomu dvakrát skoro doslova tatáž věta
+o přerušovaném obrysu. Panel se teď jmenuje „Cíle a parametry" podle toho,
+co v něm je, a věta zůstala jednou. Karta na Rozpočtu se navíc jmenovala
+„Co kdyby: kam jde váš příjem", tedy stejně jako záložka vedle, se kterou
+nesouvisí. Text vlevo přitom sliboval „posuvníky mění cenu, sazbu a délku
+rodičovské", i když panel ukazuje jen ovladače k cílům, které uživatel má.
+
+### Co se nechává být
+
+- **Odhad rezervy v Bydlení a „A co teď" berou 3 měsíce, rada ve scénáři
+  3 až 6.** Rozsah je záměr (doporučení), spodní hranice je práh appky.
+- **Dvě odstíny zelené** v grafu rozpočtu (doprava vs. cíle). Kategorie
+  rozlišují popisky a chipsy nad grafem, ne jen barva.
+- **Asi čtyřicet míst skládá částku jako `toLocaleString() + ' Kč'`** místo
+  `czk()`. Výsledek je až na zaokrouhlení stejný; sjednotit to má smysl,
+  ale ne v jednom commitu s opravami chování.
+- **Rodina s dětmi a plánovaným dalším dítětem** dostane daňové zvýhodnění
+  jen za ty stávající. Karta říká „na tohle nezapomeňte" a stávající slevu
+  má uživatel už v čisté mzdě, takže by se přičtením zdvojila.

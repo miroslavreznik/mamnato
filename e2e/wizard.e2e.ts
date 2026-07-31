@@ -119,8 +119,10 @@ test('rodičovská: karta ukáže dopad na rozpočet u páru s cílem dítě', a
   await finish(page)
   // sekce „Cíle" je ve výchozím stavu sbalená → otevřít přes horní navigaci
   await openTab(page, 'cile')
+  // Rodičovská se s cílem „dítě" zapíná sama: je to nejdražší položka plánu
+  // a za tlačítkem na podzáložce ji většina lidí nenašla.
   await expect(page.getByText('Rodičovská: co udělá s rozpočtem')).toBeVisible()
-  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
+  await expect(page.getByRole('button', { name: /Spočítat dopad rodičovské/ })).toHaveCount(0)
   await expect(page.getByText('Volná rezerva během rodičovské')).toBeVisible()
 
   // Volno má dvě fáze: mateřská je vyšší a kratší, rodičovský příspěvek nižší.
@@ -540,7 +542,6 @@ test('schodek na rodičovské krytý úsporami neshodí verdikt', async ({ page 
   // Doma zůstane ten s vyšším příjmem → během rodičovské vzniká měsíční schodek,
   // rezerva po akontaci ho ale pokryje. Verdikt to musí zohlednit.
   await openTab(page, 'cile')
-  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await page.getByRole('button', { name: /Osoba 2/ }).click()
 
   await openTab(page, 'souhrn')
@@ -588,7 +589,6 @@ test('report uvádí předpoklady výpočtu včetně toho, kdo jde na rodičovsk
 
   // Vybraná volba nesmí být poznat jen podle barvy, kvůli tisku i odečítači.
   await openTab(page, 'cile')
-  await page.getByRole('button', { name: /Spočítat dopad rodičovské/ }).click()
   await expect(page.getByRole('button', { name: /Osoba 1/ })).toHaveAttribute('aria-pressed', 'true')
 
   // <summary> se v accessibility stromu neexponuje jako tlačítko.

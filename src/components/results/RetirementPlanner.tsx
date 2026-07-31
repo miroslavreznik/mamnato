@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { WizardState } from '../../types';
 import { monthlyDisposable } from '../../engine/cashflow';
-import { retirementProjection, retirementStartingCapital, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../engine/savings';
+import { retirementProjection, retirementStartingCapital, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement, retirementAge } from '../../engine/savings';
 import { DEFAULTS } from '../../engine/defaults';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
@@ -13,6 +13,7 @@ import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
 import { fieldClass } from '../ui/fieldClass';
+import { czkPerMonth, formatYears } from '../../engine/format';
 
 const INFLATION = DEFAULTS.averageCzInflation;
 
@@ -38,16 +39,31 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
   const disposable = monthlyDisposable(state);
   const monthlyAmount = monthlyContribution;
   const setMonthlyAmount = onChangeContribution;
-  const [yearsToRetirement, setYearsToRetirement] = useState(() => yearsUntilRetirement(state.person1Age));
-  // Co už je naspořeno. Appka to odhadne z úspor (bez akontace a bez
-  // tříměsíční rezervy), uživatel může přepsat: kolik z dnešních peněz je
-  // opravdu na důchod, ví jen on.
-  const [startingCapital, setStartingCapital] = useState(() => retirementStartingCapital(state));
+  // Odhad appky, dokud uživatel nezadá svoje (viz `engine/estimate.ts`).
+  //
+  // Nesmí to být `useState(odhad)`: počáteční hodnota se vyhodnotí jednou při
+  // prvním vykreslení a záložky výsledků zůstávají připojené, takže po změně
+  // úspor nebo věku v Rozpočtu tady dál svítilo staré číslo a projekce
+  // počítala z něčeho, co na obrazovce už nikde nestálo.
+  const [yearsOverride, setYearsOverride] = useState<number | null>(null);
+  const yearsToRetirement = yearsOverride ?? yearsUntilRetirement(retirementAge(state));
+  const [capitalOverride, setCapitalOverride] = useState<number | null>(null);
+  const startingCapital = capitalOverride ?? retirementStartingCapital(state);
   const [monthlyRent, setMonthlyRent] = useState(30000);
   const [rates, setRates] = useState(() =>
     Object.fromEntries(instruments.map((i) => [i.key, i.rate]))
   );
-  const [showInflation, setShowInflation] = useState(false);
+  /**
+   * Výchozí je **dnešní kupní síla**, ne nominální hodnota.
+   *
+   * Cíl renty („chci 30 000 Kč měsíčně") uživatel zadává v dnešních penězích,
+   * takže se proti němu musí porovnávat portfolio v týchž penězích. S
+   * nominální řadou tvrdila tabulka „cíle dosáhnete za 19 let" o částce, která
+   * za 19 let koupí zhruba půlku toho, co dnes. Zbytek appky (časová osa,
+   * věta o rentě v Přehledu) počítá v dnešních cenách taky, takže tahle karta
+   * byla jediné místo s druhým měřítkem.
+   */
+  const [showInflation, setShowInflation] = useState(true);
   const [showInflationInfo, setShowInflationInfo] = useState(false);
   const [showRentInfo, setShowRentInfo] = useState(false);
 
@@ -65,20 +81,17 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
       }))
     : null;
 
-  // Merge all projections into a single dataset for the chart
+  // Jedna sada čar, ne dvě.
+  //
+  // Dokud se kreslily obě, měl graf deset čar a legenda tři řádky, ve kterých
+  // se nedalo najít, která čára je která. Přepínač je **volba měřítka**, ne
+  // volba „ukázat navíc": buď se čte dnešní kupní síla, nebo nominální
+  // hodnota. Co znamená která, vysvětluje nápověda vedle přepínače.
+  const shownProjections = realProjections ?? nominalProjections;
   const chartData = Array.from({ length: yearsToRetirement + 1 }, (_, year) => {
     const point: Record<string, number> = { year };
-    for (const p of nominalProjections) {
-      if (showInflation) {
-        point[`${p.key}_nom`] = p.data[year]?.portfolioValue ?? 0;
-      } else {
-        point[p.key] = p.data[year]?.portfolioValue ?? 0;
-      }
-    }
-    if (realProjections) {
-      for (const p of realProjections) {
-        point[p.key] = p.data[year]?.portfolioValue ?? 0;
-      }
+    for (const p of shownProjections) {
+      point[p.key] = p.data[year]?.portfolioValue ?? 0;
     }
     return point;
   });
@@ -108,7 +121,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             suffix="Kč"
             className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
           />
-          <p className="mt-1 text-xs text-ink-faint">Disponibilní příjem: {disposable.toLocaleString('cs-CZ')} Kč/měs.</p>
+          <p className="mt-1 text-xs text-ink-faint">Disponibilní částka: {czkPerMonth(disposable)}</p>
         </div>
         <div>
           <label className="block text-sm font-medium text-ink-label mb-1">
@@ -116,7 +129,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           </label>
           <NumField
             value={yearsToRetirement}
-            onChange={setYearsToRetirement}
+            onChange={setYearsOverride}
             min={1} max={50}
             ariaLabel="Počet let do důchodu"
             step={1}
@@ -130,7 +143,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           </label>
           <NumField
             value={startingCapital}
-            onChange={setStartingCapital}
+            onChange={setCapitalOverride}
             ariaLabel="Už mám naspořeno"
             step={50000}
             suffix="Kč"
@@ -182,17 +195,31 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
         )}
       </div>
 
-      {/* Inflation toggle */}
+      {/* Přepínač inflace.
+          Byl to `div` s `onClick`: myší fungoval, tabulátor ho přeskočil
+          a mezerník s ním nehnul. Je to jediný ovladač, který v téhle kartě
+          rozhoduje o tom, co čísla znamenají, takže musí jít ovládat i bez
+          myši. Proto `button` s `role="switch"`, ne obrázek přepínače. */}
       <div className="flex items-center gap-3 mb-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <div
-            className={`relative w-10 h-6 rounded-full transition-colors ${showInflation ? 'bg-ink' : 'bg-shell'}`}
-            onClick={() => setShowInflation(!showInflation)}
+        <button
+          type="button"
+          role="switch"
+          aria-checked={showInflation}
+          onClick={() => setShowInflation(!showInflation)}
+          className="flex items-center gap-2 min-h-[44px] rounded-lg focus:outline-none focus:ring-2 focus:ring-ink"
+        >
+          <span
+            aria-hidden="true"
+            className={`relative shrink-0 w-10 h-6 rounded-full border border-line-strong transition-colors ${showInflation ? 'bg-ink' : 'bg-shell'}`}
           >
-            <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${showInflation ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
-          </div>
-          <span className="text-sm font-medium text-ink-label">Započítat inflaci</span>
-        </label>
+            {/* `left-0.5` musí být, ne jen `translate`. Bez něj se puntík
+                umístí podle statické pozice uvnitř `span` a vyjede osmnáct
+                pixelů za pilulku: v zapnutém stavu překryl první písmeno
+                popisku, takže tam stálo „očítat v dnešních cenách". */}
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-card shadow transition-transform ${showInflation ? 'translate-x-[16px]' : 'translate-x-0'}`} />
+          </span>
+          <span className="text-sm font-medium text-ink-label">Počítat v dnešních cenách</span>
+        </button>
         <button
           onClick={() => setShowInflationInfo(!showInflationInfo)}
           className={HELP_BUTTON}
@@ -202,14 +229,16 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
 
       {showInflationInfo && (
         <Callout tone="brand" pad="p-4 rounded-lg" className="mb-4 space-y-2">
-          <p className="font-semibold">Co znamená „započítat inflaci"?</p>
+          <p className="font-semibold">Co znamená „počítat v dnešních cenách"?</p>
           <p>
             Inflace postupně snižuje kupní sílu peněz. 1 000 000 Kč dnes bude mít za 30 let reálnou hodnotu
             přibližně 412 000 Kč (při průměrné inflaci 3 % ročně).
           </p>
           <p>
-            Když zapnete tento přepínač, graf ukazuje <strong>reálnou hodnotu</strong> vašich úspor, tedy kolik
-            si za ně skutečně koupíte v dnešních cenách. Nominální hodnota je to, co uvidíte na výpisu z účtu.
+            Zapnuto (výchozí stav) graf i tabulka ukazují <strong>dnešní kupní sílu</strong>, tedy kolik si za
+            portfolio skutečně koupíte. Rentu si přejete taky v dnešních penězích, takže se obojí dá porovnat.
+            Vypnuto uvidíte <strong>nominální</strong> hodnotu, tedy číslo, které bude jednou na výpisu z účtu;
+            proti cíli renty ale vypadá lépe, než jaké doopravdy je.
           </p>
           <p>Používáme průměrnou roční inflaci v ČR: <strong>3 %</strong> (dlouhodobý průměr ČNB).</p>
         </Callout>
@@ -232,12 +261,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             content={
               <SortedTooltip
                 labelFormatter={(label) => `Rok ${label}`}
-                nameFormatter={(name) => {
-                  const isNominal = name.endsWith('_nom');
-                  const key = isNominal ? name.replace('_nom', '') : name;
-                  const label = instruments.find((i) => i.key === key)?.label ?? key;
-                  return isNominal ? `${label} (nominální)` : showInflation ? `${label} (reálná)` : label;
-                }}
+                nameFormatter={(name) => instruments.find((i) => i.key === name)?.label ?? name}
               />
             }
           />
@@ -245,28 +269,12 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
               ověřené jako značky v grafu (práh 3:1 vůči ploše), ne jako text,
               kde je potřeba 4,5:1. Barvu nese čtvereček vedle popisku. */}
           <Legend
-            formatter={(value) => {
-              const isNominal = value.endsWith('_nom');
-              const key = isNominal ? value.replace('_nom', '') : value;
-              const label = instruments.find((i) => i.key === key)?.label ?? key;
-              const text = isNominal ? `${label} (nom.)` : showInflation ? `${label} (reál.)` : label;
-              return <span className="text-ink-body">{text}</span>;
-            }}
+            formatter={(value) => (
+              <span className="text-ink-body">
+                {instruments.find((i) => i.key === value)?.label ?? value}
+              </span>
+            )}
           />
-          {instruments.map((inst) => (
-            showInflation ? (
-              <Line
-                key={`${inst.key}_nom`}
-                type="monotone"
-                dataKey={`${inst.key}_nom`}
-                stroke={inst.color}
-                strokeWidth={1}
-                strokeDasharray="5 5"
-                dot={false}
-                opacity={0.5}
-              />
-            ) : null
-          ))}
           {instruments.map((inst) => (
             <Line
               key={inst.key}
@@ -318,7 +326,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                         value={rates[p.key]}
                         onChange={(v) => setRates({ ...rates, [p.key]: v })}
                         ariaLabel={`Výnos ${p.label}`}
-                        className="w-20 text-right px-2 py-2 border border-line  rounded text-sm"
+                        className={fieldClass('w-20 text-right px-2 py-2 text-sm')}
                       />
                       <span className="ml-1">%</span>
                     </td>
@@ -330,7 +338,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                     </td>
                     <td className="text-right py-2">
                       {reachedYear !== null ? (
-                        <span className="text-good font-medium">za {reachedYear} {reachedYear === 1 ? 'rok' : reachedYear < 5 ? 'roky' : 'let'}</span>
+                        <span className="text-good font-medium">za {formatYears(reachedYear)}</span>
                       ) : (
                         <span className="text-ink-faint">nedosaženo</span>
                       )}

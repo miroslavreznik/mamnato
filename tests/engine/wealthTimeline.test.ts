@@ -138,8 +138,13 @@ describe('horizont plánu', () => {
     // se nevešlo nic z toho, na co si spoří: doplacení hypotéky ani
     // odrostlé dítě, ani konec výdělku.
     expect(planHorizonMonths(makeState({ person1Age: 30 }))).toBe(35 * 12);
-    // U páru rozhoduje mladší: příjem domácnosti končí až s ním.
-    expect(planHorizonMonths(makeState({ person1Age: 50, person2Age: 40 }))).toBe(25 * 12);
+    // U páru rozhoduje **starší**. Osa počítá se mzdou po celý horizont
+    // a rentu neumí, takže dál než k prvnímu odchodu do důchodu nedohlédne.
+    // S mladším by u páru 50 a 40 let slibovala pětadvacet let dvou platů,
+    // z toho patnáct po tom, co jeden z nich přestane chodit do práce.
+    expect(planHorizonMonths(makeState({ person1Age: 50, person2Age: 40 }))).toBe(15 * 12);
+    // Pořadí osob na tom nic nemění.
+    expect(planHorizonMonths(makeState({ person1Age: 40, person2Age: 50 }))).toBe(15 * 12);
   });
 
   it('drží se mezi deseti a čtyřiceti lety', () => {

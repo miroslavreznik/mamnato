@@ -25,6 +25,18 @@ export function czkMonthly(value: number): string {
   return `${czk(value)} měsíčně`;
 }
 
+/**
+ * Číslo s daným počtem desetinných míst, česky.
+ *
+ * Tedy s **desetinnou čárkou**. `toFixed()` ji neumí a vrací tečku, takže se
+ * v appce objevovalo „26.6 %", „4.9×", „~15.8 měs." a „2.4 mil. Kč" vedle
+ * správně naformátovaných částek. Na české obrazovce je to první věc, která
+ * prozradí, že si toho nikdo nevšiml.
+ */
+export function decimal(value: number, digits = 1): string {
+  return value.toLocaleString('cs-CZ', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
 // Procento bez vnucených desetinných míst: 0,01 → „1 %", 0,048 → „4,8 %".
 export function percentCompact(ratio: number): string {
   const value = Math.round(ratio * 1000) / 10;
@@ -52,6 +64,13 @@ export function yearWord(years: number): string {
 // opakovalo a pokaždé se v něm dal udělat překlep.
 export function formatYears(years: number): string {
   return `${years} ${yearWord(years)}`;
+}
+
+// 1 dítě, 2–4 děti, 5+ dětí. Bez toho vzniklo „zvýhodnění na 5 děti".
+export function childWord(children: number): string {
+  if (children === 1) return 'dítě';
+  if (children >= 2 && children <= 4) return 'děti';
+  return 'dětí';
 }
 
 // 1 měsíc, 2–4 měsíce, 5+ měsíců

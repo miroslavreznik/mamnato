@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { decimal } from '../../engine/format';
 
 /**
  * Sdílený vizuální základ pro všechny grafy.
@@ -107,7 +108,7 @@ export function useChartColors(): ChartColors {
 // Krátký formát Kč pro osy: 1,2 M / 300 tis / 850
 export function fmtKcShort(n: number): string {
   const abs = Math.abs(n);
-  if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1)} M`;
+  if (abs >= 1_000_000) return `${decimal(n / 1_000_000)} M`;
   if (abs >= 1_000) return `${Math.round(n / 1_000)} tis`;
   return `${Math.round(n)}`;
 }

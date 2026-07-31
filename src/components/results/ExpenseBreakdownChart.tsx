@@ -177,7 +177,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
 
 
   return (
-    <Card title="Co kdyby: kam jde váš příjem" subtitle={<>Celý měsíční příjem ({fmtKc(income)}) rozdělený na výdaje, cíle a volnou rezervu.{' '}
+    <Card title="Kam jde váš příjem" subtitle={<>Celý měsíční příjem ({fmtKc(income)}) rozdělený na výdaje, cíle a volnou rezervu.{' '}
         <span className="text-ink-body">Klepnutím na položku ji vypnete</span> a hned uvidíte, jestli by vám pak na zbytek vyšlo. Zkuste třeba vypnout dovolenou nebo dítě.</>}>
       {/* Výsledek pokusu: změnila se odpověď „Mám na to?" */}
       {whatIf && (

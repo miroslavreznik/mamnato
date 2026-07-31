@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import { CHILD_COSTS_CZ } from '../../engine/defaults';
 import { calculateChildCosts } from '../../engine/childCost';
+import { decimal } from '../../engine/format';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
@@ -117,7 +118,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
                       value={customCosts[range.label]}
                       onChange={(v) => setCustomCosts({ ...customCosts, [range.label]: v })}
                       ariaLabel={`Náklady ${range.label}`}
-                      className="w-24 text-right px-2 py-2 border border-line  rounded text-sm"
+                      className={fieldClass('w-24 text-right px-2 py-2 text-sm')}
                     />
                   </td>
                 </tr>
@@ -138,7 +139,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
         <div className="p-3 bg-tint-brand rounded-lg">
           <span className="text-sm text-ink-muted">Celkové náklady</span>
           <p className="text-lg font-bold text-brand">
-            {(result.totalCost / 1_000_000).toFixed(1)} mil. Kč
+            {decimal(result.totalCost / 1_000_000)} mil. Kč
           </p>
         </div>
       </div>

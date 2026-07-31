@@ -10,7 +10,7 @@ import {
 import {
   downPaymentTradeoff, STOCK_RETURN, COMPARISON_STEP, MIN_RESERVE_MONTHS,
 } from '../../../engine/downPayment';
-import { czk, czkPerMonth, formatNumber as fmt, formatRate } from '../../../engine/format';
+import { czk, czkPerMonth, decimal, formatNumber as fmt, formatRate } from '../../../engine/format';
 import { StepButton, SliderCard } from './shared';
 
 // O kolik se hýbe krokovacími tlačítky a jaký krok má posuvník.
@@ -92,7 +92,7 @@ export default function DownPaymentSlider({ state, onChange }: {
       <div className="flex flex-wrap justify-between gap-x-2 text-sm mt-1.5">
         <span className="text-ink-body">Zbývající rezerva po akontaci:</span>
         <span className={`font-semibold ${reserve <= 0 ? 'text-danger' : reserveMonths < MIN_RESERVE_MONTHS ? 'text-caution' : 'text-ink'}`}>
-          {czk(reserve)}{reserve > 0 && isFinite(reserveMonths) ? ` (~${reserveMonths.toFixed(1)} měs. výdajů)` : ''}
+          {czk(reserve)}{reserve > 0 && isFinite(reserveMonths) ? ` (~${decimal(reserveMonths)} měs. výdajů)` : ''}
         </span>
       </div>
 

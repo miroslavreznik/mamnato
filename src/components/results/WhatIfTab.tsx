@@ -147,7 +147,7 @@ export default function WhatIfTab() {
                 <>Odpověď zůstává <strong>{answerNow.toLowerCase()}</strong>. {comparison.hint}</>
               )
             ) : (
-              'Posuvníky vpravo mění cenu, sazbu a délku rodičovské. Časová osa se překreslí hned a původní scénář zůstane vidět jako přerušovaný obrys, takže je poznat, jestli jste si pomohli.'
+              'Vpravo vypnete kterýkoli cíl, nebo pohnete jeho parametry. Časová osa se překreslí hned a původní scénář zůstane vidět jako přerušovaný obrys, takže je poznat, jestli jste si pomohli.'
             )}
           </p>
         </div>

@@ -1,6 +1,7 @@
 import type { WizardState } from '../../types';
 import { dti, dsti } from '../../engine/mortgage';
 import { DEFAULTS } from '../../engine/defaults';
+import { decimal, percentCompact } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
@@ -43,7 +44,7 @@ export default function DtiDstiIndicator({ state }: Props) {
             <span className="font-semibold">DTI</span>
             <Tooltip text="DTI říká, kolikrát váš roční příjem pokryje celkový dluh (nová hypotéka i zůstatek stávajících úvěrů). Závazný horní limit ČNB od ledna 2024 nevyžaduje; banky ho ale běžně posuzují, obvykle kolem 8,5×." />
           </div>
-          <div className="text-xl sm:text-2xl font-bold whitespace-nowrap">{dtiVal === Infinity ? '∞' : dtiVal.toFixed(1)}×</div>
+          <div className="text-xl sm:text-2xl font-bold whitespace-nowrap">{dtiVal === Infinity ? '∞' : decimal(dtiVal)}×</div>
           <div className="text-xs mt-1">Orientační limit bank: {DEFAULTS.dtiLimit}×</div>
         </div>
 
@@ -53,8 +54,8 @@ export default function DtiDstiIndicator({ state }: Props) {
             <span className="font-semibold">DSTI</span>
             <Tooltip text="DSTI říká, jaký podíl příjmu tvoří splátky všech úvěrů. Závazný horní limit ČNB od července 2023 nevyžaduje; banky ho ale běžně posuzují, obvykle kolem 45 %." />
           </div>
-          <div className="text-2xl font-bold">{dstiVal === Infinity ? '∞' : (dstiVal * 100).toFixed(1)} %</div>
-          <div className="text-xs mt-1">Orientační limit bank: {(DEFAULTS.dstiLimit * 100).toFixed(0)} %</div>
+          <div className="text-2xl font-bold">{dstiVal === Infinity ? '∞' : decimal(dstiVal * 100)} %</div>
+          <div className="text-xs mt-1">Orientační limit bank: {percentCompact(DEFAULTS.dstiLimit)}</div>
         </div>
       </div>
 

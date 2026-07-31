@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import { loanAmount, mortgageRate, loanTermYears, monthlyMortgagePayment } from './mortgage';
-import { czk } from './format';
+import { childWord, czk } from './format';
 
 /**
  * Daňové úlevy spojené s hypotékou a dětmi.
@@ -107,7 +107,9 @@ export function evaluateTaxRelief(state: WizardState): TaxRelief | null {
     const yearly = childCreditYearly(childrenForCredit);
     items.push({
       key: 'child',
-      label: childrenForCredit === 1 ? 'Daňové zvýhodnění na dítě' : `Daňové zvýhodnění na ${childrenForCredit} děti`,
+      label: childrenForCredit === 1
+        ? 'Daňové zvýhodnění na dítě'
+        : `Daňové zvýhodnění na ${childrenForCredit} ${childWord(childrenForCredit)}`,
       yearly,
       monthly: Math.round(yearly / 12),
       how: `Na první dítě ${czk(CHILD_TAX_CREDIT[0])} ročně, na druhé ${czk(CHILD_TAX_CREDIT[1])} a na třetí a další ${czk(CHILD_TAX_CREDIT[2])}. Na rozdíl od odpočtu úroků se odečítá rovnou od daně, ne od základu.`,

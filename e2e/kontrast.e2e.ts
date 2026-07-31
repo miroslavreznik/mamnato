@@ -75,11 +75,19 @@ function findInvisibleText(): string[] {
 
   const bad: string[] = []
   for (const el of document.querySelectorAll('body *')) {
-    // Jen prvky s vlastním textem, ne obaly.
-    const own = [...el.childNodes]
-      .filter((n) => n.nodeType === 3 && n.textContent?.trim())
-      .map((n) => n.textContent!.trim())
-      .join(' ')
+    // Jen prvky s vlastním textem, ne obaly. Pole nemají textový uzel, ale
+    // `value`, takže by je procházka minula: přesně tak se do appky dostalo
+    // pole s náklady na dítě, které mělo v tmavém režimu černý text na tmavém
+    // podkladu (1,4:1). Vypadalo jako prázdné a nikdo si toho nevšiml.
+    // Posuvníky a zaškrtávátka mají `value` („on", „4.8"), ale nekreslí
+    // z něj ani písmenko: měřit u nich kontrast textu nedává smysl.
+    const textual = ['text', 'number', 'tel', 'search', 'email', 'url', '']
+    const own = el instanceof HTMLInputElement
+      ? (textual.includes(el.getAttribute('type') ?? '') ? el.value.trim() : '')
+      : [...el.childNodes]
+        .filter((n) => n.nodeType === 3 && n.textContent?.trim())
+        .map((n) => n.textContent!.trim())
+        .join(' ')
     if (!own) continue
     // Emoji se kreslí vlastními barvami, ne `color`, takže jejich kontrast
     // nic neznamená. Přeskakuje se text bez jediného písmene a číslice.
@@ -131,6 +139,8 @@ async function walk(page: Page, scheme: 'light' | 'dark'): Promise<string[]> {
   for (let i = 0; i < 3; i++) await page.getByTestId('wizard-next').click()
   await page.getByTestId('goal-property').click()
   await page.getByTestId('goal-retirement').click()
+  // I dítě: jeho karta má vlastní tabulku polí a rodičovskou.
+  await page.getByTestId('goal-child').click()
   await page.getByTestId('wizard-next').click()
   await page.getByTestId('wizard-next').click()
 

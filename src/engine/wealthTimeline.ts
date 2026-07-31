@@ -1,9 +1,9 @@
 import type { WizardState } from '../types';
 import { monthlyChildCostAtAge } from './childCost';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment, youngestApplicantAge } from './mortgage';
+import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment } from './mortgage';
 import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
-import { yearsUntilRetirement } from './savings';
+import { yearsUntilRetirement, retirementAge } from './savings';
 import { calculateDefaultAllocations, type GoalAllocations } from './allocation';
 
 // Časová osa úspor: měsíc po měsíci simuluje vývoj úspor domácnosti přes
@@ -98,7 +98,7 @@ export const MAX_HORIZON_MONTHS = 480;
  * což je jiná úloha než tahle.
  */
 export function planHorizonMonths(state: WizardState): number {
-  const age = youngestApplicantAge(state);
+  const age = retirementAge(state);
   const months = yearsUntilRetirement(age) * 12;
   return Math.min(MAX_HORIZON_MONTHS, Math.max(MIN_HORIZON_MONTHS, months));
 }

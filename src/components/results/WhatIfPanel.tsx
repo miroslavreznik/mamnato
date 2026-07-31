@@ -193,7 +193,7 @@ export default function WhatIfPanel() {
     // vybledlé, že by nešlo přečíst.
     <div className="no-print rounded-2xl bg-sunken p-5 space-y-4">
       <div className="flex items-center justify-between gap-2">
-        <h3 className="type-section text-ink">Co kdyby</h3>
+        <h3 className="type-section text-ink">Cíle a parametry</h3>
         {touched && (
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-tint-good text-good">
             živě
@@ -202,8 +202,6 @@ export default function WhatIfPanel() {
       </div>
       <p className="text-[13px] text-ink-body leading-relaxed">
         Vypněte cíl a uvidíte plán bez něj, nebo si pohrajte s jeho parametry.
-        Časová osa vlevo se překreslí hned, a když se změní její tvar, zůstane ten
-        původní vidět jako přerušovaný obrys.
       </p>
 
       {goals.length > 0 ? (
