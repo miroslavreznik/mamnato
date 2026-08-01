@@ -156,6 +156,20 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     saveState(next);
   };
 
+  /**
+   * Termín dítěte, tažením puntíku po časové ose.
+   *
+   * Zapisuje se do stavu, ne do obrazovky. Rozhoduje totiž o tom, jestli
+   * rodičovská padne před koupi nebo po ní a kolik do ní domácnost stihne
+   * naspořit; dokud si ho držela jen obrazovka, věta u cíle „Během
+   * rodičovské vám bude chybět…" se posunem puntíku vůbec nezměnila.
+   */
+  const handleChangeChildTiming = (months: number) => {
+    const next = { ...state, childInMonths: Math.min(480, Math.max(0, Math.round(months))) };
+    setState(next);
+    saveState(next);
+  };
+
   // Výdaje jdou přepsat přímo v Rozpočtu. Zapisuje se do zadaného stavu,
   // ne do toho po „co kdyby": jsou to skutečné údaje, ne úvaha nad grafem.
   const handleChangeExpense = (field: string, value: number) => {
@@ -283,7 +297,12 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             Id zůstává `souhrn`: je v uložených odkazech i v kotvách testů
             a přejmenovat ho by rozbilo sdílené adresy kvůli popisku. */}
         <ResultsSection id="souhrn" title="Přehled" subtitle="Odpověď, váš plán v čase a stav vašich cílů" active={isVisible('souhrn')}>
-          <ResultsOverview state={activeState} allocations={activeAllocations} onOpenSection={selectTab} />
+          <ResultsOverview
+            state={activeState}
+            allocations={activeAllocations}
+            onOpenSection={selectTab}
+            onChangeChildTiming={handleChangeChildTiming}
+          />
           {hasNoGoals && (
             <div className="bg-tint-caution border border-line rounded-xl p-6 text-center">
               <p className="text-caution">Vraťte se a vyberte své finanční cíle pro podrobnější analýzu.</p>

@@ -112,6 +112,11 @@ function findInvisibleText(): string[] {
 
 async function walk(page: Page, scheme: 'light' | 'dark'): Promise<string[]> {
   await page.emulateMedia({ colorScheme: scheme })
+  // Výchozí je tmavý režim bez ohledu na systém, takže `colorScheme` sám
+  // o sobě nestačí: motiv se musí nastavit tak, jak ho drží appka.
+  await page.addInitScript((t) => {
+    try { localStorage.setItem('mamnato_theme', t) } catch { /* ignore */ }
+  }, scheme)
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/')
 

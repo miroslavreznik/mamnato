@@ -62,6 +62,7 @@ export type WizardAction =
   | { type: 'SET_RENOVATION'; value: WizardState['property']['renovation'] }
   | { type: 'SET_NUMBER_OF_CHILDREN'; count: number }
   | { type: 'SET_PERSON_AGE'; person: 1 | 2; value: number }
+  | { type: 'SET_CHILD_TIMING'; months: number }
   | { type: 'UPDATE_CUSTOM_GOALS'; goals: WizardState['customGoals'] }
   | { type: 'SET_PARENTAL_LEAVE'; value: ParentalLeave | undefined }
   | { type: 'LOAD_STATE'; state: WizardState }
@@ -113,6 +114,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     }
     case 'SET_NUMBER_OF_CHILDREN':
       return { ...state, numberOfChildren: action.count };
+    case 'SET_CHILD_TIMING':
+      return { ...state, childInMonths: Math.min(480, Math.max(0, Math.round(action.months))) };
     case 'SET_PERSON_AGE':
       return action.person === 1
         ? { ...state, person1Age: action.value }

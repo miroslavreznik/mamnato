@@ -1229,3 +1229,67 @@ rozdíl vidět jako přerušovaný obrys pod stuhou. Nadpis je pojmenuje
 („Zkoušíte koupi za 3 roky a dítě za 3 roky."), protože „Zkoušíte: bydlení
 za 5 500 000 Kč" u někoho, kdo hnul jen termínem, mluví o čísle, se kterým
 nehnul.
+
+## B24. Výřez na deset let, tmavý režim, plynulé barvy, termín dítěte
+
+Pět věcí ze zpětné vazby, tři z nich mění výchozí stav appky.
+
+### Výchozí výřez je deset let, ne celý plán
+
+Na horizontu k důchodu se první roky srazí do pár procent šířky: koupě
+a dítě splynou v jeden shluk u levého okraje a zbytek je dlouhá rovná čára.
+Přitom právě těch pár let je jediná část plánu, se kterou se dá něco udělat,
+a jsou v nich všechny události, kterými jde na stuze hýbat. Co zůstane za
+výřezem, řekne věta pod ním (`beyondView`), takže se nic neztratí.
+
+### Výchozí je tmavý režim
+
+Systémová předvolba se tím na první návštěvě obchází. Vědomě: appka je
+z velké části graf a na tmavém podkladu je barevná škála stuhy čitelnější.
+Uložená volba má dál přednost, takže kdo přepne na světlý, ten ho má.
+Testy, které si na motivu zakládají (kontrast, tooltip, otisky), si ho teď
+musí nastavit uloženou předvolbou; samotné `emulateMedia` už nestačí.
+
+### Barva stuhy se mění plynule
+
+Tři stavy stačí na větu, ale ne na obrázek: stuha měnila barvu skokem, dva
+roky stejná zelená a pak hrana. Přibyla proto spojitá míra `severity`
+(0 pohodlně, 1 hluboký schodek), ukotvená ve **stejných prazích** jako
+`tension`, aby si barva a věta nemohly odporovat:
+
+- `< 0,5` klid (a čím větší polštář, tím sytější zelená),
+- `0,5 až 0,75` napětí, tedy tatáž tři pravidla co dřív,
+- `> 0,75` schodek, tím tmavší, čím hlubší.
+
+Barvy míchá `color-mix` v oklab přímo v CSS, ne JavaScript: tokeny mají
+jinou hodnotu ve světlém a tmavém režimu, takže jakýkoli výpočet v JS by si
+je musel číst z `getComputedStyle` a přepočítávat při přepnutí motivu.
+Gradient má nejvýš 64 zastávek (na čtyřech stech měsících je víc stejně
+k nerozeznání), ale zlomy stavu se do vzorku přidávají vždy.
+
+### „Z čeho přehled počítá" vypadalo jako nadpis
+
+Bylo to `<details>` s `list-none`, tedy bez trojúhelníčku, bez šipky a bez
+jakékoli změny při najetí myší. Teď je to celé tlačítko se šipkou, která se
+otočí, a se slovem, co se stane („Zobrazit rozpis" / „Skrýt rozpis").
+
+### Termín dítěte je zadaný údaj, ne úvaha nad grafem
+
+Věta u cíle („Během rodičovské vám bude chybět 51 048 Kč měsíčně…") se
+posunem puntíku vůbec neměnila. Nešlo o formulaci: `evaluateParentalLeave`
+o termínu nevěděla, protože ho držela obrazovka. Počítala vždycky, jako by
+volno začínalo dnes a domácnost už bydlela ve svém.
+
+Termín se proto přesunul do stavu (`childInMonths`) a rodičovská z něj
+odvozuje dvě věci:
+
+- **jestli se do té doby stihne koupit.** Kdo čeká dítě dřív, než dospoří
+  akontaci, platí během volna nájem, ne splátku.
+- **kolik bude v tu chvíli rezervy.** Skládá se stejně jako na časové ose:
+  měsíc po měsíci přiteče disponibilní částka, při koupi odejde akontace
+  a od té chvíle platí rozpočet po koupi.
+
+Na modelovém páru: dítě za rok znamená „během rodičovské vám měsíčně zbyde
+10 532 Kč" (ještě v nájmu), dítě za šest let „nejméně 6 966 Kč" (už se
+splátkou). Tři starší testy počítaly s volnem začínajícím dnes; mají teď
+`childInMonths: 0`, aby říkaly to, co říkat chtěly.

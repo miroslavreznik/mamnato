@@ -150,7 +150,11 @@ export function wealthTimeline(
   const ownership = ownershipCosts(state);
   const mortgage = monthlyMortgagePayment(Math.max(0, price - targetDownPayment), rate, term);
 
-  const childMonth = hasChild ? Math.max(0, Math.round(opts.childOffsetMonths ?? 12)) : null;
+  // Termín dítěte je zadaný údaj (`state.childInMonths`); `opts` ho přebíjí
+  // jen v „Co kdyby", kde se s ním zkouší hýbat, aniž by se to uložilo.
+  const childMonth = hasChild
+    ? Math.max(0, Math.round(opts.childOffsetMonths ?? state.childInMonths ?? 12))
+    : null;
   const pl = state.parentalLeave;
   const leaveActive = !!pl?.enabled && childMonth !== null;
   const phases = leavePhases(state);

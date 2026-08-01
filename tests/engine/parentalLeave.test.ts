@@ -64,6 +64,9 @@ describe('evaluateParentalLeave', () => {
     const state = makeState({
       goals: ['child', 'property'],
       savings: { totalSavings: 1200000, downPaymentFromSavings: 1000000 }, // rezerva 200k
+      // Dítě hned: rezerva je pak přesně to, co zbude po akontaci. Kdo ho
+      // čeká později, má do té doby naspořeno víc a rezerva je jiná.
+      childInMonths: 0,
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
     });
     const r = evaluateParentalLeave(state)!;
@@ -132,5 +135,44 @@ describe('dítě je součástí rodičovské, ne až po ní', () => {
     const rucne = leave.incomeNow - leave.lostSalary + rodicovska.monthlyBenefit
       - expensesAfterPurchase(state) - 8000;
     expect(Math.round(leave.worstMonthlyDisposable)).toBe(Math.round(rucne));
+  });
+});
+
+describe('termín dítěte mění dopad rodičovské', () => {
+  // Pár, který na akontaci zatím nedosáhne: do koupě bydlí v nájmu.
+  const par = (childInMonths: number): WizardState => makeState({
+    mode: 'couple',
+    goals: ['property', 'child'],
+    income: { person1NetMonthly: 48000, person2NetMonthly: 36000 },
+    expenses: { rent: 18000, existingLoans: 0, insurance: 1500, food: 8000, transport: 3000, children: 0, utilities: 3500, other: 3000 },
+    savings: { totalSavings: 400000 },
+    property: { targetPrice: 6000000, mortgageRate: 0.048, loanTermYears: 30 },
+    childInMonths,
+    parentalLeave: { enabled: true, parent: 2, durationMonths: 36 },
+  });
+
+  it('čím později dítě, tím větší rezerva na volno', () => {
+    // Do příchodu dítěte se spoří, takže výpadek příjmu je z čeho krýt.
+    // Dokud se termín držel jen v obrazovce, věta u cíle se posunem
+    // puntíku vůbec nezměnila.
+    const brzy = evaluateParentalLeave(par(6))!;
+    const pozdeji = evaluateParentalLeave(par(60))!;
+    expect(pozdeji.reserveAfter).toBeGreaterThan(brzy.reserveAfter);
+    expect(pozdeji.reserveLeftAfterLeave).toBeGreaterThan(brzy.reserveLeftAfterLeave);
+  });
+
+  it('dítě před koupí znamená nájem, po koupi splátku', () => {
+    // Rozhoduje to o výdajích během volna, tedy i o tom, jestli schodek vůbec
+    // nastane. Splátka bývá výrazně vyšší než nájem.
+    const predKoupi = evaluateParentalLeave(par(6))!;
+    const poKoupi = evaluateParentalLeave(par(120))!;
+    expect(poKoupi.worstMonthlyDisposable).toBeLessThan(predKoupi.worstMonthlyDisposable);
+  });
+
+  it('bez zadaného termínu platí rok', () => {
+    const bezTerminu = { ...par(12) };
+    delete bezTerminu.childInMonths;
+    expect(evaluateParentalLeave(bezTerminu)!.reserveAfter)
+      .toBe(evaluateParentalLeave(par(12))!.reserveAfter);
   });
 });

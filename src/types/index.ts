@@ -76,6 +76,19 @@ export interface WizardState {
   // Custom goals (for 'other')
   customGoals?: CustomGoal[];
 
+  /**
+   * Za jak dlouho čekáte dítě, v měsících od dneška. Výchozí je rok.
+   *
+   * Je to **zadaný údaj, ne úvaha nad grafem**, i když se zadává tažením
+   * puntíku po časové ose. Rozhoduje totiž o víc než o poloze značky: jestli
+   * rodičovská padne před koupi (platí se nájem) nebo po ní (splátka)
+   * a kolik do té doby stihne domácnost naspořit, tedy z čeho se výpadek
+   * příjmu pokryje. Dokud si termín držela jen obrazovka, věta u cíle
+   * „Během rodičovské vám bude chybět…" se posunem puntíku vůbec nezměnila,
+   * protože ji počítal engine, který o něm nevěděl.
+   */
+  childInMonths?: number;
+
   // Rodičovská / výpadek příjmu (pro cíl „dítě" u páru/rodiny)
   parentalLeave?: ParentalLeave;
 }

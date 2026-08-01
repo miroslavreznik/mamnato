@@ -125,6 +125,11 @@ test('desktop, světlý režim', async ({ page }) => {
 
 test('desktop, tmavý režim', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' })
+  // Výchozí je tmavý režim bez ohledu na systém, takže `colorScheme` sám
+  // o sobě nestačí: motiv se musí nastavit tak, jak ho drží appka.
+  await page.addInitScript((t) => {
+    try { localStorage.setItem('mamnato_theme', t) } catch { /* ignore */ }
+  }, 'dark')
   await walk(page, 'tmavy', 1280, 900)
 })
 

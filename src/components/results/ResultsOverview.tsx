@@ -14,7 +14,7 @@ import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
 import JourneyRibbon from './JourneyRibbon';
 import NextStepCard from './NextStepCard';
-import JourneyRange, { JourneyRangeNote } from './JourneyRange';
+import JourneyRange, { JourneyRangeNote, DEFAULT_VIEW_MONTHS } from './JourneyRange';
 import TightestPoint from './TightestPoint';
 import HeroNumber from '../ui/HeroNumber';
 import MonthsMeter from '../ui/MonthsMeter';
@@ -26,6 +26,8 @@ interface Props {
   // Přepnutí na záložku, kde se dá rada rovnou provést. Bez toho musel
   // uživatel místo, na které rada odkazuje, najít sám.
   onOpenSection?: (id: string) => void;
+  /** Posun puntíku „Dítě" po ose. Zapisuje se do stavu, viz `childInMonths`. */
+  onChangeChildTiming?: (months: number) => void;
 }
 
 type Tone = 'good' | 'caution' | 'danger' | 'plain';
@@ -58,7 +60,7 @@ const goalBadge: Record<GoalStatus, { label: string; status: Status }> = {
 // by si appka odporovala, i když každá odpověď mluví o něčem jiném.
 const conditionalBadge = { label: 'Podmíněně', status: 'neutral' as const };
 
-export default function ResultsOverview({ state, allocations, onOpenSection }: Props) {
+export default function ResultsOverview({ state, allocations, onOpenSection, onChangeChildTiming }: Props) {
   const summary = evaluateOverall(state, allocations);
   const disposable = monthlyDisposable(state);
   const rate = savingsRate(state);
@@ -160,22 +162,13 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   // v přehledu chyběla, přestože je to ten největší závazek ze všech.
   const readinessGoals = summary.goals;
 
-  // Kdy čekáte dítě: úvaha nad grafem, ne zadaný údaj. Nemění verdikt,
-  // jen posouvá událost po ose, takže si to drží obrazovka, ne uložený stav.
-  // Stejnou hodnotu má i graf vývoje úspor v záložce Bydlení; sjednotit je
-  // patří ke kroku, kde vznikne sdílený stav pro „co kdyby".
-  const [childOffset, setChildOffset] = useState(12);
-
   // Kdy koupit: taky úvaha nad grafem. Nula znamená „hned, jak to půjde",
   // tedy jakmile je na akontaci naspořeno; odsud se dá koupě odsouvat.
   // Neukládá se ze stejného důvodu jako dítě a nemění akontaci ani splátku,
   // jen termín. Co se mezitím naspoří, zůstane v rezervě.
   const [purchaseAt, setPurchaseAt] = useState(0);
-  const journeyData = journey(state, {
-    childOffsetMonths: childOffset,
-    purchaseNotBeforeMonth: purchaseAt,
-    allocations,
-  });
+  // Termín dítěte si bere časová osa ze stavu sama, proto se nepředává.
+  const journeyData = journey(state, { purchaseNotBeforeMonth: purchaseAt, allocations });
 
   // Doleva jen k měsíci, kdy je na akontaci naspořeno: dřív koupit nejde.
   // Doprava deset let, ale ne až k důchodu; za obzorem plánu už odklad
@@ -187,9 +180,16 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
   };
 
   // Výřez z cesty. Drží se v obrazovce, ne v uloženém stavu: je to způsob
-  // dívání, ne údaj o plánu. Výchozí je celek, protože otázka zní „vyjde
-  // to celé"; kdo chce vidět nejbližší roky zblízka, přepne.
-  const [viewMonths, setViewMonths] = useState(journeyData.horizonMonths);
+  // dívání, ne údaj o plánu.
+  //
+  // **Výchozí je deset let**, ne celý plán. Na celém horizontu se první roky
+  // srazí do pár procent šířky: koupě a dítě splynou v jeden shluk u levého
+  // okraje a zbytek je dlouhá rovná čára do důchodu. Přitom právě těch pár
+  // let je jediná část plánu, se kterou se dá něco udělat, a jsou v ní
+  // všechny události, kterými jde hýbat. Co zůstane za výřezem, řekne věta
+  // pod stuhou (`beyondView`), takže se nic neztratí.
+  const [viewMonths, setViewMonths] = useState(() =>
+    Math.min(DEFAULT_VIEW_MONTHS, journeyData.horizonMonths));
   const view = Math.min(viewMonths, journeyData.horizonMonths);
 
   return (
@@ -253,7 +253,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection }: P
         <JourneyRibbon
           data={journeyData}
           viewMonths={view}
-          onMoveChild={state.goals.includes('child') ? setChildOffset : undefined}
+          onMoveChild={state.goals.includes('child') ? onChangeChildTiming : undefined}
           onMovePurchase={purchaseRange ? setPurchaseAt : undefined}
           purchaseRange={purchaseRange ?? undefined}
         />

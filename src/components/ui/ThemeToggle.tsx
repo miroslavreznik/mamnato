@@ -2,12 +2,26 @@ import { useEffect, useState } from 'react';
 
 const STORAGE_KEY = 'mamnato_theme';
 
+/**
+ * Výchozí je **tmavý** režim, ne ten systémový.
+ *
+ * Appka je z velké části graf a čísla na něm: stuha, barvy napětí, čáry
+ * srovnání. Na tmavém podkladu je to znát a čte se to líp než na papírově
+ * světlém, takže tak vypadá appka poprvé.
+ *
+ * Systémová předvolba se tím na první návštěvě obchází. Je to vědomá volba,
+ * ne opomenutí: kdo chce světlý, přepne, a od té chvíle platí jeho volba,
+ * protože uložená předvolba má přednost před vším ostatním.
+ *
+ * Tisk to neřeší; ten si dark mód vypíná sám (`ResultsDashboard`), aby se
+ * na papír netiskla tmavá plocha.
+ */
 function getInitialTheme(): 'light' | 'dark' {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'dark' || stored === 'light') return stored;
   } catch { /* ignore */ }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'dark';
 }
 
 export default function ThemeToggle() {

@@ -41,6 +41,11 @@ const num = (page: Page, label: string) =>
 
 async function start(page: Page, width = 1280) {
   await page.emulateMedia({ colorScheme: 'dark' })
+  // Výchozí je tmavý režim bez ohledu na systém, takže `colorScheme` sám
+  // o sobě nestačí: motiv se musí nastavit tak, jak ho drží appka.
+  await page.addInitScript((t) => {
+    try { localStorage.setItem('mamnato_theme', t) } catch { /* ignore */ }
+  }, 'dark')
   await page.setViewportSize({ width, height: 900 })
   await page.goto('/')
   await page.getByRole('button', { name: /Spustit přehled/ }).click()

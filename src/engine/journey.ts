@@ -38,6 +38,12 @@ export interface Journey {
   points: WealthPoint[];
   /** Napětí rozpočtu pro každý bod, ve stejném pořadí jako `points`. */
   tension: Tension[];
+  /**
+   * Totéž spojitě, 0 (pohodlně) až 1 (hluboký schodek). Podle toho se stuha
+   * barví, aby přechod nebyl skokový; `tension` z toho jde odvodit
+   * (`< 0,5` je klid, `< 0,75` napětí, výš schodek).
+   */
+  severity: number[];
   events: JourneyEvent[];
   minCash: number;
   minCashMonth: number;
@@ -178,6 +184,61 @@ function whatHappensAt(month: number, events: JourneyEvent[]): 'Rodičovská' | 
   const recent = before !== undefined && month - before.month <= RECENT_MONTHS;
   if (recent && before?.key === 'purchase') return 'Po koupi';
   return 'Rozpočet';
+}
+
+/**
+ * Jak moc to skřípe, spojitě od 0 do 1.
+ *
+ * Tři stavy stačí na větu („napjato", „schodek"), ale ne na obrázek. Stuha
+ * s nimi měnila barvu skokem: dva roky stejná zelená, pak hrana a jantarová.
+ * Přitom rozpočet se nemění skokem, ale postupně, a právě ten pohyb je na
+ * časové ose to nejzajímavější: kde se to začíná zhoršovat a kde už se to
+ * zase zvedá.
+ *
+ * Škála je **ukotvená ve stejných prazích jako `tensionAt`**, aby si barva
+ * a věta pod ní nemohly odporovat:
+ *
+ * - `0 až 0,5` je klid. Nula je pohodlný polštář (tok přes trojnásobek prahu
+ *   a rezerva přes půl roku), k půlce se blíží ten, komu do napětí zbývá už
+ *   jen kousek.
+ * - `0,5 až 0,75` je napětí, tedy tatáž tři pravidla co ve `tensionAt`.
+ * - `0,75 až 1` je schodek, tím hlubší, čím větší díra proti měsíčním výdajům.
+ *
+ * Díky tomu platí: `severity < 0,5` právě když je `tension === 'calm'`.
+ * Barva se tak hýbe plynule, ale nikdy nepřeteče do pásma, které stav nemá.
+ */
+function severityAt(point: WealthPoint, limits: TensionLimits): number {
+  const oneMonth = Math.max(1, monthOfExpensesAt(point.month, limits));
+
+  // Nultý měsíc je výchozí stav, žádný tok se v něm nestal; posuzuje se
+  // jen podle toho, s čím domácnost začíná.
+  if (point.month === 0) {
+    return point.cash < oneMonth
+      ? 0.5 + 0.25 * (1 - Math.max(0, point.cash) / oneMonth)
+      : 0.5 * (1 - Math.min(1, point.cash / (6 * oneMonth)));
+  }
+
+  if (point.flow < 0) {
+    return 0.75 + 0.25 * Math.min(1, Math.abs(point.flow) / oneMonth);
+  }
+
+  // Napětí: bere se ten nejnaléhavější z důvodů, stejně jako ve `tensionAt`.
+  const tense: number[] = [];
+  if (point.cash < oneMonth) tense.push(1 - Math.max(0, point.cash) / oneMonth);
+  if (point.flowAfterGoals < -limits.goalShortfall) {
+    tense.push(Math.min(1, Math.abs(point.flowAfterGoals) / limits.thinFlow));
+  }
+  if (point.flow < limits.thinFlow) tense.push(1 - point.flow / limits.thinFlow);
+  if (tense.length > 0) return 0.5 + 0.25 * Math.max(...tense);
+
+  // Klid. Čím větší polštář, tím blíž nule: rozhoduje ta horší ze dvou věcí,
+  // kolik měsíčně zbývá a na kolik měsíců by vystačila rezerva.
+  const headroom = Math.min(
+    point.flow / (3 * limits.thinFlow),
+    point.cash / (6 * oneMonth),
+    1
+  );
+  return 0.5 * (1 - Math.max(0, headroom));
 }
 
 /**
@@ -356,6 +417,7 @@ export function journey(
 
   const limits = tensionLimits(state, tl.purchaseMonth);
   const tension = tl.points.map((p) => tensionAt(p, limits));
+  const severity = tl.points.map((p) => severityAt(p, limits));
 
   const events: JourneyEvent[] = [];
   if (tl.purchaseMonth !== null) {
@@ -390,6 +452,7 @@ export function journey(
   return {
     points: tl.points,
     tension,
+    severity,
     events,
     minCash: tl.minCash,
     minCashMonth: tl.minCashMonth,

@@ -46,11 +46,38 @@ const MAX_H = 260;
 
 const PAD = { top: 34, right: 16, bottom: 30, left: 16 };
 
-const TENSION_VAR: Record<Tension, string> = {
-  calm: 'var(--ribbon-calm)',
-  tense: 'var(--ribbon-tense)',
-  deficit: 'var(--ribbon-deficit)',
-};
+/**
+ * Barva podle spojité míry napětí (`journey.severity`), ne podle tří stavů.
+ *
+ * Dřív měla stuha tři ploché barvy a mezi nimi skoro ostrou hranu: dva roky
+ * stejná zelená, pak zlom a jantarová. Rozpočet se ale takhle nechová.
+ * Zajímavé na časové ose je právě to, kde se to začíná zhoršovat a kde se to
+ * zase zvedá, a to jde vidět jen na plynulém přechodu.
+ *
+ * Míchá `color-mix` v prostoru oklab, ne ručně počítané RGB: barvy jsou
+ * v CSS proměnných a mají jinou hodnotu ve světlém a tmavém režimu, takže
+ * jakýkoli výpočet v JS by si je musel číst z `getComputedStyle` a znovu
+ * přepočítávat při přepnutí motivu. V oklab proto, že přechod přes žlutou
+ * nezešediví jako v sRGB.
+ *
+ * Kotvy jsou tytéž prahy, podle kterých se počítá `tension`: 0 klid,
+ * 0,5 začátek napětí, 1 hluboký schodek. Zelená se navíc drží déle
+ * (kvadratické náběhy), aby se plán, který má rezervu, nebarvil doržava
+ * jen proto, že se blíží k prahu.
+ */
+function severityColor(severity: number): string {
+  const s = Math.min(1, Math.max(0, severity));
+  if (s <= 0.5) {
+    const u = Math.round(Math.pow(s / 0.5, 2) * 100);
+    return u <= 0
+      ? 'var(--ribbon-calm)'
+      : `color-mix(in oklab, var(--ribbon-tense) ${u}%, var(--ribbon-calm))`;
+  }
+  const u = Math.round(Math.pow((s - 0.5) / 0.5, 0.8) * 100);
+  return u <= 0
+    ? 'var(--ribbon-tense)'
+    : `color-mix(in oklab, var(--ribbon-deficit) ${u}%, var(--ribbon-tense))`;
+}
 
 interface Props {
   data: Journey;
@@ -110,11 +137,12 @@ export default function JourneyRibbon({
     return {
       points: pts,
       tension: data.tension.slice(0, pts.length),
+      severity: data.severity.slice(0, pts.length),
       events: data.events.filter((e) => e.month <= horizonMonths),
       ghostPoints: ghost?.points.filter((p) => p.month <= horizonMonths) ?? null,
     };
   }, [data, horizonMonths, ghost]);
-  const { points, tension, events } = inView;
+  const { points, tension, severity, events } = inView;
   const svgRef = useRef<SVGSVGElement>(null);
 
   // Skutečná šířka v pixelech. Z ní je `viewBox`, takže se nic nepřeškáluje
@@ -229,28 +257,35 @@ export default function JourneyRibbon({
       .y1((p) => ys(p.cash))
       .curve(curveMonotoneX)(points) ?? '';
 
-    // Zastávky gradientu.
+    // Zastávky gradientu: jedna na každý navzorkovaný bod, obarvená podle
+    // toho, jak moc to v tu chvíli skřípe. SVG mezi nimi dopočítá zbytek,
+    // takže přechod je plynulý a přitom se drží dat.
     //
-    // Napětí se rozdělí na úseky a každý úsek dostane dvě zastávky, na svém
-    // začátku a na svém konci. Bez toho by SVG plynule prolnulo první barvu
-    // do poslední přes celou šířku a stuha by byla červená už roky předtím,
-    // než se schodek objeví. Přechod mezi úseky se změkčí úzkým oknem,
-    // aby hrana nebyla ostrá jako řez, ale pořád bylo poznat, kdy se to zlomí.
-    const BLEND = 0.015;
+    // Nevzorkuje se každý měsíc: na horizontu do důchodu je to přes čtyři
+    // sta zastávek, které na osmi stech pixelech stejně nikdo nerozliší.
+    // Zlomy (koupě, narození, schodek) se ale ztratit nesmí, takže se do
+    // vzorku vždycky přidá i bod, kde se stav mění.
+    const MAX_STOPS = 64;
+    const step = Math.max(1, Math.ceil(points.length / MAX_STOPS));
+    const sampled = new Set<number>([0, points.length - 1]);
+    for (let i = 0; i < points.length; i += step) sampled.add(i);
+    for (let i = 1; i < tension.length; i++) {
+      if (tension[i] !== tension[i - 1]) { sampled.add(i - 1); sampled.add(i); }
+    }
+    const stops = [...sampled]
+      .sort((a, b) => a - b)
+      .map((i) => ({
+        offset: points[i].month / horizonMonths,
+        color: severityColor(severity[i] ?? 0),
+      }));
+
+    // Úseky napětí. Slouží už jen k vyznačení schodku vzorkem.
     const runs: { from: number; to: number; tension: Tension }[] = [];
     tension.forEach((t, i) => {
       const at = points[i].month / horizonMonths;
       const last = runs.at(-1);
       if (last && last.tension === t) last.to = at;
       else runs.push({ from: at, to: at, tension: t });
-    });
-
-    const stops: { offset: number; tension: Tension }[] = [];
-    runs.forEach((r, i) => {
-      const from = i === 0 ? 0 : r.from + BLEND;
-      const to = i === runs.length - 1 ? 1 : r.to - BLEND;
-      stops.push({ offset: from, tension: r.tension });
-      if (to > from) stops.push({ offset: to, tension: r.tension });
     });
 
     // Duch se kreslí ve stejné ose jako živá stuha. Vlastní měřítko by rozdíl
@@ -270,7 +305,7 @@ export default function JourneyRibbon({
       .map((r) => ({ from: xs(r.from * horizonMonths), to: xs(r.to * horizonMonths) }));
 
     return { xs, ys, path, fill, stops, lo, ghostPath, deficitRanges };
-  }, [points, tension, horizonMonths, inView.ghostPoints, W, H]);
+  }, [points, tension, severity, horizonMonths, inView.ghostPoints, W, H]);
 
   // Roky na ose. Krok se řídí tím, kolik se jich na danou šířku vejde, ne jen
   // délkou horizontu: letopočet potřebuje kolem osmatřiceti pixelů i s mezerou
@@ -422,7 +457,7 @@ export default function JourneyRibbon({
       <defs>
         <linearGradient id={`ribbon-${uid}`} x1="0" y1="0" x2="1" y2="0">
           {geom.stops.map((s, i) => (
-            <stop key={i} offset={`${s.offset * 100}%`} stopColor={TENSION_VAR[s.tension]} />
+            <stop key={i} offset={`${s.offset * 100}%`} stopColor={s.color} />
           ))}
         </linearGradient>
         {/* Ořez na schodkové úseky. Přes ně se překreslí stuha přerušovaně,
@@ -610,10 +645,13 @@ export default function JourneyRibbon({
                 />
               </>
             )}
+            {/* Obrys puntíku má tutéž barvu jako stuha pod ním. Se třemi
+                plochými barvami tu vycházel jantarový kroužek nad zeleným
+                úsekem, protože se stav zlomil o měsíc dřív. */}
             <circle
               cx={x} cy={y} r="7"
               fill="var(--card)"
-              stroke={TENSION_VAR[data.tension[e.month] ?? 'calm']}
+              stroke={severityColor(data.severity[e.month] ?? 0)}
               strokeWidth="3"
               pointerEvents="none"
             />

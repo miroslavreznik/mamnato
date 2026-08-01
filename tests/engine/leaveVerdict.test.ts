@@ -98,6 +98,7 @@ describe('verdikt při schodku na rodičovské', () => {
     // rezerva musí být o tolik vyšší, aby scénář zůstal ten samý.
     const state = buyingCoupleOnLeave({
       savings: { totalSavings: 3460000 + 8000 * 36, downPaymentFromSavings: 2510000 },
+      childInMonths: 0, // dítě hned, jinak rezerva do jeho příchodu vyroste
     });
     const leave = evaluateParentalLeave(state)!;
     expect(leave.coversWholeLeave).toBe(true);

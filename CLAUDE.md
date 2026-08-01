@@ -120,9 +120,14 @@ a spadne se na výchozí hodnoty, takže poškozený `localStorage` appku neshod
 
 **Většina výsledků je editovatelná** a zapisuje se do `state`, ne do „co kdyby":
 výdaje (`ExpenseEditor`), akontace, sazba, částky u cílů, délka rodičovské. Jsou to
-skutečné údaje, takže se ukládají a přepočítá se z nich celý přehled. Posuvníky
-v „Co kdyby" jsou naopak jen úvaha nad grafem a neukládají se nikdy. Totéž platí
-o puntících na stuze (termín koupě a narození dítěte): drží je obrazovka, ne stav.
+skutečné údaje, takže se ukládají a přepočítá se z nich celý přehled. Patří sem
+i **termín dítěte** (`childInMonths`), i když se zadává tažením puntíku po stuze:
+rozhoduje o tom, jestli rodičovská padne před koupi (platí se nájem) nebo po ní
+(splátka) a kolik do té doby domácnost naspoří. Dokud si ho držela jen obrazovka,
+věta u cíle „Během rodičovské vám bude chybět…" se posunem puntíku nezměnila.
+
+Posuvníky v „Co kdyby" jsou naopak jen úvaha nad grafem a neukládají se nikdy;
+totéž platí o **termínu koupě**, který drží obrazovka.
 Odklad koupě přitom **nemění akontaci ani splátku**, jen termín; co se mezitím
 naspoří, zůstane v hotovosti. Kdyby se tvářil jako vyšší akontace, rozešla by se
 časová osa se splátkou, DSTI i verdiktem.

@@ -9,7 +9,7 @@ import { emergencyRunwayMonths } from '../../engine/cashflow';
 import { budgetNow, budgetAfterPurchase } from '../../engine/budget';
 import { czk, formatNumber as fmt, formatMonths } from '../../engine/format';
 import JourneyRibbon from './JourneyRibbon';
-import JourneyRange, { JourneyRangeNote } from './JourneyRange';
+import JourneyRange, { JourneyRangeNote, DEFAULT_VIEW_MONTHS } from './JourneyRange';
 import WhatIfPanel from './WhatIfPanel';
 import Callout from '../ui/Callout';
 
@@ -76,10 +76,11 @@ export default function WhatIfTab() {
     max: Math.max(earliestPurchase, Math.min(earliestPurchase + 120, currentJourney.horizonMonths - 12)),
   };
 
-  // Vlastní výřez, ne sdílený se záložkou Přehled. Tady se člověk dívá na
-  // rozdíl proti původnímu scénáři, a ten se v prvních letech skoro nepozná,
-  // takže se hodí jiný úsek než při čtení verdiktu.
-  const [viewMonths, setViewMonths] = useState(currentJourney.horizonMonths);
+  // Vlastní výřez, ne sdílený se záložkou Přehled: tady se člověk dívá na
+  // rozdíl proti původnímu scénáři, jinde na verdikt. Výchozích deset let
+  // ale platí stejně, viz `DEFAULT_VIEW_MONTHS`.
+  const [viewMonths, setViewMonths] = useState(() =>
+    Math.min(DEFAULT_VIEW_MONTHS, currentJourney.horizonMonths));
   const view = Math.min(viewMonths, currentJourney.horizonMonths);
 
   // Dlaždice se řídí zadaným scénářem, aby po odložení bydlení nezmizely

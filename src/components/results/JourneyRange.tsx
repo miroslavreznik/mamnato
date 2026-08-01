@@ -12,12 +12,19 @@
  * karta nejtěsnějšího místa i čísla mluví dál o celém plánu; mění se jen to,
  * kam se člověk dívá.
  *
+ * Výchozí je proto **deset let**, ne celý plán: v nich se odehraje všechno,
+ * co jde ovlivnit, a jsou v nich všechny události, kterými jde na stuze
+ * hýbat. Co zůstane za výřezem, řekne věta pod stuhou.
+ *
  * Když je co přepínat, ukáže se; u někoho pár let před důchodem je horizont
  * deset let a nabízet u něj „10 let" nebo „celý plán" by byla tatáž věc
  * dvakrát, takže se nekreslí nic.
  */
 
 import { beyondView, type Journey } from '../../engine/journey';
+
+/** Výchozí výřez. Delší plán se ořízne, kratší zůstane celý. */
+export const DEFAULT_VIEW_MONTHS = 120;
 
 interface Props {
   /** Celý horizont plánu v měsících. */

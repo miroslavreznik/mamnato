@@ -591,13 +591,20 @@ test('report uvádí předpoklady výpočtu včetně toho, kdo jde na rodičovsk
   await openTab(page, 'cile')
   await expect(page.getByRole('button', { name: /Osoba 1/ })).toHaveAttribute('aria-pressed', 'true')
 
-  // <summary> se v accessibility stromu neexponuje jako tlačítko.
-  await page.locator('summary', { hasText: 'Z čeho přehled počítá' }).click()
-  // Stejný seznam je i ve verzi jen pro tisk, proto .first().
-  const assumptions = page.locator('details', { hasText: 'Z čeho přehled počítá' })
-  await expect(assumptions.getByText('Na rodičovské zůstane')).toBeVisible()
-  await expect(assumptions.getByText(/Osoba 1 \(příjem/)).toBeVisible()
-  await expect(assumptions.getByText('Úroková sazba')).toBeVisible()
+  // Rozbalovátko je tlačítko se šipkou a se slovem, co se stane: `<summary>`
+  // bez markeru se v přehledu ztrácelo mezi nadpisy a nikdo do něj neklikl.
+  const rozbalit = page.getByRole('button', { name: /Zobrazit rozpis/ })
+  await expect(rozbalit).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByText('Na rodičovské zůstane')).toBeHidden()
+
+  await rozbalit.click()
+  await expect(page.getByRole('button', { name: /Skrýt rozpis/ })).toHaveAttribute('aria-expanded', 'true')
+  // Míří se do rozbaleného rozpisu: „Úroková sazba" je i popisek posuvníku
+  // v Bydlení, které je zrovna skryté.
+  const rozpis = page.getByTestId('predpoklady')
+  await expect(rozpis.getByText('Na rodičovské zůstane')).toBeVisible()
+  await expect(rozpis.getByText(/Osoba 1 \(příjem/)).toBeVisible()
+  await expect(rozpis.getByText('Úroková sazba')).toBeVisible()
 })
 
 test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ browser }) => {
@@ -727,11 +734,15 @@ test('cesta dohlédne až k důchodu a ukáže doplacení hypotéky', async ({ p
   await expectResults(page)
 
   // Popisek stuhy nese délku horizontu, takže se dá ověřit bez čtení SVG.
+  // Výchozí výřez je deset let, celý plán proto stojí v „z celkových 35".
   const stuha = page.getByRole('img', { name: /Vývoj úspor na/ })
   const popis = (await stuha.getAttribute('aria-label')) ?? ''
-  const let_ = Number(popis.match(/Vývoj úspor na (\d+) let/)?.[1])
-  expect(let_).toBe(35)
-  expect(popis).toContain('Splaceno')
+  expect(Number(popis.match(/z celkových (\d+)/)?.[1])).toBe(35)
+
+  await page.getByRole('button', { name: 'Celý plán', exact: true }).click()
+  const cely = (await stuha.getAttribute('aria-label')) ?? ''
+  expect(Number(cely.match(/Vývoj úspor na (\d+) let/)?.[1])).toBe(35)
+  expect(cely).toContain('Splaceno')
 })
 
 test('výřez cesty zkrátí pohled, ale neschová, co je za ním', async ({ page }) => {
@@ -757,15 +768,17 @@ test('výřez cesty zkrátí pohled, ale neschová, co je za ním', async ({ pag
   const roky = async () => Number(
     ((await stuha.getAttribute('aria-label')) ?? '').match(/Vývoj úspor na (\d+) let/)?.[1]
   )
-  expect(await roky()).toBe(35)
-
-  await page.getByRole('button', { name: '10 let', exact: true }).click()
+  // Výchozí je výřez na deset let: v nich se odehraje všechno, co jde ovlivnit.
   expect(await roky()).toBe(10)
-  await expect(page.getByText(/Za zobrazeným úsekem/)).toBeVisible()
+  await expect(page.locator('#souhrn').getByText(/Za zobrazeným úsekem/)).toBeVisible()
 
   await page.getByRole('button', { name: 'Celý plán', exact: true }).click()
   expect(await roky()).toBe(35)
-  await expect(page.getByText(/Za zobrazeným úsekem/)).toHaveCount(0)
+  await expect(page.locator('#souhrn').getByText(/Za zobrazeným úsekem/)).toHaveCount(0)
+
+  await page.getByRole('button', { name: '10 let', exact: true }).click()
+  expect(await roky()).toBe(10)
+  await expect(page.locator('#souhrn').getByText(/Za zobrazeným úsekem/)).toBeVisible()
 })
 
 test('výdaje jdou přepsat rovnou ve výsledcích a přehled se přepočítá', async ({ page }) => {

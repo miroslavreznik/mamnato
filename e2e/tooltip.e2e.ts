@@ -34,6 +34,11 @@ async function openFirstTooltip(page: Page) {
 for (const scheme of ['light', 'dark'] as const) {
   test(`nápověda je čitelná v ${scheme === 'light' ? 'světlém' : 'tmavém'} režimu`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme })
+    // Výchozí je tmavý režim bez ohledu na systém, takže `colorScheme` sám
+      // o sobě nestačí: motiv se musí nastavit tak, jak ho drží appka.
+    await page.addInitScript((t) => {
+      try { localStorage.setItem('mamnato_theme', t) } catch { /* ignore */ }
+    }, scheme)
     const tip = await openFirstTooltip(page)
 
     const { color, background } = await tip.evaluate((el) => {
