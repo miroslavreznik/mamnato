@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { WizardState } from '../../types';
 import { monthlyDisposable } from '../../engine/cashflow';
 import { retirementProjection, retirementStartingCapital, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement, retirementAge } from '../../engine/savings';
@@ -31,9 +31,11 @@ interface Props {
   // se projeví i v grafu rozpočtu a ve verdiktu (a naopak).
   monthlyContribution: number;
   onChangeContribution: (value: number) => void;
+  /** Zápis výnosu nástroje do plánu (desetinné číslo, 0,07 = 7 %). */
+  onChangeRate: (key: string, rate: number) => void;
 }
 
-export default function RetirementPlanner({ state, monthlyContribution, onChangeContribution }: Props) {
+export default function RetirementPlanner({ state, monthlyContribution, onChangeContribution, onChangeRate }: Props) {
   const colors = useChartColors();
   const instruments = instrumentDefs.map((i) => ({ ...i, color: colors[i.colorRole] }));
   const disposable = monthlyDisposable(state);
@@ -50,9 +52,14 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
   const [capitalOverride, setCapitalOverride] = useState<number | null>(null);
   const startingCapital = capitalOverride ?? retirementStartingCapital(state);
   const [monthlyRent, setMonthlyRent] = useState(30000);
-  const [rates, setRates] = useState(() =>
-    Object.fromEntries(instruments.map((i) => [i.key, i.rate]))
+  // Výnosy jsou zadané údaje, ne nastavení karty: z akciové řady počítá
+  // i věta o rentě v Přehledu. Dokud si je karta držela sama, ukazovala
+  // tabulka portfolio při 4 %, zatímco verdikt vedle mluvil o sedmi.
+  const rates = useMemo(
+    () => Object.fromEntries(instruments.map((i) => [i.key, (state.retirementRates?.[i.key] ?? i.rate / 100) * 100])),
+    [instruments, state.retirementRates]
   );
+  const setRate = (key: string, percent: number) => onChangeRate(key, percent / 100);
   /**
    * Výchozí je **dnešní kupní síla**, ne nominální hodnota.
    *
@@ -324,7 +331,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
                     <td className="text-right py-2 text-ink-body">
                       <NumField
                         value={rates[p.key]}
-                        onChange={(v) => setRates({ ...rates, [p.key]: v })}
+                        onChange={(v) => setRate(p.key, v)}
                         ariaLabel={`Výnos ${p.label}`}
                         className={fieldClass('w-20 text-right px-2 py-2 text-sm')}
                       />

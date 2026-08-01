@@ -171,6 +171,13 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     saveState(next);
   };
 
+  // Očekávané výnosy z karty důchodu. Z akciové řady počítá i verdikt.
+  const handleChangeRetirementRate = (key: string, rate: number) => {
+    const next = { ...state, retirementRates: { ...state.retirementRates, [key]: rate } };
+    setState(next);
+    saveState(next);
+  };
+
   // Náklady na dítě z karty (počet dětí, částky dle věku, VŠ). Patří do plánu:
   // počítá z nich časová osa, rodičovská i rozdělení peněz na cíle.
   const handleChangeChildCosts = (patch: NonNullable<WizardState['childCosts']>) => {
@@ -393,6 +400,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
               <RetirementPlanner
                 state={activeState}
                 monthlyContribution={allocations.retirement}
+                onChangeRate={handleChangeRetirementRate}
                 onChangeContribution={(v) => handleChangeAllocation('retirement', null, v)}
               />
             )}

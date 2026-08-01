@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { propertyReadiness, customReadiness } from '../../src/engine/readiness';
+import { propertyReadiness, customReadiness, retirementReadiness } from '../../src/engine/readiness';
 import { evaluateOverall } from '../../src/engine/summary';
 import type { WizardState } from '../../src/types';
 import type { GoalAllocations } from '../../src/engine/allocation';
@@ -129,5 +129,33 @@ describe('customReadiness', () => {
     const state = makeState({ goals: ['other'], customGoals: goals });
     const r = customReadiness(state, allocs({ custom: [10000] }));
     expect(r.headline).toContain('1 z 2');
+  });
+});
+
+describe('věta o důchodu stojí na výnosu, který jde přepsat', () => {
+  const sporici = (rates?: Record<string, number>): WizardState => ({
+    version: '1.0', currentStep: 1, completedSteps: [], mode: 'individual',
+    income: { person1NetMonthly: 60000 },
+    expenses: { rent: 15000, existingLoans: 0, insurance: 1500, food: 6000, transport: 3000, children: 0, utilities: 3500, other: 3000 },
+    savings: { totalSavings: 300000 },
+    goals: ['retirement'],
+    person1Age: 35,
+    property: { targetPrice: 5000000 },
+    retirementRates: rates,
+  });
+  const alloc = { downPayment: 0, retirement: 5000, child: 0, custom: [] };
+
+  it('nižší výnos v tabulce znamená nižší rentu ve větě', () => {
+    // Dokud si sazby držela karta, ukazovala tabulka portfolio při 4 %,
+    // zatímco verdikt vedle mluvil o sedmi.
+    const sedm = retirementReadiness(sporici(), alloc);
+    const ctyri = retirementReadiness(sporici({ sp500: 0.04 }), alloc);
+    expect(ctyri.headline).not.toBe(sedm.headline);
+    expect(ctyri.headline).toContain('4 %');
+    expect(sedm.headline).toContain('7 %');
+  });
+
+  it('předpoklad je ve větě napsaný', () => {
+    expect(retirementReadiness(sporici(), alloc).headline).toMatch(/při výnosu .* ročně/);
   });
 });

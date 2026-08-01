@@ -90,6 +90,16 @@ export interface WizardState {
   childInMonths?: number;
 
   /**
+   * Očekávané roční výnosy nástrojů v kartě „Plán spoření na důchod",
+   * klíčem je nástroj (`sp500`, `bonds`, …), hodnotou desetinné číslo.
+   *
+   * Patří do plánu, ne do obrazovky: z akciové řady (`sp500`) počítá i věta
+   * o rentě v Přehledu. Dokud si je karta držela sama, ukazovala tabulka
+   * portfolio při 4 %, zatímco verdikt vedle mluvil o sedmi.
+   */
+  retirementRates?: Record<string, number>;
+
+  /**
    * Úpravy nákladů na dítě z karty „Náklady na dítě".
    *
    * Patří do plánu, ne do obrazovky: podle nich počítá časová osa, rodičovská

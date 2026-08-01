@@ -242,6 +242,24 @@ export function yearOfReachingTarget(
  * počítala jen nové vklady. Kvůli tomu vycházela renta tak nízko, že se
  * i verdikt překlápěl na „zatím spíš doplněk".
  */
+/**
+ * Nástroj, ze kterého počítá plán, a jeho výchozí výnos.
+ *
+ * Sedm procent je dlouhodobý průměr širokého akciového indexu. Je to
+ * zároveň řada, kterou karta „Plán spoření na důchod" ukazuje jako první,
+ * takže když si uživatel její výnos přepíše, musí se změnit i věta o rentě
+ * v Přehledu; jinak by tabulka počítala portfolio při 4 % a verdikt vedle ní
+ * mluvil o sedmi.
+ */
+export const RETIREMENT_BASIS = 'sp500';
+export const DEFAULT_RETIREMENT_RETURN = 0.07;
+
+/** Roční výnos, se kterým počítá plán. */
+export function retirementReturn(state: WizardState): number {
+  const manual = state.retirementRates?.[RETIREMENT_BASIS];
+  return manual != null && Number.isFinite(manual) ? manual : DEFAULT_RETIREMENT_RETURN;
+}
+
 export function retirementStartingCapital(state: WizardState): number {
   // Kdo kupuje, tomu se rezerva poměřuje výdaji po koupi: splátka bývá skoro
   // dvojnásobek nájmu, takže „tři měsíce" znamenají skoro dvakrát tolik peněz.

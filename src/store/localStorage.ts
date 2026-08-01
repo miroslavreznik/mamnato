@@ -76,6 +76,14 @@ export function normalizeState(raw: unknown): WizardState | null {
     childInMonths: typeof raw.childInMonths === 'number'
       ? Math.min(480, Math.max(0, Math.round(raw.childInMonths)))
       : undefined,
+    // Výnosy: rozumné meze, ať uložený nesmysl neudělá z renty milion.
+    retirementRates: isRecord(raw.retirementRates)
+      ? Object.fromEntries(
+        Object.entries(raw.retirementRates)
+          .filter(([, v]) => typeof v === 'number' && Number.isFinite(v) && v >= -0.5 && v <= 0.5)
+          .map(([k, v]) => [k, v as number])
+      )
+      : undefined,
     childCosts: isRecord(raw.childCosts)
       ? {
         children: typeof raw.childCosts.children === 'number'
