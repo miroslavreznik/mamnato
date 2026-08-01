@@ -3,6 +3,7 @@ import { evaluateTaxRelief } from '../../engine/taxRelief';
 import Tooltip from '../ui/Tooltip';
 import { formatNumber as fmt } from '../../engine/format';
 import Card from '../ui/Card';
+import Disclosure from '../ui/Disclosure';
 
 
 /**
@@ -30,8 +31,10 @@ export default function TaxReliefCard({ state }: { state: WizardState }) {
                 <span className="text-xs text-ink-faint">/měs</span>
               </span>
             </div>
-            <p className="mt-1 text-xs text-ink-muted">{item.how}</p>
             <p className="mt-1 text-xs text-ink-faint">Ročně {fmt(item.yearly)} Kč.</p>
+            <Disclosure summary="Jak se to počítá">
+              <p className="text-xs text-ink-muted pb-1">{item.how}</p>
+            </Disclosure>
           </div>
         ))}
       </div>

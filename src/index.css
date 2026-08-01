@@ -516,6 +516,14 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
   .print-only {
     display: block !important;
   }
+  /* Klapky (Disclosure) se na papíře rozbalí: na obrazovce se pod ně schovává
+     odůvodnění, aby stránka nebyla samý odstavec, ale report má být úplný.
+     Vlastní třída, ne varianta `print:` z Tailwindu: zbytek tiskových
+     pravidel je tady. Klapka se schovává inline stylem, protože ten tohle
+     pravidlo přebít nedokáže, kdežto `[hidden]` z Tailwind preflightu ano. */
+  .print-open {
+    display: block !important;
+  }
   /* Stuha se musí vytisknout celá, ne zastavená uprostřed vykreslování. */
   .ribbon-draw {
     stroke-dasharray: none !important;

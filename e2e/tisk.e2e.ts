@@ -45,6 +45,19 @@ test('v tisku je obsah všech záložek, ne jen vybrané', async ({ page }) => {
   }
 })
 
+test('klapky se na papíře rozbalí', async ({ page }) => {
+  // Na obrazovce se pod klapky schovává odůvodnění, aby stránka nebyla samý
+  // odstavec. Report ale nikdo neproklikává, takže na papíře musí být úplný.
+  await toResults(page)
+  const skryte = page.getByText(/ušetřený rozdíl se utratí/)
+  await expect(skryte).toBeHidden()
+
+  await enterPrintMode(page)
+  await expect(skryte).toBeVisible()
+  // Samotné tlačítko klapky na papíře smysl nemá.
+  await expect(page.getByRole('button', { name: 'Co která čára znamená' })).toBeHidden()
+})
+
 test('do tisku se nedostanou ovládací prvky', async ({ page }) => {
   await toResults(page)
   await enterPrintMode(page)

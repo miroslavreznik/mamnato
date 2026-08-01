@@ -1173,3 +1173,52 @@ rodičovské", i když panel ukazuje jen ovladače k cílům, které uživatel m
 - **Rodina s dětmi a plánovaným dalším dítětem** dostane daňové zvýhodnění
   jen za ty stávající. Karta říká „na tohle nezapomeňte" a stávající slevu
   má uživatel už v čisté mzdě, takže by se přičtením zdvojila.
+
+## B23. Slib na uvítanou, míň textu na mobilu, posun událostí v Co kdyby
+
+Tři věci ze zpětné vazby.
+
+### Co se nestane, hned na uvítací obrazovce
+
+Odznáček „Zdarma · Bez registrace" neodpovídal na to, čeho se u finanční
+kalkulačky lidé doopravdy bojí: jestli za tím nestojí banka a jestli jim za
+týden nezačne někdo volat s nabídkou hypotéky. Pod tlačítko proto přibyly
+čtyři odškrtnuté věty (zdarma a bez registrace, nejsme banka ani
+zprostředkovatel, nechceme jméno ani kontakt, nikdo vás nebude obvolávat)
+a jedna malá o tom, že výpočty běží v prohlížeči.
+
+Každá je ověřitelná: appka nemá backend, produkční CSP má
+`connect-src 'none'`, nikde se neptá na kontakt a nemá analytiku. **Kdyby se
+cokoli z toho změnilo, musí se ten výčet změnit taky.** Třetí dlaždice se
+proto přejmenovala z „Data zůstávají u vás" (to teď říká výčet) na
+„Odnesete si to", tedy tisk a sdílený odkaz.
+
+### Klapky místo odstavců
+
+Na telefonu měla záložka Bydlení 5 703 px, tedy skoro sedm obrazovek, a
+čísla se v ní ztrácela mezi vysvětlivkami. Přibyla komponenta `Disclosure`
+a s ní pravidlo: **na stránce zůstává číslo a závěr, pod klapku jde
+odůvodnění.** Schované jsou: rozpis jednorázových nákladů (součet zůstal),
+„Pozor na odhad banky", limity ČNB u DTI/DSTI, popis čar v grafu koupě vs.
+nájem i jeho výhrady, výpočet daňových úlev, tabulka nákladů na dítě podle
+věku a druhá půlka nápovědy „čísla nejsou jen k prohlížení".
+
+Měřeno na 390 px: Bydlení 5 703 → 5 127 px, Dítě a důchod 5 097 → 4 721,
+Přehled 3 858 → 3 742, Rozpočet 2 836 → 2 720. Zbytek délky jsou grafy
+a čísla, a ta se schovávat nemají.
+
+Klapka **není `<details>`**: obsah v něm prohlížeč schová tak, že ho nejde
+vytáhnout do tisku, a report se neproklikává. Schovává se inline stylem,
+protože Tailwind má v preflightu `[hidden] { display: none !important }`
+uvnitř vrstvy a u `!important` deklarací vyhrávají vrstvené styly nad
+nevrstvenými, takže tiskové pravidlo by ho nepřebilo. Hlídá to test.
+
+### Posun událostí i v Co kdyby
+
+Puntíky koupě a dítěte jdou chytit i na stuze v Co kdyby, kde jsou to
+posuvníky jako cena nebo sazba: počítají se do „změněno" a mizí s „Vrátit
+původní scénář". Původní scénář si přitom drží termíny zadané, takže je
+rozdíl vidět jako přerušovaný obrys pod stuhou. Nadpis je pojmenuje
+(„Zkoušíte koupi za 3 roky a dítě za 3 roky."), protože „Zkoušíte: bydlení
+za 5 500 000 Kč" u někoho, kdo hnul jen termínem, mluví o čísle, se kterým
+nehnul.

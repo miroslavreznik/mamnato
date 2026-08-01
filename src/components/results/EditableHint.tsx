@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Disclosure from '../ui/Disclosure';
 
 /**
  * „Do těch čísel se dá sáhnout."
@@ -48,13 +49,22 @@ export default function EditableHint() {
       >
         <path d="M11 4H4v16h16v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z" />
       </svg>
-      <p className="min-w-0 text-sm text-ink-body">
-        <span className="font-semibold text-ink">Čísla v přehledu nejsou jen k prohlížení.</span>{' '}
-        Kde je pole, posuvník nebo přepínač, dá se do něj sáhnout: výdaje v Rozpočtu,
-        akontace a sazba v Bydlení, částky u cílů. Přehled se přepočítá hned a změna se uloží.
-        Do průvodce se kvůli tomu vracet nemusíte. Puntíkem na časové ose navíc posunete
-        termín koupě nebo narození dítěte; to je úvaha nad grafem a neukládá se.
-      </p>
+      {/* Jedna věta a zbytek pod klapku. Na telefonu zabíral celý odstavec
+          čtvrtinu obrazovky, a to na každé záložce znovu. */}
+      <div className="min-w-0">
+        <p className="text-sm text-ink-body">
+          <span className="font-semibold text-ink">Čísla v přehledu nejsou jen k prohlížení.</span>{' '}
+          Kde je pole, posuvník nebo puntík na ose, dá se do něj sáhnout.
+        </p>
+        <Disclosure summary="Co všechno jde upravit">
+          <p className="text-sm text-ink-body pb-1">
+            Výdaje v Rozpočtu, akontace a sazba v Bydlení, částky u cílů. Přehled se
+            přepočítá hned, změna se uloží a do průvodce se kvůli tomu vracet nemusíte.
+            Puntíkem na časové ose posunete termín koupě nebo narození dítěte; to je
+            úvaha nad grafem a neukládá se.
+          </p>
+        </Disclosure>
+      </div>
       <button
         type="button"
         onClick={dismiss}

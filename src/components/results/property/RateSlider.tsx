@@ -4,6 +4,7 @@ import { ltvRateAdvice, paymentAtRate } from '../../../engine/rateGuidance';
 import { czk, czkPerMonth, formatMonths, formatYears, formatRate } from '../../../engine/format';
 import Tooltip from '../../ui/Tooltip';
 import { StepButton, SliderCard } from './shared';
+import Disclosure from '../../ui/Disclosure';
 
 // Rozsah posuvníku sazby, pokrývá historické minimum i vyšší scénáře.
 const RATE_MIN = 0.02;
@@ -93,12 +94,13 @@ export default function RateSlider({ state, onChange }: {
             </p>
           )}
 
-          <p>
-            <span className="font-medium text-ink-label">Pozor na odhad banky:</span>{' '}
-            LTV počítáme z ceny, kterou jste zadali. Banka ho ale počítá ze svého odhadu, a ten
-            bývá spíš konzervativní. Když odhadce dům ocení níž, spadnete do horšího pásma a
-            rozdíl musíte doplatit z vlastních peněz. Vyplatí se nechat si odhad udělat u víc bank.
-          </p>
+          <Disclosure summary="Pozor na odhad banky">
+            <p className="pb-1">
+              LTV počítáme z ceny, kterou jste zadali. Banka ho ale počítá ze svého odhadu, a ten
+              bývá spíš konzervativní. Když odhadce dům ocení níž, spadnete do horšího pásma a
+              rozdíl musíte doplatit z vlastních peněz. Vyplatí se nechat si odhad udělat u víc bank.
+            </p>
+          </Disclosure>
 
           {advice.nextBand && advice.extraDownPayment > 0 && advice.rateDrop > 0 && (
             <p className={advice.affordable ? 'text-good' : ''}>
@@ -128,7 +130,7 @@ export default function RateSlider({ state, onChange }: {
           </p>
 
           <p className="text-ink-faint">
-            Přirážky podle LTV jsou orientační tržní zvyklost. Konkrétní sazbu vždy potvrdí až banka.
+            Přirážky podle LTV jsou orientační, konkrétní sazbu potvrdí až banka.
           </p>
         </div>
       )}

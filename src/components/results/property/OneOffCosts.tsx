@@ -2,6 +2,7 @@ import type { WizardState } from '../../../types';
 import { purchaseOneOffCosts } from '../../../engine/purchaseCosts';
 import { czk } from '../../../engine/format';
 import Tooltip from '../../ui/Tooltip';
+import Disclosure from '../../ui/Disclosure';
 
 /**
  * Jednorázové náklady koupě.
@@ -24,14 +25,17 @@ export default function OneOffCosts({ state }: { state: WizardState }) {
         <span className="font-semibold text-ink">{czk(costs.min)} až {czk(costs.max)}</span>.
         O tuhle částku se rezerva sníží hned při koupi, ještě než začnete splácet.
       </p>
-      <div className="space-y-1">
-        {costs.items.map((item) => (
-          <div key={item.key} className="flex justify-between gap-3 text-xs">
-            <span className="text-ink-body">{item.label}</span>
-            <span className="text-ink-muted shrink-0">{czk(item.min)} až {czk(item.max)}</span>
-          </div>
-        ))}
-      </div>
+      {/* Součet je odpověď, rozpis je jeho odůvodnění. */}
+      <Disclosure summary="Rozpis položek">
+        <div className="space-y-1 pb-1">
+          {costs.items.map((item) => (
+            <div key={item.key} className="flex justify-between gap-3 text-xs">
+              <span className="text-ink-body">{item.label}</span>
+              <span className="text-ink-muted shrink-0">{czk(item.min)} až {czk(item.max)}</span>
+            </div>
+          ))}
+        </div>
+      </Disclosure>
     </div>
   );
 }

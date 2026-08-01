@@ -674,7 +674,11 @@ test('graf koupě vs. nájem vysvětlí čáry i závěr', async ({ page }) => {
   await openTab(page, 'bydleni')
 
   // Všechny tři čáry jsou vysvětlené, ne jen pojmenované v legendě.
+  // Vysvětlení je pod klapkou: na telefonu zabíralo třetinu obrazovky nad
+  // grafem, ale dostupné být musí.
   await expect(page.getByText(/Koupě vs\. nájem: vývoj čistého jmění/)).toBeVisible()
+  await expect(page.getByText(/Nájem bez investování:/)).toBeHidden()
+  await page.getByRole('button', { name: 'Co která čára znamená' }).click()
   await expect(page.getByText(/Nájem bez investování:/)).toBeVisible()
   await expect(page.getByText(/ušetřený rozdíl se utratí/)).toBeVisible()
 

@@ -21,12 +21,32 @@ const features = [
     ),
   },
   {
-    title: 'Data zůstávají u vás',
-    desc: 'Nic se nikam neposílá. Vše počítá váš prohlížeč, žádná registrace.',
+    title: 'Odnesete si to',
+    desc: 'Přehled si vytisknete do PDF nebo pošlete odkazem. I ten se skládá ve vašem prohlížeči.',
     icon: (
-      <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />
+      <path d="M6 9V4h12v5M6 18h12v-5H6zM6 14h12M8 4v5m8-5v5" />
     ),
   },
+];
+
+/**
+ * Čtyři věty o tom, co se **nestane**.
+ *
+ * Přišlo to ze zpětné vazby: „zdarma" a „bez registrace" v odznáčku nahoře
+ * lidem neodpoví na to, čeho se u finanční kalkulačky doopravdy bojí, tedy
+ * jestli za tím nestojí banka a jestli jim za týden nezačne někdo volat
+ * s nabídkou hypotéky. Odpověď musí být vidět dřív, než začnou psát příjmy,
+ * ne až v podmínkách dole.
+ *
+ * Každá věta je ověřitelná: appka nemá backend, produkční CSP má
+ * `connect-src 'none'`, nikde se neptá na jméno ani kontakt a nemá
+ * analytiku. Kdyby se cokoli z toho změnilo, musí se změnit i tenhle výčet.
+ */
+const promises = [
+  'Zdarma a bez registrace',
+  'Nejsme banka ani zprostředkovatel',
+  'Nechceme jméno, e-mail ani telefon',
+  'Nikdo vás nebude obvolávat s nabídkami',
 ];
 
 export default function WelcomeScreen({ onStart, onResume }: Props) {
@@ -67,6 +87,25 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
             </button>
           )}
         </div>
+
+        {/* Co se nestane. Čtyři krátké řádky, ne odstavec: má to jít
+            přeletět očima, ne číst. Na širším okně do dvou sloupců, na telefonu pod sebe: „Nikdo vás nebude
+            obvolávat s nabídkami" se do půlky 390px displeje nevejde. */}
+        <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-left max-w-lg mx-auto">
+          {promises.map((p) => (
+            <li key={p} className="flex items-start gap-2 text-sm text-ink-body">
+              <svg className="w-4 h-4 shrink-0 mt-0.5 text-good" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+              {p}
+            </li>
+          ))}
+        </ul>
+
+        <p className="mt-4 text-xs text-ink-muted max-w-lg mx-auto text-left">
+          Všechny výpočty běží ve vašem prohlížeči a čísla z něj neodcházejí.
+          Je to vzdělávací nástroj, ne nabídka ani poradenství.
+        </p>
       </div>
 
       {/* Features */}

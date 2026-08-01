@@ -5,6 +5,7 @@ import { decimal, percentCompact } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
+import Disclosure from '../ui/Disclosure';
 
 interface Props {
   state: WizardState;
@@ -67,9 +68,11 @@ export default function DtiDstiIndicator({ state }: Props) {
         </div>
       )}
 
-      <p className="mt-4 text-xs text-ink-faint">
+      <Disclosure summary="Co je závazné a co jen zvyklost" className="mt-2">
+        <p className="text-xs text-ink-faint pb-1">
         Závazný je dnes už jen limit LTV (výše hypotéky vůči ceně): max 80 %, u žadatelů do 36 let 90 %. Horní limity DTI a DSTI ČNB závazně nevyžaduje, banky je ale posuzují jako interní vodítko.
       </p>
+      </Disclosure>
     </Card>
   );
 }

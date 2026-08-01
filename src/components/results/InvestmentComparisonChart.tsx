@@ -11,6 +11,7 @@ import { czk, percentCompact } from '../../engine/format';
 import { DEFAULTS } from '../../engine/defaults';
 import { purchasingPowerAfter } from '../../engine/savings';
 import Card from '../ui/Card';
+import Disclosure from '../ui/Disclosure';
 import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
@@ -50,12 +51,16 @@ export default function InvestmentComparisonChart({ state }: Props) {
   return (
     <Card title="Koupě vs. nájem: vývoj čistého jmění" subtitle={<>Všechny tři čáry ukazují <span className="text-ink-body">čisté jmění</span>, tedy co byste měli, kdybyste
         všechno prodali a doplatili dluhy. Startují na stejné částce: vlastník ji dá do akontace, nájemník ji investuje.</>}>
-      {/* Bez tohohle vysvětlení nešlo poznat, co která čára znamená. */}
+      {/* Bez tohohle vysvětlení nešlo poznat, co která čára znamená. Pod
+          klapkou proto, že popisky čar jsou v legendě grafu; tohle je jejich
+          rozvedení a na telefonu zabíralo třetinu obrazovky nad grafem. */}
+      <Disclosure summary="Co která čára znamená" className="mb-2">
       <ul className="mb-4 space-y-1 text-xs text-ink-muted">
         <li><span className="font-medium text-ink-label">Koupě nemovitosti:</span> hodnota nemovitosti minus zbytek hypotéky. Když vyjde vlastnictví levněji než nájem, rozdíl se investuje.</li>
         <li><span className="font-medium text-ink-label">Nájem a investování rozdílu:</span> nájemník investuje akontaci i to, oč měsíčně platí míň než vlastník.</li>
         <li><span className="font-medium text-ink-label">Nájem bez investování:</span> ušetřený rozdíl se utratí, takže jmění neroste. Nejčastější varianta v praxi.</li>
       </ul>
+      </Disclosure>
 
       <ResponsiveContainer width="100%" height={350}>
         <LineChart data={data} margin={{ top: 5, right: 8, left: 8, bottom: 5 }}>
@@ -148,6 +153,7 @@ export default function InvestmentComparisonChart({ state }: Props) {
         <p className="text-sm text-ink-label">
           <span className="font-semibold">Za {HORIZON} let:</span> {takeaway}
         </p>
+        <Disclosure summary="Nač je ten rozdíl citlivý">
         <p className="mt-2 text-xs text-ink-muted">
           Rozdíl mezi čarami je citlivý na tři čísla nahoře. Zkuste si je změnit, pořadí se často otočí.
           Výnosy jsou dlouhodobé průměry, ne záruka. Částky jsou v cenách za {HORIZON} let,
@@ -155,13 +161,13 @@ export default function InvestmentComparisonChart({ state }: Props) {
           koruna za {HORIZON} let zhruba {percentCompact(purchasingPowerAfter(HORIZON))} dnešní
           kupní síly. Na to, která čára je výš, to nemá vliv, obě jsou počítané stejně.
         </p>
+        <p className="mt-2 text-xs text-ink-faint">
+          Do srovnání nevstupuje jistota vlastního bydlení (nájem se dá vypovědět, hypotéka ne),
+          jednorázové náklady koupě ani odpočet úroků z daní. Počítá se s tím, že nájemník rozdíl
+          opravdu každý měsíc investuje a nesáhne na něj, což se v praxi povede málokomu.
+        </p>
+        </Disclosure>
       </div>
-
-      <p className="mt-3 text-xs text-ink-faint">
-        Do srovnání nevstupuje jistota vlastního bydlení (nájem se dá vypovědět, hypotéka ne),
-        jednorázové náklady koupě ani odpočet úroků z daní. Počítá se s tím, že nájemník rozdíl
-        opravdu každý měsíc investuje a nesáhne na něj, což se v praxi povede málokomu.
-      </p>
     </Card>
   );
 }

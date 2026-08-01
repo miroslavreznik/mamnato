@@ -36,6 +36,19 @@ export interface Overrides {
   propertyPrice?: number;
   mortgageRate?: number;
   parentalLeaveMonths?: number;
+  /**
+   * Termíny událostí na stuze: za jak dlouho dítě a nejdřív kdy koupě.
+   *
+   * Nejsou to pole stavu, ale volby časové osy, takže je `applyOverrides`
+   * nikam nedosazuje; bere si je rovnou záložka. Patří sem proto, že se
+   * s nimi má zacházet jako s posuvníky: počítají se do `touched` a mizí
+   * s „Vrátit původní scénář".
+   *
+   * Původní scénář (duch pod stuhou) si drží termíny zadané, takže je
+   * na první pohled vidět, co odklad udělal.
+   */
+  childMonth?: number;
+  purchaseMonth?: number;
 }
 
 export interface WhatIfValue {

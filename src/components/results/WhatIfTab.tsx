@@ -53,11 +53,28 @@ function Delta({ label, value, unit, diff, betterWhenLower }: {
 export default function WhatIfTab() {
   const {
     baseline, baselineAllocations, current, currentAllocations, touched, excludedGoals,
+    overrides, setOverride,
   } = useWhatIf();
 
   const comparison = compareScenarios(baseline, baselineAllocations, current, currentAllocations);
-  const currentJourney = journey(current, { allocations: currentAllocations });
+
+  // Termíny událostí jsou tady posuvník jako každý jiný: „co kdybychom měli
+  // dítě až za čtyři roky" nebo „co kdybychom s koupí rok počkali" je otázka
+  // ze stejné rodiny jako „co kdyby byl byt o půl milionu levnější".
+  // Původní scénář si drží termíny zadané, takže duch pod stuhou ukáže rozdíl.
+  const childOffset = overrides.childMonth ?? 12;
+  const purchaseAt = overrides.purchaseMonth ?? 0;
+  const currentJourney = journey(current, {
+    allocations: currentAllocations,
+    childOffsetMonths: childOffset,
+    purchaseNotBeforeMonth: purchaseAt,
+  });
   const baselineJourney = journey(baseline, { allocations: baselineAllocations });
+  const earliestPurchase = currentJourney.earliestPurchaseMonth;
+  const purchaseRange = earliestPurchase === null ? null : {
+    min: earliestPurchase,
+    max: Math.max(earliestPurchase, Math.min(earliestPurchase + 120, currentJourney.horizonMonths - 12)),
+  };
 
   // Vlastní výřez, ne sdílený se záložkou Přehled. Tady se člověk dívá na
   // rozdíl proti původnímu scénáři, a ten se v prvních letech skoro nepozná,
@@ -102,6 +119,16 @@ export default function WhatIfTab() {
     (p, i) => p.cash !== baselineJourney.points[i]?.cash
   );
 
+  // Co se posunulo po ose, pojmenované do nadpisu. Termín „hned" se čte líp
+  // než „za 0 měsíců" a je to u koupě nejčastější odpověď.
+  const movedTiming: string[] = [];
+  if (overrides.purchaseMonth != null) {
+    movedTiming.push(purchaseAt <= 0 ? 'koupi hned' : `koupi za ${formatMonths(purchaseAt)}`);
+  }
+  if (overrides.childMonth != null) {
+    movedTiming.push(childOffset <= 0 ? 'dítě hned' : `dítě za ${formatMonths(childOffset)}`);
+  }
+
   // Odpověď se porovnává celá, i s doplňkem za čárkou. Bez něj vycházelo
   // „odpověď se změnila z máte na to na máte na to", protože „Máte na to"
   // a „Máte na to, ale bude to napjaté" mají headline stejný.
@@ -131,11 +158,14 @@ export default function WhatIfTab() {
               : postponed.length > 0
                 // Nadpis má říct, co uživatel právě udělal. Když odložil cíl,
                 // je „Zkoušíte: bydlení za 6 000 000 Kč" matoucí: s cenou
-                // nehnul a přesto o ní nadpis mluví.
+                // nehnul a přesto o ní nadpis mluví. Totéž platí o termínech:
+                // kdo posunul koupi na později, o ceně nerozhodoval.
                 ? `Zkoušíte to bez toho, co jste odložili: ${postponed.join(', ')}.`
-                : hasProperty
-                  ? `Zkoušíte: bydlení za ${czk(current.property.targetPrice)}.`
-                  : 'Zkoušíte upravený scénář.'}
+                : movedTiming.length > 0
+                  ? `Zkoušíte ${movedTiming.join(' a ')}.`
+                  : hasProperty
+                    ? `Zkoušíte: bydlení za ${czk(current.property.targetPrice)}.`
+                    : 'Zkoušíte upravený scénář.'}
           </h2>
           <p className="mt-3 text-[15px] text-ink-body max-w-[62ch] leading-relaxed">
             {touched ? (
@@ -147,7 +177,7 @@ export default function WhatIfTab() {
                 <>Odpověď zůstává <strong>{answerNow.toLowerCase()}</strong>. {comparison.hint}</>
               )
             ) : (
-              'Vpravo vypnete kterýkoli cíl, nebo pohnete jeho parametry. Časová osa se překreslí hned a původní scénář zůstane vidět jako přerušovaný obrys, takže je poznat, jestli jste si pomohli.'
+              'Vpravo vypnete kterýkoli cíl, nebo pohnete jeho parametry. Puntíky na časové ose jde chytit a posunout, takže jde zkusit i pozdější koupi nebo dítě. Osa se překreslí hned a původní scénář zůstane vidět jako přerušovaný obrys, takže je poznat, jestli jste si pomohli.'
             )}
           </p>
         </div>
@@ -177,6 +207,13 @@ export default function WhatIfTab() {
             animate={false}
             viewMonths={view}
             ghost={touched && shapeChanged ? baselineJourney : undefined}
+            onMoveChild={current.goals.includes('child')
+              ? (m) => setOverride('childMonth', m)
+              : undefined}
+            onMovePurchase={purchaseRange
+              ? (m) => setOverride('purchaseMonth', m)
+              : undefined}
+            purchaseRange={purchaseRange ?? undefined}
           />
           <JourneyRangeNote data={currentJourney} viewMonths={view} />
         </div>

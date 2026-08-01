@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
 import GoalAllocationField from './GoalAllocationField';
+import Disclosure from '../ui/Disclosure';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
 import { HELP_BUTTON } from '../ui/Tooltip';
@@ -98,7 +99,10 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
         </div>
       </div>
 
-      {/* Editable cost table */}
+      {/* Tabulka je k přepsání, ne ke čtení: odpověď je průměr a součet pod
+          ní, tohle jsou vstupy. Na telefonu zabírala čtyři řádky polí hned
+          nad grafem, který totéž ukazuje názorněji. */}
+      <Disclosure summary="Upravit náklady podle věku" className="mb-4">
       <div className="mb-6">
         <h4 className="text-sm font-semibold text-ink-label mb-2">Měsíční náklady dle věku</h4>
         <div className="overflow-x-auto">
@@ -127,6 +131,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
           </table>
         </div>
       </div>
+      </Disclosure>
 
       {/* Summary */}
       <div className="grid grid-cols-2 gap-4 mb-6">
