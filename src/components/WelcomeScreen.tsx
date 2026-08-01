@@ -22,7 +22,7 @@ const features = [
   },
   {
     title: 'Odnesete si to',
-    desc: 'Přehled si vytisknete do PDF nebo pošlete odkazem. I ten se skládá ve vašem prohlížeči.',
+    desc: 'Přehled si vytisknete do PDF nebo pošlete odkazem komukoli, s kým se radíte.',
     icon: (
       <path d="M6 9V4h12v5M6 18h12v-5H6zM6 14h12M8 4v5m8-5v5" />
     ),
@@ -32,11 +32,16 @@ const features = [
 /**
  * Čtyři věty o tom, co se **nestane**.
  *
- * Přišlo to ze zpětné vazby: „zdarma" a „bez registrace" v odznáčku nahoře
- * lidem neodpoví na to, čeho se u finanční kalkulačky doopravdy bojí, tedy
- * jestli za tím nestojí banka a jestli jim za týden nezačne někdo volat
- * s nabídkou hypotéky. Odpověď musí být vidět dřív, než začnou psát příjmy,
- * ne až v podmínkách dole.
+ * Přišlo to ze zpětné vazby: „zdarma" a „bez registrace" lidem neodpoví na
+ * to, čeho se u finanční kalkulačky doopravdy bojí, tedy jestli za tím
+ * nestojí banka a jestli jim za týden nezačne někdo volat s nabídkou
+ * hypotéky. Odpověď musí být vidět dřív, než začnou psát příjmy, ne až
+ * v podmínkách dole.
+ *
+ * Stojí to na **jednom místě**, v kartě pod dlaždicemi. Nejdřív to bylo
+ * rozseté na tři: odznáček nad nadpisem, seznam pod tlačítkem a dlaždice
+ * „Data zůstávají u vás". Každé to říkalo trochu jinak a dohromady to
+ * působilo jako přemlouvání.
  *
  * Každá věta je ověřitelná: appka nemá backend, produkční CSP má
  * `connect-src 'none'`, nikde se neptá na jméno ani kontakt a nemá
@@ -47,6 +52,7 @@ const promises = [
   'Nejsme banka ani zprostředkovatel',
   'Nechceme jméno, e-mail ani telefon',
   'Nikdo vás nebude obvolávat s nabídkami',
+  'Čísla zůstávají ve vašem prohlížeči',
 ];
 
 export default function WelcomeScreen({ onStart, onResume }: Props) {
@@ -58,7 +64,7 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
       <div className="text-center max-w-2xl mx-auto">
         <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-tint-brand text-brand border border-line mb-6">
           <span className="w-1.5 h-1.5 rounded-full bg-ink" />
-          Zdarma · Bez registrace · Hotovo za 3 minuty
+          Hotovo za 3 minuty
         </span>
 
         <h1 className="type-display text-ink mb-4 text-balance">
@@ -88,28 +94,13 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
           )}
         </div>
 
-        {/* Co se nestane. Čtyři krátké řádky, ne odstavec: má to jít
-            přeletět očima, ne číst. Na širším okně do dvou sloupců, na telefonu pod sebe: „Nikdo vás nebude
-            obvolávat s nabídkami" se do půlky 390px displeje nevejde. */}
-        <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-left max-w-lg mx-auto">
-          {promises.map((p) => (
-            <li key={p} className="flex items-start gap-2 text-sm text-ink-body">
-              <svg className="w-4 h-4 shrink-0 mt-0.5 text-good" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-              {p}
-            </li>
-          ))}
-        </ul>
-
-        <p className="mt-4 text-xs text-ink-muted max-w-lg mx-auto text-left">
-          Všechny výpočty běží ve vašem prohlížeči a čísla z něj neodcházejí.
-          Je to vzdělávací nástroj, ne nabídka ani poradenství.
-        </p>
       </div>
 
-      {/* Features */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-14">
+      {/* Co appka umí a co po vás nechce, v jedné mřížce.
+          Dřív to bylo na třech místech: odznáček nahoře („Zdarma · Bez
+          registrace"), seznam pod tlačítkem a dlaždice „Data zůstávají
+          u vás". Trojí obměna téhož vypadá jako přemlouvání, ne jako slib. */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12">
         {features.map((f) => (
           <div
             key={f.title}
@@ -124,6 +115,27 @@ export default function WelcomeScreen({ onStart, onResume }: Props) {
             <p className="text-sm text-ink-muted leading-relaxed">{f.desc}</p>
           </div>
         ))}
+
+        {/* Slib přes celou šířku, ne čtvrtá dlaždice v řadě: je to jiný druh
+            informace než „co uvidíte" a čte se jako výčet, ne jako odstavec. */}
+        <div className="sm:col-span-3 rounded-2xl border border-line bg-card/70 p-5 text-left">
+          <h3 className="font-semibold text-ink mb-3">Nejsme banka a nic po vás nechceme</h3>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+            {promises.map((p) => (
+              <li key={p} className="flex items-start gap-2 text-sm text-ink-body">
+                <svg className="w-4 h-4 shrink-0 mt-0.5 text-good" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M20 6 9 17l-5-5" />
+                </svg>
+                {p}
+              </li>
+            ))}
+          </ul>
+          {/* Zbylo jen to, co výčet neřekne. Věta o prohlížeči byla i tady
+              i v patičce pod tím, tedy třetí obměna téhož na jedné obrazovce. */}
+          <p className="mt-3 text-xs text-ink-muted">
+            Je to vzdělávací a informační nástroj, ne nabídka ani poradenství.
+          </p>
+        </div>
       </div>
     </div>
   );

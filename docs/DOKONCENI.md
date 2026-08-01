@@ -1182,10 +1182,17 @@ Tři věci ze zpětné vazby.
 
 Odznáček „Zdarma · Bez registrace" neodpovídal na to, čeho se u finanční
 kalkulačky lidé doopravdy bojí: jestli za tím nestojí banka a jestli jim za
-týden nezačne někdo volat s nabídkou hypotéky. Pod tlačítko proto přibyly
-čtyři odškrtnuté věty (zdarma a bez registrace, nejsme banka ani
-zprostředkovatel, nechceme jméno ani kontakt, nikdo vás nebude obvolávat)
-a jedna malá o tom, že výpočty běží v prohlížeči.
+týden nezačne někdo volat s nabídkou hypotéky. Přibyl proto výčet pěti
+odškrtnutých vět: zdarma a bez registrace, nejsme banka ani zprostředkovatel,
+nechceme jméno ani kontakt, nikdo vás nebude obvolávat, čísla zůstávají
+v prohlížeči.
+
+**Na jednom místě, ne na třech.** Napoprvé to stálo pod tlačítkem a vedle
+toho o tomtéž mluvil odznáček nad nadpisem („Zdarma · Bez registrace"),
+dlaždice „Data zůstávají u vás" a ještě patička. Čtyři obměny téhož na jedné
+obrazovce působí jako přemlouvání, ne jako slib. Výčet je teď v kartě pod
+dlaždicemi, odznáček říká jen „Hotovo za 3 minuty" a dlaždice mluví o tisku
+a sdílení.
 
 Každá je ověřitelná: appka nemá backend, produkční CSP má
 `connect-src 'none'`, nikde se neptá na kontakt a nemá analytiku. **Kdyby se
