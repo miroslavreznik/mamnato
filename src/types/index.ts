@@ -89,6 +89,22 @@ export interface WizardState {
    */
   childInMonths?: number;
 
+  /**
+   * Úpravy nákladů na dítě z karty „Náklady na dítě".
+   *
+   * Patří do plánu, ne do obrazovky: podle nich počítá časová osa, rodičovská
+   * i rozdělení peněz na cíle. Dokud si je karta držela sama, ukazovala
+   * náklady na dvě děti a osa vedle ní počítala jedno.
+   */
+  childCosts?: {
+    /** Kolik dětí se plánuje. Počítá se, že přijdou zhruba naráz. */
+    children?: number;
+    /** Přepsané měsíční částky podle věkového pásma (klíč je `label`). */
+    byAge?: Record<string, number>;
+    /** Počítat i vysokou školu (19 až 26 let). */
+    includeUniversity?: boolean;
+  };
+
   // Rodičovská / výpadek příjmu (pro cíl „dítě" u páru/rodiny)
   parentalLeave?: ParentalLeave;
 }

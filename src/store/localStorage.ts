@@ -1,6 +1,21 @@
 import type { WizardState, FinancialGoal, UserMode } from '../types';
 import { createInitialState } from './wizardStore';
-import { DEFAULTS } from '../engine/defaults';
+import { DEFAULTS, CHILD_COSTS_CZ } from '../engine/defaults';
+
+/**
+ * Přepsané náklady na dítě z uloženého stavu.
+ *
+ * Bere jen známá věková pásma a jen kladná čísla: cizí klíč by se v tabulce
+ * nikde nezobrazil, ale počítal by se do průměru, který jde do rozpočtu.
+ */
+function childCostOverrides(raw: Record<string, unknown>): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const range of CHILD_COSTS_CZ) {
+    const v = raw[range.label];
+    if (typeof v === 'number' && Number.isFinite(v) && v >= 0) out[range.label] = Math.round(v);
+  }
+  return out;
+}
 
 const STORAGE_KEY = 'mamnato_wizard_v1';
 const CURRENT_VERSION = '1.0';
@@ -60,6 +75,19 @@ export function normalizeState(raw: unknown): WizardState | null {
     // Termín dítěte: rozumné meze, ať uložený nesmysl nerozhodí časovou osu.
     childInMonths: typeof raw.childInMonths === 'number'
       ? Math.min(480, Math.max(0, Math.round(raw.childInMonths)))
+      : undefined,
+    childCosts: isRecord(raw.childCosts)
+      ? {
+        children: typeof raw.childCosts.children === 'number'
+          ? Math.min(5, Math.max(1, Math.round(raw.childCosts.children)))
+          : undefined,
+        includeUniversity: raw.childCosts.includeUniversity === true ? true : undefined,
+        // Jen kladná čísla u známých pásem; cizí klíč by se v tabulce
+        // nikde nezobrazil, ale počítal by se do průměru.
+        byAge: isRecord(raw.childCosts.byAge)
+          ? childCostOverrides(raw.childCosts.byAge)
+          : undefined,
+      }
       : undefined,
     income: {
       person1NetMonthly: num(rIncome.person1NetMonthly, base.income.person1NetMonthly),

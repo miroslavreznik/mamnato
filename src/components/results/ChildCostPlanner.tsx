@@ -17,19 +17,30 @@ interface Props {
   state: WizardState;
   monthlyAllocation: number;
   onChangeAllocation: (v: number) => void;
+  /** Zápis do plánu: počet dětí, částky dle věku, vysoká škola. */
+  onChangeCosts: (patch: NonNullable<WizardState['childCosts']>) => void;
 }
 
-export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAllocation }: Props) {
+export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAllocation, onChangeCosts }: Props) {
   const colors = useChartColors();
   const isFamily = state.mode === 'family';
-  const [numberOfChildren, setNumberOfChildren] = useState(state.numberOfChildren ?? 1);
-  const [horizonYears, setHorizonYears] = useState(18);
-  const [includeUni, setIncludeUni] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
-  const [customCosts, setCustomCosts] = useState<Record<string, number>>(() =>
-    Object.fromEntries(CHILD_COSTS_CZ.map((r) => [r.label, r.monthlyCost]))
+
+  // Počet dětí, částky podle věku i vysoká škola jsou **zadané údaje**, ne
+  // nastavení téhle karty: počítá z nich časová osa, rodičovská i rozdělení
+  // peněz na cíle. Dokud si je karta držela ve vlastním `useState`, ukazovala
+  // náklady na dvě děti a osa vedle ní počítala jedno.
+  const costs = state.childCosts;
+  const numberOfChildren = Math.max(1, Math.round(costs?.children ?? 1));
+  const includeUni = costs?.includeUniversity ?? false;
+  const customCosts = useMemo(
+    () => Object.fromEntries(CHILD_COSTS_CZ.map((r) => [r.label, costs?.byAge?.[r.label] ?? r.monthlyCost])),
+    [costs?.byAge]
   );
 
+  // Horizont je jen výřez pro graf a součet v téhle kartě: kdo chce vidět
+  // „co stojí dítě do deseti let", nemění tím plán.
+  const [horizonYears, setHorizonYears] = useState(18);
   const effectiveHorizon = includeUni ? Math.max(horizonYears, 26) : horizonYears;
 
   const result = useMemo(
@@ -65,14 +76,17 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
           <label className="block text-sm font-medium text-ink-label mb-1">Počet dětí</label>
           <NumField
             value={numberOfChildren}
-            onChange={setNumberOfChildren}
+            onChange={(v) => onChangeCosts({ children: v })}
             min={1} max={5}
             ariaLabel="Počet dětí"
             step={1}
             className={fieldClass('w-full px-3 py-2.5 text-base')}
           />
           {numberOfChildren > 1 && (
-            <p className="mt-1 text-xs text-ink-faint">U druhého a dalšího dítěte mohou být náklady nižší díky zděděnému vybavení.</p>
+            <p className="mt-1 text-xs text-ink-faint">
+              U druhého a dalšího dítěte mohou být náklady nižší díky zděděnému vybavení.
+              Plán počítá, že přijdou zhruba naráz; rozestup mezi sourozenci časová osa neumí.
+            </p>
           )}
         </div>
         <div>
@@ -91,7 +105,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
             <input
               type="checkbox"
               checked={includeUni}
-              onChange={(e) => setIncludeUni(e.target.checked)}
+              onChange={(e) => onChangeCosts({ includeUniversity: e.target.checked })}
               className="w-4 h-4 rounded border-line-strong"
             />
             <span className="text-sm text-ink-label">Zahrnout VŠ (19–26 let)</span>
@@ -120,7 +134,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
                   <td className="text-right py-2">
                     <NumField
                       value={customCosts[range.label]}
-                      onChange={(v) => setCustomCosts({ ...customCosts, [range.label]: v })}
+                      onChange={(v) => onChangeCosts({ byAge: { ...costs?.byAge, [range.label]: v } })}
                       ariaLabel={`Náklady ${range.label}`}
                       className={fieldClass('w-24 text-right px-2 py-2 text-sm')}
                     />

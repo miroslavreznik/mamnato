@@ -171,6 +171,14 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     saveState(next);
   };
 
+  // Náklady na dítě z karty (počet dětí, částky dle věku, VŠ). Patří do plánu:
+  // počítá z nich časová osa, rodičovská i rozdělení peněz na cíle.
+  const handleChangeChildCosts = (patch: NonNullable<WizardState['childCosts']>) => {
+    const next = { ...state, childCosts: { ...state.childCosts, ...patch } };
+    setState(next);
+    saveState(next);
+  };
+
   const handleChangeParentalLeave = (value: ParentalLeave | undefined) => {
     const next = { ...state, parentalLeave: value };
     setState(next);
@@ -392,6 +400,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
               <ChildCostPlanner
                 state={activeState}
                 monthlyAllocation={allocations.child}
+                onChangeCosts={handleChangeChildCosts}
                 onChangeAllocation={(v) => handleChangeAllocation('child', null, v)}
               />
             )}

@@ -1,5 +1,5 @@
 import type { WizardState } from '../types';
-import { monthlyChildCostAtAge } from './childCost';
+import { monthlyChildCost } from './childCost';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
 import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment } from './mortgage';
 import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
@@ -225,7 +225,7 @@ export function wealthTimeline(
       const repaid = mortgagePaidOffMonth !== null && m >= mortgagePaidOffMonth;
       expenses = expenses - rent + (repaid ? 0 : mortgage) + ownership;
     }
-    if (childMonth !== null && m >= childMonth) expenses += monthlyChildCostAtAge((m - childMonth) / 12);
+    if (childMonth !== null && m >= childMonth) expenses += monthlyChildCost(state, (m - childMonth) / 12);
 
     const flow = income - expenses;
     cash += flow;

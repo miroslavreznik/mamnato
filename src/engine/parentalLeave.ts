@@ -2,7 +2,7 @@ import type { WizardState } from '../types';
 import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable } from './cashflow';
 import { effectiveDownPayment, expensesAfterPurchase, downPaymentGap } from './mortgage';
 import { estimate, type Estimate } from './estimate';
-import { monthlyChildCostAtAge } from './childCost';
+import { monthlyChildCost } from './childCost';
 import { calculateDefaultAllocations, monthsToSaveAtAllocation } from './allocation';
 
 // Rodičovský příspěvek na jedno dítě (od 2024), celkový balík na celou dobu.
@@ -193,10 +193,10 @@ export interface LeaveImpact {
  * nemohla rozejít. U volna delšího než tři roky přejde dítě do dražšího
  * pásma a průměr to zachytí.
  */
-function childCostOverPhase(fromMonth: number, months: number): number {
+function childCostOverPhase(state: WizardState, fromMonth: number, months: number): number {
   const whole = Math.max(1, Math.round(months));
   let sum = 0;
-  for (let i = 0; i < whole; i++) sum += monthlyChildCostAtAge((fromMonth + i) / 12);
+  for (let i = 0; i < whole; i++) sum += monthlyChildCost(state, (fromMonth + i) / 12);
   return sum / whole;
 }
 
@@ -258,7 +258,7 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   const expenses = totalMonthlyExpenses(state);
 
   const disposableNow = incomeNow - expenses;
-  const childCostAvg = childCostOverPhase(0, pl.durationMonths);
+  const childCostAvg = childCostOverPhase(state, 0, pl.durationMonths);
   const disposableDuringLeave = incomeDuringLeave - expenses - childCostAvg;
 
   // Výdaje, se kterými se během rodičovské reálně počítá: po koupi mizí nájem
@@ -299,7 +299,7 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   let elapsedMonths = 0;
   for (const phase of phases) {
     const disposable = incomeNow - lostSalary + phase.monthlyBenefit - relevantExpenses
-      - childCostOverPhase(elapsedMonths, phase.months);
+      - childCostOverPhase(state, elapsedMonths, phase.months);
     elapsedMonths += phase.months;
     worstMonthlyDisposable = Math.min(worstMonthlyDisposable, disposable);
     const monthly = Math.max(0, -disposable);

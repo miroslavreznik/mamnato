@@ -2,6 +2,7 @@ import type { WizardState } from '../types';
 import { monthlyDisposable } from './cashflow';
 import { downPaymentGap } from './mortgage';
 import { CHILD_COSTS_CZ } from './defaults';
+import { monthlyChildCost } from './childCost';
 
 /**
  * Kolik měsíčně jde na jednotlivé cíle.
@@ -37,14 +38,17 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
   const disposable = monthlyDisposable(state);
   const allocs: GoalAllocations = { downPayment: 0, retirement: 0, child: 0, custom: [] };
 
-  // Dítě: vážený průměr měsíčních nákladů za prvních 18 let.
+  // Dítě: vážený průměr měsíčních nákladů po celou dobu, po kterou se dítě
+  // živí. Bere se z plánu, takže se s ním hýbe i karta „Náklady na dítě"
+  // (počet dětí, částky podle věku, vysoká škola).
   if (state.goals.includes('child')) {
+    const maxAge = state.childCosts?.includeUniversity ? 26 : 18;
     let totalMonths = 0;
     let totalCost = 0;
     for (const range of CHILD_COSTS_CZ) {
-      if (range.to > 18) continue;
+      if (range.to > maxAge) continue;
       const months = (range.to - range.from) * 12;
-      totalCost += range.monthlyCost * months;
+      totalCost += monthlyChildCost(state, range.from) * months;
       totalMonths += months;
     }
     allocs.child = totalMonths > 0 ? Math.round(totalCost / totalMonths) : 0;

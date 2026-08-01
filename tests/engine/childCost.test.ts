@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { calculateChildCosts } from '../../src/engine/childCost';
+import { calculateChildCosts, monthlyChildCost } from '../../src/engine/childCost';
+import { calculateDefaultAllocations } from '../../src/engine/allocation';
+import { wealthTimeline } from '../../src/engine/wealthTimeline';
+import type { WizardState } from '../../src/types';
 
 describe('calculateChildCosts', () => {
   it('calculates costs for 1 child, 18 years', () => {
@@ -36,5 +39,40 @@ describe('calculateChildCosts', () => {
     expect(result.totalCost).toBe(0);
     expect(result.monthlyAverage).toBe(0);
     expect(result.yearlyBreakdown).toHaveLength(0);
+  });
+});
+
+describe('náklady na dítě jsou jedny pro celou appku', () => {
+  const rodina = (childCosts?: WizardState['childCosts']): WizardState => ({
+    version: '1.0', currentStep: 1, completedSteps: [], mode: 'couple',
+    income: { person1NetMonthly: 48000, person2NetMonthly: 36000 },
+    expenses: { rent: 18000, existingLoans: 0, insurance: 1500, food: 8000, transport: 3000, children: 0, utilities: 3500, other: 3000 },
+    savings: { totalSavings: 400000 },
+    goals: ['child'],
+    property: { targetPrice: 6000000, mortgageRate: 0.048, loanTermYears: 30 },
+    childCosts,
+  });
+
+  it('dvě děti stojí dvakrát tolik, a to i na časové ose', () => {
+    // Karta si počet dětí držela sama, takže ukazovala náklady na dvě děti
+    // a osa vedle ní počítala jedno.
+    expect(monthlyChildCost(rodina({ children: 2 }), 1))
+      .toBe(2 * monthlyChildCost(rodina(), 1));
+
+    const jedno = wealthTimeline(rodina(), { months: 60, childOffsetMonths: 0 });
+    const dve = wealthTimeline(rodina({ children: 2 }), { months: 60, childOffsetMonths: 0 });
+    expect(dve.points[12].flow).toBeLessThan(jedno.points[12].flow);
+  });
+
+  it('přepsaná částka u pásma platí i pro rozpočet', () => {
+    const draha = rodina({ byAge: { '0–3 roky': 20000 } });
+    expect(monthlyChildCost(draha, 1)).toBe(20000);
+    expect(calculateDefaultAllocations(draha).child)
+      .toBeGreaterThan(calculateDefaultAllocations(rodina()).child);
+  });
+
+  it('bez zapnuté vysoké školy se po osmnáctinách neplatí nic', () => {
+    expect(monthlyChildCost(rodina(), 20)).toBe(0);
+    expect(monthlyChildCost(rodina({ includeUniversity: true }), 20)).toBeGreaterThan(0);
   });
 });
