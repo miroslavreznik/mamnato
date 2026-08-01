@@ -5,6 +5,7 @@ import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortg
 import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
 import { yearsUntilRetirement, retirementAge } from './savings';
 import { calculateDefaultAllocations, type GoalAllocations } from './allocation';
+import { reserveStatus } from './reserve';
 
 // Časová osa úspor: měsíc po měsíci simuluje vývoj úspor domácnosti přes
 // plánované životní události, spoření na akontaci, koupi (jednorázový pokles
@@ -172,6 +173,9 @@ export function wealthTimeline(
   //    dvakrát: 11 333 Kč jako cíl a k tomu 6 426 Kč jako výdaj. Stuha pak
   //    hlásila napjatý rozpočet od narození dítěte i tam, kde ve
   //    skutečnosti vycházel.
+  //
+  // Třetí, **nouzová rezerva**, končí naplněním. Je to cíl s koncem, ne trvalý
+  // výdaj: od chvíle, kdy je plná, se ty peníze uvolní na cokoli jiného.
   const alloc = opts.allocations ?? calculateDefaultAllocations(state);
   const customTotal = alloc.custom.reduce((sum, v) => sum + v, 0);
   const goalsAlways = alloc.retirement + customTotal;
@@ -181,6 +185,12 @@ export function wealthTimeline(
   // Fond na akontaci: co je z úspor vyhrazeno teď, plus co se na ni měsíčně
   // odkládá. Kupuje se z něj, ne z celého jmění.
   let downPaymentFund = effectiveDownPayment(state);
+  // Nouzová rezerva vede vlastní fond ze stejného důvodu jako akontace: jsou
+  // to peníze v hotovosti, ale slíbené jinam. Bez toho by cíl „rezerva" na ose
+  // nebyl vidět vůbec, protože se od `cash` neodečítá (nikam neodchází).
+  const reserve = reserveStatus(state);
+  const reserveGoal = state.goals.includes('reserve');
+  let reserveFund = reserve.current;
   let purchaseMonth: number | null = null;
   let earliestPurchaseMonth: number | null = null;
   const notBefore = Math.max(0, Math.round(opts.purchaseNotBeforeMonth ?? 0));
@@ -229,10 +239,19 @@ export function wealthTimeline(
 
     const flow = income - expenses;
     cash += flow;
-    // Fond na akontaci roste jen do koupě a jen o vyhrazenou částku, nikdy
-    // ale o víc, než kolik ten měsíc doopravdy přiteklo.
+    // Oba fondy si berou z toho, co ten měsíc doopravdy přiteklo, a berou si
+    // postupně: rezerva první, akontace ze zbytku. Kdyby si každý sáhl na
+    // `min(alloc, flow)` zvlášť, rozdělily by v hubeném měsíci tytéž peníze
+    // dvakrát a osa by kupovala dřív, než na co domácnost má.
+    let free = Math.max(0, flow);
+    const buildingReserve = reserveGoal && reserveFund < reserve.target;
+    if (buildingReserve) {
+      const put = Math.min(alloc.reserve, free);
+      reserveFund += put;
+      free -= put;
+    }
     if (purchaseMonth === null) {
-      downPaymentFund += Math.max(0, Math.min(alloc.downPayment, flow));
+      downPaymentFund += Math.min(alloc.downPayment, free);
     }
 
     if (cash < minCash) {
@@ -243,6 +262,7 @@ export function wealthTimeline(
 
     const goals = goalsAlways
       + (purchaseMonth === null ? alloc.downPayment : 0)
+      + (buildingReserve ? alloc.reserve : 0)
       + (childMonth !== null && m >= childMonth ? 0 : alloc.child);
     points.push({
       month: m + 1,

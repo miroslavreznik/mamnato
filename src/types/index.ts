@@ -1,6 +1,6 @@
 export type UserMode = 'individual' | 'couple' | 'family';
 
-export type FinancialGoal = 'property' | 'child' | 'retirement' | 'other';
+export type FinancialGoal = 'property' | 'child' | 'retirement' | 'other' | 'reserve';
 
 export interface WizardState {
   version: string;
@@ -98,6 +98,15 @@ export interface WizardState {
    * portfolio při 4 %, zatímco verdikt vedle mluvil o sedmi.
    */
   retirementRates?: Record<string, number>;
+
+  /**
+   * Na kolik měsíců nezbytných výdajů má vystačit nouzová rezerva.
+   *
+   * Nevyplněno znamená „drž se doporučení" (tři měsíce, viz
+   * `engine/reserve.ts`), ne „chybí údaj". Cíl „rezerva" se tím dá zvednout
+   * na půl roku nebo víc, což dává smysl u nejistého příjmu.
+   */
+  reserveMonths?: number;
 
   /**
    * Úpravy nákladů na dítě z karty „Náklady na dítě".

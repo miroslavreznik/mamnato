@@ -1358,3 +1358,58 @@ v kartě dítěte, růst cen nemovitostí a nájmu v grafu koupě vs. nájem
 (předpoklady jen toho jednoho srovnání) a požadovaná renta v důchodu.
 Ta poslední je hraniční: kdyby se z ní počítalo „kolik vám do ní chybí",
 patřila by do plánu.
+
+## Nouzová rezerva jako sledovaný cíl
+
+Rezerva byla ve slovníčku popsaná jako „první věc, kterou má smysl mít
+hotovou, dřív než cokoli jiného" a karta „A co teď" ji uměla doporučit
+(„postavte 128 063 Kč"). Nešla ale zapnout jako cíl, takže se neobjevila
+nikde vedle důchodu a dítěte: ani v rozpočtu, ani na časové ose, ani mezi
+přepínači v Co kdyby. Doporučení bez místa v plánu se čte jako poznámka
+pod čarou.
+
+**Nový modul `engine/reserve.ts`** je jediné místo, kde se rezerva počítá.
+Ten vzorec dosud bydlel uvnitř `nextStep` a nešel použít jinde, aniž by se
+opsal; `nextStep` z něj teď čte taky. Drží se dvě věci, na kterých u rezervy
+záleží:
+
+- kdo kupuje, poměřuje se **výdaji po koupi** (splátka bývá skoro dvojnásobek
+  nájmu, takže tatáž rezerva vydrží kratší dobu),
+- „co mám stranou" je u kupujícího to, co po zaplacení akontace **zbyde**,
+  ne celé úspory.
+
+**Cíl je opt-in.** Ve výchozím stavu zapnutý není, takže se nikomu nezmění
+plán, který si už uložil. Kdo si ho zapne, dostane v Cílech kartu s cílovou
+částkou (výchozí tři měsíce, jde zvednout až na dvanáct), stavem, termínem
+a měsíční částkou.
+
+**V rozdělení peněz má přednost před akontací**, ale jen do 40 % volných
+peněz. Kupovat s prázdnou rezervou znamená řešit první rozbitou pračku
+drahou půjčkou, což je horší než koupit o pár měsíců později; cíl, který
+zastaví všechno ostatní, si ale uživatel vypne a nebude ho mít vůbec.
+Výchozí tempo je „plná do dvou let".
+
+**Na časové ose vede vlastní fond**, stejně jako akontace. Rezerva je
+hotovost, takže z `cash` nikam neodchází a bez fondu by nebyla vidět;
+napíná ale tok na cíle (`flowAfterGoals`), a tím i barvu stuhy. Oba fondy
+si berou z toho, co ten měsíc doopravdy přiteklo, a berou si **postupně**:
+kdyby si každý sáhl na `min(alloc, flow)` zvlášť, rozdělily by v hubeném
+měsíci tytéž peníze dvakrát a osa by kupovala dřív, než na co domácnost má.
+Naplněním se cíl uvolní; je to cíl s koncem, ne trvalý výdaj.
+
+### Co se schválně nezměnilo
+
+**Dlaždice „Rezerva vydrží" v Přehledu dál kreslí šest měsíců**, i když si
+uživatel nastaví tři nebo dvanáct. Odpovídá totiž na jinou otázku než cíl:
+jak dlouho by úspory vydržely proti obecnému doporučení 3–6 měsíců, kdežto
+cíl měří „jsem na svém čísle". Kdyby dlaždice následovala volbu, nešlo by
+z ní poznat, jestli je uživatelovo číslo vysoké nebo nízké.
+
+**`MIN_RESERVE_MONTHS_AFTER_PURCHASE` zůstává na třech měsících** i pro toho,
+kdo si cíl zvedne na půl roku. Je to hranice bezpečí, ne uživatelova ambice:
+kdo míří výš, nemá tím zčervenat u cíle bydlení.
+
+**Pořadí v „A co teď" se nemění.** Akontace zůstává před rezervou, protože
+je to aktivní spořicí cíl s termínem; rezerva se k ní připočte ve vysvětlení.
+Zapnutý cíl mění jen to, odkud se bere měsíční částka (uživatelova místo
+odhadu) a kam vede tlačítko (do Cílů místo do Rozpočtu).

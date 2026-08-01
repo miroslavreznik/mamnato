@@ -12,6 +12,7 @@ import InvestmentComparisonChart from './InvestmentComparisonChart';
 import RetirementPlanner from './RetirementPlanner';
 import CustomGoalPlanner from './CustomGoalPlanner';
 import ChildCostPlanner from './ChildCostPlanner';
+import ReservePlanner from './ReservePlanner';
 import ParentalLeavePlanner from './ParentalLeavePlanner';
 import TaxReliefCard from './TaxReliefCard';
 import EducationalGlossary from './EducationalGlossary';
@@ -26,6 +27,7 @@ import EditableHint from './EditableHint';
 import ShareConfirm from './ShareConfirm';
 import { goalsTabLabel } from '../../engine/goalNames';
 import { calculateDefaultAllocations } from '../../engine/allocation';
+import { MAX_RESERVE_MONTHS } from '../../engine/reserve';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
 import { withExcludedExpenses, withExcludedGoals, isGoalActive } from '../../engine/expenseBreakdown';
@@ -55,9 +57,10 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
   const hasRetirement = state.goals.includes('retirement');
   const hasOther = state.goals.includes('other');
   const hasChild = state.goals.includes('child');
+  const hasReserve = state.goals.includes('reserve');
   const hasNoGoals = state.goals.length === 0;
   const hasLeave = parentalLeaveApplicable(state);
-  const hasGoalPlanners = hasRetirement || hasChild || hasLeave || hasOther;
+  const hasGoalPlanners = hasReserve || hasRetirement || hasChild || hasLeave || hasOther;
 
   // Části výsledků jako záložky, jen ty, které dávají smysl podle cílů.
   const sectionDefs: TabDef[] = [
@@ -109,6 +112,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
    */
   const [allocOverrides, setAllocOverrides] = useState<{
     downPayment?: number;
+    reserve?: number;
     retirement?: number;
     child?: number;
     custom?: Record<string, number>;
@@ -118,6 +122,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
   const allocations = useMemo<GoalAllocations>(() => ({
     downPayment: allocOverrides.downPayment ?? defaultAllocations.downPayment,
+    reserve: allocOverrides.reserve ?? defaultAllocations.reserve,
     retirement: allocOverrides.retirement ?? defaultAllocations.retirement,
     child: allocOverrides.child ?? defaultAllocations.child,
     // Vlastní cíle podle `id`, ne podle pořadí: smazáním prostředního cíle
@@ -129,6 +134,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
   // Vypnutý cíl nesmí dál ukrajovat z rozpočtu.
   const activeAllocations = useMemo<GoalAllocations>(() => ({
     downPayment: excludedGoals.has('property') ? 0 : allocations.downPayment,
+    reserve: excludedGoals.has('reserve') ? 0 : allocations.reserve,
     retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
     child: excludedGoals.has('child') ? 0 : allocations.child,
     // Odložený vlastní cíl se z pole vyhazuje, ne nuluje: `withExcludedGoals`
@@ -177,6 +183,18 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
   // počítá z nich časová osa, rodičovská i rozdělení peněz na cíle.
   const handleChangeChildCosts = (patch: NonNullable<WizardState['childCosts']>) => {
     const next = { ...state, childCosts: { ...state.childCosts, ...patch } };
+    setState(next);
+    saveState(next);
+  };
+
+  /**
+   * Na kolik měsíců má vystačit nouzová rezerva.
+   *
+   * Je to zadaný údaj, ne nastavení karty: mění cílovou částku, a tím
+   * i rozdělení peněz, časovou osu a stav cíle v přehledu.
+   */
+  const handleChangeReserveMonths = (months: number) => {
+    const next = { ...state, reserveMonths: Math.min(MAX_RESERVE_MONTHS, Math.max(1, Math.round(months))) };
     setState(next);
     saveState(next);
   };
@@ -393,7 +411,17 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
         {/* Cíle */}
         {hasGoalPlanners && (
-          <ResultsSection id="cile" title={goalsTabLabel(state)} subtitle="Důchod, dítě, rodičovská a vlastní cíle" active={isVisible('cile')}>
+          <ResultsSection id="cile" title={goalsTabLabel(state)} subtitle="Rezerva, důchod, dítě, rodičovská a vlastní cíle" active={isVisible('cile')}>
+            {/* Rezerva je první karta v Cílech schválně: je to podle
+                slovníčku appky první věc, která má být hotová. */}
+            {hasReserve && (
+              <ReservePlanner
+                state={activeState}
+                monthlyAllocation={allocations.reserve}
+                onChangeMonths={handleChangeReserveMonths}
+                onChangeAllocation={(v) => handleChangeAllocation('reserve', null, v)}
+              />
+            )}
             {hasRetirement && (
               <RetirementPlanner
                 state={activeState}

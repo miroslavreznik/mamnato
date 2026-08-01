@@ -22,6 +22,7 @@ export default function ShareConfirm({ state, onCopy, onCancel }: {
 }) {
   const goals = [
     ...(state.goals.includes('property') ? [GOAL_LABELS.property] : []),
+    ...(state.goals.includes('reserve') ? [GOAL_LABELS.reserve] : []),
     ...(state.goals.includes('child') ? [GOAL_LABELS.child] : []),
     ...(state.goals.includes('retirement') ? [GOAL_LABELS.retirement] : []),
     ...(state.goals.includes('other')

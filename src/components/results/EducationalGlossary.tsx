@@ -48,7 +48,7 @@ const groups: GlossaryGroup[] = [
       {
         term: 'Nouzová rezerva',
         explanation:
-          'Peníze stranou na 3 až 6 měsíců nezbytných výdajů, dostupné do pár dnů (spořicí účet, ne akcie). Při výdajích 25 000 Kč měsíčně je to 75 000 až 150 000 Kč. Je to první věc, kterou má smysl mít hotovou, dřív než cokoli jiného: bez ní se každá rána řeší drahou půjčkou. Nepleťte si ji s volnou rezervou, ta je měsíční; tahle je naspořená.',
+          'Peníze stranou na 3 až 6 měsíců nezbytných výdajů, dostupné do pár dnů (spořicí účet, ne akcie). Při výdajích 25 000 Kč měsíčně je to 75 000 až 150 000 Kč. Je to první věc, kterou má smysl mít hotovou, dřív než cokoli jiného: bez ní se každá rána řeší drahou půjčkou. Nepleťte si ji s volnou rezervou, ta je měsíční; tahle je naspořená. Dá se zapnout jako cíl mezi ostatními, pak ji uvidíte v rozpočtu i na časové ose.',
       },
       {
         term: 'Pruh v průvodci a graf rozpočtu',

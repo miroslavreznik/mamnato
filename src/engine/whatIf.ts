@@ -36,6 +36,7 @@ export function allocationsWithoutGoals(
 ): GoalAllocations {
   return {
     downPayment: excludedGoals.has('property') ? 0 : allocations.downPayment,
+    reserve: excludedGoals.has('reserve') ? 0 : allocations.reserve,
     retirement: excludedGoals.has('retirement') ? 0 : allocations.retirement,
     child: excludedGoals.has('child') ? 0 : allocations.child,
     // Odložené cíle se z pole vyhazují, ne nulují. `withExcludedGoals` je

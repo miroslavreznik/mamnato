@@ -125,7 +125,7 @@ describe('nejtěsnější místo a stuha si neodporují', () => {
     // nezbývá. Dřív karta hlásila „plán drží po celou dobu" a stuha vedle
     // ní byla jantarová.
     const state = makeState({ goals: ['retirement'], savings: { totalSavings: 2000000 } });
-    const j = journey(state, { allocations: { downPayment: 0, retirement: 99000, child: 0, custom: [] } });
+    const j = journey(state, { allocations: { downPayment: 0, reserve: 0, retirement: 99000, child: 0, custom: [] } });
     expect(j.tension.some((t) => t === 'tense')).toBe(true);
     expect(j.tightest?.tension).toBe('tense');
     expect(j.tightest?.explanation).toContain('na cíle by chybělo');
@@ -133,7 +133,7 @@ describe('nejtěsnější místo a stuha si neodporují', () => {
 
   it('když na cíle zbývá, zůstává karta i stuha klidná', () => {
     const state = makeState({ goals: ['retirement'], savings: { totalSavings: 2000000 } });
-    const j = journey(state, { allocations: { downPayment: 0, retirement: 1000, child: 0, custom: [] } });
+    const j = journey(state, { allocations: { downPayment: 0, reserve: 0, retirement: 1000, child: 0, custom: [] } });
     expect(j.tension.every((t) => t === 'calm')).toBe(true);
     expect(j.tightest?.tension).toBe('calm');
   });
@@ -218,7 +218,7 @@ describe('práh na schodku cílů', () => {
     // korunám a karta u ní hlásila poplach.
     const state = makeState({ savings: { totalSavings: 2000000 } });
     const disposable = 41000;
-    const j = journey(state, { allocations: { downPayment: 0, retirement: disposable + 20, child: 0, custom: [] } });
+    const j = journey(state, { allocations: { downPayment: 0, reserve: 0, retirement: disposable + 20, child: 0, custom: [] } });
     expect(j.tension.every((t) => t === 'calm')).toBe(true);
     expect(j.tightest?.tension).toBe('calm');
   });
@@ -227,7 +227,7 @@ describe('práh na schodku cílů', () => {
     const state = makeState({ savings: { totalSavings: 2000000 } });
     const disposable = 41000;
     // Práh je 1 % z příjmu 75 000, tedy 750 Kč.
-    const j = journey(state, { allocations: { downPayment: 0, retirement: disposable + 2000, child: 0, custom: [] } });
+    const j = journey(state, { allocations: { downPayment: 0, reserve: 0, retirement: disposable + 2000, child: 0, custom: [] } });
     expect(j.tension.some((t) => t === 'tense')).toBe(true);
     expect(j.tightest?.tension).toBe('tense');
   });
@@ -320,7 +320,7 @@ describe('nejtěsnější místo nepojmenuje příčinu, kterou nezná', () => {
     savings: { totalSavings: 200000 },
     property: { targetPrice: 7000000, mortgageRate: 0.048, loanTermYears: 30 },
   });
-  const alloc = { downPayment: 1367, retirement: 0, child: 11333, custom: [] };
+  const alloc = { downPayment: 1367, reserve: 0, retirement: 0, child: 11333, custom: [] };
 
   it('schodek roky po narození dítěte není rodičovská', () => {
     // Bez zapnuté rodičovské se schodek jmenoval „Rodičovská 2042", protože
@@ -355,7 +355,7 @@ describe('nejtěsnější místo nepojmenuje příčinu, kterou nezná', () => {
       property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
     });
-    const j = journey(state, { allocations: { downPayment: 0, retirement: 0, child: 0, custom: [] } });
+    const j = journey(state, { allocations: { downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [] } });
     expect(j.tightest!.title).toMatch(/Rodičovská/);
   });
 });

@@ -1,10 +1,11 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
-import { monthlyDisposable, necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
+import { monthlyDisposable, totalMonthlyIncome } from './cashflow';
 import { downPaymentGap, postPurchaseRunwayMonths, dsti, mortgagePayment, necessaryExpensesAfterPurchase, totalProjectCost } from './mortgage';
 import { evaluateScenario } from './scenarios';
 import { budgetNow, budgetAfterPurchase } from './budget';
 import { evaluateParentalLeave } from './parentalLeave';
+import { reserveStatus } from './reserve';
 import { MIN_RESERVE_MONTHS_AFTER_PURCHASE } from './readiness';
 import { DEFAULTS } from './defaults';
 import { czk, czkMonthly, monthYearIn, formatMonths } from './format';
@@ -65,6 +66,18 @@ export interface NextStep {
 const RESERVE_MONTHS = MIN_RESERVE_MONTHS_AFTER_PURCHASE;
 
 /**
+ * „To je / To jsou" podle počtu měsíců.
+ *
+ * Čeština to nemá podle jednotného a množného čísla, ale podle číslovky:
+ * „to je 1 měsíc", „to jsou 3 měsíce", ale zase „to je 6 měsíců". Dokud
+ * byla rezerva vždycky tříměsíční, nebylo to vidět; zvednutím cíle na půl
+ * roku by z toho bylo „to jsou 6 měsíců".
+ */
+function monthsCopula(months: number): string {
+  return months >= 2 && months <= 4 ? 'jsou' : 'je';
+}
+
+/**
  * Kolik měsíčně jde odložit navíc, aniž by se sáhlo na cíle.
  *
  * Bere se volná rezerva, tedy to, co zbývá po výdajích **i po cílech**.
@@ -105,7 +118,6 @@ function leaveLimits(state: WizardState, allocations: GoalAllocations): boolean 
 
 export function nextStep(state: WizardState, allocations: GoalAllocations): NextStep {
   const disposable = monthlyDisposable(state);
-  const necessary = necessaryMonthlyExpenses(state);
   const free = spare(state, allocations);
 
   // 1. Rozpočet nevychází.
@@ -175,39 +187,40 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
     }
   }
 
-  // 4. Nouzová rezerva. U toho, kdo kupuje, se počítá z toho, co po koupi
-  // zbyde, protože akontace většinu úspor odnese, a poměřuje se výdaji po
-  // koupi: splátka bývá skoro dvojnásobek nájmu, takže tatáž rezerva vydrží
-  // kratší dobu. Dřív se násobil počet měsíců po koupi dnešními výdaji, což
-  // rozhodlo správně (poměr vyjde stejně), ale ukazovalo částky o polovinu
-  // nižší, než na jaké se v tu chvíli spoří.
-  const monthlyNeed = buying ? necessaryExpensesAfterPurchase(state) : necessary;
-  const reserveTarget = monthlyNeed * RESERVE_MONTHS;
-  const reserveNow = buying
-    ? postPurchaseRunwayMonths(state) * monthlyNeed
-    : state.savings.totalSavings;
-  if (reserveNow < reserveTarget) {
-    const missing = reserveTarget - reserveNow;
-    const monthly = free > 0 ? Math.min(free, Math.ceil(missing / 12 / 500) * 500) : 0;
+  // 4. Nouzová rezerva. Čísla jsou z `reserve.ts`, tedy z téhož místa, ze
+  // kterého počítá cíl „nouzová rezerva" i jeho karta v Cílech; ten vzorec
+  // tady dřív bydlel sám a nešel použít nikde jinde, aniž by se opsal.
+  //
+  // U toho, kdo kupuje, se počítá z toho, co po koupi zbyde, a poměřuje se
+  // výdaji po koupi: splátka bývá skoro dvojnásobek nájmu, takže tatáž
+  // rezerva vydrží kratší dobu.
+  const reserve = reserveStatus(state);
+  if (!reserve.done) {
+    // Když je rezerva mezi cíli, platí částka, kterou si u ní uživatel
+    // nastavil; jinak se odhadne tak, aby byla plná do roka.
+    const chosen = state.goals.includes('reserve') ? allocations.reserve : 0;
+    const monthly = chosen > 0
+      ? chosen
+      : free > 0 ? Math.min(free, Math.ceil(reserve.gap / 12 / 500) * 500) : 0;
     return {
       key: 'reserve',
       action: monthly > 0
-        ? `Postavte nouzovou rezervu ${czk(reserveTarget)}.`
-        : `Postavte nouzovou rezervu ${czk(reserveTarget)}. Zatím na ni nic nezbývá.`,
+        ? `Postavte nouzovou rezervu ${czk(reserve.target)}.`
+        : `Postavte nouzovou rezervu ${czk(reserve.target)}. Zatím na ni nic nezbývá.`,
       // Pozor na pořadí: „Chybí 5 855 Kč, tedy 3 měsíce nezbytných výdajů"
       // říkalo, že tři měsíce výdajů stojí necelých šest tisíc. Měsíců je
       // ta cílová částka, ne to, co do ní schází.
       //
       // Kdo nemá stranou nic, ať nečte tutéž částku dvakrát pod sebou.
-      why: (reserveNow > 0
-        ? `To jsou ${formatMonths(RESERVE_MONTHS)} nezbytných výdajů, chybí do nich ${czk(missing)}. `
-        : `To jsou ${formatMonths(RESERVE_MONTHS)} nezbytných výdajů a chybí celá. `)
+      why: (reserve.current > 0
+        ? `To ${monthsCopula(reserve.targetMonths)} ${formatMonths(reserve.targetMonths)} nezbytných výdajů, chybí do nich ${czk(reserve.gap)}. `
+        : `To ${monthsCopula(reserve.targetMonths)} ${formatMonths(reserve.targetMonths)} nezbytných výdajů a chybí celá. `)
         + 'Bez rezervy se každá nečekaná rána řeší drahou půjčkou, i když jinak plán vychází.'
         + (buying ? ' Počítá se s tím, co zbyde po zaplacení akontace.' : ''),
       monthly: monthly > 0 ? monthly : undefined,
-      done: monthly > 0 ? monthYearIn(missing / monthly) : undefined,
-      section: 'rozpocet',
-      actionLabel: 'Projít výdaje',
+      done: monthly > 0 ? monthYearIn(reserve.gap / monthly) : undefined,
+      section: state.goals.includes('reserve') ? 'cile' : 'rozpocet',
+      actionLabel: state.goals.includes('reserve') ? 'Nastavit odkládání' : 'Projít výdaje',
     };
   }
 

@@ -5,6 +5,7 @@ import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement, retirementAge, retirementReturn, SAFE_WITHDRAWAL_RATE } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
+import { reserveStatus, monthsToFillReserve, DEFAULT_RESERVE_MONTHS } from './reserve';
 import { DEFAULTS } from './defaults';
 import { formatMonths, czk, czkMonthly, percentCompact } from './format';
 
@@ -21,7 +22,12 @@ export type GoalStatus = 'good' | 'caution' | 'warning';
 // Kolik měsíců nezbytných výdajů musí zbýt v rezervě po zaplacení akontace.
 // Pod touhle hranicí je koupě sice možná, ale první nečekaný výdaj
 // (rozbitá pračka, výpadek příjmu) se řeší dluhem.
-export const MIN_RESERVE_MONTHS_AFTER_PURCHASE = 3;
+//
+// Je to totéž doporučení, ze kterého vychází cíl „nouzová rezerva", proto se
+// bere odtamtud a existuje jednou. Zůstává to ale **hranice bezpečí**, ne
+// uživatelův cíl: kdo si rezervu zvedne na půl roku, nemá tím zčervenat
+// u bydlení. Jeho číslo nese cíl rezervy, tohle hlídá dno.
+export const MIN_RESERVE_MONTHS_AFTER_PURCHASE = DEFAULT_RESERVE_MONTHS;
 
 export interface GoalReadiness {
   key: string;
@@ -186,6 +192,50 @@ export function leaveReadiness(state: WizardState): GoalReadiness | null {
     headline: thin
       ? `${perMonth} Rezerva to pokryje, ale zbyde z ní jen ${czk(leave.reserveLeftAfterLeave)}, což je na nečekané výdaje málo.`
       : `${perMonth} Rezerva to pokryje a zbyde vám ${czk(leave.reserveLeftAfterLeave)}.`,
+  };
+}
+
+/**
+ * Připravenost nouzové rezervy.
+ *
+ * Věta odpovídá na „mám ji?", ne na „co je to rezerva"; vysvětlení má karta
+ * v Cílech a slovníček. Cílová částka se opakuje jen tehdy, když je hotová,
+ * protože to je ta zpráva; když chybí, je zajímavější to, co chybí.
+ *
+ * Nula odkládaná na chybějící rezervu je „nevychází", ne „pozor". Rezerva se
+ * na rozdíl od důchodu nedožene později: nečekaný výdaj nepočká, až se
+ * uvolní peníze.
+ */
+export function reserveReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
+  const status = reserveStatus(state);
+  const label = 'Nouzová rezerva';
+  const basis = status.afterPurchase ? ' nezbytných výdajů po koupi' : ' nezbytných výdajů';
+
+  if (status.done) {
+    return {
+      key: 'reserve',
+      label,
+      status: 'good',
+      headline: `Rezerva ${czk(status.current)} je hotová, vydrží ${formatMonths(status.targetMonths)}${basis}.`,
+    };
+  }
+
+  const monthly = allocations.reserve;
+  if (monthly <= 0) {
+    return {
+      key: 'reserve',
+      label,
+      status: 'warning',
+      headline: `Do rezervy na ${formatMonths(status.targetMonths)}${basis} chybí ${czk(status.gap)} a zatím na ni nic neodkládáte.`,
+    };
+  }
+
+  const months = monthsToFillReserve(state, monthly);
+  return {
+    key: 'reserve',
+    label,
+    status: 'caution',
+    headline: `Do rezervy chybí ${czk(status.gap)}. Při ${czkMonthly(monthly)} ji máte plnou za ${formatMonths(months)}.`,
   };
 }
 

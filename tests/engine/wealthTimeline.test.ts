@@ -55,8 +55,8 @@ describe('wealthTimeline', () => {
 
   it('vyšší odkládání na akontaci koupi přiblíží', () => {
     const state = makeState({ goals: ['property'] });
-    const slow = wealthTimeline(state, { months: 60, allocations: { downPayment: 5000, retirement: 0, child: 0, custom: [] } });
-    const fast = wealthTimeline(state, { months: 60, allocations: { downPayment: 40000, retirement: 0, child: 0, custom: [] } });
+    const slow = wealthTimeline(state, { months: 60, allocations: { downPayment: 5000, reserve: 0, retirement: 0, child: 0, custom: [] } });
+    const fast = wealthTimeline(state, { months: 60, allocations: { downPayment: 40000, reserve: 0, retirement: 0, child: 0, custom: [] } });
     expect(slow.purchaseMonth).toBe(40);
     expect(fast.purchaseMonth).toBe(5);
   });
@@ -66,7 +66,7 @@ describe('wealthTimeline', () => {
     // barvila stuha klidnou zelenou i tam, kde verdikt hlásil, že po koupi
     // na cíle chybí.
     const state = makeState({ goals: ['property', 'retirement'] });
-    const a = { downPayment: 10000, retirement: 8000, child: 0, custom: [] };
+    const a = { downPayment: 10000, reserve: 0, retirement: 8000, child: 0, custom: [] };
     const tl = wealthTimeline(state, { months: 60, allocations: a });
     const before = tl.points[1];
     expect(before.flowAfterGoals).toBe(before.flow - 18000);
@@ -109,7 +109,7 @@ describe('cíle, které v čase končí', () => {
     // platila by domácnost za dítě dvakrát a stuha by hlásila napjatý
     // rozpočet i tam, kde ve skutečnosti vychází.
     const state = makeState({ goals: ['child'], savings: { totalSavings: 300000 } });
-    const a = { downPayment: 0, retirement: 0, child: 9000, custom: [] };
+    const a = { downPayment: 0, reserve: 0, retirement: 0, child: 9000, custom: [] };
     const tl = wealthTimeline(state, { months: 36, childOffsetMonths: 12, allocations: a });
 
     const before = tl.points[6];
@@ -124,7 +124,7 @@ describe('cíle, které v čase končí', () => {
 
   it('odkládání na akontaci končí koupí', () => {
     const state = makeState({ goals: ['property'], savings: { totalSavings: 1000000 } });
-    const a = { downPayment: 12000, retirement: 4000, child: 0, custom: [] };
+    const a = { downPayment: 12000, reserve: 0, retirement: 4000, child: 0, custom: [] };
     const tl = wealthTimeline(state, { months: 36, allocations: a });
     expect(tl.purchaseMonth).toBe(0);
     const after = tl.points[3];

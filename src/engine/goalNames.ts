@@ -9,6 +9,7 @@ import type { WizardState } from '../types';
  */
 export const GOAL_LABELS: Record<string, string> = {
   property: 'Vlastní bydlení',
+  reserve: 'Nouzová rezerva',
   retirement: 'Důchod',
   child: 'Dítě',
 };
@@ -34,6 +35,7 @@ const MAX_TAB_LABEL = 22;
  */
 export function goalsTabLabel(state: WizardState): string {
   const names: string[] = [];
+  if (state.goals.includes('reserve')) names.push(GOAL_LABELS.reserve);
   if (state.goals.includes('child')) names.push(GOAL_LABELS.child);
   if (state.goals.includes('retirement')) names.push(GOAL_LABELS.retirement);
   if (state.goals.includes('other')) {

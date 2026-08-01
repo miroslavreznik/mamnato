@@ -113,6 +113,11 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
     if (state.goals.includes('property') && allocations.downPayment > 0) {
       add('downPayment', 'property', 'Spoření na akontaci', allocations.downPayment, false);
     }
+    // Rezerva se odkládá i po koupi: u kupujícího se poměřuje výdaji po ní,
+    // takže právě tehdy teprve nabírá smysl.
+    if (state.goals.includes('reserve') && allocations.reserve > 0) {
+      add('reserve', 'reserve', 'Nouzová rezerva', allocations.reserve);
+    }
     if (state.goals.includes('retirement') && allocations.retirement > 0) {
       add('retirement', 'retirement', 'Spoření na důchod', allocations.retirement);
     }

@@ -1,6 +1,7 @@
 import type { WizardState, FinancialGoal, UserMode } from '../types';
 import { createInitialState } from './wizardStore';
 import { DEFAULTS, CHILD_COSTS_CZ } from '../engine/defaults';
+import { MAX_RESERVE_MONTHS } from '../engine/reserve';
 
 /**
  * Přepsané náklady na dítě z uloženého stavu.
@@ -38,7 +39,7 @@ function sanitizeNumberMap(obj: Record<string, unknown>): Record<string, number>
   return out;
 }
 
-const VALID_GOALS: FinancialGoal[] = ['property', 'child', 'retirement', 'other'];
+const VALID_GOALS: FinancialGoal[] = ['property', 'child', 'retirement', 'other', 'reserve'];
 
 /**
  * Načtený stav z prohlížeče zkontroluje a doplní na aktuální tvar.
@@ -75,6 +76,11 @@ export function normalizeState(raw: unknown): WizardState | null {
     // Termín dítěte: rozumné meze, ať uložený nesmysl nerozhodí časovou osu.
     childInMonths: typeof raw.childInMonths === 'number'
       ? Math.min(480, Math.max(0, Math.round(raw.childInMonths)))
+      : undefined,
+    // Délka rezervy: chybějící hodnota je platný stav („drž se doporučení"),
+    // takže se nedoplňuje výchozím číslem.
+    reserveMonths: typeof raw.reserveMonths === 'number'
+      ? Math.min(MAX_RESERVE_MONTHS, Math.max(1, Math.round(raw.reserveMonths)))
       : undefined,
     // Výnosy: rozumné meze, ať uložený nesmysl neudělá z renty milion.
     retirementRates: isRecord(raw.retirementRates)

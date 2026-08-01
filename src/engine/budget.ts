@@ -24,8 +24,11 @@ export interface BudgetView {
 }
 
 // Cíle mimo bydlení. Koupě s nimi nehýbe, spoří se dál stejně.
+//
+// Rezerva je mezi nimi schválně: u kupujícího se poměřuje výdaji **po** koupi,
+// takže po zaplacení akontace teprve nabírá smysl, ne aby skončila.
 function nonHousingGoals(a: GoalAllocations): number {
-  return a.retirement + a.child + a.custom.reduce((s, v) => s + v, 0);
+  return a.reserve + a.retirement + a.child + a.custom.reduce((s, v) => s + v, 0);
 }
 
 function view(disposable: number, allocated: number): BudgetView {

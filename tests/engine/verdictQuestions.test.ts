@@ -19,7 +19,7 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
 }
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 describe('verdikt jako dvě otázky', () => {
@@ -72,7 +72,7 @@ describe('druhá otázka u nedosažitelného bydlení', () => {
       property: { targetPrice: 4200000, mortgageRate: 0.052, loanTermYears: 30 },
       person1Age: 29,
     });
-    const v = evaluateOverall(state, allocs({ downPayment: 6500, retirement: 3000 })).verdict;
+    const v = evaluateOverall(state, allocs({ downPayment: 6500, reserve: 0, retirement: 3000 })).verdict;
     expect(v.questions[0].status).toBe('warning');
     expect(v.questions[1].answer).toMatch(/^Kdyby na bydlení došlo: /);
   });
@@ -96,7 +96,7 @@ describe('podmíněná odpověď se označí', () => {
       property: { targetPrice: 4200000, mortgageRate: 0.052, loanTermYears: 30 },
       person1Age: 29,
     });
-    const v = evaluateOverall(state, allocs({ downPayment: 6500, retirement: 3000 })).verdict;
+    const v = evaluateOverall(state, allocs({ downPayment: 6500, reserve: 0, retirement: 3000 })).verdict;
     expect(v.questions[1].conditional).toBe(true);
     expect(v.questions[0].conditional).toBeUndefined();
   });

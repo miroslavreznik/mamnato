@@ -159,3 +159,35 @@ test('výnos v Důchodu platí i pro větu o rentě a graf koupě vs. nájem', a
   await page.waitForTimeout(300)
   expect(digits(await num(page, 'Výnos investic').inputValue()), 'výnos v Bydlení').toBe('4')
 })
+
+test('nouzová rezerva je cíl jako každý jiný a platí pro celý přehled', async ({ page }) => {
+  // Rezerva uměla být doporučením v „A co teď", ale ne cílem: nešla zapnout
+  // a nikde vedle důchodu a dítěte se neobjevila. Tenhle test hlídá, že je
+  // to opravdu cíl, tedy že se dá nastavit a že se z toho přepočítá přehled.
+  await toResults(page, { savings: '60000', goals: ['reserve', 'retirement'] })
+
+  const veta = () => page.locator('#souhrn').getByText(/Do rezervy chybí/).innerText()
+  const predVeta = await veta()
+
+  // Delší cíl znamená vyšší částku, a tedy i pozdější termín.
+  await page.locator('#tab-cile').click()
+  await num(page, 'Na kolik měsíců má rezerva vystačit').fill('6')
+  await page.waitForTimeout(300)
+  await page.locator('#tab-souhrn').click()
+  await page.waitForTimeout(400)
+  const poDelce = await veta()
+  expect(poDelce, 'věta u cíle po prodloužení rezervy').not.toBe(predVeta)
+
+  // Vlastní měsíční částka přebije odhad a zkrátí termín.
+  await page.locator('#tab-cile').click()
+  await num(page, 'Kolik měsíčně odkládám na rezervu').fill('12000')
+  await page.locator('#tab-souhrn').click()
+  await page.waitForTimeout(400)
+  const poCastce = await veta()
+  expect(poCastce, 'věta u cíle po změně částky').not.toBe(poDelce)
+  expect(digits(poCastce), 'částka ve větě').toContain('12000')
+
+  // A v rozpočtu je to samostatná položka, ne skrytý odečet.
+  await page.locator('#tab-rozpocet').click()
+  await expect(page.locator('#rozpocet').getByText('Nouzová rezerva').first()).toBeVisible()
+})

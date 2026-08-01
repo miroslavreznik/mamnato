@@ -69,7 +69,7 @@ describe('breakdownSurplus', () => {
 });
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 describe('incomeFlow', () => {

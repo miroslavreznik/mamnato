@@ -21,13 +21,13 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
 }
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 describe('budgetNow', () => {
   it('počítá odkládání na akontaci mezi cíli', () => {
     const state = makeState();
-    const b = budgetNow(state, allocs({ downPayment: 8000, retirement: 5000 }));
+    const b = budgetNow(state, allocs({ downPayment: 8000, reserve: 0, retirement: 5000 }));
     // disponibilní = 60 000 − 29 000 = 31 000
     expect(b.disposable).toBe(31000);
     expect(b.allocated).toBe(13000);
@@ -52,7 +52,7 @@ describe('budgetAfterPurchase', () => {
 
   it('na akontaci se po koupi už neodkládá', () => {
     const state = makeState();
-    const withSaving = budgetAfterPurchase(state, allocs({ downPayment: 8000, retirement: 5000 }));
+    const withSaving = budgetAfterPurchase(state, allocs({ downPayment: 8000, reserve: 0, retirement: 5000 }));
     const without = budgetAfterPurchase(state, allocs({ retirement: 5000 }));
     expect(withSaving.allocated).toBe(5000);
     expect(withSaving.allocated).toBe(without.allocated);
@@ -74,7 +74,7 @@ describe('evaluateOverall: dvě období rozpočtu', () => {
   });
 
   it('s cílem nemovitost dostane uživatel obě období', () => {
-    const s = evaluateOverall(makeState(), allocs({ downPayment: 8000, retirement: 5000 }));
+    const s = evaluateOverall(makeState(), allocs({ downPayment: 8000, reserve: 0, retirement: 5000 }));
     expect(s.budget?.disposable).toBe(31000);
     expect(s.budgetAfter).not.toBeNull();
     expect(s.budgetAfter!.disposable).toBeLessThan(s.budget!.disposable);

@@ -3,6 +3,7 @@ import { monthlyDisposable } from './cashflow';
 import { downPaymentGap } from './mortgage';
 import { CHILD_COSTS_CZ } from './defaults';
 import { monthlyChildCost } from './childCost';
+import { reserveStatus } from './reserve';
 
 /**
  * Kolik měsíčně jde na jednotlivé cíle.
@@ -19,6 +20,8 @@ import { monthlyChildCost } from './childCost';
 export interface GoalAllocations {
   /** Měsíční odkládání na chybějící akontaci. */
   downPayment: number;
+  /** Měsíční odkládání na nouzovou rezervu, dokud není plná. */
+  reserve: number;
   retirement: number;
   child: number;
   custom: number[];
@@ -34,9 +37,19 @@ const DOWN_PAYMENT_SHARE = 0.5;
 // tomu appka nabídla 667 Kč měsíčně a termín „za 5 let".
 const MAX_DOWN_PAYMENT_YEARS = 5;
 
+// Do kolika měsíců má být rezerva plná, když ji uživatel nechá na výchozím
+// rozdělení. Dva roky jsou kompromis: rezerva vzniká, a přitom neodloží koupi
+// o polovinu doby spoření na akontaci.
+const RESERVE_FILL_MONTHS = 24;
+
+// Nejvyšší podíl volných peněz, který si rezerva vezme. Má přednost před
+// akontací, ale ne takovou, aby spolkla celý rozpočet: cíl, který zastaví
+// všechno ostatní, si uživatel vypne a nebude ho mít vůbec.
+const RESERVE_MAX_SHARE = 0.4;
+
 export function calculateDefaultAllocations(state: WizardState): GoalAllocations {
   const disposable = monthlyDisposable(state);
-  const allocs: GoalAllocations = { downPayment: 0, retirement: 0, child: 0, custom: [] };
+  const allocs: GoalAllocations = { downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [] };
 
   // Dítě: vážený průměr měsíčních nákladů po celou dobu, po kterou se dítě
   // živí. Bere se z plánu, takže se s ním hýbe i karta „Náklady na dítě"
@@ -54,13 +67,26 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
     allocs.child = totalMonths > 0 ? Math.round(totalCost / totalMonths) : 0;
   }
 
+  // Rezerva je před akontací schválně. Kdo koupí s prázdnou rezervou, řeší
+  // první rozbitou pračku drahou půjčkou, a to je horší než koupit o pár
+  // měsíců později; slovníček appky to říká rovnou („první věc, kterou má
+  // smysl mít hotovou"). Aby to nebyl jen jiný způsob, jak koupi zabít, bere
+  // si rezerva nejvýš `RESERVE_MAX_SHARE` volných peněz.
+  if (state.goals.includes('reserve')) {
+    const { gap } = reserveStatus(state);
+    if (gap > 0) {
+      const afterChild = Math.max(0, disposable - allocs.child);
+      allocs.reserve = Math.round(Math.min(afterChild * RESERVE_MAX_SHARE, gap / RESERVE_FILL_MONTHS));
+    }
+  }
+
   // Akontace má přednost před dlouhodobými cíli, protože bez ní koupě není.
   // Odkládá se půlka volných peněz, a když by to trvalo přes pět let, tak víc.
   // Nikdy si ale nevezme víc, než co zbývá.
   if (state.goals.includes('property')) {
     const gap = downPaymentGap(state);
     if (gap > 0) {
-      const afterChild = Math.max(0, disposable - allocs.child);
+      const afterChild = Math.max(0, disposable - allocs.child - allocs.reserve);
       const share = afterChild * DOWN_PAYMENT_SHARE;
       const overMaxHorizon = gap / (MAX_DOWN_PAYMENT_YEARS * 12);
       allocs.downPayment = Math.round(Math.min(afterChild, Math.max(share, overMaxHorizon)));
@@ -69,13 +95,13 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
 
   // Důchod: zbytek, nejvýš 30 % disponibilní částky.
   if (state.goals.includes('retirement')) {
-    const remaining = disposable - allocs.child - allocs.downPayment;
+    const remaining = disposable - allocs.child - allocs.reserve - allocs.downPayment;
     allocs.retirement = Math.max(0, Math.min(Math.round(remaining), Math.round(disposable * 0.3)));
   }
 
   // Vlastní cíle: prosté rozdělení toho, co ještě zbylo.
   if (state.goals.includes('other') && state.customGoals && state.customGoals.length > 0) {
-    const used = allocs.downPayment + allocs.retirement + allocs.child;
+    const used = allocs.downPayment + allocs.reserve + allocs.retirement + allocs.child;
     const remaining = Math.max(0, disposable - used);
     // Zaokrouhlený podíl by po vynásobení počtem cílů přestřelil: ze 44 000
     // na tři cíle vyjde 14 667 na každý, dohromady 44 001, a v přehledu pak

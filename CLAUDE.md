@@ -82,6 +82,11 @@ Klíčové moduly a jejich role:
   výdajů; vypnutím se snižuje i souhrnná položka `other`, aby se částka neodečetla dvakrát.
 - `readiness.ts` + `verdict.ts`: `summary.ts` jen skládá jejich výsledky. Hodnocení
   jednotlivých cílů je v prvním, formulace odpovědi ve druhém.
+- `reserve.ts`: jediné místo, kde se počítá nouzová rezerva (cílová částka,
+  co je stranou, kolik chybí, kdy bude plná). Kdo kupuje, poměřuje se výdaji
+  **po koupi** a „stranou" má jen to, co po akontaci zbyde. Bere si to cíl
+  `reserve`, `readiness.ts` i `nextStep.ts`; ten vzorec byl dřív jen uvnitř
+  `nextStep` a nešel použít jinde, aniž by se opsal.
 - `whatIf.ts`: režim „co kdyby". Porovnává verdikt před a po vypnutí položky
   a vysvětluje, proč se nehnul.
 - `wealthTimeline.ts` + `journey.ts`: časová osa úspor a její čtení. První simuluje

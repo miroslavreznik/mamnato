@@ -158,6 +158,11 @@ export default function WhatIfPanel() {
         </>
       ),
     }] : []),
+    ...(allGoals.goals.includes('reserve') ? [{
+      key: 'reserve',
+      label: GOAL_LABELS.reserve,
+      amount: allGoalAllocations.reserve,
+    }] : []),
     ...(allGoals.goals.includes('child') ? [{
       key: 'child',
       label: GOAL_LABELS.child,

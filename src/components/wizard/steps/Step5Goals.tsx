@@ -13,6 +13,18 @@ const goalOptions: { value: FinancialGoal; label: string; icon: ReactNode }[] = 
     icon: <path d="M3 10.5 12 4l9 6.5M5 9.5V20h14V9.5M9.5 20v-5h5v5" />,
   },
   {
+    // Rezerva hned za bydlením: podle slovníčku appky je to první věc, která
+    // má být hotová, a schovat ji až za vlastní cíle by tomu odporovalo.
+    value: 'reserve',
+    label: 'Nouzová rezerva',
+    icon: (
+      <>
+        <path d="M12 3.5 19 6v5.5c0 4.1-2.9 7.6-7 8.9-4.1-1.3-7-4.8-7-8.9V6l7-2.5z" />
+        <path d="M9 12.2l2.1 2.1L15.4 10" />
+      </>
+    ),
+  },
+  {
     value: 'child',
     label: 'Dítě / rodina',
     icon: (
@@ -79,7 +91,9 @@ export default function Step5Goals() {
         jestli se vejdou do jednoho rozpočtu vedle sebe.
       </p>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {/* Pět dlaždic se do čtyř sloupců nevejde, pátá by visela sama pod
+          řadou. Na širokém okně proto pět sloupců, mezitím tři. */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {goalOptions.map((g) => {
           const selected = state.goals.includes(g.value);
           return (

@@ -20,7 +20,7 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
 }
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 describe('propertyReadiness', () => {
@@ -73,7 +73,7 @@ describe('bydlení mezi cíli', () => {
   it('nemovitost se v přehledu cílů objeví jako cíl', () => {
     // Dřív se odsud vyřazovala, protože se opakovala s dlaždicemi, takže
     // uživatel s hypotékou v seznamu cílů svůj největší závazek neviděl.
-    const s = evaluateOverall(makeState({ goals: ['property', 'retirement'] }), allocs({ downPayment: 8000, retirement: 5000 }));
+    const s = evaluateOverall(makeState({ goals: ['property', 'retirement'] }), allocs({ downPayment: 8000, reserve: 0, retirement: 5000 }));
     const property = s.goals.find((g) => g.key === 'property');
     expect(property).toBeDefined();
     expect(property?.label).toBe('Vlastní bydlení');
@@ -143,7 +143,7 @@ describe('věta o důchodu stojí na výnosu, který jde přepsat', () => {
     property: { targetPrice: 5000000 },
     retirementRates: rates,
   });
-  const alloc = { downPayment: 0, retirement: 5000, child: 0, custom: [] };
+  const alloc = { downPayment: 0, reserve: 0, retirement: 5000, child: 0, custom: [] };
 
   it('nižší výnos v tabulce znamená nižší rentu ve větě', () => {
     // Dokud si sazby držela karta, ukazovala tabulka portfolio při 4 %,

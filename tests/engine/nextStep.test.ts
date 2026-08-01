@@ -18,7 +18,7 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
   };
 }
 const alloc = (o: Partial<GoalAllocations> = {}): GoalAllocations =>
-  ({ downPayment: 0, retirement: 0, child: 0, custom: [], ...o });
+  ({ downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [], ...o });
 
 // Oddělovač tisíců je úzká nezlomitelná mezera a její kód se liší podle
 // verze ICU, takže se porovnávají číslice, ne řetězec.

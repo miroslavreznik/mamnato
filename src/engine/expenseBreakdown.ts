@@ -154,6 +154,9 @@ function goalFlows(
   if (!afterPurchase && state.goals.includes('property') && allocations.downPayment > 0) {
     flows.push({ key: 'downPayment', label: 'Spoření na akontaci', amount: allocations.downPayment });
   }
+  if (state.goals.includes('reserve') && allocations.reserve > 0) {
+    flows.push({ key: 'reserve', label: 'Nouzová rezerva', amount: allocations.reserve });
+  }
   if (state.goals.includes('retirement') && allocations.retirement > 0) {
     flows.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement });
   }

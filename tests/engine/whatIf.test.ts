@@ -4,7 +4,7 @@ import type { GoalAllocations } from '../../src/engine/allocation';
 import type { WizardState } from '../../src/types';
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 function household(overrides: Partial<WizardState> = {}): WizardState {

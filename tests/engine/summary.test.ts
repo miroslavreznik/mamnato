@@ -20,7 +20,7 @@ function makeState(overrides: Partial<WizardState> = {}): WizardState {
 }
 
 const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
-  downPayment: 0, retirement: 0, child: 0, custom: [], ...o,
+  downPayment: 0, reserve: 0, retirement: 0, child: 0, custom: [], ...o,
 });
 
 describe('evaluateOverall', () => {
@@ -34,7 +34,7 @@ describe('evaluateOverall', () => {
   it('returns not_yet when saving goals exceed disposable', () => {
     // disponibilní = 60 000 − 29 000 = 31 000, cíle chtějí víc
     const state = makeState({ goals: ['property', 'retirement'] });
-    const s = evaluateOverall(state, allocs({ downPayment: 25000, retirement: 35000 }));
+    const s = evaluateOverall(state, allocs({ downPayment: 25000, reserve: 0, retirement: 35000 }));
     expect(s.status).toBe('not_yet');
     expect(s.budget?.fits).toBe(false);
   });
@@ -43,13 +43,13 @@ describe('evaluateOverall', () => {
     // Splátka hypotéky je výdaj na bydlení, ne cíl, a v alokacích proto vůbec
     // není. Odkládání na akontaci naopak z rozpočtu ukusuje jako každý cíl.
     const state = makeState({ goals: ['property', 'retirement'] });
-    const s = evaluateOverall(state, allocs({ downPayment: 8000, retirement: 5000 }));
+    const s = evaluateOverall(state, allocs({ downPayment: 8000, reserve: 0, retirement: 5000 }));
     expect(s.budget?.allocated).toBe(13000);
   });
 
   it('produces a per-goal readiness entry for each active goal', () => {
     const state = makeState({ goals: ['property', 'retirement'] });
-    const s = evaluateOverall(state, allocs({ downPayment: 10000, retirement: 5000 }));
+    const s = evaluateOverall(state, allocs({ downPayment: 10000, reserve: 0, retirement: 5000 }));
     expect(s.goals.map((g) => g.key).sort()).toEqual(['property', 'retirement']);
   });
 

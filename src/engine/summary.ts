@@ -5,6 +5,7 @@ import { evaluateParentalLeave } from './parentalLeave';
 import type { GoalAllocations } from './allocation';
 import {
   propertyReadiness,
+  reserveReadiness,
   retirementReadiness,
   childReadiness,
   customReadiness,
@@ -54,6 +55,9 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
 
   const goals: GoalReadiness[] = [];
   if (state.goals.includes('property')) goals.push(propertyReadiness(state, allocations));
+  // Rezerva hned za bydlením: je to podle vlastního slovníčku appky první věc,
+  // která má být hotová, takže patří nad dlouhodobé cíle, ne pod ně.
+  if (state.goals.includes('reserve')) goals.push(reserveReadiness(state, allocations));
   if (state.goals.includes('retirement')) goals.push(retirementReadiness(state, allocations));
   if (state.goals.includes('child')) goals.push(childReadiness(allocations));
   if (state.goals.includes('other')) goals.push(customReadiness(state, allocations));
