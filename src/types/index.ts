@@ -109,6 +109,16 @@ export interface WizardState {
   reserveMonths?: number;
 
   /**
+   * Odklepnuté kontroly reálnosti vstupů (`engine/plausibility.ts`).
+   *
+   * Upozornění typu „jídlo za 3 000 pro dva je hodně nízko" nesmí jít
+   * odmítnout jen do dalšího překreslení: hraničních případů je spousta
+   * (obědy v ceně práce, auto od zaměstnavatele, bydlení u rodičů) a kdo
+   * jednou řekne „u nás to tak je", má mít pokoj natrvalo.
+   */
+  dismissedChecks?: string[];
+
+  /**
    * Úpravy nákladů na dítě z karty „Náklady na dítě".
    *
    * Patří do plánu, ne do obrazovky: podle nich počítá časová osa, rodičovská

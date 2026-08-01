@@ -918,3 +918,45 @@ test('bez rezervy je na řadě rezerva, ne cíle', async ({ page }) => {
   const card = page.locator('#souhrn').getByText('A co teď').locator('..')
   await expect(card).toContainText('nouzovou rezervu')
 })
+
+test('nereálně nízký výdaj se ozve, ale nic neblokuje a jde odklepnout', async ({ page }) => {
+  // Kdo zadá jídlo za 3 000 pro dva, dostal dřív zelený verdikt postavený
+  // na rozpočtu, který nevydrží. Upozornění nesmí nic nutit: hraničních
+  // případů je spousta a poslední slovo má uživatel.
+  await start(page)
+  await page.getByTestId('mode-couple').click()
+  await next(page) // → Příjmy
+  await next(page) // → Výdaje
+
+  await page.getByRole('textbox', { name: 'Jídlo a potraviny', exact: true }).fill('3000')
+  const note = page.getByTestId('kontrola-food_low')
+  await expect(note).toBeVisible()
+  // Částka ve větě je na dospělého, ne zadaná.
+  expect((await note.innerText()).replace(/[^\d]/g, '')).toContain('1500')
+
+  // Nic to neblokuje: „Další" funguje dál.
+  await expect(page.getByTestId('wizard-next')).toBeEnabled()
+
+  // Oprava upozornění zháší.
+  await page.getByRole('textbox', { name: 'Jídlo a potraviny', exact: true }).fill('9000')
+  await expect(note).toBeHidden()
+
+  // A kdo řekne „u nás to tak je", má mít pokoj i ve výsledcích.
+  await page.getByRole('textbox', { name: 'Jídlo a potraviny', exact: true }).fill('3000')
+  await expect(note).toBeVisible()
+  await next(page) // → Úspory
+  await next(page) // → Cíle
+  await pickGoal(page, 'retirement')
+  await finish(page)
+  await expectResults(page)
+
+  // V Přehledu je to jeden řádek nad odpovědí, opravit se to dá v Rozpočtu.
+  await expect(page.getByTestId('kontrola-vstupu-souhrn')).toBeVisible()
+  await page.getByRole('button', { name: /Zkontrolovat v Rozpočtu/ }).click()
+  await expect(page.locator('#tab-rozpocet')).toHaveAttribute('aria-selected', 'true')
+
+  await page.getByTestId('kontrola-food_low').getByRole('button', { name: 'Je to tak' }).click()
+  await expect(page.getByTestId('kontrola-food_low')).toBeHidden()
+  await openTab(page, 'souhrn')
+  await expect(page.getByTestId('kontrola-vstupu-souhrn')).toBeHidden()
+})

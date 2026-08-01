@@ -87,6 +87,13 @@ Klíčové moduly a jejich role:
   **po koupi** a „stranou" má jen to, co po akontaci zbyde. Bere si to cíl
   `reserve`, `readiness.ts` i `nextStep.ts`; ten vzorec byl dřív jen uvnitř
   `nextStep` a nešel použít jinde, aniž by se opsal.
+- `plausibility.ts`: kontrola reálnosti zadaných výdajů („jídlo za 3 000 pro dva
+  je hodně nízko"). **Nic nezakazuje a nic nemění**: neblokuje průvodce,
+  nepřepisuje hodnoty, nesahá na verdikt. Hraničních případů je spousta
+  (obědy v ceně práce, auto od zaměstnavatele, bydlení u rodičů), takže
+  poslední slovo má uživatel a odklepnutá poznámka se ukládá do
+  `state.dismissedChecks`. Prahy jsou schválně nízko, ne na průměru: falešné
+  upozornění je dražší než zameškané.
 - `whatIf.ts`: režim „co kdyby". Porovnává verdikt před a po vypnutí položky
   a vysvětluje, proč se nehnul.
 - `wealthTimeline.ts` + `journey.ts`: časová osa úspor a její čtení. První simuluje

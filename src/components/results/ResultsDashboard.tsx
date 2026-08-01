@@ -36,6 +36,7 @@ import type { CustomGoal, ParentalLeave } from '../../types';
 import { saveState } from '../../store/localStorage';
 import { buildShareUrl } from '../../store/shareLink';
 import Disclaimer from '../ui/Disclaimer';
+import PlausibilityNotes, { PlausibilityHint } from '../ui/PlausibilityNotes';
 import AssumptionsCard from './AssumptionsCard';
 
 interface ResultsDashboardProps {
@@ -199,6 +200,19 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     saveState(next);
   };
 
+  /**
+   * Odklepnutí kontroly reálnosti („u nás to tak je").
+   *
+   * Ukládá se do plánu, ne do obrazovky: hraniční případ (obědy v ceně
+   * práce, auto od zaměstnavatele) platí i zítra a upozornění, které se
+   * po překreslení vrátí, se lidé naučí odklikávat bez čtení.
+   */
+  const handleDismissCheck = (key: string) => {
+    const next = { ...state, dismissedChecks: [...(state.dismissedChecks ?? []), key] };
+    setState(next);
+    saveState(next);
+  };
+
   const handleChangeParentalLeave = (value: ParentalLeave | undefined) => {
     const next = { ...state, parentalLeave: value };
     setState(next);
@@ -354,6 +368,10 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             Id zůstává `souhrn`: je v uložených odkazech i v kotvách testů
             a přejmenovat ho by rozbilo sdílené adresy kvůli popisku. */}
         <ResultsSection id="souhrn" title="Přehled" subtitle="Odpověď, váš plán v čase a stav vašich cílů" active={isVisible('souhrn')}>
+          {/* Zadaný stav, ne `activeState`: vypnutá položka v „co kdyby" je
+              úmysl, ne podezřelý vstup. Jinak by odškrtnutí jídla v grafu
+              rozsvítilo „jídlo je na nule". */}
+          <PlausibilityHint state={state} onOpen={() => selectTab('rozpocet')} />
           <ResultsOverview
             state={activeState}
             allocations={activeAllocations}
@@ -386,6 +404,8 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             onChange={handleChangeExpense}
             onChangeDiscretionaryItem={handleChangeDiscretionaryItem}
           />
+          {/* Pod editorem, ne nad ním: pole na opravu jsou hned nad poznámkou. */}
+          <PlausibilityNotes state={state} onDismiss={handleDismissCheck} />
         </ResultsSection>
 
         {/* Bydlení a hypotéka */}

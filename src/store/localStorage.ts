@@ -82,6 +82,11 @@ export function normalizeState(raw: unknown): WizardState | null {
     reserveMonths: typeof raw.reserveMonths === 'number'
       ? Math.min(MAX_RESERVE_MONTHS, Math.max(1, Math.round(raw.reserveMonths)))
       : undefined,
+    // Odklepnuté kontroly vstupů. Jen řetězce a jen rozumný počet: je to
+    // seznam klíčů, ne úložiště.
+    dismissedChecks: Array.isArray(raw.dismissedChecks)
+      ? raw.dismissedChecks.filter((k): k is string => typeof k === 'string').slice(0, 50)
+      : undefined,
     // Výnosy: rozumné meze, ať uložený nesmysl neudělá z renty milion.
     retirementRates: isRecord(raw.retirementRates)
       ? Object.fromEntries(

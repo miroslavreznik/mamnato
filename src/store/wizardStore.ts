@@ -53,6 +53,8 @@ export type WizardAction =
   | { type: 'UPDATE_SAVINGS'; field: string; value: number }
   | { type: 'UPDATE_SAVINGS_BREAKDOWN'; field: keyof SavingsBreakdown; value: number }
   | { type: 'UPDATE_DEBT_PRINCIPAL'; value: number }
+  // Odklepnutí kontroly reálnosti vstupů („u nás to tak je").
+  | { type: 'DISMISS_CHECK'; key: string }
   | { type: 'SET_GOALS'; goals: FinancialGoal[] }
   | { type: 'UPDATE_PROPERTY'; field: string; value: number }
   // Odebrání ručně zadané hodnoty vrátí odhad. Jedna akce pro všechna pole,
@@ -148,6 +150,11 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     }
     case 'UPDATE_DEBT_PRINCIPAL':
       return { ...state, existingDebtPrincipal: action.value };
+    case 'DISMISS_CHECK': {
+      const dismissed = state.dismissedChecks ?? [];
+      if (dismissed.includes(action.key)) return state;
+      return { ...state, dismissedChecks: [...dismissed, action.key] };
+    }
     case 'SET_GOALS': {
       /**
        * S cílem „dítě" se rovnou zapne rodičovská.

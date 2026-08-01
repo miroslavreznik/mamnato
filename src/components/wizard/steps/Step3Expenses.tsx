@@ -9,6 +9,7 @@ import { formatNumber as fmt } from '../../../engine/format';
 import { fieldClass } from '../../ui/fieldClass';
 import { NECESSARY_EXPENSE_FIELDS, DISCRETIONARY_EXPENSE_FIELD } from '../../../engine/expenseFields';
 import Callout from '../../ui/Callout';
+import PlausibilityNotes from '../../ui/PlausibilityNotes';
 
 // Kompaktní řádek pro jednu položku rozpisu (název + částka v Kč).
 function ItemInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
@@ -166,6 +167,14 @@ export default function Step3Expenses() {
           <Callout tone="caution" border alert>Vaše výdaje tvoří více než 90 % příjmů. Zbývá velmi málo na spoření.</Callout>
         </div>
       )}
+
+      {/* Kontrola reálnosti patří sem, kde je oprava nejlevnější: uživatel
+          má pole pod rukou. Nic to nezakazuje, „Další" zůstává funkční. */}
+      <PlausibilityNotes
+        state={state}
+        onDismiss={(key) => dispatch({ type: 'DISMISS_CHECK', key })}
+        className="mt-4"
+      />
 
       <StepNavigation
         showBack={true}

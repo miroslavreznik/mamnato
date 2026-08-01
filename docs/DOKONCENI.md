@@ -1413,3 +1413,55 @@ kdo míří výš, nemá tím zčervenat u cíle bydlení.
 je to aktivní spořicí cíl s termínem; rezerva se k ní připočte ve vysvětlení.
 Zapnutý cíl mění jen to, odkud se bere měsíční částka (uživatelova místo
 odhadu) a kam vede tlačítko (do Cílů místo do Rozpočtu).
+
+## Kontrola reálnosti vstupů
+
+Appka nikde neřekla „tohle je hodně nízko". Kdo zadal jídlo za 3 000 Kč pro
+dva nebo nechal zbytné výdaje na nule, dostal zelený verdikt postavený na
+rozpočtu, který v životě nevydrží. Je to nejčastější způsob, jak si plán
+rozbít, a přitom se pozná ze zadaných čísel.
+
+`engine/plausibility.ts` je čistá funkce nad stavem: vrátí seznam poznámek
+(klíč, nadpis, vysvětlení, tón, dotčené pole). Ukazuje se na třech místech:
+v průvodci pod poli s výdaji (tam je oprava nejlevnější), ve výsledcích pod
+editorem výdajů a v Přehledu jedním řádkem nad odpovědí, s odkazem do
+Rozpočtu.
+
+### Nic to nenutí
+
+To je celé zadání, ne kompromis. Neblokuje to „Další", nepřepisuje zadané
+hodnoty a **nesahá na verdikt**. Hraničních případů je spousta a appka
+o nich neví: obědy v ceně práce, auto od zaměstnavatele, bydlení u rodičů,
+energie v ceně nájmu, život na vesnici bez auta. Kdo řekne „u nás to tak
+je", má mít pokoj natrvalo, proto se odklepnutí ukládá do
+`state.dismissedChecks`. Upozornění, které se po překreslení vrátí, se lidé
+naučí odklikávat bez čtení a kontrola tím ztratí smysl.
+
+Ze stejného důvodu je to vizuálně poznámka, ne poplach: neutrální podklad,
+ne červená.
+
+### Prahy
+
+Schválně **nízko**, ne na průměru. Cílem není hodnotit životní styl, ale
+chytit chybějící položku a překlep v řádu. Platí, že falešné upozornění je
+dražší než zameškané: uživatel, kterému appka bezdůvodně nedůvěřuje,
+přestane důvěřovat jí.
+
+Jídlo se poměřuje **na dospělého**, ne na hlavu: děti mají vlastní položku
+„Výdaje na děti", takže by se jinak počítaly dvakrát a každá rodina by
+dostala upozornění hned nad předvyplněnými hodnotami. Test hlídá, že
+vlastní výchozí data appky neprotestují v žádném režimu.
+
+Souhrnná kontrola („výdaje nedosáhnou ani dvou pětin příjmu") je až
+poslední a jen tehdy, když se nenašlo nic konkrétního. Vedle tří jmenovitých
+poznámek by čtvrtá, obecnější, byla jen šum.
+
+### Co se schválně nekontroluje
+
+**Příjem.** Nízký příjem není chyba zadání a upozornění na něj by bylo
+hodnocení člověka, ne dat.
+
+**Cena nemovitosti.** Rozptyl mezi Prahou a okresním městem je tak velký,
+že by práh musel znát lokalitu; appka se na ni neptá a ptát nebude.
+
+**Úspory.** Nula je platná odpověď a přesně ta, se kterou se sem chodí.
