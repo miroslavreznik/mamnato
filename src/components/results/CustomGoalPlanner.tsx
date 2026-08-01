@@ -39,7 +39,12 @@ interface Props {
   state: WizardState;
   onChangeGoals: (goals: CustomGoal[]) => void;
   allocations: GoalAllocations;
-  onChangeAllocation: (index: number, value: number) => void;
+  /**
+   * Zápis částky na vlastní cíl. Klíčem je `id` cíle, ne pořadí: seznam se
+   * v „Co kdyby" filtruje (odložený cíl z něj zmizí), takže index by ukazoval
+   * na jiný cíl, než u kterého uživatel zrovna přepisuje částku.
+   */
+  onChangeAllocation: (goalId: string, value: number) => void;
 }
 
 const STEP = 500;
@@ -268,7 +273,7 @@ export default function CustomGoalPlanner({ state, onChangeGoals, allocations, o
               <AllocationSlider
                 value={given}
                 free={free}
-                onChange={(v) => onChangeAllocation(index, v)}
+                onChange={(v) => onChangeAllocation(goal.id, v)}
               />
 
               {/* Zarovnáno na stejnou šířku jako pole nad tím. Bez toho

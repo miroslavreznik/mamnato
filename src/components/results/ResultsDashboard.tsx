@@ -152,15 +152,10 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
   const resetGoals = useCallback(() => setExcludedGoals(new Set()), []);
 
-  const handleChangeAllocation = (goal: string, index: number | null, value: number) => {
-    setAllocOverrides((prev) => {
-      if (goal === 'custom' && index !== null) {
-        const id = (state.customGoals ?? [])[index]?.id;
-        if (!id) return prev;
-        return { ...prev, custom: { ...prev.custom, [id]: value } };
-      }
-      return { ...prev, [goal]: value };
-    });
+  const handleChangeAllocation = (goal: string, id: string | null, value: number) => {
+    setAllocOverrides((prev) => (goal === 'custom' && id
+      ? { ...prev, custom: { ...prev.custom, [id]: value } }
+      : { ...prev, [goal]: value }));
   };
 
   // Úprava vlastních cílů v detailu. Alokace se dorovnávat nemusí: drží se
@@ -388,7 +383,10 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             />
             <DtiDstiIndicator state={activeState} />
             <MortgageVsRent state={activeState} />
-            <InvestmentComparisonChart state={activeState} />
+            <InvestmentComparisonChart
+              state={activeState}
+              onChangeReturn={(rate) => handleChangeRetirementRate('sp500', rate)}
+            />
             <TaxReliefCard state={activeState} />
           </ResultsSection>
         )}
@@ -413,12 +411,15 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
               />
             )}
             {hasLeave && <ParentalLeavePlanner state={activeState} onChange={handleChangeParentalLeave} />}
+            {/* `activeAllocations`, ne `allocations`: seznam cílů je z
+                `activeState`, kde odložený cíl chybí. S plným polem částek
+                by se indexy rozešly a cíl by ukazoval částku souseda. */}
             {hasOther && (
               <CustomGoalPlanner
                 state={activeState}
                 onChangeGoals={handleChangeCustomGoals}
-                allocations={allocations}
-                onChangeAllocation={(i, v) => handleChangeAllocation('custom', i, v)}
+                allocations={activeAllocations}
+                onChangeAllocation={(id, v) => handleChangeAllocation('custom', id, v)}
               />
             )}
           </ResultsSection>

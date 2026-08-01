@@ -118,3 +118,44 @@ test('ručně zadaná částka u cíle přebije odhad a drží', async ({ page }
   await page.waitForTimeout(300)
   expect(digits(await duchod.inputValue()), 'zadaná částka na důchod').toBe('3000')
 })
+
+test('náklady na dítě z karty platí pro celý plán', async ({ page }) => {
+  await toResults(page, { savings: '600000', goals: ['property', 'child'] })
+
+  const veta = () => page.locator('#souhrn').getByText(/Během rodičovské/).innerText()
+  await page.locator('#souhrn').waitFor()
+  const pred = await veta()
+  const predOsa = digits(await page.getByRole('img', { name: /Vývoj úspor/ }).getAttribute('aria-label'))
+
+  // Dvě děti stojí dvakrát tolik. Dokud si počet držela karta, ukazovala
+  // náklady na dvě a osa vedle ní počítala jedno.
+  await page.locator('#tab-cile').click()
+  await num(page, 'Počet dětí').fill('2')
+  await page.locator('#tab-souhrn').click()
+  await page.waitForTimeout(400)
+
+  expect(await veta(), 'věta o rodičovské').not.toBe(pred)
+  expect(digits(await page.getByRole('img', { name: /Vývoj úspor/ }).getAttribute('aria-label')), 'časová osa')
+    .not.toBe(predOsa)
+})
+
+test('výnos v Důchodu platí i pro větu o rentě a graf koupě vs. nájem', async ({ page }) => {
+  await toResults(page, { savings: '600000', goals: ['property', 'retirement'] })
+  const veta = () => page.locator('#souhrn').getByText(/při výnosu/).innerText()
+  const pred = await veta()
+
+  await page.locator('#tab-cile').click()
+  await num(page, 'Výnos SP500 / globální akcie').fill('4')
+  await page.waitForTimeout(300)
+
+  // Věta v Přehledu počítá z téhož čísla…
+  await page.locator('#tab-souhrn').click()
+  await page.waitForTimeout(300)
+  expect(await veta(), 'věta o rentě').not.toBe(pred)
+  expect(await veta()).toContain('4 %')
+
+  // …a graf koupě vs. nájem taky, je to jeden a týž předpoklad.
+  await page.locator('#tab-bydleni').click()
+  await page.waitForTimeout(300)
+  expect(digits(await num(page, 'Výnos investic').inputValue()), 'výnos v Bydlení').toBe('4')
+})

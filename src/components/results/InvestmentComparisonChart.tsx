@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { WizardState } from '../../types';
-import { investmentComparison } from '../../engine/savings';
+import { investmentComparison, retirementReturn } from '../../engine/savings';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import SortedTooltip from '../ui/SortedTooltip';
 import NumField from '../ui/NumField';
@@ -16,16 +16,22 @@ import { fieldClass } from '../ui/fieldClass';
 
 interface Props {
   state: WizardState;
+  /** Zápis očekávaného výnosu akcií do plánu (desetinné číslo, 0,07 = 7 %). */
+  onChangeReturn: (rate: number) => void;
 }
 
 // Horizont srovnání. Delší nemá smysl, odhady výnosů jsou už tak hodně hrubé.
 const HORIZON = 30;
 
-export default function InvestmentComparisonChart({ state }: Props) {
+export default function InvestmentComparisonChart({ state, onChangeReturn }: Props) {
   const colors = useChartColors();
   const [propertyRate, setPropertyRate] = useState(3);
-  const [sp500Rate, setSp500Rate] = useState(7);
   const [rentGrowth, setRentGrowth] = useState(3);
+  // Výnos akcií je jeden pro celou appku: totéž číslo počítá i důchodovou
+  // projekci a větu o rentě v Přehledu. Dvě různá „očekávaný výnos" na dvou
+  // záložkách jsou dvě různé odpovědi na jednu otázku.
+  const sp500Rate = retirementReturn(state) * 100;
+  const setSp500Rate = (percent: number) => onChangeReturn(percent / 100);
 
   const data = investmentComparison(
     state,
