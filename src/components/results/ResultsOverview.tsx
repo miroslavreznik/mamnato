@@ -284,7 +284,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
       {readinessGoals.length > 0 && (
         <div>
           <h3 className="type-label text-ink-muted mb-2">Jak jste na tom s cíli</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div data-testid="cile-prehled" className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {readinessGoals.map((g) => (
               <div key={g.key} className="p-3 rounded-lg border border-line">
                 <div className="flex items-center justify-between gap-2">
@@ -320,6 +320,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
         {kpis.map((k) => (
           <HeroNumber
             key={k.label}
+            testId={`kpi-${k.label}`}
             label={<>{k.label}<Tooltip text={k.tooltip} /></>}
             value={k.value}
             unit={k.unit}

@@ -93,9 +93,38 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     [state, excludedExpenses, excludedGoals]
   );
 
-  const [allocations, setAllocations] = useState<GoalAllocations>(() =>
-    calculateDefaultAllocations(state)
-  );
+  /**
+   * Kolik měsíčně jde na který cíl.
+   *
+   * Odvozuje se ze zadaného plánu, dokud uživatel nesáhne na konkrétní cíl;
+   * od té chvíle platí jeho číslo (týž vzorec jako u sazby nebo nákladů na
+   * vlastnictví, viz `engine/estimate.ts`).
+   *
+   * Dřív to byl `useState(calculateDefaultAllocations(state))`, tedy hodnota
+   * spočítaná **jednou** při otevření výsledků. Kdo si pak v Rozpočtu snížil
+   * výdaje o pět tisíc, viděl sice vyšší disponibilní částku, ale na akontaci
+   * se dál odkládalo staré číslo: „naspoříte za 4 roky" se nezměnilo a
+   * časová osa kupovala pořád ve stejný měsíc. Změna jednoho čísla tak
+   * mlčky neplatila pro zbytek stránky.
+   */
+  const [allocOverrides, setAllocOverrides] = useState<{
+    downPayment?: number;
+    retirement?: number;
+    child?: number;
+    custom?: Record<string, number>;
+  }>({});
+
+  const defaultAllocations = useMemo(() => calculateDefaultAllocations(state), [state]);
+
+  const allocations = useMemo<GoalAllocations>(() => ({
+    downPayment: allocOverrides.downPayment ?? defaultAllocations.downPayment,
+    retirement: allocOverrides.retirement ?? defaultAllocations.retirement,
+    child: allocOverrides.child ?? defaultAllocations.child,
+    // Vlastní cíle podle `id`, ne podle pořadí: smazáním prostředního cíle
+    // by se jinak zadané částky posunuly na sousedy.
+    custom: (state.customGoals ?? []).map((g, i) =>
+      allocOverrides.custom?.[g.id] ?? defaultAllocations.custom[i] ?? 0),
+  }), [allocOverrides, defaultAllocations, state.customGoals]);
 
   // Vypnutý cíl nesmí dál ukrajovat z rozpočtu.
   const activeAllocations = useMemo<GoalAllocations>(() => ({
@@ -124,22 +153,22 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
   const resetGoals = useCallback(() => setExcludedGoals(new Set()), []);
 
   const handleChangeAllocation = (goal: string, index: number | null, value: number) => {
-    setAllocations((prev) => {
+    setAllocOverrides((prev) => {
       if (goal === 'custom' && index !== null) {
-        const custom = [...prev.custom];
-        custom[index] = value;
-        return { ...prev, custom };
+        const id = (state.customGoals ?? [])[index]?.id;
+        if (!id) return prev;
+        return { ...prev, custom: { ...prev.custom, [id]: value } };
       }
       return { ...prev, [goal]: value };
     });
   };
 
-  // Úprava vlastních cílů v detailu → uložit a udržet zarovnané alokace.
+  // Úprava vlastních cílů v detailu. Alokace se dorovnávat nemusí: drží se
+  // podle `id` a nezadaný cíl si vezme výchozí rozdělení.
   const handleChangeCustomGoals = (goals: CustomGoal[]) => {
     const next = { ...state, customGoals: goals };
     setState(next);
     saveState(next);
-    setAllocations((prev) => ({ ...prev, custom: goals.map((_, i) => prev.custom[i] ?? 0) }));
   };
 
   const handleChangeParentalLeave = (value: ParentalLeave | undefined) => {

@@ -22,7 +22,7 @@ const TONE: Record<NumberTone, { text: string; bar: string }> = {
   plain: { text: 'text-ink', bar: 'bg-ink' },
 };
 
-export default function HeroNumber({ label, value, unit, note, tone = 'plain', meter, children, className = '' }: {
+export default function HeroNumber({ label, value, unit, note, tone = 'plain', meter, children, className = '', testId }: {
   label: ReactNode;
   value: string;
   unit?: string;
@@ -34,10 +34,12 @@ export default function HeroNumber({ label, value, unit, note, tone = 'plain', m
   /** Vlastní grafika místo proužku, například měřič měsíců. */
   children?: ReactNode;
   className?: string;
+  /** Kotva pro testy. Dlaždice se jinak od sebe v DOM nedají rozeznat. */
+  testId?: string;
 }) {
   const t = TONE[tone];
   return (
-    <div className={`p-3 rounded-lg bg-sunken ${className}`.trimEnd()}>
+    <div data-testid={testId} className={`p-3 rounded-lg bg-sunken ${className}`.trimEnd()}>
       <span className="text-xs text-ink-muted inline-flex items-center">{label}</span>
       <p className={`type-hero whitespace-nowrap mt-0.5 ${t.text}`}>
         {value}
