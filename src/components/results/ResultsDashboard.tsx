@@ -115,7 +115,8 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     downPayment?: number;
     reserve?: number;
     retirement?: number;
-    child?: number;
+    // `child` tu schválně není: kolik dítě stojí, se zadává v tabulce podle
+    // věku, ne jako jedna ruční částka. Viz `ChildCostPlanner`.
     custom?: Record<string, number>;
   }>({});
 
@@ -125,7 +126,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     downPayment: allocOverrides.downPayment ?? defaultAllocations.downPayment,
     reserve: allocOverrides.reserve ?? defaultAllocations.reserve,
     retirement: allocOverrides.retirement ?? defaultAllocations.retirement,
-    child: allocOverrides.child ?? defaultAllocations.child,
+    child: defaultAllocations.child,
     // Vlastní cíle podle `id`, ne podle pořadí: smazáním prostředního cíle
     // by se jinak zadané částky posunuly na sousedy.
     custom: (state.customGoals ?? []).map((g, i) =>
@@ -274,6 +275,23 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
   // takže seznam patří **před** zkopírování, ne za něj.
   const [shareCopied, setShareCopied] = useState(false);
   const [shareAsking, setShareAsking] = useState(false);
+
+  /**
+   * Otevření výzvy „odkaz ponese vaše údaje".
+   *
+   * Výzva se kreslí nad obsahem sloupce, kdežto tlačítko je v přilepené
+   * hlavičce. Kdo klikl ze spodku dlouhé stránky, viděl jen to, že se
+   * tlačítko přepnulo, a seznam sdílených údajů zůstal o pár obrazovek výš.
+   * U jediné akce, která pustí data z prohlížeče ven, je to to poslední,
+   * co si má uživatel domýšlet.
+   */
+  const toggleShareAsking = () => {
+    const opening = !shareAsking;
+    setShareAsking(opening);
+    // Posun patří sem, ne do aktualizační funkce `setShareAsking`: tu React
+    // ve vývojovém režimu volá dvakrát, takže by se dvakrát rolovalo.
+    if (opening) window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const handleShare = async () => {
     const url = buildShareUrl(state);
     setShareAsking(false);
@@ -312,7 +330,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         actions={
           <ResultsHeader
             shareCopied={shareCopied}
-            onShare={() => setShareAsking((v) => !v)}
+            onShare={toggleShareAsking}
             onPrint={handlePrint}
             onEdit={onEdit}
             onReset={onReset}
@@ -455,7 +473,6 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
                 state={activeState}
                 monthlyAllocation={allocations.child}
                 onChangeCosts={handleChangeChildCosts}
-                onChangeAllocation={(v) => handleChangeAllocation('child', null, v)}
               />
             )}
             {hasLeave && <ParentalLeavePlanner state={activeState} onChange={handleChangeParentalLeave} />}

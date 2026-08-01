@@ -1465,3 +1465,46 @@ hodnocení člověka, ne dat.
 že by práh musel znát lokalitu; appka se na ni neptá a ptát nebude.
 
 **Úspory.** Nula je platná odpověď a přesně ta, se kterou se sem chodí.
+
+## Počet dětí platil jen pro náklady
+
+Kdo si v kartě „Náklady na dítě" nastavil dvě děti, dostal dvojnásobné výdaje,
+ale zbytek appky dál počítal jedno. Číslo se propsalo, nic dalšího ne.
+
+Jeden zdroj pravdy je teď `plannedChildren(state)` v `engine/childCost.ts`
+a berou si ho:
+
+- **Dávky během volna.** Model počítá, že plánované děti přijdou naráz
+  (karta to říká nahlas), takže dávky musely jít za týmž předpokladem:
+  u dvou a více dětí narozených současně je mateřská 37 týdnů místo 28
+  a rodičovský příspěvek 525 000 Kč místo 350 000. Do té doby platil plán
+  se dvěma dětmi dvojnásobné náklady a příspěvek dostával na jedno, což
+  je rozdíl 175 000 Kč, o které se appka mýlila proti sobě samé.
+- **Daňové zvýhodnění.** Bylo natvrdo na jedno dítě (`plannedChild ? 1 : …`).
+  Zvýhodnění se přitom stupňuje podle pořadí, takže druhé dítě není totéž
+  co první. U rodiny se plánované děti přičtou k těm, které už doma jsou,
+  a poznámka pod kartou rozlišuje, která část je novinka.
+- **Popisky.** Záložka, přepínač v Co kdyby, sdílený seznam cílů, věta u cíle,
+  puntík na časové ose i popisek jeho úchopu pro čtečku. Jednotné číslo
+  u plánu se dvěma dětmi vypadalo jako chyba zadání.
+
+### Pole „Kolik měsíčně odkládám na dítě" zmizelo
+
+Bylo to druhé místo, kde se nastavovalo totéž. Kolik dítě stojí, se zadává
+v tabulce podle věku; kolik během volna přiteče, plyne z jeho délky. Ruční
+částka nad tím byla třetí, nezávislé číslo, které se s oběma mohlo rozejít.
+Do rozpočtu jde vážený průměr z tabulky a karta ho ukazuje jako výsledek,
+ne jako pole.
+
+Věta u cíle se proto přeformulovala. Stálo v ní „Odkládáte X na náklady
+spojené s dítětem", jenže tu částku uživatel nezadával, takže se tvářila
+jako jeho rozhodnutí. Teď říká, co ta částka je, a hodnotí to, co se
+hodnotit dá: jestli se vedle ostatních cílů do rozpočtu vejde.
+
+## Sdílení: výzva mimo obrazovku
+
+Tlačítko „Sdílet přehled" je v přilepené hlavičce, ale výzva „odkaz ponese
+vaše údaje" se kreslí nad obsahem sloupce. Kdo klikl ze spodku dlouhé
+stránky, viděl jen to, že se tlačítko přepnulo. U jediné akce, která pustí
+data z prohlížeče ven, je to to poslední, co si má uživatel domýšlet, takže
+otevření výzvy teď stránku odroluje nahoru.

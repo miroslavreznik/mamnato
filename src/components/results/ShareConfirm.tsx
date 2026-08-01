@@ -1,5 +1,5 @@
 import type { WizardState } from '../../types';
-import { GOAL_LABELS, customGoalName } from '../../engine/goalNames';
+import { GOAL_LABELS, customGoalName, childGoalLabel } from '../../engine/goalNames';
 import Callout from '../ui/Callout';
 
 /**
@@ -23,7 +23,7 @@ export default function ShareConfirm({ state, onCopy, onCancel }: {
   const goals = [
     ...(state.goals.includes('property') ? [GOAL_LABELS.property] : []),
     ...(state.goals.includes('reserve') ? [GOAL_LABELS.reserve] : []),
-    ...(state.goals.includes('child') ? [GOAL_LABELS.child] : []),
+    ...(state.goals.includes('child') ? [childGoalLabel(state)] : []),
     ...(state.goals.includes('retirement') ? [GOAL_LABELS.retirement] : []),
     ...(state.goals.includes('other')
       ? (state.customGoals ?? []).map((_, i) => customGoalName(state, i))

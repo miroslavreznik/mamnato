@@ -1,6 +1,6 @@
 import { useWhatIf } from '../../store/whatIfStore';
 import { mortgageRate, loanTermYears } from '../../engine/mortgage';
-import { GOAL_LABELS, customGoalName } from '../../engine/goalNames';
+import { GOAL_LABELS, customGoalName, childGoalLabel } from '../../engine/goalNames';
 import { czk, formatRate, formatMonths } from '../../engine/format';
 
 /**
@@ -165,7 +165,7 @@ export default function WhatIfPanel() {
     }] : []),
     ...(allGoals.goals.includes('child') ? [{
       key: 'child',
-      label: GOAL_LABELS.child,
+      label: childGoalLabel(allGoals),
       amount: allGoalAllocations.child,
       params: hasLeave ? (
         <Slider

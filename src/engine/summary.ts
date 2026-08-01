@@ -59,7 +59,7 @@ export function evaluateOverall(state: WizardState, allocations: GoalAllocations
   // která má být hotová, takže patří nad dlouhodobé cíle, ne pod ně.
   if (state.goals.includes('reserve')) goals.push(reserveReadiness(state, allocations));
   if (state.goals.includes('retirement')) goals.push(retirementReadiness(state, allocations));
-  if (state.goals.includes('child')) goals.push(childReadiness(allocations));
+  if (state.goals.includes('child')) goals.push(childReadiness(state, allocations));
   if (state.goals.includes('other')) goals.push(customReadiness(state, allocations));
   const leaveRow = leaveReadiness(state);
   if (leaveRow) goals.push(leaveRow); // schodek během volna → status se sám sníží (warning)

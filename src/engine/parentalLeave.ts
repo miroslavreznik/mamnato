@@ -2,16 +2,42 @@ import type { WizardState } from '../types';
 import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable } from './cashflow';
 import { effectiveDownPayment, expensesAfterPurchase, downPaymentGap } from './mortgage';
 import { estimate, type Estimate } from './estimate';
-import { monthlyChildCost } from './childCost';
+import { monthlyChildCost, plannedChildren } from './childCost';
 import { calculateDefaultAllocations, monthsToSaveAtAllocation } from './allocation';
 
 // Rodičovský příspěvek na jedno dítě (od 2024), celkový balík na celou dobu.
 export const RODICOVSKA_POOL = 350000;
 
-// Mateřská (peněžitá pomoc v mateřství) se vyplácí 28 týdnů, tedy zhruba
-// 6,5 měsíce. U vícerčat 37 týdnů, s tím tady nepočítáme.
+/**
+ * Balík u dvou a více dětí narozených současně, o polovinu vyšší
+ * (§ 30 zákona o státní sociální podpoře).
+ *
+ * Časová osa počítá, že plánované děti přijdou naráz, a `monthlyChildCost`
+ * podle toho násobí výdaje. Dávky musely jít za tímtéž předpokladem: plán
+ * se dvěma dětmi platil dvojnásobné náklady, ale příspěvek dostával na
+ * jedno, takže si appka sama se sebou odporovala o statisíce.
+ */
+export const RODICOVSKA_POOL_MULTIPLE = 525000;
+
+// Mateřská (peněžitá pomoc v mateřství) se vyplácí 28 týdnů, u dvou a více
+// dětí narozených současně 37 týdnů.
 export const PPM_WEEKS = 28;
-export const PPM_MONTHS = Math.round((PPM_WEEKS * 7 / 30.4) * 10) / 10;
+export const PPM_WEEKS_MULTIPLE = 37;
+export const PPM_MONTHS = weeksToMonths(PPM_WEEKS);
+
+function weeksToMonths(weeks: number): number {
+  return Math.round((weeks * 7 / 30.4) * 10) / 10;
+}
+
+/** Kolik týdnů mateřské náleží podle počtu dětí v plánu. */
+export function ppmWeeks(state: WizardState): number {
+  return plannedChildren(state) > 1 ? PPM_WEEKS_MULTIPLE : PPM_WEEKS;
+}
+
+/** Celkový balík rodičovského příspěvku podle počtu dětí v plánu. */
+export function rodicovskaPool(state: WizardState): number {
+  return plannedChildren(state) > 1 ? RODICOVSKA_POOL_MULTIPLE : RODICOVSKA_POOL;
+}
 
 // Redukční hranice denního vyměřovacího základu pro nemocenské dávky, 2026.
 // Zdroj: ČSSZ, hodnoty platné od 1. 1. 2026.
@@ -56,9 +82,9 @@ export function ppmMonthly(netMonthlySalary: number): number {
 // Rodičovský příspěvek po skončení mateřské: zbytek balíku rozložený na
 // zbývající měsíce volna. Čerpat se dá rychleji i pomaleji, tady se drží
 // zvolené délky volna.
-export function rodicovskaMonthly(durationMonths: number, ppmMonths: number): number {
+export function rodicovskaMonthly(durationMonths: number, ppmMonths: number, pool: number = RODICOVSKA_POOL): number {
   const remaining = Math.max(1, durationMonths - ppmMonths);
-  return Math.round(RODICOVSKA_POOL / remaining);
+  return Math.round(pool / remaining);
 }
 
 // Fáze volna. Mateřská na začátku je výrazně vyšší než rodičovský příspěvek,
@@ -90,16 +116,17 @@ function suggestedPhases(state: WizardState): LeavePhase[] {
   const pl = state.parentalLeave;
   if (!pl) return [];
   const duration = Math.max(1, pl.durationMonths);
-  const ppmMonths = Math.min(PPM_MONTHS, duration);
+  const weeks = ppmWeeks(state);
+  const ppmMonths = Math.min(weeksToMonths(weeks), duration);
   const phases: LeavePhase[] = [
-    { key: 'ppm', label: `Mateřská (prvních ${PPM_WEEKS} týdnů)`, months: ppmMonths, monthlyBenefit: ppmMonthly(parentSalary(state, pl.parent)) },
+    { key: 'ppm', label: `Mateřská (prvních ${weeks} týdnů)`, months: ppmMonths, monthlyBenefit: ppmMonthly(parentSalary(state, pl.parent)) },
   ];
   if (duration > ppmMonths) {
     phases.push({
       key: 'rodicovska',
       label: 'Rodičovský příspěvek',
       months: duration - ppmMonths,
-      monthlyBenefit: rodicovskaMonthly(duration, ppmMonths),
+      monthlyBenefit: rodicovskaMonthly(duration, ppmMonths, rodicovskaPool(state)),
     });
   }
   return phases;

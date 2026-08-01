@@ -64,7 +64,11 @@ function goalTip(goal: GoalReadiness): Tip | null {
         ...toGoals,
       };
     case 'child':
-      return { text: 'Na náklady spojené s dítětem zatím neodkládáte nic.', ...toGoals };
+      return {
+        text: 'Náklady na dítě se vedle ostatních cílů do rozpočtu zatím nevejdou. '
+          + 'Pomůže ubrat u jiného cíle, nebo ve výdajích.',
+        ...toGoals,
+      };
     case 'other':
       return {
         text: 'U vlastních cílů se nestíhají všechny termíny. Upravte částku nebo termín u toho, který nevychází.',

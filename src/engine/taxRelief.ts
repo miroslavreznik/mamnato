@@ -1,6 +1,7 @@
 import type { WizardState } from '../types';
 import { loanAmount, mortgageRate, loanTermYears, monthlyMortgagePayment } from './mortgage';
 import { childWord, czk } from './format';
+import { plannedChildren } from './childCost';
 
 /**
  * Daňové úlevy spojené s hypotékou a dětmi.
@@ -78,6 +79,9 @@ export interface TaxRelief {
   // Uplatňuje uživatel zvýhodnění na dítě nejspíš už teď (tedy je v čisté
   // mzdě, kterou zadal)? U rodiny s dětmi ano, u plánovaného dítěte ne.
   childCreditAlreadyClaimed: boolean;
+  // Kolik dětí z toho teprve přijde. Rodina, která už děti má a plánuje
+  // další, potřebuje vědět, která část je novinka a která ne.
+  plannedChildren: number;
 }
 
 export function evaluateTaxRelief(state: WizardState): TaxRelief | null {
@@ -97,11 +101,16 @@ export function evaluateTaxRelief(state: WizardState): TaxRelief | null {
     });
   }
 
-  // Plánované dítě = nová sleva. Děti, které už doma jsou, si uživatel
-  // nejspíš uplatňuje a má je v čisté mzdě.
-  const plannedChild = state.goals.includes('child');
+  // Plánované děti = nová sleva. Děti, které už doma jsou, si uživatel
+  // nejspíš uplatňuje a má je v čisté mzdě; poznámka pod kartou to říká.
+  //
+  // Počet plánovaných dětí je z plánu, ne natvrdo jedno. Kdo si v kartě
+  // nákladů nastavil dvě, platil dvojnásobné výdaje, ale zvýhodnění tu
+  // dostal na jedno dítě. Zvýhodnění se navíc stupňuje podle pořadí, takže
+  // druhé dítě není totéž co první.
+  const planned = state.goals.includes('child') ? plannedChildren(state) : 0;
   const existingChildren = state.mode === 'family' ? (state.numberOfChildren ?? 0) : 0;
-  const childrenForCredit = plannedChild && existingChildren === 0 ? 1 : existingChildren;
+  const childrenForCredit = existingChildren + planned;
 
   if (childrenForCredit > 0) {
     const yearly = childCreditYearly(childrenForCredit);
@@ -124,5 +133,6 @@ export function evaluateTaxRelief(state: WizardState): TaxRelief | null {
     yearly,
     monthly: Math.round(yearly / 12),
     childCreditAlreadyClaimed: existingChildren > 0,
+    plannedChildren: planned,
   };
 }

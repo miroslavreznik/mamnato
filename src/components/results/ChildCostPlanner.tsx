@@ -2,26 +2,36 @@ import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import { CHILD_COSTS_CZ } from '../../engine/defaults';
 import { calculateChildCosts } from '../../engine/childCost';
-import { decimal } from '../../engine/format';
+import { decimal, czkPerMonth } from '../../engine/format';
+import { plannedChildren } from '../../engine/childCost';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
 import NumField from '../ui/NumField';
-import GoalAllocationField from './GoalAllocationField';
 import Disclosure from '../ui/Disclosure';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
 import { HELP_BUTTON } from '../ui/Tooltip';
 import { fieldClass } from '../ui/fieldClass';
 
+/**
+ * Náklady na dítě.
+ *
+ * **Pole „kolik měsíčně odkládám" tu schválně není.** Bylo to druhé místo,
+ * kde se totéž nastavovalo: kolik dítě stojí, se zadává v tabulce podle věku
+ * a kolik během volna přiteče, se odvozuje z jeho délky. Ruční částka nad tím
+ * byla třetí, nezávislé číslo, které se s oběma mohlo rozejít. Do rozpočtu
+ * jde vážený průměr z téhle tabulky, takže se změnou částky u kterékoli
+ * věkové skupiny se přepočítá celý přehled.
+ */
 interface Props {
   state: WizardState;
+  /** Kolik z toho jde měsíčně do rozpočtu (vážený průměr nákladů). */
   monthlyAllocation: number;
-  onChangeAllocation: (v: number) => void;
   /** Zápis do plánu: počet dětí, částky dle věku, vysoká škola. */
   onChangeCosts: (patch: NonNullable<WizardState['childCosts']>) => void;
 }
 
-export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAllocation, onChangeCosts }: Props) {
+export default function ChildCostPlanner({ state, monthlyAllocation, onChangeCosts }: Props) {
   const colors = useChartColors();
   const isFamily = state.mode === 'family';
   const [showInfo, setShowInfo] = useState(false);
@@ -31,7 +41,8 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
   // peněz na cíle. Dokud si je karta držela ve vlastním `useState`, ukazovala
   // náklady na dvě děti a osa vedle ní počítala jedno.
   const costs = state.childCosts;
-  const numberOfChildren = Math.max(1, Math.round(costs?.children ?? 1));
+  const numberOfChildren = plannedChildren(state);
+  const many = numberOfChildren > 1;
   const includeUni = costs?.includeUniversity ?? false;
   const customCosts = useMemo(
     () => Object.fromEntries(CHILD_COSTS_CZ.map((r) => [r.label, costs?.byAge?.[r.label] ?? r.monthlyCost])),
@@ -51,7 +62,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
   return (
     <Card>
       <div className="flex items-center gap-2 mb-4">
-        <h3 className="type-section text-ink">Náklady na dítě</h3>
+        <h3 className="type-section text-ink">{many ? 'Náklady na děti' : 'Náklady na dítě'}</h3>
         <button
           onClick={() => setShowInfo(!showInfo)}
           className={HELP_BUTTON}
@@ -61,13 +72,13 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
 
       {showInfo && (
         <Callout tone="brand" className="mb-4">
-          Průměrné náklady na jedno dítě v ČR dle ČSÚ. Skutečné náklady se liší dle regionu, životního stylu a počtu dětí. Nezahrnují jednorázové výdaje (kočárek, autosedačka, nábytek).
+          Průměrné náklady na jedno dítě v ČR dle ČSÚ, vynásobené počtem dětí. Skutečné náklady se liší dle regionu, životního stylu a počtu dětí. Nezahrnují jednorázové výdaje (kočárek, autosedačka, nábytek).
         </Callout>
       )}
 
       {isFamily && (
         <Callout tone="caution" className="mb-4">
-          Vaše aktuální výdaje na děti ({state.expenses.children.toLocaleString('cs-CZ')} Kč/měs.) jsou již zahrnuty ve výpočtu cashflow. Níže zobrazené náklady představují odhad pro plánované/budoucí dítě.
+          Vaše aktuální výdaje na děti ({state.expenses.children.toLocaleString('cs-CZ')} Kč/měs.) jsou již zahrnuty ve výpočtu cashflow. Níže zobrazené náklady představují odhad pro {many ? 'plánované děti' : 'plánované dítě'}.
         </Callout>
       )}
 
@@ -174,7 +185,7 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
               </linearGradient>
             </defs>
             <CartesianGrid {...gridProps(colors)} />
-            <XAxis dataKey="year" {...axisProps(colors)} label={{ value: 'Věk dítěte', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
+            <XAxis dataKey="year" {...axisProps(colors)} label={{ value: many ? 'Věk dětí' : 'Věk dítěte', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
             <YAxis tickFormatter={(n) => `${(n / 1000).toFixed(0)}k`} {...axisProps(colors)} />
             <Tooltip
               formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč/měs.`]}
@@ -189,12 +200,19 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeAll
       <p className="mt-4 text-xs text-ink-faint">
         Zdroj: ČSÚ, průměr pro rok 2024. Částky jsou orientační a zahrnují běžné výdaje bez jednorázových položek.
       </p>
-      <GoalAllocationField
-        label="Kolik měsíčně odkládám na dítě"
-        value={monthlyAllocation}
-        onChange={onChangeAllocation}
-        hint="Částka se promítne do rozpočtu i do celkového verdiktu."
-      />
+
+      {/* Místo pole „kolik měsíčně odkládám": částka se nezadává, plyne
+          z tabulky výše. Uživatel má vidět, co z jeho zadání vzniklo. */}
+      <div className="mt-4 pt-4 border-t border-line">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <span className="text-sm font-medium text-ink-label">Do rozpočtu jde měsíčně</span>
+          <span className="text-lg font-bold text-ink tabular-nums">{czkPerMonth(monthlyAllocation)}</span>
+        </div>
+        <p className="mt-1 text-xs text-ink-faint">
+          Vážený průměr z tabulky výše. Do narození se odkládá stranou, od narození
+          je to skutečný výdaj podle věku. Změnou částek nahoře se přepočítá celý přehled.
+        </p>
+      </div>
     </Card>
   );
 }

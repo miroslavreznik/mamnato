@@ -95,6 +95,12 @@ interface Props {
   /** Mez posunu dítěte v měsících. */
   childRange?: { min: number; max: number };
   /**
+   * Jak se dítěti říká. Plán se dvěma dětmi mluví v množném čísle všude
+   * kolem, takže i tady: čtečka jinak nabídne „Za jak dlouho čekáte dítě"
+   * u puntíku, který je popsaný „Děti".
+   */
+  childLabel?: string;
+  /**
    * Posun koupě. Doleva jen k měsíci, kdy je na akontaci naspořeno: dřív
    * koupit nejde, protože není z čeho.
    */
@@ -124,6 +130,7 @@ export default function JourneyRibbon({
   animate = true,
   onMoveChild,
   childRange = { min: 0, max: 96 },
+  childLabel = 'dítě',
   onMovePurchase,
   purchaseRange = { min: 0, max: 120 },
   ghost,
@@ -213,7 +220,7 @@ export default function JourneyRibbon({
       m.child = {
         move: onMoveChild,
         range: childRange,
-        label: 'Za jak dlouho čekáte dítě',
+        label: `Za jak dlouho čekáte ${childLabel}`,
         text: (month) => `za ${formatMonths(month)}`,
       };
     }
@@ -228,7 +235,7 @@ export default function JourneyRibbon({
       };
     }
     return m;
-  }, [onMoveChild, childRange, onMovePurchase, purchaseRange]);
+  }, [onMoveChild, childRange, childLabel, onMovePurchase, purchaseRange]);
 
   const clampTo = (m: number, range: { min: number; max: number }) =>
     Math.min(range.max, Math.max(range.min, m));

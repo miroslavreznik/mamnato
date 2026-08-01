@@ -1,4 +1,5 @@
 import type { WizardState } from '../types';
+import { plannedChildren } from './childCost';
 
 /**
  * Jak se cíle jmenují směrem k uživateli.
@@ -13,6 +14,17 @@ export const GOAL_LABELS: Record<string, string> = {
   retirement: 'Důchod',
   child: 'Dítě',
 };
+
+/**
+ * Jak se cíl „dítě" jmenuje podle počtu dětí v plánu.
+ *
+ * Kdo si v kartě nastaví dvě děti, platí dvojnásobné náklady, ale všude
+ * kolem četl „Dítě" v jednotném čísle: v záložce, v přepínači v Co kdyby
+ * i na časové ose. Číslo se propsalo, slovo ne.
+ */
+export function childGoalLabel(state: WizardState): string {
+  return plannedChildren(state) > 1 ? 'Děti' : GOAL_LABELS.child;
+}
 
 /** Jméno vlastního cíle, nebo náhrada, když ho uživatel nepojmenoval. */
 export function customGoalName(state: WizardState, index: number): string {
@@ -36,7 +48,7 @@ const MAX_TAB_LABEL = 22;
 export function goalsTabLabel(state: WizardState): string {
   const names: string[] = [];
   if (state.goals.includes('reserve')) names.push(GOAL_LABELS.reserve);
-  if (state.goals.includes('child')) names.push(GOAL_LABELS.child);
+  if (state.goals.includes('child')) names.push(childGoalLabel(state));
   if (state.goals.includes('retirement')) names.push(GOAL_LABELS.retirement);
   if (state.goals.includes('other')) {
     (state.customGoals ?? []).forEach((_, i) => names.push(customGoalName(state, i)));

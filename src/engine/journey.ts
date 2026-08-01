@@ -5,6 +5,7 @@ import { necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
 import { necessaryExpensesAfterPurchase } from './mortgage';
 import type { GoalAllocations } from './allocation';
 import { czk, czkMonthly, formatMonths } from './format';
+import { plannedChildren } from './childCost';
 
 /**
  * Podklad pro časovou osu v Přehledu: život jako jeden příběh.
@@ -424,7 +425,15 @@ export function journey(
     events.push({ key: 'purchase', month: tl.purchaseMonth, label: 'Koupě', detail: 'Koupě bydlení' });
   }
   if (tl.childMonth !== null) {
-    events.push({ key: 'child', month: tl.childMonth, label: 'Dítě', detail: 'Dítě a rodičovská' });
+    // Popisek jde za počtem dětí v plánu. Číslo se propisovalo do nákladů
+    // i do osy, ale puntík na ní se pořád jmenoval „Dítě".
+    const many = plannedChildren(state) > 1;
+    events.push({
+      key: 'child',
+      month: tl.childMonth,
+      label: many ? 'Děti' : 'Dítě',
+      detail: many ? 'Děti a rodičovská' : 'Dítě a rodičovská',
+    });
   }
   if (tl.leaveEndMonth !== null && tl.leaveEndMonth <= horizonMonths) {
     events.push({ key: 'leaveEnd', month: tl.leaveEndMonth, label: 'Konec rodičovské' });

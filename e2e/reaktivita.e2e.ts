@@ -119,6 +119,31 @@ test('ručně zadaná částka u cíle přebije odhad a drží', async ({ page }
   expect(digits(await duchod.inputValue()), 'zadaná částka na důchod').toBe('3000')
 })
 
+test('počet dětí platí pro celý plán, ne jen pro náklady', async ({ page }) => {
+  // Číslo se propisovalo do výdajů, ale zbytek appky pořád počítal jedno dítě:
+  // rodičovský příspěvek, daňové zvýhodnění i popisky na časové ose.
+  await toResults(page, { savings: '600000', goals: ['property', 'child'] })
+
+  await page.locator('#tab-cile').click()
+  await num(page, 'Počet dětí').fill('2')
+  await page.waitForTimeout(400)
+
+  // Dávky jdou za týmž předpokladem jako náklady: děti přijdou naráz, takže
+  // 37 týdnů mateřské a balík o polovinu vyšší.
+  await expect(page.locator('#cile').getByText(/Mateřská \(prvních 37 týdnů\)/)).toBeVisible()
+  await expect(page.locator('#cile').getByText(/Rodičovský příspěvek = /)).toContainText('525')
+
+  // Zvýhodnění na dítě zná pořadí, ne jen to první.
+  await page.locator('#tab-bydleni').click()
+  await expect(page.locator('#bydleni').getByText('Daňové zvýhodnění na 2 děti')).toBeVisible()
+
+  // A popisky mluví v množném čísle, včetně úchopu na stuze.
+  await page.locator('#tab-souhrn').click()
+  await page.waitForTimeout(300)
+  await expect(page.getByRole('slider', { name: 'Za jak dlouho čekáte děti' })).toBeVisible()
+  await expect(page.locator('#souhrn').getByText(/Náklady na 2 děti/)).toBeVisible()
+})
+
 test('náklady na dítě z karty platí pro celý plán', async ({ page }) => {
   await toResults(page, { savings: '600000', goals: ['property', 'child'] })
 

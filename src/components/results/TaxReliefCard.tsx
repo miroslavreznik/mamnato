@@ -50,9 +50,13 @@ export default function TaxReliefCard({ state }: { state: WizardState }) {
       </div>
 
       <p className="mt-3 text-xs text-ink-muted">
-        {relief.childCreditAlreadyClaimed
-          ? 'Pozor: zvýhodnění na děti si nejspíš uplatňujete už teď u zaměstnavatele, takže ho máte v čisté mzdě, kterou jste zadali. Novinkou pro vás bude jen odpočet úroků, ten začne platit až po podpisu hypotéky.'
-          : 'Odpočet úroků začne platit až po podpisu hypotéky a uplatňuje se v daňovém přiznání nebo ročním zúčtování u zaměstnavatele. Zvýhodnění na dítě až po jeho narození.'}
+        {/* Tři situace, ne dvě: kdo už děti má a plánuje další, má část
+            zvýhodnění v čisté mzdě a část teprve přijde. */}
+        {relief.childCreditAlreadyClaimed && relief.plannedChildren > 0
+          ? 'Zvýhodnění na děti, které už doma máte, si nejspíš uplatňujete u zaměstnavatele, takže ho máte v čisté mzdě, kterou jste zadali. Novinkou bude část za plánované děti a odpočet úroků, ten začne platit až po podpisu hypotéky.'
+          : relief.childCreditAlreadyClaimed
+            ? 'Pozor: zvýhodnění na děti si nejspíš uplatňujete už teď u zaměstnavatele, takže ho máte v čisté mzdě, kterou jste zadali. Novinkou pro vás bude jen odpočet úroků, ten začne platit až po podpisu hypotéky.'
+            : 'Odpočet úroků začne platit až po podpisu hypotéky a uplatňuje se v daňovém přiznání nebo ročním zúčtování u zaměstnavatele. Zvýhodnění na dítě až po jeho narození.'}
       </p>
     </Card>
   );

@@ -4,12 +4,14 @@ import {
   defaultCaringParent,
   parentSalary,
   benefitEstimate,
-  PPM_WEEKS,
+  ppmWeeks,
+  rodicovskaPool,
 } from '../../engine/parentalLeave';
 import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
 import EstimateNote from '../ui/EstimateNote';
-import { formatNumber as fmt } from '../../engine/format';
+import { formatNumber as fmt, czk } from '../../engine/format';
+import { plannedChildren } from '../../engine/childCost';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
 import { fieldClass } from '../ui/fieldClass';
@@ -27,7 +29,7 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
 
   const enable = () => {
     // Dávka se schválně nevyplňuje: odhadne se z příjmu pečujícího rodiče
-    // (mateřská prvních 28 týdnů, pak rodičovský příspěvek).
+    // (mateřská, pak rodičovský příspěvek).
     onChange({ enabled: true, parent: defaultCaringParent(state), durationMonths: 36 });
   };
   const update = (patch: Partial<ParentalLeave>) => {
@@ -57,6 +59,9 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
   }
 
   const hasProperty = state.goals.includes('property');
+  const multiple = plannedChildren(state) > 1;
+  const weeks = ppmWeeks(state);
+  const pool = rodicovskaPool(state);
   const leaveNeg = impact.disposableDuringLeave < 0;
   const afterPurchase = impact.disposableDuringLeaveAfterPurchase;
   const afterNeg = afterPurchase !== null && afterPurchase < 0;
@@ -152,7 +157,11 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
         <div className="mb-4 p-3 rounded-lg bg-sunken">
           <p className="text-xs font-medium text-ink-label mb-2">
             Dávky se v čase mění
-            <Tooltip text={`Mateřská (peněžitá pomoc v mateřství) se vyplácí ${PPM_WEEKS} týdnů a činí 70 % redukovaného denního vyměřovacího základu, takže u vyšších příjmů je výrazně vyšší než rodičovský příspěvek. Počítáme ji z čisté mzdy pečujícího rodiče přes odhad hrubé mzdy, přesnou částku určí ČSSZ. Po jejím konci se čerpá rodičovský příspěvek 350 000 Kč, rozložený na zbytek rodičovské.`} />
+            {/* Týdny mateřské i výše balíku se řídí počtem dětí v plánu:
+                u dvou a více narozených současně je to 37 týdnů a 525 000 Kč.
+                Dokud tu stála pevná čísla, tvrdila appka u plánu se dvěma
+                dětmi dvojnásobné náklady, ale dávky na jedno. */}
+            <Tooltip text={`Mateřská (peněžitá pomoc v mateřství) se vyplácí ${weeks} týdnů a činí 70 % redukovaného denního vyměřovacího základu, takže u vyšších příjmů je výrazně vyšší než rodičovský příspěvek. Počítáme ji z čisté mzdy pečujícího rodiče přes odhad hrubé mzdy, přesnou částku určí ČSSZ. Po jejím konci se čerpá rodičovský příspěvek ${czk(pool)}, rozložený na zbytek rodičovské.`} />
           </p>
           <div className="space-y-1">
             {impact.phases.map((phase) => (
@@ -165,8 +174,9 @@ export default function ParentalLeavePlanner({ state, onChange }: Props) {
             ))}
           </div>
           <p className="mt-2 text-[11px] text-ink-faint">
-            Mateřská = 70 % z redukovaného denního základu vaší mzdy. Rodičovský příspěvek = 350 000 Kč
+            Mateřská = 70 % z redukovaného denního základu vaší mzdy. Rodičovský příspěvek = {czk(pool)}{' '}
             dělených zbývajícími {Math.round(impact.phases[1]?.months ?? 0)} měsíci.
+            {multiple && ' U dvou a více dětí narozených současně je balík o polovinu vyšší a mateřská delší.'}
           </p>
         </div>
       )}

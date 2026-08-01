@@ -8,6 +8,7 @@ import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../eng
 import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
 import { monthsToSaveAtAllocation } from '../../engine/allocation';
 import { DEFAULTS } from '../../engine/defaults';
+import { plannedChildren } from '../../engine/childCost';
 import { decimal, formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
@@ -254,6 +255,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
           data={journeyData}
           viewMonths={view}
           onMoveChild={state.goals.includes('child') ? onChangeChildTiming : undefined}
+          childLabel={plannedChildren(state) > 1 ? 'děti' : 'dítě'}
           onMovePurchase={purchaseRange ? setPurchaseAt : undefined}
           purchaseRange={purchaseRange ?? undefined}
         />

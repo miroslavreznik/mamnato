@@ -37,7 +37,20 @@ export function monthlyChildCostAtAge(
 export function monthlyChildCost(state: WizardState, ageYears: number): number {
   const c = state.childCosts;
   return monthlyChildCostAtAge(ageYears, { costs: c?.byAge, includeUniversity: c?.includeUniversity })
-    * Math.max(1, Math.round(c?.children ?? 1));
+    * plannedChildren(state);
+}
+
+/**
+ * S kolika dětmi plán počítá.
+ *
+ * Jedno, dokud si uživatel v kartě „Náklady na děti" nenastaví víc. Je to
+ * **jeden údaj pro celou appku**: náklady, dávky během volna, daňové
+ * zvýhodnění i popisky na časové ose z něj musí vycházet stejně. Dřív si ho
+ * bralo jen počítání nákladů, takže plán se dvěma dětmi platil dvojnásobné
+ * výdaje, ale rodičovský příspěvek i slevu na dani měl na jedno.
+ */
+export function plannedChildren(state: WizardState): number {
+  return Math.max(1, Math.round(state.childCosts?.children ?? 1));
 }
 
 export interface ChildCostResult {

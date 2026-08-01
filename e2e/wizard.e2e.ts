@@ -825,8 +825,15 @@ test('sdílení nejdřív řekne, co v odkazu bude, a teprve pak kopíruje', asy
   await finish(page)
   await expectResults(page)
 
+  // Výzva se kreslí nad obsahem, tlačítko je v přilepené hlavičce. Kdo klikne
+  // ze spodku dlouhé stránky, musí seznam sdílených údajů uvidět, ne jen
+  // přepnuté tlačítko.
+  await page.mouse.wheel(0, 4000)
+  await page.waitForFunction(() => window.scrollY > 500)
+
   await page.getByRole('button', { name: 'Sdílet přehled' }).click()
-  await expect(page.getByText('Odkaz ponese vaše údaje')).toBeVisible()
+  await page.waitForFunction(() => window.scrollY < 50)
+  await expect(page.getByText('Odkaz ponese vaše údaje')).toBeInViewport()
   await expect(page.getByText('čisté příjmy domácnosti')).toBeVisible()
   await expect(page.getByText(/vaše cíle: důchod/)).toBeVisible()
   // Dokud uživatel nepotvrdí, nekopíruje se: potvrzení o zkopírování nikde.

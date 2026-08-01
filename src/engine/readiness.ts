@@ -7,7 +7,9 @@ import { retirementProjection, retirementStartingCapital, goalProgress, yearsUnt
 import { evaluateParentalLeave } from './parentalLeave';
 import { reserveStatus, monthsToFillReserve, DEFAULT_RESERVE_MONTHS } from './reserve';
 import { DEFAULTS } from './defaults';
-import { formatMonths, czk, czkMonthly, percentCompact } from './format';
+import { formatMonths, czk, czkMonthly, childWord, percentCompact } from './format';
+import { plannedChildren } from './childCost';
+import { budgetNow } from './budget';
 
 /**
  * Připravenost jednotlivých cílů.
@@ -239,15 +241,33 @@ export function reserveReadiness(state: WizardState, allocations: GoalAllocation
   };
 }
 
-export function childReadiness(allocations: GoalAllocations): GoalReadiness {
+/**
+ * Připravenost cíle „dítě".
+ *
+ * Dřív tu stálo „Odkládáte X na náklady spojené s dítětem", jenže tu částku
+ * uživatel nezadával: byl to vážený průměr z tabulky nákladů podle věku.
+ * Věta se tedy tvářila jako jeho rozhodnutí, i když to byl důsledek jeho
+ * zadání, a jediný způsob, jak dostat „zatím neodkládáte nic", byl vynulovat
+ * celou tabulku. Teď říká, co ta částka je, a hodnotí to, co se hodnotit dá:
+ * jestli se vedle ostatních cílů do rozpočtu vejde.
+ */
+export function childReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const monthly = allocations.child;
+  const children = plannedChildren(state);
+  const label = children > 1 ? 'Děti / rodina' : 'Dítě / rodina';
+  const subject = children > 1
+    ? `Náklady na ${children} ${childWord(children)}`
+    : 'Náklady na dítě';
+  const fits = budgetNow(state, allocations).fits;
+  const sentence = `${subject} vycházejí v průměru na ${czkMonthly(monthly)}. `
+    + 'Do narození se odkládají stranou, od narození jsou skutečným výdajem podle věku.';
   return {
     key: 'child',
-    label: 'Dítě / rodina',
-    status: monthly > 0 ? 'good' : 'caution',
-    headline: monthly > 0
-      ? `Odkládáte ${czkMonthly(monthly)} na náklady spojené s dítětem.`
-      : 'Zatím neodkládáte nic na náklady spojené s dítětem.',
+    label,
+    status: fits ? 'good' : 'caution',
+    headline: fits
+      ? sentence
+      : `${sentence} Vedle ostatních cílů se to zatím do rozpočtu nevejde.`,
   };
 }
 
