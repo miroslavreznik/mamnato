@@ -1,7 +1,7 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { WizardState } from '../../types';
 import type { GoalAllocations } from '../../engine/allocation';
-import { incomeFlow, expenseCategories, withExcludedExpenses, withExcludedGoals } from '../../engine/expenseBreakdown';
+import { incomeFlow, expenseCategories, withExcludedExpenses, withExcludedGoals, childReserveLabel } from '../../engine/expenseBreakdown';
 import { evaluateWhatIf, allocationsWithoutGoals } from '../../engine/whatIf';
 import type { ExpenseCategory } from '../../engine/expenseBreakdown';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -122,14 +122,14 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
       add('retirement', 'retirement', 'Spoření na důchod', allocations.retirement);
     }
     if (state.goals.includes('child') && allocations.child > 0) {
-      add('child', 'child', 'Rezerva na dítě', allocations.child);
+      add('child', 'child', childReserveLabel(state), allocations.child);
     }
     if (state.goals.includes('other')) {
       const total = allocations.custom.reduce((sum, v) => sum + v, 0);
       if (total > 0) add('other', 'other', 'Vlastní cíle', total);
     }
     return segs;
-  }, [state.goals, allocations, excludedGoals, colors.categorical.goals]);
+  }, [state, allocations, excludedGoals, colors.categorical.goals]);
 
   const goalLabelByKey = useMemo(
     () => Object.fromEntries(goalSegments.map((s) => [s.key, s.label])),

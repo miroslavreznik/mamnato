@@ -6,6 +6,7 @@ import { journey } from '../../engine/journey';
 import { GOAL_LABELS, customGoalName } from '../../engine/goalNames';
 import { mortgagePayment, postPurchaseRunwayMonths } from '../../engine/mortgage';
 import { emergencyRunwayMonths } from '../../engine/cashflow';
+import { plannedChildren } from '../../engine/childCost';
 import { budgetNow, budgetAfterPurchase } from '../../engine/budget';
 import { czk, formatNumber as fmt, formatMonths } from '../../engine/format';
 import JourneyRibbon from './JourneyRibbon';
@@ -127,7 +128,8 @@ export default function WhatIfTab() {
     movedTiming.push(purchaseAt <= 0 ? 'koupi hned' : `koupi za ${formatMonths(purchaseAt)}`);
   }
   if (overrides.childMonth != null) {
-    movedTiming.push(childOffset <= 0 ? 'dítě hned' : `dítě za ${formatMonths(childOffset)}`);
+    const kid = plannedChildren(baseline) > 1 ? 'děti' : 'dítě';
+    movedTiming.push(childOffset <= 0 ? `${kid} hned` : `${kid} za ${formatMonths(childOffset)}`);
   }
 
   // Odpověď se porovnává celá, i s doplňkem za čárkou. Bez něj vycházelo

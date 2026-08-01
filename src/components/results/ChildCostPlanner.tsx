@@ -84,12 +84,12 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeCos
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <div>
-          <label className="block text-sm font-medium text-ink-label mb-1">Počet dětí</label>
+          <label className="block text-sm font-medium text-ink-label mb-1">Kolik dětí plánujete</label>
           <NumField
             value={numberOfChildren}
             onChange={(v) => onChangeCosts({ children: v })}
             min={1} max={5}
-            ariaLabel="Počet dětí"
+            ariaLabel="Kolik dětí plánujete"
             step={1}
             className={fieldClass('w-full px-3 py-2.5 text-base')}
           />

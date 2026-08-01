@@ -108,10 +108,13 @@ export default function Step1Mode() {
 
       {state.mode === 'family' && (
         <div className="mt-4">
-          <label htmlFor="children-count" className="block text-sm font-medium text-ink-label mb-1">Počet dětí</label>
+          {/* Schválně ne jen „Počet dětí": tak se jmenovalo i pole v kartě
+              nákladů, kde se zadávají teprve plánované děti. Dvě různá čísla
+              pod stejným popiskem se pletla i nám. */}
+          <label htmlFor="children-count" className="block text-sm font-medium text-ink-label mb-1">Kolik dětí máte teď doma</label>
           <select
             id="children-count"
-            aria-label="Počet dětí"
+            aria-label="Kolik dětí máte teď doma"
             value={state.numberOfChildren ?? 1}
             onChange={(e) => dispatch({ type: 'SET_NUMBER_OF_CHILDREN', count: parseInt(e.target.value) })}
             className={fieldClass('w-full px-3 py-2.5 text-base bg-card')}

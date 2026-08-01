@@ -87,6 +87,11 @@ Klíčové moduly a jejich role:
   **po koupi** a „stranou" má jen to, co po akontaci zbyde. Bere si to cíl
   `reserve`, `readiness.ts` i `nextStep.ts`; ten vzorec byl dřív jen uvnitř
   `nextStep` a nešel použít jinde, aniž by se opsal.
+- `childCost.ts`: náklady na dítě podle věku a `plannedChildren()`, tedy **kolik
+  dětí plán počítá**. To číslo si berou náklady, dávky během rodičovské
+  (u dvou a víc narozených současně je mateřská 37 týdnů a příspěvek
+  525 000 Kč), daňové zvýhodnění i všechny popisky. Model počítá, že děti
+  přijdou naráz; kdo na to sáhne, ať to drží ve všech třech.
 - `plausibility.ts`: kontrola reálnosti zadaných výdajů („jídlo za 3 000 pro dva
   je hodně nízko"). **Nic nezakazuje a nic nemění**: neblokuje průvodce,
   nepřepisuje hodnoty, nesahá na verdikt. Hraničních případů je spousta

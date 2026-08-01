@@ -2,6 +2,12 @@ import type { WizardState } from '../types';
 import { totalMonthlyIncome } from './cashflow';
 import { mortgagePayment, ownershipCosts } from './mortgage';
 import type { GoalAllocations } from './allocation';
+import { plannedChildren } from './childCost';
+
+/** Jak se v rozpočtu jmenuje odkládání na dítě. Množné číslo podle plánu. */
+export function childReserveLabel(state: WizardState): string {
+  return plannedChildren(state) > 1 ? 'Rezerva na děti' : 'Rezerva na dítě';
+}
 
 export interface ExpenseCategory {
   key: string;
@@ -161,7 +167,7 @@ function goalFlows(
     flows.push({ key: 'retirement', label: 'Spoření na důchod', amount: allocations.retirement });
   }
   if (state.goals.includes('child') && allocations.child > 0) {
-    flows.push({ key: 'child', label: 'Rezerva na dítě', amount: allocations.child });
+    flows.push({ key: 'child', label: childReserveLabel(state), amount: allocations.child });
   }
   if (state.goals.includes('other')) {
     const total = allocations.custom.reduce((s, v) => s + v, 0);

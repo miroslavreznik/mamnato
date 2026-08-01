@@ -125,7 +125,7 @@ test('počet dětí platí pro celý plán, ne jen pro náklady', async ({ page 
   await toResults(page, { savings: '600000', goals: ['property', 'child'] })
 
   await page.locator('#tab-cile').click()
-  await num(page, 'Počet dětí').fill('2')
+  await num(page, 'Kolik dětí plánujete').fill('2')
   await page.waitForTimeout(400)
 
   // Dávky jdou za týmž předpokladem jako náklady: děti přijdou naráz, takže
@@ -155,7 +155,7 @@ test('náklady na dítě z karty platí pro celý plán', async ({ page }) => {
   // Dvě děti stojí dvakrát tolik. Dokud si počet držela karta, ukazovala
   // náklady na dvě a osa vedle ní počítala jedno.
   await page.locator('#tab-cile').click()
-  await num(page, 'Počet dětí').fill('2')
+  await num(page, 'Kolik dětí plánujete').fill('2')
   await page.locator('#tab-souhrn').click()
   await page.waitForTimeout(400)
 

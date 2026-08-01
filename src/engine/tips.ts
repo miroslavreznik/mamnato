@@ -6,6 +6,7 @@ import type { OverallStatusKey } from './verdict';
 import { evaluateScenario } from './scenarios';
 import { postPurchaseRunwayMonths } from './mortgage';
 import { czk } from './format';
+import { plannedChildren } from './childCost';
 
 /**
  * Rady „co můžete udělat" pod verdiktem.
@@ -52,7 +53,7 @@ const BUDGET_TIPS: Tip[] = [
 ];
 
 // Rada k cíli, který nevychází. Klíč je `GoalReadiness.key`.
-function goalTip(goal: GoalReadiness): Tip | null {
+function goalTip(state: WizardState, goal: GoalReadiness): Tip | null {
   if (goal.status === 'good') return null;
   const toGoals = { section: 'cile', actionLabel: 'Nastavit částku' } as const;
   switch (goal.key) {
@@ -65,7 +66,8 @@ function goalTip(goal: GoalReadiness): Tip | null {
       };
     case 'child':
       return {
-        text: 'Náklady na dítě se vedle ostatních cílů do rozpočtu zatím nevejdou. '
+        text: `Náklady na ${plannedChildren(state) > 1 ? 'děti' : 'dítě'} se vedle ostatních cílů `
+          + 'do rozpočtu zatím nevejdou. '
           + 'Pomůže ubrat u jiného cíle, nebo ve výdajích.',
         ...toGoals,
       };
@@ -130,7 +132,7 @@ export function buildTips(
   }
 
   // 4. Cíle, které nevycházejí. Bez tohohle kroku zůstal cíl bez rady.
-  const goalTips = goals.map(goalTip).filter((t): t is Tip => t !== null);
+  const goalTips = goals.map((g) => goalTip(state, g)).filter((t): t is Tip => t !== null);
 
   // 5. Když nic nedrhne, radí se, co s volným prostorem.
   //

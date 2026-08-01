@@ -1508,3 +1508,7 @@ vaše údaje" se kreslí nad obsahem sloupce. Kdo klikl ze spodku dlouhé
 stránky, viděl jen to, že se tlačítko přepnulo. U jediné akce, která pustí
 data z prohlížeče ven, je to to poslední, co si má uživatel domýšlet, takže
 otevření výzvy teď stránku odroluje nahoru.
+
+Zbytek popisků, které zůstávaly v jednotném čísle i u dvou dětí: segment
+„Rezerva na dítě" v grafu rozpočtu, shrnutí posunutých událostí v Co kdyby
+a tip u cíle. Všechny teď jdou přes `plannedChildren(state)`.
