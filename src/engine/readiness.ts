@@ -3,7 +3,7 @@ import type { GoalAllocations } from './allocation';
 import { downPaymentGap, postPurchaseRunwayMonths } from './mortgage';
 import { monthsToSaveAtAllocation } from './allocation';
 import { evaluateScenario } from './scenarios';
-import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement, retirementAge, retirementReturn } from './savings';
+import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement, retirementAge, retirementReturn, SAFE_WITHDRAWAL_RATE } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
 import { DEFAULTS } from './defaults';
 import { formatMonths, czk, czkMonthly, percentCompact } from './format';
@@ -109,7 +109,7 @@ export function retirementReadiness(state: WizardState, allocations: GoalAllocat
     monthly, years, rate, DEFAULTS.averageCzInflation, retirementStartingCapital(state)
   );
   const finalValue = projection[projection.length - 1]?.portfolioValue ?? 0;
-  const monthlyRent = finalValue * 0.04 / 12;
+  const monthlyRent = finalValue * SAFE_WITHDRAWAL_RATE / 12;
   // Renta pod ~8 000 Kč/měs je spíš doplněk k důchodu než plnohodnotný příjem.
   const modest = monthlyRent < 8000;
   // Předpoklad se říká nahlas: bez něj vypadá číslo jako slib, a přitom

@@ -1293,3 +1293,68 @@ Na modelovém páru: dítě za rok znamená „během rodičovské vám měsíč
 10 532 Kč" (ještě v nájmu), dítě za šest let „nejméně 6 966 Kč" (už se
 splátkou). Tři starší testy počítaly s volnem začínajícím dnes; mají teď
 `childInMonths: 0`, aby říkaly to, co říkat chtěly.
+
+## B25. Aby na výsledcích všechno ovlivňovalo všechno
+
+Zadání znělo: ať po každé změně neříká appka jinde nesmysly. Nejdřív mapa,
+co všechno jde na výsledcích přepsat a kam to teče, pak čtyři kusy práce.
+
+Společná příčina všech nálezů: **hodnota spočítaná jednou při otevření
+výsledků** (`useState(odhad)`), nebo **tatáž věc držená na dvou místech**.
+Záložky výsledků zůstávají připojené, takže se počáteční hodnota už nikdy
+nepřepočítá, i když se pod ní změní celý plán.
+
+### 1. Rozdělení peněz na cíle
+
+`allocations` byl `useState(calculateDefaultAllocations(state))`. Kdo si
+v Rozpočtu snížil výdaje, viděl vyšší disponibilní částku, ale na akontaci
+se dál odkládalo staré číslo: „naspoříte za 4 roky" zůstalo stát a osa
+kupovala pořád ve stejný měsíc.
+
+Nově se odvozuje z plánu, dokud uživatel nesáhne na konkrétní cíl; od té
+chvíle platí jeho číslo. Týž vzorec jako u sazby a nákladů na vlastnictví
+(`engine/estimate.ts`), jen pro cíle.
+
+### 2. Náklady na dítě
+
+Počet dětí, částky podle věku i vysoká škola byly lokální v kartě. Ukazovala
+tedy náklady na dvě děti, zatímco osa, rodičovská i rozpočet počítaly jedno
+dítě z tabulky ČSÚ. Přesunuto do `state.childCosts`, čte to
+`monthlyChildCost()`, přes kterou jde nově celý engine.
+
+Horizont v kartě zůstal lokální schválně: je to výřez pro graf vedle něj,
+ne údaj o plánu.
+
+### 3. Výnos investic
+
+Tabulka v důchodu má u každého nástroje přepsatelný výnos, ale věta o rentě
+měla natvrdo 7 % a graf koupě vs. nájem si držel vlastní pole „Výnos
+investic". Tři místa, jeden předpoklad. Nově `state.retirementRates`
+a věta říká, z čeho vychází („při výnosu 7 % ročně…").
+
+### 4. Vlastní cíle a konstanty
+
+Karta vlastních cílů dostávala seznam z `activeState` (kde odložený cíl
+chybí) a částky z plného pole, takže se po odložení prostředního cíle
+rozešly indexy a každý další ukazoval částku souseda. Částky se teď
+adresují `id`.
+
+Sjednotily se i dvě konstanty, které existovaly dvakrát: hranice tří měsíců
+rezervy (`readiness` a `nextStep`) a míra bezpečného výběru 4 %
+(`fourPercentTarget` a odhad renty).
+
+### Pojistka
+
+`e2e/reaktivita.e2e.ts` sáhne na vstup a porovná odečty před a po. Nekontroluje
+konkrétní částky, ty se mění s výchozími daty, ale to, **že se pohnuly**:
+výdaje → rozpočet, měsíc koupě, dlaždice, věty u cílů; sazba → splátka,
+rezerva, DSTI; počet dětí → rodičovská i osa; výnos → renta i graf koupě
+vs. nájem. A naopak: ručně zadaná částka u cíle po změně výdajů **zůstane**.
+
+### Co zůstává lokální schválně
+
+Výřez časové osy a termín koupě (způsob dívání, ne údaj o plánu), horizont
+v kartě dítěte, růst cen nemovitostí a nájmu v grafu koupě vs. nájem
+(předpoklady jen toho jednoho srovnání) a požadovaná renta v důchodu.
+Ta poslední je hraniční: kdyby se z ní počítalo „kolik vám do ní chybí",
+patřila by do plánu.

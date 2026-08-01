@@ -5,6 +5,7 @@ import { downPaymentGap, postPurchaseRunwayMonths, dsti, mortgagePayment, necess
 import { evaluateScenario } from './scenarios';
 import { budgetNow, budgetAfterPurchase } from './budget';
 import { evaluateParentalLeave } from './parentalLeave';
+import { MIN_RESERVE_MONTHS_AFTER_PURCHASE } from './readiness';
 import { DEFAULTS } from './defaults';
 import { czk, czkMonthly, monthYearIn, formatMonths } from './format';
 
@@ -54,8 +55,14 @@ export interface NextStep {
   actionLabel?: string;
 }
 
-/** Doporučená nouzová rezerva: tři měsíce nezbytných výdajů. */
-const RESERVE_MONTHS = 3;
+/**
+ * Doporučená nouzová rezerva: tři měsíce nezbytných výdajů.
+ *
+ * Bere se z `readiness`, aby existovala jednou. Dokud tu stála vlastní
+ * trojka, mohl se práh, podle kterého se hodnotí cíl bydlení, rozejít
+ * s částkou, kterou tahle karta doporučuje odkládat.
+ */
+const RESERVE_MONTHS = MIN_RESERVE_MONTHS_AFTER_PURCHASE;
 
 /**
  * Kolik měsíčně jde odložit navíc, aniž by se sáhlo na cíle.

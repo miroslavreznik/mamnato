@@ -213,9 +213,19 @@ export function retirementAge(state: WizardState): number | undefined {
   return oldestApplicantAge(state);
 }
 
+/**
+ * Pravidlo bezpečného výběru: kolik ročně jde z portfolia brát, aniž by
+ * došlo. Čtyři procenta jsou obvyklá orientační hodnota.
+ *
+ * Je to jedna konstanta, protože se používá na dvou stranách téže věty:
+ * v cíli renty („kolik potřebujete naspořit") i v odhadu renty („kolik vám
+ * to bude vynášet"). Se dvěma zápisy by si mohly protiřečit.
+ */
+export const SAFE_WITHDRAWAL_RATE = 0.04;
+
 // Cílová hodnota portfolia pro požadovanou měsíční rentu dle pravidla bezpečného výběru.
 // Při 4 % ročně: portfolio × 0,04 = roční renta → portfolio = měsíční renta × 12 / 0,04 (= × 300).
-export function fourPercentTarget(monthlyIncome: number, withdrawalRate: number = 0.04): number {
+export function fourPercentTarget(monthlyIncome: number, withdrawalRate: number = SAFE_WITHDRAWAL_RATE): number {
   if (withdrawalRate <= 0) return Infinity;
   return (monthlyIncome * 12) / withdrawalRate;
 }
