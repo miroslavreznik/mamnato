@@ -21,7 +21,7 @@ import { goalProgress } from '../../src/engine/savings';
 import { discretionaryBreakdownTotal } from '../../src/engine/discretionary';
 import { plannedChildren } from '../../src/engine/childCost';
 import { mortgagePayment, mortgageRate, effectiveDownPayment, loanAmount, ownershipCosts } from '../../src/engine/mortgage';
-import { czk } from '../../src/engine/format';
+import { czk, monthYearIn } from '../../src/engine/format';
 import { retirementProjection, retirementStartingCapital, yearsUntilRetirement, retirementAge, retirementReturn, SAFE_WITHDRAWAL_RATE } from '../../src/engine/savings';
 import { DEFAULTS, CHILD_COSTS_CZ } from '../../src/engine/defaults';
 import { calculateChildCosts } from '../../src/engine/childCost';
@@ -81,6 +81,7 @@ const EXPECTED_RULES = [
   'rodičovská: fáze vs. průměr',
   'vlastní cíle: počet',
   'nejnižší bod: karta vs. stuha',
+  'kalendář: nadpis vs. termín',
   'dítě: rozpočet vs. karta',
   'důchod: renta ve větě',
   'LTV: základ',
@@ -274,6 +275,14 @@ function auditAll(): string[] {
       const card = Number(inCard[1].replace(/\D/g, ''));
       const bar = Number(lowest.label.replace(/\D/g, ''));
       rule('nejnižší bod: karta vs. stuha', Math.abs(card - bar) <= 1, () => `karta ${card}, stuha ${bar}`);
+    }
+
+    // Rok v nadpisu nejtěsnějšího místa a termín počítaný z data.
+    // Obojí se v Přehledu potkává: „Nejníže 2028" nad „hotovo v dubnu 2028".
+    const titleYear = path.tightest?.title.match(/(20\d\d)/);
+    if (titleYear && path.tightest) {
+      rule('kalendář: nadpis vs. termín', titleYear[1] === monthYearIn(path.tightest.month).slice(-4),
+        () => `nadpis „${path.tightest!.title}", termín ${monthYearIn(path.tightest!.month)}`);
     }
 
     // Věta o rodičovské a stav rodičovské v enginu.

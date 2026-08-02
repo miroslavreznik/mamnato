@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { line, area, curveMonotoneX } from 'd3-shape';
 import type { Journey, Tension } from '../../engine/journey';
-import { czk, formatMonths } from '../../engine/format';
+import { czk, formatMonths, yearIn } from '../../engine/format';
 
 /**
  * Časová osa: život až do důchodu jako jedna stuha.
@@ -318,7 +318,6 @@ export default function JourneyRibbon({
   // délkou horizontu: letopočet potřebuje kolem osmatřiceti pixelů i s mezerou
   // a na telefonu je plochy třetina proti desktopu. Dokud se počítalo jen
   // z horizontu, mačkalo se osm letopočtů do tří set pixelů.
-  const thisYear = new Date().getFullYear();
   const ticks = useMemo(() => {
     const usable = W - PAD.left - PAD.right;
     const fits = Math.max(2, Math.floor(usable / 38));
@@ -457,7 +456,7 @@ export default function JourneyRibbon({
       aria-label={
         `Vývoj úspor na ${Math.round(horizonMonths / 12)} let`
         + (full ? '. ' : ` z celkových ${Math.round(data.horizonMonths / 12)}. `)
-        + named.map((e) => `${e.label} za ${Math.round(e.month / 12)} let`).join(', ')
+        + named.map((e) => `${e.label} za ${formatMonths(e.month)}`).join(', ')
         + `. Nejníže ${czk(Math.max(0, data.minCash))}.`
       }
     >
@@ -494,7 +493,7 @@ export default function JourneyRibbon({
           textAnchor="middle" fontSize="11" fill="var(--ink-muted)"
           pointerEvents="none"
         >
-          {thisYear + m / 12}
+          {yearIn(m)}
         </text>
       ))}
 

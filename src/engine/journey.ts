@@ -4,7 +4,7 @@ import type { WealthPoint } from './wealthTimeline';
 import { necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
 import { necessaryExpensesAfterPurchase } from './mortgage';
 import type { GoalAllocations } from './allocation';
-import { czk, czkMonthly, formatMonths } from './format';
+import { czk, czkMonthly, formatMonths, yearIn } from './format';
 import { plannedChildren } from './childCost';
 
 /**
@@ -56,10 +56,14 @@ export interface Journey {
 }
 
 /**
- * Rok, ve kterém daný měsíc padne. Osa je od „teď", takže se počítá
- * od letošního roku; přesné datum by budilo dojem přesnosti, kterou model nemá.
+ * Rok, ve kterém daný měsíc padne.
+ *
+ * Počítá se z dnešního data (`yearIn`), ne jako „letošní rok + počet let".
+ * Ta zkratka platí jen v lednu: v srpnu spadl dvacátý měsíc plánu do dubna
+ * 2028, ale nadpis hlásil 2027, zatímco karta „A co teď" o kus vedle
+ * počítala termíny přes `monthYearIn` a psala správně „v dubnu 2028".
  */
-const yearOf = (month: number) => new Date().getFullYear() + Math.floor(month / 12);
+const yearOf = (month: number) => yearIn(month);
 
 /**
  * Hranice, od kterých se rozpočet počítá za napjatý.

@@ -1599,3 +1599,31 @@ ne oprava překlepu. Zůstává tu, dokud se o něm nerozhodne.
 
 **Dlaždice „Rezerva vydrží" kreslí šest měsíců** bez ohledu na cíl, viz
 odůvodnění výše.
+
+## Kalendář: popisky počítaly od ledna, ne od dneška
+
+Výpočty jsou v celé appce **měsíční** a to je v pořádku: časová osa simuluje
+měsíc po měsíci, hypotéka i investiční srovnání umořují a zhodnocují měsíčně,
+důchodová projekce taky (jen se reportuje po letech, protože graf po měsících
+nikdo nepřečte). Roční krok tedy nikde neovlivňuje matematiku.
+
+Kalendářní **popisky** ale ano. `journey.yearOf` počítal
+`letošní rok + floor(měsíc / 12)`, což platí jen v lednu. V srpnu padne
+dvacátý měsíc plánu do dubna 2028, ale nadpis hlásil 2027; podle toho,
+kolikátý je zrovna měsíc, byla takhle mimo víc než polovina pozic a vždycky
+o celý rok dolů.
+
+Nejhorší na tom bylo, že si to odporovalo uvnitř jedné obrazovky: karta
+„A co teď" počítala termíny přes `monthYearIn`, tedy z dnešního data, a psala
+správně „hotovo v dubnu 2028", zatímco nadpis nejtěsnějšího místa nad ní
+tvrdil „Nejníže 2027".
+
+Nový `format.yearIn()` počítá z téhož data jako `monthYearIn` a berou si ho
+oba (nadpisy nejtěsnějšího místa i letopočty na ose stuhy). `tests/engine/kalendar.test.ts`
+přepíná systémový čas na leden, srpen i konec prosince: se starým vzorcem
+tři z jeho testů padnou, v lednu by prošly oba.
+
+Při té příležitosti se opravil i popis stuhy pro čtečku. Uváděl
+`za ${Math.round(měsíc / 12)} let`, tedy „Dítě za 1 let": špatně česky
+a zároveň nepřesně, protože sedmnáct měsíců je rok a pět měsíců. Nově
+`formatMonths`, stejně jako všude jinde.

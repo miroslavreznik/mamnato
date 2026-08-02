@@ -119,11 +119,32 @@ const MONTHS_CS = [
  * „v květnu 2029" si zapíše do kalendáře. Šestý pád proto, že se to vždycky
  * používá po předložce „v".
  */
+function dateIn(monthsFromNow: number): Date {
+  const now = new Date();
+  return new Date(now.getFullYear(), now.getMonth() + Math.max(0, Math.round(monthsFromNow)), 1);
+}
+
 export function monthYearIn(monthsFromNow: number): string {
   if (!isFinite(monthsFromNow)) return '';
-  const now = new Date();
-  const target = new Date(now.getFullYear(), now.getMonth() + Math.max(0, Math.round(monthsFromNow)), 1);
+  const target = dateIn(monthsFromNow);
   // Včetně předložky: všechny české měsíce ji mají v šestém pádě „v",
   // žádný nevyžaduje „ve", takže se to nemusí rozlišovat.
   return `v ${MONTHS_CS[target.getMonth()]} ${target.getFullYear()}`;
+}
+
+/**
+ * Kalendářní rok, do kterého daný měsíc plánu padne.
+ *
+ * **Musí se počítat z dnešního data, ne z letopočtu plus podílu.** Plán běží
+ * od dneška, ne od ledna: v srpnu padne dvacátý měsíc do dubna 2028, ale
+ * `letošní rok + floor(20/12)` dá 2027. Podle toho, kolikátý je zrovna
+ * měsíc, je takhle mimo víc než polovina pozic, a vždycky o celý rok dolů.
+ *
+ * Stejným datem počítá `monthYearIn`, takže „Nejníže 2028" na stuze a
+ * „hotovo v dubnu 2028" v kartě kroku mluví o téže chvíli.
+ */
+export function yearIn(monthsFromNow: number): number {
+  const now = new Date();
+  if (!isFinite(monthsFromNow)) return now.getFullYear();
+  return dateIn(monthsFromNow).getFullYear();
 }
