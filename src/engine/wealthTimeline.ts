@@ -284,3 +284,25 @@ export function wealthTimeline(
     firstNegativeMonth,
   };
 }
+
+/**
+ * Za kolik měsíců bude akontace naspořená, podle skutečné simulace.
+ *
+ * `monthsToSaveAtAllocation` dělí chybějící částku měsíčním odkládáním, což
+ * platí jen tehdy, když domácnosti každý měsíc opravdu tolik zbývá. Během
+ * rodičovské nezbývá: příjem klesne o mzdu pečujícího rodiče a fond na
+ * akontaci roste pomaleji, nebo vůbec. Dlaždice pak slibovala „naspoříte za
+ * 34 měsíců" a stuha o kousek vedle kupovala až ve 37. Dvě čísla o téže věci,
+ * a to pomalejší je to pravdivé.
+ *
+ * Vrací `Infinity`, když se v horizontu plánu nenaspoří (typicky když na
+ * akontaci nejde nic).
+ */
+export function monthsUntilDownPaymentReady(
+  state: WizardState,
+  allocations: GoalAllocations
+): number {
+  if (!state.goals.includes('property')) return 0;
+  const { earliestPurchaseMonth } = wealthTimeline(state, { allocations });
+  return earliestPurchaseMonth ?? Infinity;
+}

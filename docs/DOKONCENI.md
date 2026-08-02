@@ -1512,3 +1512,49 @@ otevření výzvy teď stránku odroluje nahoru.
 Zbytek popisků, které zůstávaly v jednotném čísle i u dvou dětí: segment
 „Rezerva na dítě" v grafu rozpočtu, shrnutí posunutých událostí v Co kdyby
 a tip u cíle. Všechny teď jdou přes `plannedChildren(state)`.
+
+## Audit souhrnu: čísla, která si odporovala
+
+Přehled je jedna souvislá odpověď, ale každý jeho kus si čísla počítá sám.
+S každým dalším kusem přibývají dvojice, které se můžou rozejít, a ručně se
+to už uhlídat nedá. Vznikl proto `tests/engine/souhrnKonzistence.test.ts`:
+projde mřížku plánů (cíle × úspory × délka rezervy × rodičovská ×
+rekonstrukce, přes 600 kombinací) a ověřuje **vztahy mezi čísly**, ne
+konkrétní částky. Konkrétní částky se mění s výchozími daty a test by se
+otupil; vztahy platí vždycky.
+
+Odhalil tři skutečné rozpory:
+
+**1. „Rezerva 900 000 Kč je hotová, vydrží 3 měsíce."** Věta uváděla cílový
+počet měsíců, ne skutečné pokrytí. Dlaždice o dva centimetry vedle přitom
+hlásila „Rezerva po koupi vydrží 19,6 měs.". Obojí o týchž penězích. Věta
+teď říká, na kolik rezerva vystačí.
+
+**2. „Naspoříte za 34 měs." vs. koupě na stuze ve 37. měsíci.** Dlaždice
+dělila chybějící akontaci měsíčním odkládáním, což platí jen tehdy, když
+domácnosti každý měsíc opravdu tolik zbývá. Během rodičovské nezbývá.
+Nový `monthsUntilDownPaymentReady()` bere termín ze simulace, tedy z téhož
+místa, ze kterého kreslí stuha; používá ho dlaždice, karta „A co teď"
+i věta u cíle bydlení.
+
+**3. Nejnižší bod v kartě vs. na stuze.** Karta uváděla 473 063 Kč a puntík
+„nejníž" vedle ní 232 690 Kč. Karta totiž měřila minimum až od měsíce
+schodku, aby u někoho, komu úspory jen rostou, nestálo „klesnou na 200 000 Kč"
+o částce, ze které se vycházelo. Rozlišení teď nese **věta**, ne jiné číslo:
+při skutečném poklesu „nejníže klesnou na X", jinak „pod dnešních X se
+nedostanou". Číslo je vždycky totéž jako na stuze.
+
+Do třetice se opravil proužek u chybějící akontace: počítal pokrytí z holé
+ceny, zatímco mezera z ceny včetně rekonstrukce, takže u projektu
+s rekonstrukcí ukazoval větší pokrytí, než jaké bylo.
+
+### Co test hlídá
+
+Dlaždice rezervy vs. cíl rezervy, hotová rezerva vs. verdikt „ale bez
+rezervy", věta o rezervě vs. výpočet, termín akontace vs. měsíc koupě na ose,
+základ proužku akontace, „cíle z toho vezmou X" vs. součet toků v rozpočtu,
+cílová částka v kroku „A co teď" vs. karta rezervy, nejnižší bod v kartě vs.
+na stuze a řádek rodičovské vs. její výpočet.
+
+Druhý test v souboru hlídá, že mřížka nezhubla: kdyby ji někdo omylem zúžil,
+první test by prošel prázdný.

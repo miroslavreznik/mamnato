@@ -6,6 +6,7 @@ import { evaluateScenario } from './scenarios';
 import { budgetNow, budgetAfterPurchase } from './budget';
 import { evaluateParentalLeave } from './parentalLeave';
 import { reserveStatus } from './reserve';
+import { monthsUntilDownPaymentReady } from './wealthTimeline';
 import { MIN_RESERVE_MONTHS_AFTER_PURCHASE } from './readiness';
 import { DEFAULTS } from './defaults';
 import { czk, czkMonthly, monthYearIn, formatMonths } from './format';
@@ -180,7 +181,10 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
           : 'Peníze na ni musí odněkud přijít, jinak se koupě neposune.')
           + reserveNote,
         monthly: monthly > 0 ? monthly : undefined,
-        done: monthly > 0 ? monthYearIn(gap / monthly) : undefined,
+        // Termín ze simulace, aby seděl na dlaždici i na stuhu. Prosté
+        // `gap / monthly` platí jen tehdy, když domácnosti každý měsíc
+        // opravdu tolik zbývá; během rodičovské nezbývá.
+        done: monthly > 0 ? monthYearIn(monthsUntilDownPaymentReady(state, allocations)) : undefined,
         section: 'bydleni',
         actionLabel: 'Nastavit odkládání',
       };

@@ -270,18 +270,26 @@ function findTightest(
   if (worst.flow < 0) {
     const what = whatHappensAt(worst.month, events);
 
-    // Jak hluboko úspory kvůli tomuhle schodku klesnou. Musí se měřit až od
-    // něj: globální minimum bývá na startu, takže u někoho, komu úspory celou
-    // dobu jen rostou, stálo „klesnou na 200 000 Kč“ o částce, ze které se
-    // vycházelo a která nikdy neklesla.
-    const lowAfter = Math.min(...points.filter((p) => p.month >= worst.month).map((p) => p.cash));
+    // Jak hluboko úspory klesnou. **Musí to být totéž číslo, jaké nese
+    // puntík „nejníž" na stuze**, jinak stojí dvě různé částky o téže věci
+    // deset centimetrů od sebe. Dřív se tu měřilo minimum až od měsíce
+    // schodku, aby u někoho, komu úspory jen rostou, nestálo „klesnou na
+    // 200 000 Kč" o částce, ze které se vycházelo. Jenže při koupi před
+    // rodičovskou vyšlo 473 063 Kč, zatímco stuha hlásila 232 690 Kč.
+    //
+    // Rozlišení proto nese věta, ne jiné číslo: když je nejníže hned teď,
+    // říká se, že se pod dnešní stav neklesne.
+    const lowest = Math.max(0, minCash);
+    const fallsLater = minCashMonth > 0;
     return {
       month: worst.month,
       title: `${what} ${yearOf(worst.month)}`,
       explanation: `Rozpočet by byl ${czkMonthly(Math.abs(worst.flow))} v mínusu. `
-        + (lowAfter < 0
+        + (minCash < 0
           ? 'Úspory to nepokryjí, plán v této podobě neprojde.'
-          : `Úspory to pokryjí, ale klesnou na ${czk(lowAfter)}.`),
+          : fallsLater
+            ? `Úspory to pokryjí, nejníže klesnou na ${czk(lowest)}.`
+            : `Úspory to pokryjí a pod dnešních ${czk(lowest)} se nedostanou.`),
       tension: 'deficit',
     };
   }

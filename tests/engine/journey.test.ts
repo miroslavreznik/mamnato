@@ -332,18 +332,39 @@ describe('nejtěsnější místo nepojmenuje příčinu, kterou nezná', () => {
     expect(j.tightest!.title).toMatch(/Rozpočet/);
   });
 
-  it('neříká, že úspory klesnou na částku, ze které se vycházelo', () => {
-    // Globální minimum bývá na startu. U někoho, komu úspory celou dobu jen
-    // rostou, stálo u schodku v roce 2042 „klesnou na 200 000 Kč", což byla
-    // výše úspor v roce 2026 a nikdy neklesla.
+  it('neříká, že úspory klesnou, když neklesly, a drží se čísla ze stuhy', () => {
+    // Dvě věci naráz, protože jdou proti sobě:
+    //
+    //  - Globální minimum bývá na startu. U někoho, komu úspory celou dobu
+    //    jen rostou, stálo u schodku v roce 2042 „klesnou na 200 000 Kč",
+    //    což byla výše úspor v roce 2026 a nikdy neklesla.
+    //  - Řešit to jiným číslem (minimum od schodku dál) ale znamenalo, že
+    //    karta hlásila 473 063 Kč a puntík „nejníž" na stuze vedle ní
+    //    232 690 Kč. Dvě částky o téže věci deset centimetrů od sebe.
+    //
+    // Číslo je proto vždycky totéž jako na stuze a rozlišuje **věta**.
     const j = journey(pozde(), { allocations: alloc });
     const atWorst = j.points.find((p) => p.month === j.tightest!.month)!;
     expect(j.minCashMonth).toBe(0);
     expect(atWorst.cash).toBeGreaterThan(j.minCash);
-    expect(j.tightest!.explanation).not.toContain('200 000');
-    // Uvedená částka je nejnižší zůstatek od schodku dál, ne od začátku.
-    const lowAfter = Math.min(...j.points.filter((p) => p.month >= j.tightest!.month).map((p) => p.cash));
-    expect(j.tightest!.explanation).toContain(lowAfter.toLocaleString('cs-CZ'));
+    expect(j.tightest!.explanation).not.toMatch(/klesnou na/);
+    expect(j.tightest!.explanation).toMatch(/se nedostanou/);
+    expect(j.tightest!.explanation).toContain(j.minCash.toLocaleString('cs-CZ'));
+  });
+
+  it('u schodku, po kterém úspory opravdu klesnou, uvádí totéž číslo jako stuha', () => {
+    const j = journey(makeState({
+      goals: ['property', 'child'],
+      savings: { totalSavings: 600000 },
+      childInMonths: 12,
+      parentalLeave: { enabled: true, parent: 2, durationMonths: 36 },
+    }), { allocations: alloc });
+    const lowest = j.events.find((e) => e.key === 'lowest')!;
+    if (j.tightest?.tension === 'deficit') {
+      const card = j.tightest.explanation.replace(/\D/g, '');
+      expect(card).toContain(String(Math.max(0, j.minCash)));
+      expect(lowest.label.replace(/\D/g, '')).toBe(String(Math.max(0, j.minCash)));
+    }
   });
 
   it('během opravdové rodičovské se schodek jmenuje po ní', () => {

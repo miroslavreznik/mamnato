@@ -5,8 +5,8 @@ import { evaluateOverall } from '../../engine/summary';
 import type { GoalStatus } from '../../engine/summary';
 import { journey } from '../../engine/journey';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
-import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dsti, requiredDownPayment, downPaymentFraction } from '../../engine/mortgage';
-import { monthsToSaveAtAllocation } from '../../engine/allocation';
+import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dsti, requiredDownPayment, downPaymentFraction, totalProjectCost } from '../../engine/mortgage';
+import { monthsUntilDownPaymentReady } from '../../engine/wealthTimeline';
 import { DEFAULTS } from '../../engine/defaults';
 import { plannedChildren } from '../../engine/childCost';
 import { decimal, formatMonths, formatNumber as fmt } from '../../engine/format';
@@ -99,8 +99,14 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
         })(),
         (() => {
           const gap = downPaymentGap(state);
-          const months = monthsToSaveAtAllocation(state, allocations.downPayment);
-          const required = requiredDownPayment(state.property.targetPrice, downPaymentFraction(state));
+          // Termín ze simulace, ne z prostého dělení: během rodičovské se
+          // neodkládá, tak jak dlaždice slibovala, a stuha vedle kupovala
+          // o tři měsíce později. Pravdivé je to pomalejší číslo.
+          const months = monthsUntilDownPaymentReady(state, allocations);
+          // Požadovaná akontace se počítá z celé investice včetně rekonstrukce,
+          // stejně jako `downPaymentGap`. Z holé ceny by proužek u projektu
+          // s rekonstrukcí ukazoval větší pokrytí, než jaké je.
+          const required = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
           return {
             label: 'Chybějící akontace',
             tooltip: 'Rozdíl mezi akontací, kterou banka požaduje (20 % ceny, u žadatelů do 36 let 10 %), a tím, co pokryjete z úspor. Bez ní vám banka hypotéku neposkytne.',

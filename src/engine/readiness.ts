@@ -1,7 +1,7 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
 import { downPaymentGap, postPurchaseRunwayMonths } from './mortgage';
-import { monthsToSaveAtAllocation } from './allocation';
+import { monthsUntilDownPaymentReady } from './wealthTimeline';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement, retirementAge, retirementReturn, SAFE_WITHDRAWAL_RATE } from './savings';
 import { evaluateParentalLeave } from './parentalLeave';
@@ -50,7 +50,7 @@ export interface GoalReadiness {
 // platí jen pro toho, kdo nespoří na nic jiného.
 export function propertyReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const scenario = evaluateScenario(state);
-  const months = monthsToSaveAtAllocation(state, allocations.downPayment);
+  const months = monthsUntilDownPaymentReady(state, allocations);
   const gap = downPaymentGap(state);
   const statusByScenario: Record<string, GoalStatus> = {
     cannot_afford_cashflow: 'warning',
@@ -214,11 +214,14 @@ export function reserveReadiness(state: WizardState, allocations: GoalAllocation
   const basis = status.afterPurchase ? ' nezbytných výdajů po koupi' : ' nezbytných výdajů';
 
   if (status.done) {
+    // Kolik vydrží, ne na kolik byla míněná. Dokud tu stál cíl, hlásila věta
+    // u rezervy 900 000 Kč „vydrží 3 měsíce" a dlaždice o dva centimetry
+    // vedle „Rezerva po koupi vydrží 19,6 měs.". Obojí o týchž penězích.
     return {
       key: 'reserve',
       label,
       status: 'good',
-      headline: `Rezerva ${czk(status.current)} je hotová, vydrží ${formatMonths(status.targetMonths)}${basis}.`,
+      headline: `Rezerva ${czk(status.current)} je hotová, vystačí na ${formatMonths(Math.round(status.monthsCovered))}${basis}.`,
     };
   }
 
