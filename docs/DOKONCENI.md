@@ -1558,3 +1558,44 @@ na stuze a řádek rodičovské vs. její výpočet.
 
 Druhý test v souboru hlídá, že mřížka nezhubla: kdyby ji někdo omylem zúžil,
 první test by prošel prázdný.
+
+## Druhé kolo auditu: mimo Přehled
+
+První kolo pokrylo Přehled. Druhé prošlo zbytek appky a hledalo dvojice čísel,
+kde totéž tvrdí dvě různá místa. Test se rozšířil z 9 na 25 kontrol a přibyla
+k němu pojistka: **každá kontrola musí aspoň jednou opravdu proběhnout**.
+Bez toho se kontrola schovaná za podmínkou, kterou žádný scénář nesplní,
+mlčky tváří jako pokrytí. Přesně to se stalo hned napoprvé: v předpokladech
+se hledal řádek „Odhadovaná splátka", který v kartě nikdy nebyl.
+
+Nálezy:
+
+**Graf „Vývoj úspor v čase" (Bydlení) sliboval jiný termín než Přehled.**
+Řadu si počítal jako přímku `akontace + částka × měsíc`, tedy bez rodičovské,
+a cíl bral z holé ceny bez rekonstrukce. Kreslí teď fond na akontaci
+z téže simulace jako stuha (`WealthPoint.downPaymentFund`) a míří na
+`downPaymentTarget()`, což je jedna funkce pro osu, graf i mezeru.
+
+**Posuvník akontace hlídal šest měsíců rezervy i tomu, kdo si u cíle
+nastavil dvanáct.** `downPayment.MIN_RESERVE_MONTHS` byl třetí nezávislý
+práh vedle `MIN_RESERVE_MONTHS_AFTER_PURCHASE` a uživatelova cíle.
+Zůstává jako výchozí (šest je horní konec doporučeného pásma, u největší
+jednorázové částky plánu je namístě opatrnější konec), ale se zapnutým cílem
+platí uživatelovo číslo.
+
+**Karta nákladů na dítě ukazovala dva různé průměry téhož.** Horizont nad
+grafem je jen výřez, takže při pěti letech stálo nahoře „Průměrné měsíční
+náklady 8 800 Kč" a o dva řádky níž „Do rozpočtu jde měsíčně 22 667 Kč".
+Popisek teď říká, za jaké období průměr je.
+
+### Co se schválně nezměnilo
+
+**Jednorázové náklady koupě se do plánu nepočítají.** Karta v Bydlení uvádí
+zhruba 15 až 40 tisíc a říká o nich, že „se rezerva sníží hned při koupi",
+jenže časová osa, `postPurchaseRunwayMonths` ani cíl rezervy je neodečítají.
+Je to jediný zbylý rozpor, o kterém víme. Zahrnout je by posunulo rezervu
+po koupi u každého kupujícího, tedy i verdikty, a je to rozhodnutí o modelu,
+ne oprava překlepu. Zůstává tu, dokud se o něm nerozhodne.
+
+**Dlaždice „Rezerva vydrží" kreslí šest měsíců** bez ohledu na cíl, viz
+odůvodnění výše.

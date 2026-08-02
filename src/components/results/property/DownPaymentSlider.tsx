@@ -8,7 +8,7 @@ import {
   totalProjectCost,
 } from '../../../engine/mortgage';
 import {
-  downPaymentTradeoff, STOCK_RETURN, COMPARISON_STEP, MIN_RESERVE_MONTHS,
+  downPaymentTradeoff, STOCK_RETURN, COMPARISON_STEP, reserveMonthsForTradeoff,
 } from '../../../engine/downPayment';
 import { czk, czkPerMonth, decimal, formatNumber as fmt, formatRate } from '../../../engine/format';
 import { StepButton, SliderCard } from './shared';
@@ -48,6 +48,9 @@ export default function DownPaymentSlider({ state, onChange }: {
     reserve, reserveMonths, safeMax, safePct,
     paymentDelta, interestDelta, stockValue, interestSavedByReserve,
   } = downPaymentTradeoff(state);
+  // Kolik měsíců výdajů má po koupi zbýt. S cílem „nouzová rezerva" platí
+  // uživatelovo číslo, jinak doporučených šest.
+  const minReserveMonths = reserveMonthsForTradeoff(state);
 
   return (
     <SliderCard>
@@ -91,7 +94,7 @@ export default function DownPaymentSlider({ state, onChange }: {
 
       <div className="flex flex-wrap justify-between gap-x-2 text-sm mt-1.5">
         <span className="text-ink-body">Zbývající rezerva po akontaci:</span>
-        <span className={`font-semibold ${reserve <= 0 ? 'text-danger' : reserveMonths < MIN_RESERVE_MONTHS ? 'text-caution' : 'text-ink'}`}>
+        <span className={`font-semibold ${reserve <= 0 ? 'text-danger' : reserveMonths < minReserveMonths ? 'text-caution' : 'text-ink'}`}>
           {czk(reserve)}{reserve > 0 && isFinite(reserveMonths) ? ` (~${decimal(reserveMonths)} měs. výdajů)` : ''}
         </span>
       </div>
@@ -99,12 +102,12 @@ export default function DownPaymentSlider({ state, onChange }: {
       {safeMax > 0 ? (
         <p className={`mt-1.5 text-xs ${dpValue > safeMax ? 'text-caution' : 'text-ink-muted'}`}>
           {dpValue > safeMax
-            ? `Jste za bezpečnou hranicí. Nad ${czk(safeMax)} akontace zbyde rezerva na méně než ${MIN_RESERVE_MONTHS} měsíců výdajů.`
-            : `Bezpečné maximum: ${czk(safeMax)} (zelená zóna), víc by nechalo rezervu pod ${MIN_RESERVE_MONTHS} měsíci výdajů po koupi.`}
+            ? `Jste za bezpečnou hranicí. Nad ${czk(safeMax)} akontace zbyde rezerva na méně než ${minReserveMonths} měsíců výdajů.`
+            : `Bezpečné maximum: ${czk(safeMax)} (zelená zóna), víc by nechalo rezervu pod ${minReserveMonths} měsíci výdajů po koupi.`}
         </p>
       ) : (
         <p className="mt-1.5 text-xs text-caution">
-          Úspory zatím nestačí na akontaci a zároveň {MIN_RESERVE_MONTHS}měsíční rezervu. Jakákoli akontace rezervu ukrojí.
+          Úspory zatím nestačí na akontaci a zároveň {minReserveMonths}měsíční rezervu. Jakákoli akontace rezervu ukrojí.
         </p>
       )}
 

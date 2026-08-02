@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import type { WizardState } from '../../types';
 import { CHILD_COSTS_CZ } from '../../engine/defaults';
 import { calculateChildCosts } from '../../engine/childCost';
-import { decimal, czkPerMonth } from '../../engine/format';
+import { decimal, czkPerMonth, formatYears } from '../../engine/format';
 import { plannedChildren } from '../../engine/childCost';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useChartColors, gridProps, axisProps } from './chartTheme';
@@ -158,16 +158,20 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeCos
       </div>
       </Disclosure>
 
-      {/* Summary */}
+      {/* Souhrn za **zobrazený** horizont, ne za celý plán.
+          Do rozpočtu jde průměr za celou dobu, kdy se dítě živí, a ten je
+          o kus níž. Dokud tu stálo jen „Průměrné měsíční náklady", ukazovala
+          karta při horizontu pěti let 8 800 Kč a o dva řádky níž
+          „Do rozpočtu jde měsíčně 22 667 Kč". Obojí průměr téhož. */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         <div className="p-3 bg-tint-brand rounded-lg">
-          <span className="text-sm text-ink-muted">Průměrné měsíční náklady</span>
+          <span className="text-sm text-ink-muted">Průměr za zobrazených {formatYears(effectiveHorizon)}</span>
           <p className="text-lg font-bold text-brand">
             {result.monthlyAverage.toLocaleString('cs-CZ')} Kč/měs.
           </p>
         </div>
         <div className="p-3 bg-tint-brand rounded-lg">
-          <span className="text-sm text-ink-muted">Celkové náklady</span>
+          <span className="text-sm text-ink-muted">Celkem za tu dobu</span>
           <p className="text-lg font-bold text-brand">
             {decimal(result.totalCost / 1_000_000)} mil. Kč
           </p>
@@ -209,8 +213,10 @@ export default function ChildCostPlanner({ state, monthlyAllocation, onChangeCos
           <span className="text-lg font-bold text-ink tabular-nums">{czkPerMonth(monthlyAllocation)}</span>
         </div>
         <p className="mt-1 text-xs text-ink-faint">
-          Vážený průměr z tabulky výše. Do narození se odkládá stranou, od narození
-          je to skutečný výdaj podle věku. Změnou částek nahoře se přepočítá celý přehled.
+          Vážený průměr z tabulky výše za celou dobu, kdy se dítě živí, tedy
+          {includeUni ? ' do 26 let' : ' do 18 let'}. Horizont nad grafem je jen výřez
+          pro tenhle graf a s plánem nehýbe. Do narození se částka odkládá stranou,
+          od narození je to skutečný výdaj podle věku.
         </p>
       </div>
     </Card>

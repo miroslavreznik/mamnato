@@ -1,6 +1,7 @@
 import type { WizardState } from '../../types';
-import { savingsProjection } from '../../engine/savings';
-import { requiredDownPayment, downPaymentGap, downPaymentFraction } from '../../engine/mortgage';
+import { wealthTimeline, monthsUntilDownPaymentReady, downPaymentTarget } from '../../engine/wealthTimeline';
+import { downPaymentGap } from '../../engine/mortgage';
+import type { GoalAllocations } from '../../engine/allocation';
 import { monthlyDisposable } from '../../engine/cashflow';
 import { formatMonths, czkPerMonth } from '../../engine/format';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
@@ -8,15 +9,23 @@ import { useChartColors, gridProps, axisProps, fmtKcShort } from './chartTheme';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
 
+/** Deset let, tolik graf kreslí. Delší pohled patří stuze v Přehledu. */
+const HORIZON_MONTHS = 120;
+
 interface Props {
   state: WizardState;
-  // Kolik se měsíčně odkládá na akontaci. Ze stejného čísla počítá dlaždice
-  // v souhrnu i posuvník v kartě nemovitosti; kdyby si graf počítal vlastní,
-  // hlásila by jedna stránka tři různé termíny.
-  monthlySaving: number;
+  /**
+   * Rozdělení peněz na cíle. Graf potřebuje **celé**, ne jen částku na
+   * akontaci: během rodičovské se o tok dělí i rezerva a ostatní cíle,
+   * a přesně o to jde. Ze stejného rozdělení počítá dlaždice v souhrnu
+   * i stuha; kdyby si graf počítal vlastní, hlásila by jedna stránka
+   * tři různé termíny.
+   */
+  allocations: GoalAllocations;
 }
 
-export default function SavingsChart({ state, monthlySaving }: Props) {
+export default function SavingsChart({ state, allocations }: Props) {
+  const monthlySaving = allocations.downPayment;
   const colors = useChartColors();
   const gap = downPaymentGap(state);
 
@@ -26,7 +35,9 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
   if (gap <= 0) return null;
 
   const disposable = monthlyDisposable(state);
-  const downPayment = requiredDownPayment(state.property.targetPrice, downPaymentFraction(state));
+  // Cíl z celé investice včetně rekonstrukce, stejně jako `downPaymentGap`
+  // a časová osa. Z holé ceny by graf hlásil dosažení dřív, než nastane.
+  const downPayment = downPaymentTarget(state);
 
   if (disposable <= 0) {
     return (
@@ -35,14 +46,18 @@ export default function SavingsChart({ state, monthlySaving }: Props) {
     );
   }
 
-  const projection = savingsProjection(state, 120, monthlySaving);
-  const intersectMonth = projection.find((p) => p.savings >= downPayment)?.month;
+  // Řada je z téže simulace, ze které kreslí stuha v Přehledu. Dřív to byla
+  // přímka `akontace + částka × měsíc`, která neví o rodičovské, takže graf
+  // sliboval dosažení akontace o měsíce dřív než osa o obrazovku výš.
+  const timeline = wealthTimeline(state, { months: HORIZON_MONTHS, allocations });
+  const ready = monthsUntilDownPaymentReady(state, allocations);
+  const intersectMonth = isFinite(ready) && ready <= HORIZON_MONTHS ? ready : undefined;
 
-  const chartData = projection
-    .filter((_, i) => i % 12 === 0 || i === projection.length - 1)
+  const chartData = timeline.points
+    .filter((_, i) => i % 12 === 0 || i === timeline.points.length - 1)
     .map((p) => ({
       year: Math.round(p.month / 12),
-      savings: Math.round(p.savings),
+      savings: p.downPaymentFund,
     }));
 
   return (

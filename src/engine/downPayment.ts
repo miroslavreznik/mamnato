@@ -9,6 +9,7 @@ import {
   totalLoanInterest,
   monthlyMortgagePayment,
 } from './mortgage';
+import { reserveTargetMonths } from './reserve';
 
 /**
  * Kolik dát z úspor na akontaci: čísla, ze kterých se to rozhoduje.
@@ -34,8 +35,23 @@ export const STOCK_RETURN = 0.07;
 /** Modelová částka, na které se ukazuje, co akontace navíc přinese. */
 export const COMPARISON_STEP = 100000;
 
-/** Rezerva, pod kterou se akontace přestává vyplácet (měsíců výdajů). */
+/**
+ * Rezerva, pod kterou se akontace přestává vyplácet (měsíců výdajů).
+ *
+ * Šest je horní konec doporučeného pásma 3–6: u největší jednorázové částky
+ * v celém plánu je namístě opatrnější konec. Kdo si ale zapne cíl „nouzová
+ * rezerva" a nastaví si vlastní počet měsíců, má platit **jeho** číslo:
+ * jinak by mu posuvník v Bydlení počítal bezpečné maximum proti šesti
+ * měsícům, zatímco karta cíle vedle hlásí dvanáct.
+ */
 export const MIN_RESERVE_MONTHS = 6;
+
+/** Kolik měsíců výdajů má po koupi zbýt, podle plánu uživatele. */
+export function reserveMonthsForTradeoff(state: WizardState): number {
+  return state.goals.includes('reserve')
+    ? reserveTargetMonths(state)
+    : MIN_RESERVE_MONTHS;
+}
 
 export interface DownPaymentTradeoff {
   /** Nezbytné měsíční výdaje po koupi (splátka a vlastnictví místo nájmu). */
@@ -71,7 +87,7 @@ export function downPaymentTradeoff(state: WizardState): DownPaymentTradeoff {
   // Nezbytné výdaje po koupi. Minimum 1, aby dělení nikdy nespadlo.
   const monthlyNeedAfter = Math.max(1, necessaryExpensesAfterPurchase(state));
 
-  const safeMax = Math.max(0, Math.min(totalSavings, totalSavings - MIN_RESERVE_MONTHS * monthlyNeedAfter));
+  const safeMax = Math.max(0, Math.min(totalSavings, totalSavings - reserveMonthsForTradeoff(state) * monthlyNeedAfter));
 
   return {
     monthlyNeedAfter,

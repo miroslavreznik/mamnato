@@ -59,6 +59,15 @@ export interface WealthPoint {
    * klidnou zelenou. Nadpis a obrázek pod ním si tak odporovaly.
    */
   flowAfterGoals: number;
+  /**
+   * Kolik je v tu chvíli našetřeno na akontaci.
+   *
+   * Vystavuje se kvůli grafu „Vývoj úspor v čase" v Bydlení. Ten si řadu
+   * počítal sám jako `akontace + částka × měsíc`, tedy přímku, která neví
+   * o rodičovské. Slibovala pak dosažení akontace o měsíce dřív, než kdy
+   * ji stuha v Přehledu opravdu naspořila.
+   */
+  downPaymentFund: number;
 }
 
 export interface WealthTimelineResult {
@@ -143,9 +152,7 @@ export function wealthTimeline(
 
   // Cílová akontace: požadovaná dle LTV; když si uživatel vyhradil víc, platí jeho volba.
   const price = totalProjectCost(state);
-  const required = requiredDownPayment(price, downPaymentFraction(state));
-  const chosen = state.savings.downPaymentFromSavings;
-  const targetDownPayment = chosen != null ? Math.max(required, chosen) : required;
+  const targetDownPayment = downPaymentTarget(state);
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
   const ownership = ownershipCosts(state);
@@ -202,7 +209,7 @@ export function wealthTimeline(
   let firstNegativeMonth: number | null = null;
 
   // Nultý měsíc je výchozí stav, žádný tok se v něm ještě nestal.
-  points.push({ month: 0, cash: Math.round(cash), flow: 0, flowAfterGoals: 0 });
+  points.push({ month: 0, cash: Math.round(cash), flow: 0, flowAfterGoals: 0, downPaymentFund: Math.round(downPaymentFund) });
 
   for (let m = 0; m < horizon; m++) {
     // Koupě: jakmile je na cílovou akontaci naspořeno (dynamicky, zohlední
@@ -269,6 +276,7 @@ export function wealthTimeline(
       cash: Math.round(cash),
       flow: Math.round(flow),
       flowAfterGoals: Math.round(flow - goals),
+      downPaymentFund: Math.round(downPaymentFund),
     });
   }
 
@@ -298,6 +306,13 @@ export function wealthTimeline(
  * Vrací `Infinity`, když se v horizontu plánu nenaspoří (typicky když na
  * akontaci nejde nic).
  */
+/** Cílová částka akontace, ze které vychází časová osa i graf spoření. */
+export function downPaymentTarget(state: WizardState): number {
+  const required = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
+  const chosen = state.savings.downPaymentFromSavings;
+  return chosen != null ? Math.max(required, chosen) : required;
+}
+
 export function monthsUntilDownPaymentReady(
   state: WizardState,
   allocations: GoalAllocations
