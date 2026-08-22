@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { line, area, curveMonotoneX } from 'd3-shape';
 import type { Journey, Tension } from '../../engine/journey';
 import { czk, formatMonths, yearIn } from '../../engine/format';
@@ -129,13 +129,21 @@ export default function JourneyRibbon({
 
   // Skutečná šířka v pixelech. Z ní je `viewBox`, takže se nic nepřeškáluje
   // a rozměry uvnitř znamenají pixely.
-  const [W, setW] = useState(700);
-  useEffect(() => {
+  // Začínáme nejmenší podporovanou šířkou. Kdyby prohlížeč doručil první
+  // ResizeObserver až o snímek později (WebKit), průhledný úchop se tím
+  // nezmenší pod 44 px. Naopak výchozích 700 ho na mobilu rozpůlilo.
+  const [W, setW] = useState(MIN_W);
+  useLayoutEffect(() => {
     const el = svgRef.current;
     if (!el) return;
+    const updateWidth = (width: number) => {
+      if (width > 0) setW(Math.round(Math.min(MAX_W, Math.max(MIN_W, width))));
+    };
+    // Synchronní první měření zabrání tomu, aby test i uživatel na okamžik
+    // dostali viewBox pro jinou šířku, než jakou má SVG na obrazovce.
+    updateWidth(el.getBoundingClientRect().width);
     const ro = new ResizeObserver(([entry]) => {
-      const w = entry.contentRect.width;
-      if (w > 0) setW(Math.round(Math.min(MAX_W, Math.max(MIN_W, w))));
+      updateWidth(entry.contentRect.width);
     });
     ro.observe(el);
     return () => ro.disconnect();

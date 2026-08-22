@@ -752,14 +752,15 @@ test('cesta dohlédne až k důchodu a ukáže doplacení hypotéky', async ({ p
   await expectResults(page)
 
   // Popisek stuhy nese délku horizontu, takže se dá ověřit bez čtení SVG.
-  // Výchozí výřez je deset let, celý plán proto stojí v „z celkových 35".
+  // Výchozí výřez je deset let. U třicátníka sahá celý plán do zákonného
+  // důchodového věku 67 let, tedy přes dalších 37 let.
   const stuha = page.getByRole('img', { name: /Vývoj úspor na/ })
   const popis = (await stuha.getAttribute('aria-label')) ?? ''
-  expect(Number(popis.match(/z celkových (\d+)/)?.[1])).toBe(35)
+  expect(Number(popis.match(/z celkových (\d+)/)?.[1])).toBe(37)
 
   await page.getByRole('button', { name: 'Celý plán', exact: true }).click()
   const cely = (await stuha.getAttribute('aria-label')) ?? ''
-  expect(Number(cely.match(/Vývoj úspor na (\d+) let/)?.[1])).toBe(35)
+  expect(Number(cely.match(/Vývoj úspor na (\d+) let/)?.[1])).toBe(37)
   expect(cely).toContain('Splaceno')
 })
 
@@ -791,7 +792,7 @@ test('výřez cesty zkrátí pohled, ale neschová, co je za ním', async ({ pag
   await expect(page.locator('#souhrn').getByText(/Za zobrazeným úsekem/)).toBeVisible()
 
   await page.getByRole('button', { name: 'Celý plán', exact: true }).click()
-  expect(await roky()).toBe(35)
+  expect(await roky()).toBe(37)
   await expect(page.locator('#souhrn').getByText(/Za zobrazeným úsekem/)).toHaveCount(0)
 
   await page.getByRole('button', { name: '10 let', exact: true }).click()

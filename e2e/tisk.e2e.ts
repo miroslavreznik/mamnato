@@ -30,6 +30,10 @@ async function toResults(page: Page) {
  * by běh zastavil.
  */
 async function enterPrintMode(page: Page) {
+  // Nativní dialog se v headless prohlížečích chová rozdílně: WebKit i
+  // Chromium mohou `afterprint` vyvolat okamžitě a vrátit appku do obrazovky
+  // ještě před emulací. Ověřujeme stav připravený aplikací, ne dialog OS.
+  await page.evaluate(() => { window.print = () => {} })
   await page.getByRole('button', { name: 'Vytisknout / PDF' }).click()
   await page.emulateMedia({ media: 'print' })
   // Appka dává grafům 300 ms na vykreslení po rozbalení sekcí.

@@ -28,10 +28,16 @@ function focusReport() {
   // Stačí jedno z nich, ne obojí.
   const outline = s.outlineStyle !== 'none' && parseFloat(s.outlineWidth) > 0
   const shadow = s.boxShadow !== 'none' && s.boxShadow !== ''
+  // Safari nemusí na SVG kruhu vykreslit CSS outline stejně jako Chromium.
+  // Úchop proto používá i kontrastní stroke; i ten je platný fokusový prstenec.
+  const svgStroke = el instanceof SVGElement
+    && s.stroke !== 'none'
+    && s.stroke !== 'transparent'
+    && parseFloat(s.strokeWidth) > 0
   return {
     tag: el.tagName.toLowerCase(),
     label: (el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 40),
-    visible: outline || shadow,
+    visible: outline || shadow || svgStroke,
     sized: r.width > 0 && r.height > 0,
   }
 }

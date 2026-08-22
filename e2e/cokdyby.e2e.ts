@@ -111,8 +111,19 @@ test.describe('odkládání cílů', () => {
   const ghost = (page: Page) =>
     page.locator('#cokdyby svg[aria-label^="Vývoj úspor"] path[stroke-dasharray="8 8"]')
 
+  async function waitForRibbonLayout(page: Page) {
+    const svg = page.locator('#cokdyby svg[aria-label^="Vývoj úspor"]')
+    await expect.poll(async () => {
+      const box = await svg.boundingBox()
+      const viewBox = (await svg.getAttribute('viewBox'))?.split(/\s+/).map(Number)
+      if (!box || !viewBox || viewBox.length !== 4) return false
+      return Math.abs(box.width - viewBox[2]) <= 1
+    }).toBe(true)
+  }
+
   test('odložení důchodu uvolní peníze, ale cestou nehne', async ({ page }) => {
     await toWhatIf(page)
+    await waitForRibbonLayout(page)
     const before = await ribbonPath(page).getAttribute('d')
 
     await page.getByTestId('whatif-goal-retirement').click()

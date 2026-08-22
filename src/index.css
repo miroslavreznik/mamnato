@@ -424,10 +424,13 @@ body {
    (`focus:ring-2`), tady se na to zapomnělo: prvek měl `focus:outline-none`
    bez náhrady, a přitom je to jediné místo, které se myší ovládá tažením,
    takže bez klávesnice se s ním nedá dělat vůbec nic. */
+.ribbon-grip:focus,
 .ribbon-grip:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
   border-radius: 9999px;
+  stroke: var(--ink);
+  stroke-width: 2px;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -498,8 +501,45 @@ input[type="range"]:focus-visible::-webkit-slider-thumb {
 
 /* Tisk / uložení do PDF: schová interaktivní prvky a vynutí světlý, čitelný přehled */
 @media print {
+  /* Tisk nesmí záviset na tom, zda `afterprint` v konkrétním prohlížeči
+     dorazí před nebo po překreslení. I při zapnutém dark módu tedy tisková
+     média sama nastaví světlou paletu s kontrastem vůči bílému papíru. */
+  :root,
+  .dark {
+    --page: #fbfaf7;
+    --card: #fbfaf7;
+    --sunken: #f3f2ea;
+    --shell: #efeee7;
+    --raised: #fbfaf7;
+    --ink: #0f3b33;
+    --ink-label: #0f3b33;
+    --ink-body: #57604f;
+    --ink-muted: #6e6c63;
+    --ink-faint: #6e6c63;
+    --line: #e6e4d8;
+    --line-strong: #d9d7ca;
+    --brand: #10715f;
+    --good: #10715f;
+    --caution: #946123;
+    --danger: #ae5139;
+    --neutral: #6e6c63;
+    --tint-brand: #e9efeb;
+    --tint-good: #e9f0ea;
+    --tint-caution: #f3eee6;
+    --tint-danger: #f5ede8;
+    --tint-neutral: #f0efeb;
+    --ribbon-calm: #37995e;
+    --ribbon-tense: #aa5b05;
+    --ribbon-deficit: #ad2105;
+    --ribbon-recover: #10715f;
+  }
   .no-print {
     display: none !important;
+  }
+  /* Neaktivní panely jsou na obrazovce schované inline stylem. V tiskových
+     médiích se vždy ukážou všechny i bez přechodného React stavu. */
+  .results-panel {
+    display: block !important;
   }
   /* Obsah se přirozeně stránkuje; nadpis sekce nenechávat samotný na konci stránky */
   section > button {

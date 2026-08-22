@@ -315,7 +315,10 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     setShareAsking(opening);
     // Posun patří sem, ne do aktualizační funkce `setShareAsking`: tu React
     // ve vývojovém režimu volá dvakrát, takže by se dvakrát rolovalo.
-    if (opening) window.scrollTo({ top: 0, behavior: 'smooth' });
+    // U upozornění na soukromí je důležitější jistota, že se hned objeví,
+    // než animace. WebKit může plynulý posun odkládat nebo ho při dlouhé
+    // stránce nedokončit, takže uživatel zůstane u tlačítka bez vysvětlení.
+    if (opening) window.scrollTo({ top: 0, behavior: 'auto' });
   };
   const handleShare = async () => {
     const url = buildShareUrl(state);

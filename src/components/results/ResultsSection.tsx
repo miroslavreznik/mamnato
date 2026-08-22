@@ -29,8 +29,9 @@ export default function ResultsSection({ id, title, subtitle, active, children }
       id={id}
       role="tabpanel"
       aria-labelledby={`tab-${id}`}
-      hidden={!active}
-      className="scroll-mt-32"
+      aria-hidden={!active}
+      style={active ? undefined : { display: 'none' }}
+      className="results-panel scroll-mt-32"
     >
       <div className="mb-4">
         <h2 className="type-section text-ink">{title}</h2>
