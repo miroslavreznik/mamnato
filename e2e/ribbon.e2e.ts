@@ -90,6 +90,26 @@ test('tažením se puntík dítěte posune po ose', async ({ page }) => {
   expect(Number(after)).toBeGreaterThan(Number(before))
 })
 
+test('při tažení je u bodu vidět přesná vzdálenost od dneška', async ({ page }) => {
+  await toResults(page, 'property')
+  const handle = page.getByRole('slider', { name: 'Za jak dlouho chcete koupit' })
+  const value = page.getByTestId('ribbon-drag-value-purchase')
+  await handle.scrollIntoViewIfNeeded()
+
+  const box = (await handle.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await expect(value).toBeVisible()
+
+  await page.mouse.move(box.x + box.width / 2 + 120, box.y + box.height / 2, { steps: 6 })
+  await expect.poll(async () => handle.getAttribute('aria-valuetext')).not.toBe('hned teď')
+  const ariaValue = (await handle.getAttribute('aria-valuetext'))!
+  await expect(value).toHaveText(ariaValue.charAt(0).toLocaleUpperCase('cs-CZ') + ariaValue.slice(1))
+
+  await page.mouse.up()
+  await expect(value).toBeHidden()
+})
+
 test('úchop dostane jen událost, se kterou opravdu jde hýbat', async ({ page }) => {
   // Koupě a dítě jsou otázka „kdy". Konec rodičovské plyne z délky volna
   // a doplacení z koupě plus splatnosti, takže tam by kroužek sliboval,

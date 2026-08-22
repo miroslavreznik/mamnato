@@ -172,6 +172,10 @@ export default function JourneyRibbon({
 
   // Bod, na který uživatel ukazuje. Kreslí se u něj vodicí linka a částka.
   const [hover, setHover] = useState<number | null>(null);
+  // Aktivně posouvaná událost. Její vzdálenost od dneška se během tažení
+  // ukazuje přímo u úchopu; z časové osy se přesný počet měsíců odhaduje
+  // špatně. Fokus ji drží viditelnou i při ovládání klávesnicí.
+  const [activeMover, setActiveMover] = useState<string | null>(null);
 
   /**
    * Vstupní animace patří k prvnímu zobrazení, ne ke každé změně.
@@ -633,12 +637,18 @@ export default function JourneyRibbon({
                   onPointerDown={(ev) => {
                     ev.preventDefault();
                     setIntro(false);
+                    setActiveMover(e.key);
                     ev.currentTarget.setPointerCapture(ev.pointerId);
                   }}
                   onPointerMove={(ev) => {
                     if (!ev.currentTarget.hasPointerCapture(ev.pointerId)) return;
                     mover.move(clampTo(monthAt(ev.clientX), mover.range));
                   }}
+                  onPointerUp={() => setActiveMover(null)}
+                  onPointerCancel={() => setActiveMover(null)}
+                  onLostPointerCapture={() => setActiveMover(null)}
+                  onFocus={() => setActiveMover(e.key)}
+                  onBlur={() => setActiveMover(null)}
                   onKeyDown={(ev) => {
                     const step = ev.key === 'PageUp' || ev.key === 'PageDown' ? 12 : 1;
                     const dir = ev.key === 'ArrowRight' || ev.key === 'ArrowUp' || ev.key === 'PageUp' ? 1
@@ -649,6 +659,32 @@ export default function JourneyRibbon({
                     mover.move(clampTo(e.month + dir * step, mover.range));
                   }}
                 />
+                {activeMover === e.key && (() => {
+                  const value = mover.text(e.month);
+                  const text = value.charAt(0).toLocaleUpperCase('cs-CZ') + value.slice(1);
+                  const half = text.length * 3.2 + 12;
+                  const tx = Math.min(Math.max(x, PAD.left + half), W - PAD.right - half);
+                  const below = y + 31;
+                  const ty = below < H - PAD.bottom - 4 ? below : y - 25;
+                  return (
+                    <g
+                      pointerEvents="none"
+                      className="no-print"
+                      data-testid={`ribbon-drag-value-${e.key}`}
+                    >
+                      <rect
+                        x={tx - half} y={ty - 13} width={half * 2} height="24" rx="12"
+                        fill="var(--ink)"
+                      />
+                      <text
+                        x={tx} y={ty + 3}
+                        textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--card)"
+                      >
+                        {text}
+                      </text>
+                    </g>
+                  );
+                })()}
               </>
             )}
             {/* Obrys puntíku má tutéž barvu jako stuha pod ním. Se třemi
