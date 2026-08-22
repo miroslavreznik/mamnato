@@ -38,6 +38,8 @@ import { buildShareUrl } from '../../store/shareLink';
 import Disclaimer from '../ui/Disclaimer';
 import PlausibilityNotes, { PlausibilityHint } from '../ui/PlausibilityNotes';
 import AssumptionsCard from './AssumptionsCard';
+import GoalPlannerPanel from './GoalPlannerPanel';
+import { czkPerMonth } from '../../engine/format';
 
 interface ResultsDashboardProps {
   state: WizardState;
@@ -429,6 +431,27 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         {/* Bydlení a hypotéka */}
         {hasProperty && (
           <ResultsSection id="bydleni" title="Vlastní bydlení" subtitle="Největší položka plánu: akontace, splátka, limity a srovnání s nájmem" active={isVisible('bydleni')}>
+            <nav aria-label="Části sekce vlastní bydlení" className="no-print flex flex-wrap gap-2">
+              {[
+                ['bydleni-dostupnost', 'Dostupnost hypotéky'],
+                ['bydleni-srovnani', 'Koupě vs. nájem'],
+                ['bydleni-dane', 'Daně a odpočty'],
+              ].map(([id, label]) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className="min-h-[44px] px-4 rounded-full border border-line text-sm font-semibold text-ink-body hover:bg-sunken"
+                >
+                  {label}
+                </button>
+              ))}
+            </nav>
+            <div id="bydleni-dostupnost" className="scroll-mt-36 space-y-6">
+              <div>
+                <h3 className="type-section text-ink">Dostupnost hypotéky</h3>
+                <p className="text-sm text-ink-muted">Akontace, měsíční splátka a orientační bankovní obezřetnost.</p>
+              </div>
             <SavingsChart state={activeState} allocations={activeAllocations} />
             <PropertyAffordability
               state={activeState}
@@ -438,12 +461,25 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
               onChangeMonthlySaving={(v) => handleChangeAllocation('downPayment', null, v)}
             />
             <DtiDstiIndicator state={activeState} />
+            </div>
+            <div id="bydleni-srovnani" className="scroll-mt-36 space-y-6">
+              <div>
+                <h3 className="type-section text-ink">Koupě vs. nájem</h3>
+                <p className="text-sm text-ink-muted">Srovnání čistého jmění včetně vlastního kapitálu v nemovitosti.</p>
+              </div>
             <MortgageVsRent state={activeState} />
             <InvestmentComparisonChart
               state={activeState}
               onChangeReturn={(rate) => handleChangeRetirementRate('sp500', rate)}
             />
+            </div>
+            <div id="bydleni-dane" className="scroll-mt-36 space-y-6">
+              <div>
+                <h3 className="type-section text-ink">Daně a odpočty</h3>
+                <p className="text-sm text-ink-muted">Orientační dopad odpočtu zaplacených úroků.</p>
+              </div>
             <TaxReliefCard state={activeState} />
+            </div>
           </ResultsSection>
         )}
 
@@ -453,39 +489,76 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             {/* Rezerva je první karta v Cílech schválně: je to podle
                 slovníčku appky první věc, která má být hotová. */}
             {hasReserve && (
+              <GoalPlannerPanel
+                id="reserve"
+                label="Nouzová rezerva"
+                summary={`${czkPerMonth(allocations.reserve)} odkládat měsíčně`}
+                defaultOpen
+              >
               <ReservePlanner
                 state={activeState}
                 monthlyAllocation={allocations.reserve}
                 onChangeMonths={handleChangeReserveMonths}
                 onChangeAllocation={(v) => handleChangeAllocation('reserve', null, v)}
               />
+              </GoalPlannerPanel>
             )}
             {hasRetirement && (
+              <GoalPlannerPanel
+                id="retirement"
+                label="Důchod"
+                summary={`${czkPerMonth(allocations.retirement)} odkládat měsíčně`}
+                defaultOpen={!hasReserve}
+              >
               <RetirementPlanner
                 state={activeState}
                 monthlyContribution={allocations.retirement}
                 onChangeRate={handleChangeRetirementRate}
                 onChangeContribution={(v) => handleChangeAllocation('retirement', null, v)}
               />
+              </GoalPlannerPanel>
             )}
             {hasChild && (
+              <GoalPlannerPanel
+                id="child"
+                label="Dítě"
+                summary={`${czkPerMonth(allocations.child)} odkládat měsíčně`}
+                defaultOpen={!hasReserve && !hasRetirement}
+              >
               <ChildCostPlanner
                 state={activeState}
                 monthlyAllocation={allocations.child}
                 onChangeCosts={handleChangeChildCosts}
               />
+              </GoalPlannerPanel>
             )}
-            {hasLeave && <ParentalLeavePlanner state={activeState} onChange={handleChangeParentalLeave} />}
+            {hasLeave && (
+              <GoalPlannerPanel
+                id="leave"
+                label="Rodičovská"
+                summary="Příjmy a rezerva během dočasného výpadku"
+                defaultOpen={!hasReserve && !hasRetirement && !hasChild}
+              >
+                <ParentalLeavePlanner state={activeState} onChange={handleChangeParentalLeave} />
+              </GoalPlannerPanel>
+            )}
             {/* `activeAllocations`, ne `allocations`: seznam cílů je z
                 `activeState`, kde odložený cíl chybí. S plným polem částek
                 by se indexy rozešly a cíl by ukazoval částku souseda. */}
             {hasOther && (
+              <GoalPlannerPanel
+                id="other"
+                label="Vlastní cíle"
+                summary={`${activeState.customGoals?.length ?? 0} ${(activeState.customGoals?.length ?? 0) === 1 ? 'cíl' : 'cílů'}`}
+                defaultOpen={!hasReserve && !hasRetirement && !hasChild && !hasLeave}
+              >
               <CustomGoalPlanner
                 state={activeState}
                 onChangeGoals={handleChangeCustomGoals}
                 allocations={activeAllocations}
                 onChangeAllocation={(id, v) => handleChangeAllocation('custom', id, v)}
               />
+              </GoalPlannerPanel>
             )}
           </ResultsSection>
         )}

@@ -312,14 +312,14 @@ function findTightest(
     return minCashMonth === 0
       ? {
         month: 0,
-        title: 'Nejtěsnější je teď',
+        title: 'Právě teď',
         explanation: `Úspory ${czk(Math.max(0, minCash))} nepokryjí ani měsíc nezbytných výdajů. `
           + 'Odsud už jen rostou, ale do té doby rozpočet neunese nic nečekaného.',
         tension: 'tense',
       }
       : {
         month: minCashMonth,
-        title: `Nejníže ${yearOf(minCashMonth)}`,
+        title: `Rok ${yearOf(minCashMonth)}`,
         explanation: `Úspory klesnou na ${czk(Math.max(0, minCash))}, tedy pod jeden měsíc nezbytných výdajů. `
           + 'Rozpočet sice vychází, ale první nečekaná událost ho rozhodí.',
         tension: 'tense',
@@ -340,7 +340,7 @@ function findTightest(
   if (leanest.flowAfterGoals < -limits.goalShortfall) {
     return {
       month: leanest.month,
-      title: `Nejtěsněji ${yearOf(leanest.month)}`,
+      title: `Rok ${yearOf(leanest.month)}`,
       explanation: 'Rozpočet vychází a úspory rostou, ale na cíle by chybělo '
         + `${czkMonthly(Math.abs(leanest.flowAfterGoals))}. `
         + 'Buď se na ně bude odkládat míň, nebo je potřeba ubrat jinde.',
@@ -358,7 +358,7 @@ function findTightest(
     const what = whatHappensAt(worst.month, events);
     return {
       month: worst.month,
-      title: what === 'Rozpočet' ? `Nejtěsněji ${yearOf(worst.month)}` : `${what} ${yearOf(worst.month)}`,
+      title: what === 'Rozpočet' ? `Rok ${yearOf(worst.month)}` : `${what} ${yearOf(worst.month)}`,
       explanation: `Rozpočet vyjde, ale zbyde jen ${czkMonthly(worst.flow)}. `
         + 'Odkládat se v tu dobu skoro nedá a nečekaný výdaj musí z úspor.',
       tension: 'tense',
@@ -368,7 +368,7 @@ function findTightest(
   if (minCashMonth === 0) {
     return {
       month: 0,
-      title: 'Nejtěsnější je teď',
+      title: 'Právě teď',
       explanation: `Úspory ${czk(Math.max(0, minCash))} pokryjí ${formatMonths(runwayAt(minCash))} nezbytných výdajů `
         + 'a odsud už jen rostou.',
       tension: 'calm',
@@ -379,7 +379,7 @@ function findTightest(
   // ale informace, kde je plán nejblíž ke hraně.
   return {
     month: minCashMonth,
-    title: `Nejníže ${yearOf(minCashMonth)}`,
+    title: `Rok ${yearOf(minCashMonth)}`,
     explanation: `Úspory klesnou na ${czk(Math.max(0, minCash))}, což je ${formatMonths(runwayAt(minCash))} nezbytných výdajů. `
       + 'Plán drží po celou dobu.',
     tension: 'calm',

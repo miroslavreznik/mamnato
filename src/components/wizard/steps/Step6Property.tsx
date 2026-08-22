@@ -76,16 +76,16 @@ export default function Step6Property() {
         error={price > 0 && price < 500000 ? 'Zkontrolujte zadanou cenu (min. 500 000 Kč)' : undefined}
       />
 
-      {/* Akontace dle věku (ČNB: žadatelé do 36 let → LTV až 90 %) */}
+      {/* Akontace dle věku (ČNB: žadatelé mladší 36 let → LTV až 90 %) */}
       {youngest !== undefined ? (
         <div className="mb-6 text-xs text-ink-muted">
           {youngest < 36
-            ? `Nejmladšímu žadateli je ${youngest} let, díky vyššímu LTV (do 36 let) stačí akontace ${reqDpPct} % místo 20 %.`
+            ? `Nejmladšímu žadateli je ${youngest} let, díky vyššímu LTV pro žadatele mladší 36 let stačí akontace ${reqDpPct} % místo 20 %.`
             : `Nejmladšímu žadateli je ${youngest} let, povinná akontace je ${reqDpPct} % (LTV 80 %).`}
         </div>
       ) : (
         <div className="mb-6 text-xs text-ink-muted">
-          Tip: zadejte věk v kroku <span className="font-medium">Příjmy</span>. Žadatelům do 36 let stačí díky vyššímu LTV akontace jen 10 %.
+          Tip: zadejte věk v kroku <span className="font-medium">Příjmy</span>. Žadatelům mladším 36 let stačí díky vyššímu LTV akontace jen 10 %.
         </div>
       )}
 

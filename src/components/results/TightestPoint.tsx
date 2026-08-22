@@ -1,7 +1,7 @@
 import type { TightestPoint as TightestPointData } from '../../engine/journey';
 
 /**
- * Nejtěsnější místo plánu.
+ * Nejrizikovější období plánu.
  *
  * Jediná karta v celém přehledu, která je v plné barvě. Je to schválně: ze
  * všech čísel na obrazovce je tohle to jedno, které říká, kde přesně to
@@ -24,7 +24,7 @@ export default function TightestPoint({ data, onOpen }: {
     // text na bílém papíře, tedy prázdné místo. Rámeček nahradí plochu, aby
     // karta i na papíře zůstala tím nejdůraznějším sdělením.
     <div className="rounded-2xl bg-ink text-page p-5 print:bg-transparent print:text-ink print:border-2 print:border-ink">
-      <p className="type-label opacity-70 print:opacity-100">Nejtěsnější místo</p>
+      <p className="type-label opacity-70 print:opacity-100">Nejrizikovější období plánu</p>
       <p className="type-hero mt-1.5">{data.title}</p>
       <p className="mt-2 text-sm leading-relaxed opacity-90 print:opacity-100">{data.explanation}</p>
       {onOpen && (

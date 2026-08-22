@@ -24,8 +24,8 @@ import { czk, czkMonthly, monthYearIn, formatMonths } from './format';
  *
  *  1. Rozpočet, který nevychází. Dokud výdaje přerůstají příjem, nemá smysl
  *     spořit na nic; každý cíl by se platil dluhem.
- *  2. Splátka, na kterou banka nepůjčí. Spořit na akontaci k nemovitosti,
- *     kterou stejně neschválí, je práce nazmar.
+ *  2. Splátka v pásmu zvýšené obezřetnosti. Nejdřív je užitečné ověřit
+ *     reálnou dostupnou výši úvěru, teprve potom cílit akontaci.
  *  3. Chybějící akontace. Je to aktivní spořicí cíl; rezerva po koupi se
  *     k němu připočte ve vysvětlení, ať se na ni nezapomene.
  *  4. Nouzová rezerva. Podle vlastního slovníčku appky „první věc, kterou má
@@ -135,13 +135,13 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
 
   const buying = state.goals.includes('property');
 
-  // 2. Splátka nad tím, co banky schvalují. Musí být dřív než spoření:
-  // odkládat na akontaci k ceně, na kterou banka nepůjčí, je práce nazmar.
+  // 2. Splátka v pásmu zvýšené obezřetnosti. Musí být dřív než spoření:
+  // nejdřív je potřeba ověřit dostupnou výši úvěru u konkrétní banky.
   if (buying) {
     const scenario = evaluateScenario(state);
-    if (scenario.id === 'cannot_afford_dsti' || dsti(state) > DEFAULTS.dstiLimit) {
+    if (scenario.id === 'cannot_afford_dsti' || dsti(state) > DEFAULTS.dstiCaution) {
       const income = totalMonthlyIncome(state);
-      const affordable = income * DEFAULTS.dstiLimit - state.expenses.existingLoans;
+      const affordable = income * DEFAULTS.dstiCaution - state.expenses.existingLoans;
       const over = mortgagePayment(state) - affordable;
       // Kolik ubrat z ceny, aby splátka klesla na hranici. Splátka je lineární
       // ve výši úvěru, takže poměr platí i pro cenu.
@@ -150,10 +150,10 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
         : 0;
       return {
         key: 'payment_too_high',
-        action: `Hledejte nemovitost asi o ${czk(cheaper)} levnější, nebo si připravte o tolik vyšší akontaci.`,
+        action: `Prověřte cenu přibližně o ${czk(cheaper)} nižší nebo odpovídající vyšší akontaci.`,
         why: `Splátka ${czkMonthly(mortgagePayment(state))} je ${Math.round(dsti(state) * 100)} % čistého příjmu. `
-          + `Banky obvykle chtějí do ${Math.round(DEFAULTS.dstiLimit * 100)} %, takže tuhle hypotéku nejspíš neschválí. `
-          + 'Spořit na akontaci k ceně, na kterou nepůjčí, je práce nazmar.',
+          + `Nad ${Math.round(DEFAULTS.dstiCaution * 100)} % doporučuje ČNB bankám zvýšenou obezřetnost, konkrétní banka ale bonitu posoudí podle vlastních pravidel. `
+          + 'Před dalším spořením na akontaci si proto nechte ověřit dosažitelnou výši úvěru.',
         section: 'bydleni',
         actionLabel: 'Zkusit jinou cenu',
       };

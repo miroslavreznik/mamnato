@@ -457,7 +457,7 @@ export default function JourneyRibbon({
         `Vývoj úspor na ${Math.round(horizonMonths / 12)} let`
         + (full ? '. ' : ` z celkových ${Math.round(data.horizonMonths / 12)}. `)
         + named.map((e) => `${e.label} za ${formatMonths(e.month)}`).join(', ')
-        + `. Nejníže ${czk(Math.max(0, data.minCash))}.`
+        + `. Minimum likvidních úspor ${czk(Math.max(0, data.minCash))}.`
       }
     >
       <defs>

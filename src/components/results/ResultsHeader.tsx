@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import type { UserMode } from '../../types';
 
 /**
@@ -76,8 +77,77 @@ export default function ResultsHeader({ shareCopied, onShare, onPrint, onEdit, o
   onEdit: () => void;
   onReset: () => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOutside = (event: PointerEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) setMenuOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMenuOpen(false);
+    };
+    document.addEventListener('pointerdown', closeOutside);
+    document.addEventListener('keydown', closeOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside);
+      document.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [menuOpen]);
+
+  const menuAction = (action: () => void) => () => {
+    setMenuOpen(false);
+    action();
+  };
+
   return (
-    <>
+    <div className="flex items-center gap-1">
+      {/* Na mobilu zůstává primární úprava a jedno menu. Tisk, sdílení a
+          destruktivní reset už nezabírají samostatnou řadu ikon. */}
+      <div className="sm:hidden flex items-center gap-1" ref={menuRef}>
+        <Action
+          label="Upravit"
+          onClick={onEdit}
+          alwaysLabel
+          icon="M11 4H4v16h16v-7M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"
+        />
+        <div className="relative">
+          <button
+            type="button"
+            aria-label="Další akce"
+            aria-expanded={menuOpen}
+            aria-haspopup="menu"
+            onClick={() => setMenuOpen((value) => !value)}
+            className="inline-flex items-center justify-center gap-1.5 min-h-[44px] px-2 rounded-full text-[13px] font-semibold text-ink-muted hover:text-ink hover:bg-sunken"
+          >
+            <Icon path="M5 12h.01M12 12h.01M19 12h.01" />
+            Další
+          </button>
+          {menuOpen && (
+            <div
+              role="menu"
+              className="absolute right-0 top-full mt-1 w-56 rounded-xl border border-line bg-raised p-1.5 shadow-xl"
+            >
+              <button role="menuitem" type="button" onClick={menuAction(onShare)} className="w-full min-h-[44px] px-3 rounded-lg flex items-center gap-2 text-sm text-ink-body hover:bg-sunken">
+                <Icon path="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8M16 6l-4-4-4 4M12 2v13" />
+                {shareCopied ? 'Odkaz zkopírován' : 'Sdílet přehled'}
+              </button>
+              <button role="menuitem" type="button" onClick={menuAction(onPrint)} className="w-full min-h-[44px] px-3 rounded-lg flex items-center gap-2 text-sm text-ink-body hover:bg-sunken">
+                <Icon path="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z" />
+                Vytisknout / PDF
+              </button>
+              <div className="h-px my-1 bg-line" />
+              <button role="menuitem" type="button" onClick={menuAction(onReset)} className="w-full min-h-[44px] px-3 rounded-lg flex items-center gap-2 text-sm font-semibold text-danger hover:bg-tint-danger">
+                <Icon path="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />
+                Začít znovu
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="hidden sm:contents">
       {shareCopied ? (
         // Potvrzení má popisek vidět vždycky, na rozdíl od ostatních akcí.
         // Zatržítko samo o sobě není zpětná vazba: uživatel právě klikl na
@@ -114,6 +184,7 @@ export default function ResultsHeader({ shareCopied, onShare, onPrint, onEdit, o
         title="Smaže zadané údaje a spustí průvodce od začátku."
         icon="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"
       />
-    </>
+      </div>
+    </div>
   );
 }

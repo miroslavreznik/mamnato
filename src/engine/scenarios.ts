@@ -1,6 +1,7 @@
 import type { WizardState } from '../types';
 import { monthlyDisposable } from './cashflow';
 import { dsti, dti, downPaymentGap, monthsToSaveDownPayment, necessaryExpensesAfterPurchase } from './mortgage';
+import { DEFAULTS } from './defaults';
 
 export type ScenarioId =
   | 'cannot_afford_cashflow'
@@ -43,9 +44,9 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
     cannot_afford_dsti: {
       id: 'cannot_afford_dsti',
       icon: '\uD83C\uDFE6',
-      title: 'Banka by hypotéku pravděpodobně neschválila',
+      title: 'Splátka by byla vůči příjmu velmi vysoká',
       description:
-        'Splátka hypotéky by tvořila více než 45 % vašeho příjmu (ukazatel DSTI). Závazný horní limit DSTI sice ČNB od roku 2023 nevyžaduje, ale většina bank tuto hranici i tak posuzuje a žádost by zamítla nebo nabídla výrazně horší podmínky.',
+        'Splátky by tvořily více než 40 % čistého příjmu. Nejde o závazný limit, ale o hranici, nad kterou ČNB doporučuje bankám postupovat zvlášť obezřetně. Každá banka posuzuje bonitu podle vlastních pravidel.',
       tips: [
         'Zkuste v průvodci snížit cenu nemovitosti. I rozdíl 500 000 Kč může DSTI dostat pod limit.',
         'Prodloužení doby splácení (např. z 25 na 30 let) sníží měsíční splátku a tím i DSTI.',
@@ -61,7 +62,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       tips: [
         'Zkuste v průvodci snížit cenu cílové nemovitosti. Menší nebo vzdálenější nemovitost může být rozumným mezikrokem.',
         'Každý měsíc navíc odkládaný stranou zkrátí čekání. Zvyšte měsíční úspory o 2 000–5 000 Kč a sledujte, jak se horizont mění.',
-        'Zjistěte, zda máte nárok na státní podporu, například Dlouhodobý investiční produkt (DIP) nabízí daňové zvýhodnění při spoření na vlastní bydlení.',
+        'Peníze na bydlení držte podle horizontu na spořicím účtu, termínovaném vkladu nebo v přiměřeně konzervativní investici. DIP je určený na stáří, ne na financování bydlení.',
       ],
     },
     tight_but_possible: {
@@ -93,7 +94,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       icon: '\u2705',
       title: 'Jste finančně připraveni na koupi',
       description:
-        'Máte dostatek úspor na akontaci, splátka hypotéky je v bezpečném poměru k vašemu příjmu a vejdete se do běžných bankovních limitů. Pokud jste si jisti s výběrem nemovitosti, finanční stránka vám nemusí bránit.',
+        'Máte dostatek úspor na akontaci a splátka hypotéky je v rozumném poměru k vašemu příjmu. Banka ale vždy provede vlastní posouzení bonity a hodnoty zástavy.',
       tips: [
         'Před podpisem nechte nemovitost zkontrolovat. Právní čistota (výpis z katastru, věcná břemena) a technický stav (vlhkost, elektrika, střecha) mohou výrazně ovlivnit skutečné náklady.',
         'Porovnejte nabídky alespoň 3 bank nebo využijte hypotečního poradce. Rozdíl 0,3 % na sazbě znamená na 30 letech desítky tisíc korun.',
@@ -105,7 +106,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       icon: '\uD83D\uDE80',
       title: 'Jste ve velmi silné finanční pozici',
       description:
-        'Vaše čísla výrazně překračují standardní požadavky bank i doporučení ČNB. Splátka hypotéky by tvořila jen malou část vašeho příjmu a máte dostatek úspor s rezervou. Máte prostor vybírat a vyjednávat.',
+        'Splátka hypotéky by tvořila jen malou část vašeho příjmu a máte dostatek úspor s rezervou. Máte prostor vybírat a vyjednávat.',
       tips: [
         'S takovou bonitou si můžete dovolit vyjednávat o sazbě. Banky o dobré klienty soutěží, tak zkuste oslovit více bank najednou nebo použijte makléře.',
         'Zvažte, zda dává smysl vložit jako akontaci více než 20 %. Každé procento navíc snižuje úrok a měsíční splátku.',
@@ -125,7 +126,7 @@ export function evaluateScenario(state: WizardState): Scenario {
   const scenarios = buildScenarios(state);
 
   if (disposable <= 0) return scenarios.cannot_afford_cashflow;
-  if (dstiValue > 0.45) return scenarios.cannot_afford_dsti;
+  if (dstiValue > DEFAULTS.dstiCaution) return scenarios.cannot_afford_dsti;
   if (months > 60) return scenarios.no_savings;
   // Splátka je na hraně limitu ČNB → napjaté bez ohledu na úspory.
   if (dstiValue > 0.35) return scenarios.tight_but_possible;

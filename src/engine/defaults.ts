@@ -2,10 +2,10 @@
 // Při aktualizaci projděte i komentáře u jednotlivých hodnot a datum posuňte;
 // appka datum zobrazuje uživateli (tooltip u úrokové sazby), takže zastaralá
 // data se sama prozradí.
-export const DEFAULTS_DATE = '2026-07';
+export const DEFAULTS_DATE = '2026-08';
 
-// Stav regulace ČNB (borrower-based measures), ověřeno 7/2026:
-//  - Závazný je jen limit LTV: max 80 %, u žadatelů do 36 let 90 %
+// Stav regulace ČNB (borrower-based measures), ověřeno 8/2026:
+//  - Závazný je jen limit LTV: max 80 %, u žadatelů mladších 36 let 90 %
 //    → povinná akontace 20 %, resp. 10 %. Pro vlastní bydlení se nemění.
 //  - Horní limit DSTI ČNB deaktivovala (od 7/2023), DTI (od 1/2024), banky
 //    je ale i tak běžně posuzují jako interní obezřetnostní vodítko.
@@ -67,11 +67,11 @@ export const DEFAULTS = {
     10: 0.005,
   } as Record<number, number>,
   ltvRequired: 0.20, // povinná akontace při LTV 80 %
-  ltvRequiredUnder36: 0.10, // do 36 let LTV až 90 % → akontace jen 10 %
+  ltvRequiredUnder36: 0.10, // mladší 36 let: LTV až 90 % → akontace jen 10 %
   retirementAge: 65, // orientační věk odchodu do důchodu (horizont spoření na stáří)
   mortgageMaxAge: 70, // banka obvykle vyžaduje doplacení hypotéky do ~70 let
-  dtiLimit: 8.5, // orientační bankovní vodítko (ČNB závazně nevyžaduje)
-  dstiLimit: 0.45, // orientační bankovní vodítko (ČNB závazně nevyžaduje)
+  dtiCaution: 8, // nad hodnotou ČNB doporučuje bankám zvýšenou obezřetnost
+  dstiCaution: 0.40, // nad hodnotou ČNB doporučuje bankám zvýšenou obezřetnost
   // Průměrná roční inflace ČR (dlouhodobý průměr ČNB)
   averageCzInflation: 0.03,
 } as const;

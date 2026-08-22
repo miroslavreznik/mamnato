@@ -14,6 +14,7 @@ import Card from '../ui/Card';
 import Callout from '../ui/Callout';
 import { fieldClass } from '../ui/fieldClass';
 import { czkPerMonth, formatYears } from '../../engine/format';
+import RetirementProductComparison from './RetirementProductComparison';
 
 const INFLATION = DEFAULTS.averageCzInflation;
 
@@ -379,6 +380,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
         Výnosy jsou historické průměry. Skutečné výsledky se mohou lišit.
         {showInflation && ` Inflace: ${(INFLATION * 100).toFixed(0)} % ročně (dlouhodobý průměr ČNB).`}
       </p>
+      <RetirementProductComparison />
     </Card>
   );
 }

@@ -155,7 +155,7 @@ export function oldestApplicantAge(state: WizardState): number | undefined {
   return ages.length ? Math.max(...ages) : undefined;
 }
 
-// Splňuje žadatel podmínku „do 36 let" pro vyšší LTV? Rozhoduje nejmladší
+// Splňuje žadatel podmínku „mladší 36 let" pro vyšší LTV? Rozhoduje nejmladší
 // žadatel; když věk není zadán, použije se starší přepínač (zpětná kompatibilita).
 export function isUnder36(state: WizardState): boolean {
   const youngest = youngestApplicantAge(state);
@@ -163,7 +163,7 @@ export function isUnder36(state: WizardState): boolean {
   return !!state.applicantUnder36;
 }
 
-// Povinná akontace jako podíl ceny: 20 %, u žadatelů do 36 let jen 10 %
+// Povinná akontace jako podíl ceny: 20 %, u žadatelů mladších 36 let jen 10 %
 // (ČNB umožňuje LTV až 90 %).
 export function downPaymentFraction(state: WizardState): number {
   return isUnder36(state) ? DEFAULTS.ltvRequiredUnder36 : DEFAULTS.ltvRequired;

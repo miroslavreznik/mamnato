@@ -38,6 +38,9 @@ function App() {
   }, []);
 
   const handleStart = () => {
+    if (loadState() && !window.confirm('Opravdu chcete začít znovu? Všechna zadaná data budou smazána.')) {
+      return;
+    }
     discardSharedState();
     setShared(null);
     setSharedConflict(false);

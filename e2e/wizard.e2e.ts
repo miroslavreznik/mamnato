@@ -70,6 +70,24 @@ test('projde průvodcem a zobrazí výsledky', async ({ page }) => {
   await expectResults(page)
 })
 
+test('začít znovu se uloženými daty vyžaduje potvrzení', async ({ page }) => {
+  await start(page)
+  await expect(page.getByText('Kdo plánuje?')).toBeVisible()
+  await page.getByRole('button', { name: 'MámNaTo? Domů' }).click()
+
+  const startAgain = page.getByRole('button', { name: /Začít znovu/ })
+  await expect(startAgain).toBeVisible()
+  const dialogPromise = page.waitForEvent('dialog')
+  const clickPromise = startAgain.click()
+  const dialog = await dialogPromise
+  expect(dialog.type()).toBe('confirm')
+  expect(dialog.message()).toMatch(/data budou smazána/)
+  await dialog.dismiss()
+  await clickPromise
+
+  await expect(startAgain).toBeVisible()
+})
+
 test('věk do 36 let sníží povinnou akontaci na 10 %', async ({ page }) => {
   await start(page)
   await next(page) // → Příjmy
@@ -895,7 +913,9 @@ test('„A co teď" dá jeden krok s částkou a termínem', async ({ page }) =>
   await next(page) // → Cíle
   await pickGoal(page, 'property')
   await next(page) // → Vlastní bydlení
-  await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('6000000')
+  // Cena drží DSTI pod pásmem zvýšené obezřetnosti, takže dalším krokem je
+  // skutečně chybějící akontace, ne ověření dostupné výše úvěru.
+  await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('5500000')
   await finish(page)
   await expectResults(page)
 
@@ -910,6 +930,51 @@ test('„A co teď" dá jeden krok s částkou a termínem', async ({ page }) =>
   // Tlačítko vede na místo, kde se to nastavuje.
   await card.getByRole('button', { name: /Nastavit odkládání/ }).click()
   await expect(page.locator('#tab-bydleni')).toHaveAttribute('aria-selected', 'true')
+})
+
+test('přehled bydlení oddělí banku, rozpočet a rezervu', async ({ page }) => {
+  await start(page)
+  await next(page)
+  await page.getByRole('textbox', { name: 'Můj věk', exact: true }).fill('31')
+  await next(page)
+  await next(page)
+  await next(page)
+  await pickGoal(page, 'property')
+  await next(page)
+  await finish(page)
+
+  const overview = page.locator('#souhrn')
+  await expect(overview.getByText('Bankovní dostupnost:', { exact: true })).toBeVisible()
+  await expect(overview.getByText('Rozpočet po koupi:', { exact: true })).toBeVisible()
+  await expect(overview.getByText('Rezerva po koupi:', { exact: true })).toBeVisible()
+})
+
+test('mobil schová vedlejší akce do menu a plánovače cílů do akordeonů', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await start(page)
+  await next(page)
+  await next(page)
+  await next(page)
+  await next(page)
+  await page.getByTestId('goal-reserve').click()
+  await pickGoal(page, 'retirement')
+  await next(page)
+  await expectResults(page)
+
+  await expect(page.getByRole('button', { name: 'Upravit', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Další akce' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Začít znovu' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Další akce' }).click()
+  await expect(page.getByRole('menuitem', { name: 'Začít znovu' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('menuitem', { name: 'Začít znovu' })).toHaveCount(0)
+
+  await page.locator('#tab-cile').click()
+  const retirement = page.locator('button[aria-controls="goal-panel-retirement"]')
+  await expect(retirement).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.locator('#goal-panel-retirement')).toBeHidden()
+  await retirement.click()
+  await expect(page.locator('#goal-panel-retirement')).toBeVisible()
 })
 
 test('bez rezervy je na řadě rezerva, ne cíle', async ({ page }) => {

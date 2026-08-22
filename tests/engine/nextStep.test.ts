@@ -49,8 +49,8 @@ describe('a co teď', () => {
     expect(s.done).toBeTruthy();
   });
 
-  it('splátka nad limitem banky má přednost před spořením na akontaci', () => {
-    // Spořit na akontaci k ceně, na kterou banka nepůjčí, je práce nazmar.
+  it('splátka v pásmu zvýšené obezřetnosti má přednost před spořením na akontaci', () => {
+    // Nejdřív je potřeba ověřit dosažitelnou výši úvěru u konkrétní banky.
     const state = makeState({
       goals: ['property'],
       income: { person1NetMonthly: 30000, person2NetMonthly: 26000 },
@@ -59,7 +59,7 @@ describe('a co teď', () => {
     });
     const s = nextStep(state, calculateDefaultAllocations(state));
     expect(s.key).toBe('payment_too_high');
-    expect(s.action).toMatch(/levnější/);
+    expect(s.action).toMatch(/cenu přibližně/);
     expect(s.section).toBe('bydleni');
   });
 

@@ -79,7 +79,7 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
   if (scenario.id === 'cannot_afford_cashflow') {
     headline = 'Rozpočet nevychází už dnes, takže na splátku hypotéky by nebylo z čeho.';
   } else if (scenario.id === 'cannot_afford_dsti') {
-    headline = 'Splátka je nad tím, co banky obvykle schválí. Pomůže levnější nemovitost, delší splatnost nebo vyšší akontace.';
+    headline = 'Splátka je v pásmu zvýšené bankovní obezřetnosti. Pomoci může nižší cena, delší splatnost nebo vyšší akontace; konečné posouzení udělá banka.';
   } else if (gap > 0 && !isFinite(months)) {
     headline = 'Akontace ještě chybí a zatím na ni nic neodkládáte. Nastavte si měsíční částku v sekci Bydlení.';
   } else if (gap > 0) {

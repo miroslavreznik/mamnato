@@ -5,11 +5,11 @@ import { evaluateOverall } from '../../engine/summary';
 import type { GoalStatus } from '../../engine/summary';
 import { journey } from '../../engine/journey';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
-import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dsti, requiredDownPayment, downPaymentFraction, totalProjectCost } from '../../engine/mortgage';
+import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dti, dsti, requiredDownPayment, downPaymentFraction, totalProjectCost } from '../../engine/mortgage';
 import { monthsUntilDownPaymentReady } from '../../engine/wealthTimeline';
 import { DEFAULTS } from '../../engine/defaults';
 import { plannedChildren } from '../../engine/childCost';
-import { decimal, formatMonths, formatNumber as fmt } from '../../engine/format';
+import { czkMonthly, decimal, formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
@@ -56,11 +56,6 @@ const goalBadge: Record<GoalStatus, { label: string; status: Status }> = {
   warning: { label: 'Nevychází', status: 'danger' },
 };
 
-// Odpověď, která platí jen za předpokladu, jenž zatím neplatí. Barvu stavu si
-// nezaslouží: zelené „v pořádku" hned pod červeným „nevychází" vypadá, jako
-// by si appka odporovala, i když každá odpověď mluví o něčem jiném.
-const conditionalBadge = { label: 'Podmíněně', status: 'neutral' as const };
-
 export default function ResultsOverview({ state, allocations, onOpenSection, onChangeChildTiming }: Props) {
   const summary = evaluateOverall(state, allocations);
   const disposable = monthlyDisposable(state);
@@ -92,9 +87,9 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
             value: fmt(payment),
             unit: 'Kč/měs.',
             sub: isFinite(dstiPct) ? `${Math.round(dstiPct * 100)} % čistého příjmu` : undefined,
-            tone: !isFinite(dstiPct) || dstiPct > DEFAULTS.dstiLimit ? 'danger' : dstiPct > DEFAULTS.dstiLimit * 0.85 ? 'caution' : 'plain',
+            tone: !isFinite(dstiPct) || dstiPct > DEFAULTS.dstiCaution ? 'danger' : dstiPct > DEFAULTS.dstiCaution * 0.85 ? 'caution' : 'plain',
             // Proužek vůči obvyklému bankovnímu stropu DSTI.
-            meter: isFinite(dstiPct) ? dstiPct / DEFAULTS.dstiLimit : 1,
+            meter: isFinite(dstiPct) ? dstiPct / DEFAULTS.dstiCaution : 1,
           };
         })(),
         (() => {
@@ -109,7 +104,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
           const required = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
           return {
             label: 'Chybějící akontace',
-            tooltip: 'Rozdíl mezi akontací, kterou banka požaduje (20 % ceny, u žadatelů do 36 let 10 %), a tím, co pokryjete z úspor. Bez ní vám banka hypotéku neposkytne.',
+            tooltip: 'Rozdíl mezi akontací, kterou banka požaduje (20 % ceny, u žadatelů mladších 36 let 10 %), a tím, co pokryjete z úspor. Bez ní vám banka hypotéku neposkytne.',
             value: gap > 0 ? fmt(gap) : '0',
             unit: 'Kč',
             sub: gap > 0
@@ -177,6 +172,45 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
   // Termín dítěte si bere časová osa ze stavu sama, proto se nepředává.
   const journeyData = journey(state, { purchaseNotBeforeMonth: purchaseAt, allocations });
 
+  // Bankovní obezřetnost, vlastní rozpočet a nouzová rezerva jsou tři
+  // různé odpovědi. Když se slily do jedné nálepky, uživatel nevěděl,
+  // jestli ho brzdí banka, život po koupi, nebo chybějící polštář.
+  const propertyDecisionRows = hasProperty && summary.budgetAfter
+    ? (() => {
+        const gap = downPaymentGap(state);
+        const dtiValue = dti(state);
+        const dstiValue = dsti(state);
+        const bankCaution = dtiValue > DEFAULTS.dtiCaution || dstiValue > DEFAULTS.dstiCaution;
+        const bankStatus: GoalStatus = bankCaution || gap > 0 ? 'caution' : 'good';
+        const bankAnswer = bankCaution
+          ? `DTI ${decimal(dtiValue)}× nebo DSTI ${decimal(dstiValue * 100)} % je v pásmu zvýšené obezřetnosti. Nejde o automatické zamítnutí.`
+          : gap > 0
+            ? `Splátka je pod orientačními hranicemi obezřetnosti, ale na akontaci ještě chybí ${fmt(gap)} Kč.`
+            : 'Splátka i akontace jsou pod orientačními hranicemi zvýšené obezřetnosti.';
+
+        const after = summary.budgetAfter;
+        const budgetStatus: GoalStatus = !after.fits || after.disposable <= 0
+          ? 'warning'
+          : after.surplus < 3000 ? 'caution' : 'good';
+        const budgetAnswer = after.surplus < 0
+          ? `Po koupi by na zvolené cíle chybělo ${czkMonthly(Math.abs(after.surplus))}.`
+          : after.surplus < 3000
+            ? `Po koupi a odkládání na cíle by zbývalo jen ${czkMonthly(after.surplus)}.`
+            : `Po koupi a odkládání na cíle by zbývalo ${czkMonthly(after.surplus)}.`;
+
+        const reserveStatus: GoalStatus = runway < 3 ? 'warning' : runway < 6 ? 'caution' : 'good';
+        const reserveAnswer = runway === Infinity
+          ? 'Rezerva pokryje nezbytné výdaje bez omezení.'
+          : `Po koupi by rezerva pokryla ${formatMonths(runway)} nezbytných výdajů.`;
+
+        return [
+          { label: 'Bankovní dostupnost', status: bankStatus, answer: bankAnswer },
+          { label: 'Rozpočet po koupi', status: budgetStatus, answer: budgetAnswer },
+          { label: 'Rezerva po koupi', status: reserveStatus, answer: reserveAnswer },
+        ];
+      })()
+    : [];
+
   // Doleva jen k měsíci, kdy je na akontaci naspořeno: dřív koupit nejde.
   // Doprava deset let, ale ne až k důchodu; za obzorem plánu už odklad
   // není rozhodnutí, ale jiný plán.
@@ -195,8 +229,12 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
   // let je jediná část plánu, se kterou se dá něco udělat, a jsou v ní
   // všechny události, kterými jde hýbat. Co zůstane za výřezem, řekne věta
   // pod stuhou (`beyondView`), takže se nic neztratí.
-  const [viewMonths, setViewMonths] = useState(() =>
-    Math.min(DEFAULT_VIEW_MONTHS, journeyData.horizonMonths));
+  const [viewMonths, setViewMonths] = useState(() => {
+    const defaultView = Math.min(DEFAULT_VIEW_MONTHS, journeyData.horizonMonths);
+    return journeyData.tightest && journeyData.tightest.month > defaultView
+      ? journeyData.horizonMonths
+      : defaultView;
+  });
   const view = Math.min(viewMonths, journeyData.horizonMonths);
 
   return (
@@ -223,16 +261,16 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
         {/* U vlastního bydlení jsou otázky ve skutečnosti dvě: jestli na něj
             dosáhnete a jestli po něm zbyde na zbytek. Jedna nálepka je slučuje
             a uživatel pak nepozná, která z nich ho brzdí. */}
-        {summary.verdict.questions.length > 0 && (
+        {propertyDecisionRows.length > 0 && (
           <div className="mt-4 space-y-2 max-w-[70ch]">
-            {summary.verdict.questions.map((q) => {
-              const badge = q.conditional ? conditionalBadge : goalBadge[q.status];
+            {propertyDecisionRows.map((row) => {
+              const badge = goalBadge[row.status];
               return (
-                <div key={q.question} className="flex items-start gap-2.5">
+                <div key={row.label} className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2.5">
                   <StatusBadge status={badge.status} label={badge.label} className="shrink-0 mt-0.5" />
-                  <p className={`text-sm min-w-0 ${q.conditional ? 'text-ink-muted' : 'text-ink-label'}`}>
-                    <span className="font-semibold">{q.question}</span>{' '}
-                    <span className="text-ink-body">{q.answer}</span>
+                  <p className="text-sm min-w-0 text-ink-label">
+                    <span className="font-semibold">{row.label}:</span>{' '}
+                    <span className="text-ink-body">{row.answer}</span>
                   </p>
                 </div>
               );
@@ -248,6 +286,12 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
 
       {/* Časová osa: život až do důchodu jako jedna stuha. Hrdina obrazovky. */}
       <div className="rounded-2xl bg-sunken p-5 sm:p-6">
+        <div className="mb-3">
+          <h3 className="type-section text-ink">Likvidní úspory a měsíční prostor</h3>
+          <p className="mt-1 text-sm text-ink-muted">
+            Peníze, které máte k dispozici v čase. Nejde o čisté jmění.
+          </p>
+        </div>
         {/* Animace se hlídat nemusí. Panely záložek zůstávají připojené
             (`hidden`, ne odpojení), takže se stuha vykreslí jednou při vstupu
             na výsledky a přepínání záložek ji nerozjede znovu. Přepočet při
@@ -270,11 +314,22 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
             Stálo to pod grafem „Vývoj úspor v čase" na záložce Rozpočet;
             ten graf kreslil tutéž řadu podruhé, jen v jiné barvě, a při jeho
             zrušení by se ta poznámka ztratila. Patří k řadě, ne ke kartě. */}
+        <div className="mt-4 rounded-xl border border-line bg-card/70 p-3 text-sm text-ink-body">
+          <strong className="text-ink">Hodnota nemovitosti v této ose není.</strong>{' '}
+          Při koupi proto úspory klesnou o akontaci, ale peníze se neztratí: mění se
+          na vlastní kapitál v nemovitosti.
+          {onOpenSection && (
+            <>
+              {' '}
+              <button type="button" onClick={() => onOpenSection('bydleni')} className="font-semibold text-brand hover:underline">
+                Zobrazit čisté jmění
+              </button>
+            </>
+          )}
+        </div>
         <p className="mt-3 text-xs text-ink-faint">
-          Zjednodušený model: konstantní příjmy a výdaje, bez výnosů z investic a inflace,
-          tedy všechno v dnešních cenách. Spoření na cíle z křivky nemizí, peníze se jen
-          přesouvají. Hodnota nemovitosti v ní naopak není: akontace z úspor odejde a zpátky
-          se nepřičte. Kolik po koupi vlastníte, ukazuje graf koupě vs. nájem v sekci Bydlení.
+          Model počítá s konstantními příjmy a výdaji, bez výnosů z investic a inflace,
+          tedy v dnešních cenách. Spoření na cíle z křivky nemizí, peníze se jen přesouvají.
         </p>
         {/* Bez tohohle vypadá cesta u někoho, kdo na akontaci zatím nedosáhne,
             jako klidná zelená čára, zatímco verdikt nad ní říká „zatím na to

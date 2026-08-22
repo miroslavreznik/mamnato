@@ -26,7 +26,7 @@ describe('evaluateScenario', () => {
     expect(evaluateScenario(state).id).toBe('cannot_afford_cashflow');
   });
 
-  it('returns cannot_afford_dsti when DSTI > 45%', () => {
+  it('returns cannot_afford_dsti above the 40% caution threshold', () => {
     // Need high mortgage relative to income → high property price, low savings
     const state = makeState({
       income: { person1NetMonthly: 40000 },
@@ -46,19 +46,20 @@ describe('evaluateScenario', () => {
       property: { targetPrice: 3000000, mortgageRate: 0.052, loanTermYears: 30 },
     });
     // expenses = 52000, disposable = 8000, gap = 600k-50k = 550k, months = 69 > 60
-    // loan = 2_950_000, DSTI ≈ 0.27 < 0.45
+    // loan = 2_950_000, DSTI ≈ 0.27 < 0.40
     expect(evaluateScenario(state).id).toBe('no_savings');
+    expect(evaluateScenario(state).tips.join(' ')).toMatch(/DIP je určený na stáří/);
   });
 
-  it('returns tight_but_possible when DSTI > 35% (but <= 45%)', () => {
+  it('returns tight_but_possible when DSTI is above 35% but not above 40%', () => {
     const state = makeState({
       mode: 'couple',
       income: { person1NetMonthly: 35000, person2NetMonthly: 20000 },
       expenses: { rent: 10000, existingLoans: 0, insurance: 1500, food: 6000, transport: 3000, children: 0, utilities: 3000, other: 2000 },
       savings: { totalSavings: 1200000 },
-      property: { targetPrice: 5500000, mortgageRate: 0.052, loanTermYears: 30 },
+      property: { targetPrice: 4700000, mortgageRate: 0.052, loanTermYears: 30 },
     });
-    // income = 55000, loan = 4_300_000, payment ≈ 23_530, DSTI ≈ 0.428
+    // income = 55000, loan = 3_760_000, payment ≈ 20_600, DSTI ≈ 0.375
     expect(evaluateScenario(state).id).toBe('tight_but_possible');
   });
 

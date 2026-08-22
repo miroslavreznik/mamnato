@@ -58,7 +58,7 @@ export default function Step2Income() {
         label={isCouple ? 'Věk: osoba 1' : 'Můj věk'}
         value={state.person1Age ?? 0}
         onChange={(v) => dispatch({ type: 'SET_PERSON_AGE', person: 1, value: v })}
-        tooltip="Věk ovlivňuje výši akontace (žadatelé do 36 let mají díky vyššímu LTV akontaci jen 10 %), horizont spoření na důchod (do 65 let) a splatnost hypotéky. Nepovinné."
+        tooltip="Věk ovlivňuje výši akontace (žadatelé mladší 36 let mají díky vyššímu LTV akontaci jen 10 %), horizont spoření na důchod (do 65 let) a splatnost hypotéky. Nepovinné."
       />
 
       {isCouple && (

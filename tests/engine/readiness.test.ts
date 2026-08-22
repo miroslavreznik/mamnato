@@ -55,11 +55,12 @@ describe('propertyReadiness', () => {
     expect(r.headline).not.toMatch(/naspoříte za/);
   });
 
-  it('splátku nad limit bank pojmenuje jako důvod, ne jako zkratku', () => {
+  it('splátku v pásmu obezřetnosti pojmenuje bez tvrzení o automatickém zamítnutí', () => {
     const state = makeState({ income: { person1NetMonthly: 30000 }, property: { targetPrice: 8000000, mortgageRate: 0.052, loanTermYears: 30 } });
     const r = propertyReadiness(state, allocs({ downPayment: 5000 }));
     expect(r.status).toBe('warning');
-    expect(r.headline).toMatch(/nad tím, co banky obvykle schválí/);
+    expect(r.headline).toMatch(/pásmu zvýšené bankovní obezřetnosti/);
+    expect(r.headline).toMatch(/konečné posouzení udělá banka/);
   });
 
   it('je to celá věta, ne odrážka s tečkami', () => {

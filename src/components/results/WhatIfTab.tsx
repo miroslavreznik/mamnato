@@ -259,7 +259,7 @@ export default function WhatIfTab() {
 
         {touched && currentJourney.tightest && (
           <Callout tone={comparison.improved ? 'good' : 'neutral'}>
-            <strong>Nejtěsnější místo teď:</strong> {currentJourney.tightest.title}.{' '}
+            <strong>Nejrizikovější období teď:</strong> {currentJourney.tightest.title}.{' '}
             {currentJourney.tightest.explanation}
             {baselineJourney.tightest && baselineJourney.tightest.month !== currentJourney.tightest.month && (
               <> Původně to bylo za {formatMonths(baselineJourney.tightest.month)}.</>

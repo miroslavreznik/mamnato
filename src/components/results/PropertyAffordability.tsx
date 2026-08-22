@@ -82,7 +82,7 @@ export default function PropertyAffordability({
           value={czk(dp)}
           tooltip={
             dpPct === 10
-              ? 'Žadateli do 36 let banka půjčí až 90 % ceny (LTV), takže z vlastního stačí 10 %.'
+              ? 'Žadateli mladšímu 36 let banka půjčí až 90 % ceny (LTV), takže z vlastního stačí 10 %.'
               : 'Kolik banka požaduje zaplatit z vlastních peněz. Obvykle 20 % ceny nemovitosti (LTV 80 %), zbytek pokryje hypotéka.'
           }
         />

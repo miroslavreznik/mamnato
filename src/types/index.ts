@@ -22,7 +22,7 @@ export interface WizardState {
     parentalAllowance?: number;
   };
 
-  // Věk žadatelů, ovlivňuje limit LTV (do 36 let), horizont spoření na důchod
+  // Věk žadatelů, ovlivňuje limit LTV (mladší 36 let), horizont spoření na důchod
   // a splatnost hypotéky. Nepovinné (0 / undefined = nezadáno).
   person1Age?: number;
   person2Age?: number;

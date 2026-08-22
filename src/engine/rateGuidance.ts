@@ -19,7 +19,7 @@ export interface LtvBand {
   label: string;
   // Orientační rozdíl sazby oproti pásmu do 80 % LTV (v desetinném vyjádření).
   ratePremium: number;
-  // Půjčí banka v tomto pásmu vůbec? (ČNB: LTV max 80 %, do 36 let 90 %)
+  // Půjčí banka v tomto pásmu vůbec? (ČNB: LTV max. 80 %, mladší 36 let 90 %)
   available: boolean;
 }
 

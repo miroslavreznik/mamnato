@@ -68,7 +68,7 @@ const groups: GlossaryGroup[] = [
       {
         term: 'Akontace a LTV',
         explanation:
-          'Akontace je částka, kterou při koupi zaplatíte z vlastních peněz. LTV je zkratka pro to, jakou část ceny pokryje hypotéka. Banky běžně půjčí 80 % ceny; nejmladšímu žadateli do 36 let až 90 %. U bytu za 5 milionů to znamená mít z vlastního 1 milion, u mladších žadatelů 500 tisíc.',
+          'Akontace je částka, kterou při koupi zaplatíte z vlastních peněz. LTV je zkratka pro to, jakou část ceny pokryje hypotéka. Banky běžně půjčí 80 % ceny; pokud je nejmladší žadatel mladší 36 let, až 90 %. U bytu za 5 milionů to znamená mít z vlastního 1 milion, u mladších žadatelů 500 tisíc.',
       },
       {
         term: 'Jistina, úrok a splátka',
@@ -88,7 +88,7 @@ const groups: GlossaryGroup[] = [
       {
         term: 'DTI a DSTI',
         explanation:
-          'Dvě čísla, kterými banka měří, jestli dluh unesete. DTI porovnává celkový dluh s ročním příjmem; obvyklé vodítko je 8,5násobek. DSTI porovnává všechny měsíční splátky s čistým příjmem, obvykle nejvýš 45 %, což při čistém příjmu 40 000 Kč znamená splátky do zhruba 18 000 Kč měsíčně. Česká národní banka jako závazné limity zrušila (DSTI v červenci 2023, DTI v lednu 2024), banky je ale stejně posuzují.',
+          'Dvě čísla, kterými banka měří, jestli dluh unesete. DTI porovnává celkový dluh s ročním příjmem, DSTI všechny měsíční splátky s čistým příjmem. Česká národní banka jejich závazné horní limity deaktivovala (DSTI v červenci 2023, DTI v lednu 2024). Nad DTI 8 a DSTI 40 % ale bankám doporučuje zvýšenou obezřetnost; nejde o automatické zamítnutí.',
       },
       {
         term: 'Náklady na vlastnictví',
