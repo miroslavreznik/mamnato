@@ -99,16 +99,37 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
     allocs.retirement = Math.max(0, Math.min(Math.round(remaining), Math.round(disposable * 0.3)));
   }
 
-  // Vlastní cíle: prosté rozdělení toho, co ještě zbylo.
+  // Vlastní cíle: nejdřív přesně tolik, kolik potřebují ke svému termínu.
+  //
+  // Dřív dostaly automaticky úplně všechno, co zbylo. Cíl 400 000 Kč za dva
+  // roky tak mohl dostat 52 000 Kč měsíčně, přestože potřeboval 16 667 Kč,
+  // a karta pak bez vysvětlení hlásila dosažení za osm měsíců. Přebytek není
+  // povinnost utratit: když na termíny stačí méně, zůstane opravdu volný.
   if (state.goals.includes('other') && state.customGoals && state.customGoals.length > 0) {
     const used = allocs.downPayment + allocs.reserve + allocs.retirement + allocs.child;
     const remaining = Math.max(0, disposable - used);
-    // Zaokrouhlený podíl by po vynásobení počtem cílů přestřelil: ze 44 000
-    // na tři cíle vyjde 14 667 na každý, dohromady 44 001, a v přehledu pak
-    // stálo „volných zbývá −1 Kč". Zbytek po dělení dostane první cíl.
-    const n = state.customGoals.length;
-    const perGoal = Math.floor(remaining / n);
-    allocs.custom = state.customGoals.map((_, i) => (i === 0 ? remaining - perGoal * (n - 1) : perGoal));
+    const needed = state.customGoals.map((goal) => (
+      goal.targetMonths > 0 ? Math.ceil(Math.max(0, goal.targetAmount) / goal.targetMonths) : 0
+    ));
+    const totalNeeded = needed.reduce((sum, value) => sum + value, 0);
+
+    if (totalNeeded <= remaining) {
+      allocs.custom = needed;
+    } else if (totalNeeded > 0) {
+      // Když na všechny termíny nestačí, rozdělí se zbytek poměrně podle
+      // potřeb. Poslední cíl dostane zaokrouhlovací zbytek, takže součet ani
+      // o korunu nepřesáhne společný balík.
+      let assigned = 0;
+      allocs.custom = needed.map((value, index) => {
+        const allocation = index === needed.length - 1
+          ? remaining - assigned
+          : Math.floor(remaining * value / totalNeeded);
+        assigned += allocation;
+        return allocation;
+      });
+    } else {
+      allocs.custom = needed.map(() => 0);
+    }
   }
 
   return allocs;

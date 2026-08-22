@@ -49,3 +49,21 @@ export function budgetAfterPurchase(state: WizardState, allocations: GoalAllocat
   const disposable = totalMonthlyIncome(state) - expensesAfterPurchase(state);
   return view(disposable, nonHousingGoals(allocations));
 }
+
+/**
+ * Omezí ruční změnu jednoho cíle na společný měsíční balík.
+ *
+ * Snížit částku jde vždy. Zvýšit ji jde jen o skutečně volné peníze po všech
+ * ostatních cílech. Jedno pole tak nemůže přidělit stejnou korunu podruhé a
+ * potichu poslat součet cílů nad to, co po výdajích zbývá.
+ */
+export function clampGoalAllocation(
+  current: number,
+  requested: number,
+  budget: BudgetView
+): number {
+  const next = Math.max(0, Math.round(requested));
+  const now = Math.max(0, Math.round(current));
+  if (next <= now) return next;
+  return Math.min(next, now + Math.max(0, Math.floor(budget.surplus)));
+}

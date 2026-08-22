@@ -43,6 +43,43 @@ async function toGoals(page: Page) {
 const slider = (page: Page, i = 0) =>
   page.getByRole('slider', { name: 'Kolik na tento cíl měsíčně dávám' }).nth(i)
 
+test('cílová renta se zadává v průvodci a přenese do plánu důchodu', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
+  await page.getByTestId('goal-retirement').click()
+
+  const wizardRent = num(page, 'Požadovaná měsíční renta z vlastních úspor')
+  await expect(wizardRent).toBeVisible()
+  await wizardRent.fill('42000')
+  await page.getByTestId('wizard-next').click()
+  await expect(page.getByTestId('results')).toBeVisible()
+
+  await page.locator('#tab-cile').click()
+  expect(digits(await num(page, 'Požadovaná měsíční renta z vlastních úspor').inputValue())).toBe(42000)
+  await expect(page.getByText(/Orientační závěr pro váš plán/)).toBeVisible()
+  await expect(page.getByText(/Kde spořit: DPS, DIP, nebo vlastní ETF/)).toBeVisible()
+})
+
+test('důchod ani vlastní cíl nemohou přidělit stejné peníze podruhé', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
+  await page.getByTestId('goal-retirement').click()
+  await page.getByTestId('goal-other').click()
+  await page.getByTestId('wizard-next').click()
+  await page.getByTestId('wizard-next').click()
+  await expect(page.getByTestId('results')).toBeVisible()
+
+  await page.locator('#tab-cile').click()
+  await expect(page.getByText(/Jeden společný balík pro všechny cíle/)).toBeVisible()
+  const contribution = num(page, 'Měsíční částka k investování')
+  const before = digits(await contribution.inputValue())
+  await contribution.fill(String(before + 100000))
+  await contribution.blur()
+  expect(digits(await contribution.inputValue())).toBe(before)
+})
+
 test('částka u cíle je ta, kterou uživatel nastavil', async ({ page }) => {
   await toGoals(page)
   const s = slider(page)

@@ -95,6 +95,9 @@ export function normalizeState(raw: unknown): WizardState | null {
           .map(([k, v]) => [k, v as number])
       )
       : undefined,
+    retirementMonthlyRent: raw.retirementMonthlyRent != null
+      ? Math.min(500000, Math.max(0, Math.round(num(raw.retirementMonthlyRent, DEFAULTS.retirementMonthlyRent))))
+      : DEFAULTS.retirementMonthlyRent,
     childCosts: isRecord(raw.childCosts)
       ? {
         children: typeof raw.childCosts.children === 'number'

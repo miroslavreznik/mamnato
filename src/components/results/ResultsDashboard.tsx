@@ -40,6 +40,8 @@ import PlausibilityNotes, { PlausibilityHint } from '../ui/PlausibilityNotes';
 import AssumptionsCard from './AssumptionsCard';
 import GoalPlannerPanel from './GoalPlannerPanel';
 import { czkPerMonth } from '../../engine/format';
+import { budgetNow, clampGoalAllocation } from '../../engine/budget';
+import Callout from '../ui/Callout';
 
 interface ResultsDashboardProps {
   state: WizardState;
@@ -150,6 +152,11 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     }),
   }), [allocations, excludedGoals, state.customGoals]);
 
+  const activeGoalBudget = useMemo(
+    () => budgetNow(activeState, activeAllocations),
+    [activeState, activeAllocations]
+  );
+
   // Odložení cíle v Co kdyby. Platí pro celý přehled, takže se překreslí
   // i verdikt: to je celý smysl, jinak by šlo jen o zešedlou kartu.
   const toggleGoal = useCallback((key: string) => {
@@ -163,9 +170,25 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
   const resetGoals = useCallback(() => setExcludedGoals(new Set()), []);
 
   const handleChangeAllocation = (goal: string, id: string | null, value: number) => {
+    const customIndex = goal === 'custom' && id
+      ? (state.customGoals ?? []).findIndex((g) => g.id === id)
+      : -1;
+    const current = goal === 'custom'
+      ? (customIndex >= 0 ? allocations.custom[customIndex] ?? 0 : 0)
+      : allocations[goal as keyof Omit<GoalAllocations, 'custom'>] ?? 0;
+    const safeValue = clampGoalAllocation(current, value, budgetNow(state, allocations));
     setAllocOverrides((prev) => (goal === 'custom' && id
-      ? { ...prev, custom: { ...prev.custom, [id]: value } }
-      : { ...prev, [goal]: value }));
+      ? { ...prev, custom: { ...prev.custom, [id]: safeValue } }
+      : { ...prev, [goal]: safeValue }));
+  };
+
+  const handleChangeRetirementRent = (value: number) => {
+    const next = {
+      ...state,
+      retirementMonthlyRent: Math.min(500000, Math.max(0, Math.round(value))),
+    };
+    setState(next);
+    saveState(next);
   };
 
   // Úprava vlastních cílů v detailu. Alokace se dorovnávat nemusí: drží se
@@ -486,6 +509,18 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         {/* Cíle */}
         {hasGoalPlanners && (
           <ResultsSection id="cile" title={goalsTabLabel(state)} subtitle="Rezerva, důchod, dítě, rodičovská a vlastní cíle" active={isVisible('cile')}>
+            <Callout tone={activeGoalBudget.fits ? 'brand' : 'danger'} border className="mb-6">
+              <p className="font-semibold text-ink">
+                Jeden společný balík pro všechny cíle
+              </p>
+              <p className="mt-1 text-sm text-ink-body">
+                Po výdajích zbývá <strong>{czkPerMonth(activeGoalBudget.disposable)}</strong>. Na rezervu,
+                bydlení, důchod, dítě a vlastní cíle je rozděleno{' '}
+                <strong>{czkPerMonth(activeGoalBudget.allocated)}</strong> a volných zbývá{' '}
+                <strong>{czkPerMonth(Math.max(0, activeGoalBudget.surplus))}</strong>. Stejné peníze se
+                do dvou cílů nepočítají; zvýšit jednu částku lze jen z volného zbytku nebo po ubrání jinde.
+              </p>
+            </Callout>
             {/* Rezerva je první karta v Cílech schválně: je to podle
                 slovníčku appky první věc, která má být hotová. */}
             {hasReserve && (
@@ -513,6 +548,10 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
               <RetirementPlanner
                 state={activeState}
                 monthlyContribution={allocations.retirement}
+                monthlyRent={state.retirementMonthlyRent ?? 30000}
+                onChangeRent={handleChangeRetirementRent}
+                freeMonthly={Math.max(0, activeGoalBudget.surplus)}
+                contributionIsSuggested={allocOverrides.retirement === undefined}
                 onChangeRate={handleChangeRetirementRate}
                 onChangeContribution={(v) => handleChangeAllocation('retirement', null, v)}
               />

@@ -190,9 +190,23 @@ export function purchasingPowerAfter(years: number, inflation = DEFAULTS.average
   return 1 / Math.pow(1 + inflation, years);
 }
 
-export function yearsUntilRetirement(age: number | undefined): number {
+/**
+ * Orientační zákonný důchodový věk podle roku narození.
+ *
+ * Pro ročníky 1965 až 1988 se zvyšuje o jeden měsíc za každý rok narození,
+ * až na 67 let od ročníku 1989. U starších ročníků může zvlášť u žen záviset
+ * na počtu vychovaných dětí, který appka nezná; pole proto zůstává upravitelné.
+ */
+export function estimatedStatutoryRetirementAge(age: number, currentYear = new Date().getFullYear()): number {
+  const birthYear = currentYear - age;
+  if (birthYear >= 1989) return 67;
+  if (birthYear >= 1965) return 65 + (birthYear - 1965) / 12;
+  return 65;
+}
+
+export function yearsUntilRetirement(age: number | undefined, currentYear = new Date().getFullYear()): number {
   if (age === undefined || age <= 0) return 30;
-  return Math.max(1, Math.round(DEFAULTS.retirementAge - age));
+  return Math.max(1, Math.round(estimatedStatutoryRetirementAge(age, currentYear) - age));
 }
 
 /**

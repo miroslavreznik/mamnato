@@ -95,6 +95,28 @@ describe('monthsToSaveAtAllocation', () => {
 });
 
 describe('rozdělení mezi vlastní cíle', () => {
+  it('na cíl nedává zbytečně víc, než je potřeba k zadanému termínu', () => {
+    const state = makeState({
+      goals: ['other'],
+      customGoals: [{ id: 'auto', name: 'Auto', targetAmount: 400000, targetMonths: 24 }],
+    });
+    expect(calculateDefaultAllocations(state).custom[0]).toBe(16667);
+  });
+
+  it('při nedostatku rozdělí společný balík mezi cíle poměrně', () => {
+    const state = makeState({
+      income: { person1NetMonthly: 39000 },
+      goals: ['other'],
+      customGoals: [
+        { id: 'a', name: 'A', targetAmount: 120000, targetMonths: 12 },
+        { id: 'b', name: 'B', targetAmount: 240000, targetMonths: 12 },
+      ],
+    });
+    const a = calculateDefaultAllocations(state);
+    expect(a.custom[1]).toBeCloseTo(a.custom[0] * 2, -1);
+    expect(a.custom.reduce((sum, value) => sum + value, 0)).toBe(monthlyDisposable(state));
+  });
+
   it('součet nepřesáhne volné peníze ani při nedělitelném zbytku', () => {
     // Zaokrouhlený podíl přestřeloval: ze 44 000 na tři cíle vycházelo
     // 3 × 14 667 = 44 001 a v přehledu stálo „volných zbývá −1 Kč".

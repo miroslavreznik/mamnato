@@ -68,11 +68,13 @@ export const DEFAULTS = {
   } as Record<number, number>,
   ltvRequired: 0.20, // povinná akontace při LTV 80 %
   ltvRequiredUnder36: 0.10, // mladší 36 let: LTV až 90 % → akontace jen 10 %
-  retirementAge: 65, // orientační věk odchodu do důchodu (horizont spoření na stáří)
+  retirementAge: 67, // zákonný strop pro ročníky 1989 a mladší; starší dopočítává `savings.ts`
+  retirementMonthlyRent: 30000, // renta z vlastního portfolia v dnešních cenách, nad rámec státního důchodu
   mortgageMaxAge: 70, // banka obvykle vyžaduje doplacení hypotéky do ~70 let
   dtiCaution: 8, // nad hodnotou ČNB doporučuje bankám zvýšenou obezřetnost
   dstiCaution: 0.40, // nad hodnotou ČNB doporučuje bankám zvýšenou obezřetnost
-  // Průměrná roční inflace ČR (dlouhodobý průměr ČNB)
+  // Konzervativní modelový předpoklad. Není to inflační cíl ČNB (ten je 2 %)
+  // ani tvrzení o garantované budoucí inflaci.
   averageCzInflation: 0.03,
 } as const;
 

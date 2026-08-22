@@ -1,15 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import { savingsProjection, investmentComparison, retirementProjection, retirementStartingCapital, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement } from '../../src/engine/savings';
+import { savingsProjection, investmentComparison, retirementProjection, retirementStartingCapital, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement, estimatedStatutoryRetirementAge } from '../../src/engine/savings';
 import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
 import { effectiveDownPayment, necessaryExpensesAfterPurchase } from '../../src/engine/mortgage';
 import type { CustomGoal } from '../../src/types';
 import type { WizardState } from '../../src/types';
 
 describe('yearsUntilRetirement', () => {
-  it('is 65 minus age, at least 1', () => {
-    expect(yearsUntilRetirement(35)).toBe(30);
-    expect(yearsUntilRetirement(64)).toBe(1);
-    expect(yearsUntilRetirement(70)).toBe(1); // never below 1
+  it('uses the current Czech statutory schedule, at least 1 year', () => {
+    expect(estimatedStatutoryRetirementAge(31, 2026)).toBe(67); // birth year 1995
+    expect(estimatedStatutoryRetirementAge(58, 2026)).toBe(65.25); // birth year 1968: 65 + 3 months
+    expect(yearsUntilRetirement(35, 2026)).toBe(32);
+    expect(yearsUntilRetirement(64, 2026)).toBe(1);
+    expect(yearsUntilRetirement(70, 2026)).toBe(1); // never below 1
   });
   it('falls back to 30 when age is unknown', () => {
     expect(yearsUntilRetirement(undefined)).toBe(30);

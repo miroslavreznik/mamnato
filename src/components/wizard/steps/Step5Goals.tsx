@@ -2,6 +2,9 @@ import type { ReactNode } from 'react';
 import { useWizard } from '../../../store/wizardStore';
 import type { FinancialGoal } from '../../../types';
 import StepNavigation from '../StepNavigation';
+import NumField from '../../ui/NumField';
+import { fieldClass } from '../../ui/fieldClass';
+import { DEFAULTS } from '../../../engine/defaults';
 
 // Obrysové ikony, ne emoji. Emoji se kreslí podle systému, takže vypadají
 // na každém zařízení jinak a vedle obrysových ikon ve zbytku appky působí
@@ -125,6 +128,30 @@ export default function Step5Goals() {
           );
         })}
       </div>
+
+      {state.goals.includes('retirement') && (
+        <div className="mt-5 p-4 sm:p-5 rounded-xl border border-line bg-sunken">
+          <label className="block text-sm font-semibold text-ink-label mb-1">
+            Kolik chcete měsíčně z vlastních úspor v důchodu?
+          </label>
+          <p className="text-sm text-ink-muted mb-3">
+            Zadejte částku v dnešních cenách, kterou má vyplácet vaše portfolio
+            navíc ke státnímu důchodu. Podle ní spočítáme potřebnou cílovou částku.
+          </p>
+          <div className="max-w-sm">
+            <NumField
+              value={state.retirementMonthlyRent ?? DEFAULTS.retirementMonthlyRent}
+              onChange={(value) => dispatch({ type: 'SET_RETIREMENT_RENT', value })}
+              min={0}
+              max={500000}
+              step={1000}
+              suffix="Kč/měs."
+              ariaLabel="Požadovaná měsíční renta z vlastních úspor"
+              className={fieldClass('w-full px-3 py-2.5 pr-16 text-base')}
+            />
+          </div>
+        </div>
+      )}
 
       <StepNavigation
         showBack={true}

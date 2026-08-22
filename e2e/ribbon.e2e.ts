@@ -265,3 +265,16 @@ test('bez schodku se vzorek nekreslí', async ({ page }) => {
   await toResults(page, 'retirement')
   await expect(page.locator('#souhrn svg path[stroke-dasharray="2 6"]')).toHaveCount(0)
 })
+
+test('barvy stuhy mají vysvětlení a nemíchají se do nečitelných mezistavů', async ({ page }) => {
+  await toResults(page, 'property')
+  const figure = page.locator('#souhrn figure').filter({ has: page.locator('svg[aria-label^="Vývoj úspor"]') })
+  await expect(figure.getByText(/Výška = likvidní úspory, barva = stav rozpočtu/)).toBeVisible()
+  await expect(figure.getByText('s polštářem', { exact: true })).toBeVisible()
+  await expect(figure.getByText('napjatý', { exact: true })).toBeVisible()
+  await expect(figure.getByText('měsíční schodek', { exact: true })).toBeVisible()
+
+  const colors = await figure.locator('linearGradient[id^="ribbon-"] stop').evaluateAll((stops) =>
+    stops.map((s) => s.getAttribute('stop-color')))
+  expect(colors.every((color) => color?.startsWith('var(--ribbon-'))).toBe(true)
+})

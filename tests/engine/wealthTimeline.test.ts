@@ -134,17 +134,17 @@ describe('cíle, které v čase končí', () => {
 
 describe('horizont plánu', () => {
   it('sahá k odchodu do důchodu, ne na pevných deset let', () => {
-    // Třicátník má do pětašedesáti pětatřicet let. Do desetiletého okna
+    // Třicátník má podle aktuálních pravidel do 67 let zhruba 37 let. Do desetiletého okna
     // se nevešlo nic z toho, na co si spoří: doplacení hypotéky ani
     // odrostlé dítě, ani konec výdělku.
-    expect(planHorizonMonths(makeState({ person1Age: 30 }))).toBe(35 * 12);
+    expect(planHorizonMonths(makeState({ person1Age: 30 }))).toBe(37 * 12);
     // U páru rozhoduje **starší**. Osa počítá se mzdou po celý horizont
     // a rentu neumí, takže dál než k prvnímu odchodu do důchodu nedohlédne.
     // S mladším by u páru 50 a 40 let slibovala pětadvacet let dvou platů,
     // z toho patnáct po tom, co jeden z nich přestane chodit do práce.
-    expect(planHorizonMonths(makeState({ person1Age: 50, person2Age: 40 }))).toBe(15 * 12);
+    expect(planHorizonMonths(makeState({ person1Age: 50, person2Age: 40 }))).toBe(16 * 12);
     // Pořadí osob na tom nic nemění.
-    expect(planHorizonMonths(makeState({ person1Age: 40, person2Age: 50 }))).toBe(15 * 12);
+    expect(planHorizonMonths(makeState({ person1Age: 40, person2Age: 50 }))).toBe(16 * 12);
   });
 
   it('drží se mezi deseti a čtyřiceti lety', () => {

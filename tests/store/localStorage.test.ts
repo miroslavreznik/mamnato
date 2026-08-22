@@ -22,7 +22,18 @@ describe('normalizeState', () => {
     expect(Number.isFinite(s.expenses.food)).toBe(true);
     expect(Number.isFinite(s.expenses.other)).toBe(true);
     expect(Number.isFinite(s.property.targetPrice)).toBe(true);
+    expect(s.retirementMonthlyRent).toBe(30000);
     expect(s.version).toBe('1.0');
+  });
+
+  it('preserves and bounds the requested retirement rent', () => {
+    const base = {
+      income: { person1NetMonthly: 40000 },
+      expenses: { rent: 15000 },
+      goals: ['retirement'],
+    };
+    expect(normalizeState({ ...base, retirementMonthlyRent: 42000 })!.retirementMonthlyRent).toBe(42000);
+    expect(normalizeState({ ...base, retirementMonthlyRent: 9999999 })!.retirementMonthlyRent).toBe(500000);
   });
 
   it('coerces stringy numbers and drops invalid ones', () => {

@@ -236,8 +236,8 @@ describe('práh na schodku cílů', () => {
 describe('cesta sahá až k důchodu', () => {
   it('bez zadaného horizontu se řídí věkem, ne pevnými deseti lety', () => {
     const j = journey(makeState({ person1Age: 30 }));
-    expect(j.horizonMonths).toBe(35 * 12);
-    expect(j.points[j.points.length - 1].month).toBe(35 * 12);
+    expect(j.horizonMonths).toBe(37 * 12);
+    expect(j.points[j.points.length - 1].month).toBe(37 * 12);
   });
 
   it('doplacení hypotéky je událost na cestě jako každá jiná', () => {

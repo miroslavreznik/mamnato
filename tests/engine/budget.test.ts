@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { budgetNow, budgetAfterPurchase } from '../../src/engine/budget';
+import { budgetNow, budgetAfterPurchase, clampGoalAllocation } from '../../src/engine/budget';
 import { evaluateOverall } from '../../src/engine/summary';
 import { mortgagePayment, ownershipCosts } from '../../src/engine/mortgage';
 import type { WizardState } from '../../src/types';
@@ -39,6 +39,19 @@ describe('budgetNow', () => {
     const b = budgetNow(makeState(), allocs({ retirement: 40000 }));
     expect(b.fits).toBe(false);
     expect(b.surplus).toBe(-9000);
+  });
+});
+
+describe('clampGoalAllocation', () => {
+  it('allows an increase only from money not assigned to another goal', () => {
+    const budget = { disposable: 30000, allocated: 28000, surplus: 2000, fits: true };
+    expect(clampGoalAllocation(10000, 15000, budget)).toBe(12000);
+  });
+
+  it('never blocks lowering an already overallocated goal', () => {
+    const budget = { disposable: 30000, allocated: 32000, surplus: -2000, fits: false };
+    expect(clampGoalAllocation(10000, 7000, budget)).toBe(7000);
+    expect(clampGoalAllocation(10000, 12000, budget)).toBe(10000);
   });
 });
 

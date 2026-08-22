@@ -46,37 +46,12 @@ const MAX_H = 260;
 
 const PAD = { top: 34, right: 16, bottom: 30, left: 16 };
 
-/**
- * Barva podle spojité míry napětí (`journey.severity`), ne podle tří stavů.
- *
- * Dřív měla stuha tři ploché barvy a mezi nimi skoro ostrou hranu: dva roky
- * stejná zelená, pak zlom a jantarová. Rozpočet se ale takhle nechová.
- * Zajímavé na časové ose je právě to, kde se to začíná zhoršovat a kde se to
- * zase zvedá, a to jde vidět jen na plynulém přechodu.
- *
- * Míchá `color-mix` v prostoru oklab, ne ručně počítané RGB: barvy jsou
- * v CSS proměnných a mají jinou hodnotu ve světlém a tmavém režimu, takže
- * jakýkoli výpočet v JS by si je musel číst z `getComputedStyle` a znovu
- * přepočítávat při přepnutí motivu. V oklab proto, že přechod přes žlutou
- * nezešediví jako v sRGB.
- *
- * Kotvy jsou tytéž prahy, podle kterých se počítá `tension`: 0 klid,
- * 0,5 začátek napětí, 1 hluboký schodek. Zelená se navíc drží déle
- * (kvadratické náběhy), aby se plán, který má rezervu, nebarvil doržava
- * jen proto, že se blíží k prahu.
- */
+/** Barva je stav, ne dekorativní gradient: každý úsek má jeden význam. */
 function severityColor(severity: number): string {
   const s = Math.min(1, Math.max(0, severity));
-  if (s <= 0.5) {
-    const u = Math.round(Math.pow(s / 0.5, 2) * 100);
-    return u <= 0
-      ? 'var(--ribbon-calm)'
-      : `color-mix(in oklab, var(--ribbon-tense) ${u}%, var(--ribbon-calm))`;
-  }
-  const u = Math.round(Math.pow((s - 0.5) / 0.5, 0.8) * 100);
-  return u <= 0
-    ? 'var(--ribbon-tense)'
-    : `color-mix(in oklab, var(--ribbon-deficit) ${u}%, var(--ribbon-tense))`;
+  if (s < 0.5) return 'var(--ribbon-calm)';
+  if (s < 0.75) return 'var(--ribbon-tense)';
+  return 'var(--ribbon-deficit)';
 }
 
 interface Props {
@@ -268,9 +243,9 @@ export default function JourneyRibbon({
       .y1((p) => ys(p.cash))
       .curve(curveMonotoneX)(points) ?? '';
 
-    // Zastávky gradientu: jedna na každý navzorkovaný bod, obarvená podle
-    // toho, jak moc to v tu chvíli skřípe. SVG mezi nimi dopočítá zbytek,
-    // takže přechod je plynulý a přitom se drží dat.
+    // Zastávky gradientu: jedna na každý navzorkovaný bod, obarvená jednou
+    // ze tří stavových barev. Dlouhé úseky tak zůstávají jednobarevné a jen
+    // bezprostřední přechod mezi dvěma měsíci se vyhladí hranou SVG.
     //
     // Nevzorkuje se každý měsíc: na horizontu do důchodu je to přes čtyři
     // sta zastávek, které na osmi stech pixelech stejně nikdo nerozliší.
@@ -452,6 +427,7 @@ export default function JourneyRibbon({
   }, [lowest, geom, data.minCash, named, points, horizonMonths, W, H]);
 
   return (
+    <figure className="w-full">
     <svg
       ref={svgRef}
       viewBox={`0 0 ${W} ${H}`}
@@ -769,5 +745,28 @@ export default function JourneyRibbon({
         );
       })()}
     </svg>
+    <figcaption className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-ink-muted">
+      <span className="font-medium text-ink-label">Výška = likvidní úspory, barva = stav rozpočtu:</span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block w-7 h-2 rounded-full bg-[var(--ribbon-calm)]" aria-hidden="true" />
+        s polštářem
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span className="inline-block w-7 h-2 rounded-full bg-[var(--ribbon-tense)]" aria-hidden="true" />
+        napjatý
+      </span>
+      <span className="inline-flex items-center gap-1.5">
+        <span
+          className="inline-block w-7 h-2 rounded-full"
+          aria-hidden="true"
+          style={{
+            backgroundColor: 'var(--ribbon-deficit)',
+            backgroundImage: 'repeating-linear-gradient(120deg, transparent 0 4px, var(--sunken) 4px 6px)',
+          }}
+        />
+        měsíční schodek
+      </span>
+    </figcaption>
+    </figure>
   );
 }

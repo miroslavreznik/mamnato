@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import type { WizardState } from '../../types';
-import { monthlyDisposable } from '../../engine/cashflow';
 import { retirementProjection, retirementStartingCapital, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement, retirementAge } from '../../engine/savings';
 import { DEFAULTS } from '../../engine/defaults';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, ReferenceLine } from 'recharts';
@@ -32,14 +31,26 @@ interface Props {
   // se projeví i v grafu rozpočtu a ve verdiktu (a naopak).
   monthlyContribution: number;
   onChangeContribution: (value: number) => void;
+  monthlyRent: number;
+  onChangeRent: (value: number) => void;
+  freeMonthly: number;
+  contributionIsSuggested: boolean;
   /** Zápis výnosu nástroje do plánu (desetinné číslo, 0,07 = 7 %). */
   onChangeRate: (key: string, rate: number) => void;
 }
 
-export default function RetirementPlanner({ state, monthlyContribution, onChangeContribution, onChangeRate }: Props) {
+export default function RetirementPlanner({
+  state,
+  monthlyContribution,
+  onChangeContribution,
+  monthlyRent,
+  onChangeRent,
+  freeMonthly,
+  contributionIsSuggested,
+  onChangeRate,
+}: Props) {
   const colors = useChartColors();
   const instruments = instrumentDefs.map((i) => ({ ...i, color: colors[i.colorRole] }));
-  const disposable = monthlyDisposable(state);
   const monthlyAmount = monthlyContribution;
   const setMonthlyAmount = onChangeContribution;
   // Odhad appky, dokud uživatel nezadá svoje (viz `engine/estimate.ts`).
@@ -52,7 +63,6 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
   const yearsToRetirement = yearsOverride ?? yearsUntilRetirement(retirementAge(state));
   const [capitalOverride, setCapitalOverride] = useState<number | null>(null);
   const startingCapital = capitalOverride ?? retirementStartingCapital(state);
-  const [monthlyRent, setMonthlyRent] = useState(30000);
   // Výnosy jsou zadané údaje, ne nastavení karty: z akciové řady počítá
   // i věta o rentě v Přehledu. Dokud si je karta držela sama, ukazovala
   // tabulka portfolio při 4 %, zatímco verdikt vedle mluvil o sedmi.
@@ -129,11 +139,20 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             suffix="Kč"
             className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
           />
-          <p className="mt-1 text-xs text-ink-faint">Disponibilní částka: {czkPerMonth(disposable)}</p>
+          <p className="mt-1 text-xs text-ink-muted">
+            {contributionIsSuggested && (
+              <>Návrh aplikace: nejvýše 30 % peněz po výdajích, až po rezervě, dítěti a akontaci. </>
+            )}
+            Částka je součástí společného balíku na všechny cíle, ne další peníze navíc.
+            {freeMonthly > 0
+              ? ` Bez ubrání jinde lze přidat ještě ${czkPerMonth(freeMonthly)}.`
+              : ' Pro zvýšení je potřeba ubrat u jiného cíle.'}
+          </p>
         </div>
         <div>
-          <label className="block text-sm font-medium text-ink-label mb-1">
+          <label className="block text-sm font-medium text-ink-label mb-1 flex items-center">
             Počet let do důchodu
+            <HelpTip text="Odhad podle věku staršího žadatele a současných českých pravidel: ročníky 1989 a mladší mají důchodový věk 67 let, u starších se liší podle ročníku a někdy i počtu vychovaných dětí. Přepište podle svého údaje z IDA ČSSZ." />
           </label>
           <NumField
             value={yearsToRetirement}
@@ -165,7 +184,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
         <div className="flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="flex-1">
             <label className="block text-sm font-medium text-ink-label mb-1 flex items-center">
-              Požadovaná měsíční renta
+              Požadovaná měsíční renta z vlastních úspor
               <button
                 onClick={() => setShowRentInfo(!showRentInfo)}
                 className={`ml-1 ${HELP_BUTTON}`}
@@ -174,8 +193,8 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             </label>
             <NumField
               value={monthlyRent}
-              onChange={setMonthlyRent}
-              ariaLabel="Požadovaná měsíční renta"
+              onChange={onChangeRent}
+              ariaLabel="Požadovaná měsíční renta z vlastních úspor"
               step={1000}
               suffix="Kč"
               className={fieldClass('w-full px-3 py-2.5 pr-9 text-base')}
@@ -192,7 +211,8 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           <div className="mt-3 text-sm text-good space-y-2">
             <p className="font-semibold">Co je „pravidlo 4 %"?</p>
             <p>
-              Podle pravidla 4 % můžete každý rok bezpečně vybrat zhruba 4 % hodnoty svého portfolia, aniž byste ho vyčerpali.
+              Pravidlo 4 % je historické orientační vodítko: v prvním roce počítá s výběrem zhruba 4 % hodnoty portfolia
+              a v dalších letech s navyšováním výběru o inflaci. Nezaručuje, že se portfolio v každém scénáři nevyčerpá.
               Pro rentu {monthlyRent.toLocaleString('cs-CZ')} Kč měsíčně (tj. {(monthlyRent * 12).toLocaleString('cs-CZ')} Kč ročně)
               tak potřebujete portfolio o hodnotě přibližně <strong>{targetPortfolio === Infinity ? '–' : `${Math.round(targetPortfolio).toLocaleString('cs-CZ')} Kč`}</strong> (renta × 300).
             </p>
@@ -202,6 +222,11 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
           </div>
         )}
       </div>
+
+      <RetirementProductComparison
+        monthlyContribution={monthlyAmount}
+        yearsToRetirement={yearsToRetirement}
+      />
 
       {/* Přepínač inflace.
           Byl to `div` s `onClick`: myší fungoval, tabulátor ho přeskočil
@@ -248,7 +273,7 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
             Vypnuto uvidíte <strong>nominální</strong> hodnotu, tedy číslo, které bude jednou na výpisu z účtu;
             proti cíli renty ale vypadá lépe, než jaké doopravdy je.
           </p>
-          <p>Používáme průměrnou roční inflaci v ČR: <strong>3 %</strong> (dlouhodobý průměr ČNB).</p>
+          <p>Používáme konzervativní modelový předpoklad inflace: <strong>3 % ročně</strong>.</p>
         </Callout>
       )}
 
@@ -298,13 +323,13 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
 
       <div className="mt-6">
         <h4 className="text-sm font-semibold text-ink-label mb-3">
-          Výsledná hodnota portfolia{showInflation ? ' (reálná kupní síla)' : ''}
+          Model vývoje podle typu investice{showInflation ? ' (reálná kupní síla)' : ''}
         </h4>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-line">
-                <th className="text-left py-2 text-ink-muted">Nástroj</th>
+                <th className="text-left py-2 text-ink-muted">Investice v portfoliu</th>
                 <th className="text-right py-2 text-ink-muted">Výnos % / rok</th>
                 <th className="text-right py-2 text-ink-muted">Hodnota</th>
                 <th className="text-right py-2 text-ink-muted">
@@ -378,9 +403,8 @@ export default function RetirementPlanner({ state, monthlyContribution, onChange
 
       <p className="mt-4 text-xs text-ink-faint">
         Výnosy jsou historické průměry. Skutečné výsledky se mohou lišit.
-        {showInflation && ` Inflace: ${(INFLATION * 100).toFixed(0)} % ročně (dlouhodobý průměr ČNB).`}
+        {showInflation && ` Inflace: ${(INFLATION * 100).toFixed(0)} % ročně (modelový předpoklad).`}
       </p>
-      <RetirementProductComparison />
     </Card>
   );
 }

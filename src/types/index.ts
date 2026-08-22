@@ -55,6 +55,15 @@ export interface WizardState {
   // Step 5: Goals
   goals: FinancialGoal[];
 
+  /**
+   * Požadovaná měsíční renta z vlastních úspor v dnešních cenách.
+   *
+   * Zadává se už v průvodci při volbě důchodu. Není to odhad aplikace ani
+   * očekávaný státní důchod; je to částka, kterou má jednou vyplácet vlastní
+   * portfolio navíc ke státnímu důchodu.
+   */
+  retirementMonthlyRent?: number;
+
   // Step 6: Property
   property: {
     targetPrice: number;

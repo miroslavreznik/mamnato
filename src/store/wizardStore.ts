@@ -26,6 +26,7 @@ export function createInitialState(): WizardState {
       totalSavings: 0,
     },
     goals: [],
+    retirementMonthlyRent: DEFAULTS.retirementMonthlyRent,
     property: {
       targetPrice: DEFAULTS.property.targetPrice,
       // mortgageRate ani ownershipCosts se schválně nevyplňují. Dokud je
@@ -56,6 +57,7 @@ export type WizardAction =
   // Odklepnutí kontroly reálnosti vstupů („u nás to tak je").
   | { type: 'DISMISS_CHECK'; key: string }
   | { type: 'SET_GOALS'; goals: FinancialGoal[] }
+  | { type: 'SET_RETIREMENT_RENT'; value: number }
   | { type: 'UPDATE_PROPERTY'; field: string; value: number }
   // Odebrání ručně zadané hodnoty vrátí odhad. Jedna akce pro všechna pole,
   // která umí odhad (viz engine/estimate.ts); dřív na to byly dvě skoro
@@ -173,6 +175,11 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         : state.parentalLeave;
       return { ...state, goals: action.goals, parentalLeave };
     }
+    case 'SET_RETIREMENT_RENT':
+      return {
+        ...state,
+        retirementMonthlyRent: Math.min(500000, Math.max(0, Math.round(action.value))),
+      };
     case 'UPDATE_PROPERTY':
       return { ...state, property: { ...state.property, [action.field]: action.value } };
     case 'CLEAR_PROPERTY_ESTIMATE': {
