@@ -100,5 +100,7 @@ test('bydlení uvádí energie po koupi a poplatky jako samostatnou informaci', 
   await expect(fees).toContainText('V časové ose, rezervě ani verdiktu se automaticky neodečítá')
   await page.setViewportSize({ width: 375, height: 812 })
   await expect(fees).toBeVisible()
-  expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
+  // Grafy přepočítají šířku přes ResizeObserver. WebKit po změně viewportu
+  // může ještě jeden snímek držet původní desktopovou šířku.
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
 })
