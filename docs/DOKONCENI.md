@@ -1593,9 +1593,9 @@ Popisek teď říká, za jaké období průměr je.
 **Jednorázové náklady koupě se do plánu nepočítají.** Karta v Bydlení uvádí
 zhruba 15 až 40 tisíc a říká o nich, že „se rezerva sníží hned při koupi",
 jenže časová osa, `postPurchaseRunwayMonths` ani cíl rezervy je neodečítají.
-Je to jediný zbylý rozpor, o kterém víme. Zahrnout je by posunulo rezervu
+Byl to jediný zbylý rozpor, o kterém jsme věděli. Zahrnout je by posunulo rezervu
 po koupi u každého kupujícího, tedy i verdikty, a je to rozhodnutí o modelu,
-ne oprava překlepu. Zůstává tu, dokud se o něm nerozhodne.
+ne oprava překlepu. Rozhodnutí z října 2026 je uvedeno níže.
 
 **Dlaždice „Rezerva vydrží" kreslí šest měsíců** bez ohledu na cíl, viz
 odůvodnění výše.
@@ -1627,3 +1627,38 @@ Při té příležitosti se opravil i popis stuhy pro čtečku. Uváděl
 `za ${Math.round(měsíc / 12)} let`, tedy „Dítě za 1 let": špatně česky
 a zároveň nepřesně, protože sedmnáct měsíců je rok a pět měsíců. Nově
 `formatMonths`, stejně jako všude jinde.
+
+## Opravy produktové revize, říjen 2026
+
+**Energie po koupi zůstávají.** Náklady na vlastnictví zahrnují údržbu,
+fond oprav, pojištění a daň, ale ne energie. Rozpočet, nezbytné výdaje,
+rezerva a časová osa proto nahrazují jen nájem. Srovnání bydlení ukazuje
+energie samostatně na obou stranách; investiční srovnání je účtuje stejně
+vlastníkovi i nájemníkovi, včetně období po doplacení hypotéky.
+
+**Důchod se hodnotí proti požadované rentě.** Pevný práh 8 000 Kč byl
+odstraněn. Stejná reálná projekce s dnešním kapitálem a zadaným výnosem
+se poměřuje s `retirementMonthlyRent`. Chybějící renta je nesplněný cíl
+a mění i hlavní verdikt a doporučený další krok. Existující kapitál se posuzuje i při nulových
+nových vkladech; rozdíl se sděluje v Kč měsíčně v dnešních cenách.
+
+**Ruční odkládání je součást uloženého plánu.** `allocationOverrides`
+uchovává akontaci, rezervu, důchod a vlastní cíle podle jejich ID. Nuly
+jsou skutečné zadání, nikoli návrat k odhadu. Načítání validuje částky,
+starší plány dál dostanou výchozí návrh. Sdílení přenáší částky i termíny
+z nich vypočtené. Zámek proti přepsání vlastního plánu cizím odkazem platí
+i pro tyto úpravy. Co kdyby zůstává dočasný scénář.
+
+**Poplatky při koupi jsou informativní.** Na výslovné rozhodnutí vlastníka
+projektu se nadále automaticky neodečítají z osy, rezervy ani verdiktu.
+Karta má neutrální vzhled, nadpis „Pro vaši informaci“ a vysvětluje,
+že je potřeba s částkou počítat zvlášť. Původní tvrzení o automatickém
+snížení rezervy bylo odstraněno.
+
+**Nasazení čeká na všechny kontroly.** Deploy z `main` volá stejný CI
+workflow jako PR a až po lint, typecheck, unit testech, buildu a E2E
+v Chromiu a WebKitu publikuje Pages. Donation funkce se nyní nepřidává.
+
+Regrese hlídají `tests/engine/planReliability.test.ts` a `e2e/plan.e2e.ts`:
+energie ve všech výpočtech i po doplacení, změnu požadované renty,
+uložení/sdílení všech částek včetně nuly a mobilní informativní kartu.

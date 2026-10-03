@@ -57,12 +57,14 @@ Přehled je rozdělený do **záložek**, na širokém okně jako sloupec vlevo,
 #### Bydlení *(jen při cíli nemovitost)*
 - **Kalkulačka nemovitosti**, akontace (10 % / 20 % dle věku), výše hypotéky, měsíční splátka, čas na naspoření, jednorázové náklady při koupi, připomínka refixace
 - **Ukazatele DTI a DSTI**, orientační bankovní vodítka (viz [Metodika](#metodika-a-zdroje))
-- **Celkové náklady na bydlení**, nájem dnes proti splátce a nákladům na vlastnictví
+- **Celkové náklady na bydlení**, nájem dnes proti splátce a nákladům na vlastnictví, v obou případech včetně zadaných energií a poplatků. Po koupi se nahrazuje jen nájem; energie zůstávají v rozpočtu, rezervě i časové ose.
 - **Koupě vs. nájem**, vývoj čistého jmění při koupi proti investování rozdílu, se závěrem slovy
 - **Daňové úlevy**, odpočet úroků z hypotéky a daňové zvýhodnění na dítě
 
 #### Vaše cíle
-- **Důchodový plánovač**, projekce portfolia z toho, co už máte naspořeno, pravidlo 4 %, porovnání nástrojů, přepínač nominálních a reálných částek
+- **Důchodový plánovač**, projekce portfolia z toho, co už máte naspořeno, pravidlo 4 %, porovnání nástrojů, přepínač nominálních a reálných částek. Připravenost a verdikt porovnávají rentu v dnešních cenách s vaší požadovanou částkou.
+
+Ručně nastavené měsíční odkládání na akontaci, rezervu, důchod a vlastní cíle se ukládá do plánu a přenáší sdíleným odkazem, včetně nulových částek. Jednorázové poplatky při koupi jsou samostatná informativní poznámka; časová osa, rezerva ani verdikt je automaticky neodečítají.
 - **Náklady na dítě** dle věku
 - **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)*, mateřská a rodičovský příspěvek zvlášť, protože se výrazně liší; ukáže, co zbyde v nejhorším měsíci a jestli rezerva pokryje celou dobu
 - **Plánovač vlastních cílů**, cíl je měsíční částka z volných peněz a appka řekne, jestli s ní termín vyjde
@@ -225,7 +227,7 @@ npm run test
 
 ## Nasazení
 
-Projekt se **automaticky nasazuje na GitHub Pages** při každém pushi do větve `main` (workflow `.github/workflows/deploy.yml`).
+Projekt se **automaticky nasazuje na GitHub Pages** při každém pushi do větve `main` (workflow `.github/workflows/deploy.yml`). Nasazení nejprve volá společné CI pro tentýž commit: lint, typecheck, unit testy, build a Playwright v Chromiu i WebKitu. Až po úspěchu všech kontrol vytvoří produkční build a publikuje jej. Ruční spuštění je povoleno jen z `main`.
 
 **Jednorázové zapnutí** (stačí jednou): v repozitáři **Settings → Pages → Build and deployment → Source → „GitHub Actions"**. Poté je aplikace na `https://<uživatel>.github.io/<repo>/` (zde https://miroslavreznik.github.io/mamnato/).
 

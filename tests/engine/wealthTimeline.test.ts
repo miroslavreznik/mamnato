@@ -187,8 +187,8 @@ describe('doplacení hypotéky', () => {
     expect(at(payoff + 1).flow - at(payoff - 1).flow).toBeCloseTo(splatka, 0);
     // Náklady na vlastnictví běží dál, ty koncem hypotéky nemizí: proti
     // nájemníkovi zbyde nájem minus tyhle náklady, ne celý nájem.
-    // 75 000 příjem, 34 000 výdajů, z toho 18 500 za nájem a energie.
-    const bezBydleni = 75000 - (34000 - 18500);
+    // Nájem 15 000 zmizí, energie 3 500 se platí i po doplacení hypotéky.
+    const bezBydleni = 75000 - (34000 - 15000);
     expect(at(payoff + 1).flow).toBe(Math.round(bezBydleni - ownershipCosts(state)));
   });
 
@@ -282,8 +282,7 @@ describe('odložené bydlení znamená, že se dál platí nájem', () => {
     const s = wealthTimeline(rodina(['property']), { months: 120 });
     expect(s.purchaseMonth).toBe(0);
     const bezKoupe = 49700;
-    const najemAEnergie = 19000 + 4500;
-    const splatkaANaklady = bezKoupe + najemAEnergie - s.points[1].flow;
+    const splatkaANaklady = bezKoupe + 19000 - s.points[1].flow;
     // Splátka 29 276 Kč plus 5 200 Kč nákladů na vlastnictví.
     expect(Math.round(splatkaANaklady)).toBe(34476);
   });

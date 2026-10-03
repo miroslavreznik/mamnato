@@ -23,7 +23,7 @@ describe('rozvaha nad akontací', () => {
     const state = makeState();
     const t = downPaymentTradeoff(state);
     const expected = necessaryMonthlyExpenses(state)
-      - state.expenses.rent - state.expenses.utilities
+      - state.expenses.rent
       + mortgagePayment(state) + ownershipCosts(state);
     expect(t.monthlyNeedAfter).toBeCloseTo(expected, 6);
   });

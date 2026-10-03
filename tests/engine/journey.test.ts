@@ -175,7 +175,7 @@ describe('tenký, i když kladný tok', () => {
       goals: ['property', 'child'],
       person1Age: 30,
       person2Age: 30,
-      income: { person1NetMonthly: 45000, person2NetMonthly: 38000 },
+      income: { person1NetMonthly: 50000, person2NetMonthly: 38000 },
       expenses: { rent: 18000, existingLoans: 0, insurance: 1500, food: 8000, transport: 3000, children: 0, utilities: 4500, other: 3000 },
       savings: { totalSavings: 900000 },
       property: { targetPrice: 5500000, mortgageRate: 0.048, loanTermYears: 30 },

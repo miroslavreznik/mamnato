@@ -149,3 +149,18 @@ export function monthsToSaveAtAllocation(state: WizardState, monthly: number): n
   if (monthly <= 0) return Infinity;
   return Math.ceil(gap / monthly);
 }
+
+/** Návrh aplikace doplněný o ruční částky z uloženého či sdíleného plánu. */
+export function calculateAllocations(state: WizardState): GoalAllocations {
+  const defaults = calculateDefaultAllocations(state);
+  const overrides = state.allocationOverrides ?? {};
+  return {
+    downPayment: state.goals.includes('property') ? overrides.downPayment ?? defaults.downPayment : 0,
+    reserve: state.goals.includes('reserve') ? overrides.reserve ?? defaults.reserve : 0,
+    retirement: state.goals.includes('retirement') ? overrides.retirement ?? defaults.retirement : 0,
+    child: defaults.child,
+    custom: state.goals.includes('other')
+      ? (state.customGoals ?? []).map((g, i) => overrides.custom?.[g.id] ?? defaults.custom[i] ?? 0)
+      : [],
+  };
+}

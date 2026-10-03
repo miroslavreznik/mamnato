@@ -223,7 +223,7 @@ export default function ExpenseBreakdownChart({ state, allocations, excluded, se
           <div className="p-3 rounded-lg bg-tint-brand">
             <span className="text-xs text-ink-muted inline-flex items-center">
               Volná rezerva po koupi
-              <HelpTip text="Totéž po koupi nemovitosti: místo nájmu a energií platíte splátku hypotéky a náklady vlastnictví. Záporné číslo = rozpočet po koupi nevyjde." />
+              <HelpTip text="Po koupi nájem nahradí splátka hypotéky a náklady na vlastnictví. Energie a poplatky zůstávají ve stejné výši jako dnes. Záporné číslo = rozpočet po koupi nevyjde." />
             </span>
             <p className={`text-xl sm:text-2xl font-bold whitespace-nowrap ${freeColor(flowAfter.free)}`}>
               {flowAfter.free >= 0 ? '' : '−'}{fmtKc(Math.abs(flowAfter.free))}<span className="text-sm font-normal text-ink-faint">/měs</span>

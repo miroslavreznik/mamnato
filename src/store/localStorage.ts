@@ -1,4 +1,4 @@
-import type { WizardState, FinancialGoal, UserMode } from '../types';
+import type { WizardState, FinancialGoal, UserMode, GoalAllocationOverrides } from '../types';
 import { createInitialState } from './wizardStore';
 import { DEFAULTS, CHILD_COSTS_CZ } from '../engine/defaults';
 import { MAX_RESERVE_MONTHS } from '../engine/reserve';
@@ -40,6 +40,23 @@ function sanitizeNumberMap(obj: Record<string, unknown>): Record<string, number>
 }
 
 const VALID_GOALS: FinancialGoal[] = ['property', 'child', 'retirement', 'other', 'reserve'];
+
+function allocationOverrides(raw: unknown): GoalAllocationOverrides | undefined {
+  if (!isRecord(raw)) return undefined;
+  const validAmount = (v: unknown): v is number =>
+    typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 1_000_000_000;
+  const out: GoalAllocationOverrides = {};
+  for (const key of ['downPayment', 'reserve', 'retirement'] as const) {
+    const value = raw[key];
+    if (validAmount(value)) out[key] = Math.round(value);
+  }
+  if (isRecord(raw.custom)) {
+    out.custom = Object.fromEntries(Object.entries(raw.custom)
+      .filter(([, value]) => validAmount(value))
+      .map(([key, value]) => [key, Math.round(value as number)]));
+  }
+  return out;
+}
 
 /**
  * Načtený stav z prohlížeče zkontroluje a doplní na aktuální tvar.
@@ -142,6 +159,7 @@ export function normalizeState(raw: unknown): WizardState | null {
         : undefined,
     },
     goals: raw.goals.filter((g): g is FinancialGoal => VALID_GOALS.includes(g as FinancialGoal)),
+    allocationOverrides: allocationOverrides(raw.allocationOverrides),
     property: {
       targetPrice: num(rProperty.targetPrice, base.property.targetPrice),
       // Chybějící náklady na vlastnictví jsou platný stav („odhadni z ceny").

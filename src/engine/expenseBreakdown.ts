@@ -31,7 +31,7 @@ export interface IncomeFlow {
 
 // Rozpad měsíčních výdajů po kategoriích pro dva stavy bydlení:
 //  - afterPurchase=false: bydlení = nájem + energie
-//  - afterPurchase=true:  bydlení = splátka hypotéky + náklady na vlastnictví
+//  - afterPurchase=true:  bydlení = splátka + vlastnictví + energie
 // Klasifikace nezbytné/zbytné je konzistentní s cashflow.ts (jen „other" je zbytné).
 export function expenseCategories(
   state: WizardState,
@@ -42,8 +42,8 @@ export function expenseCategories(
   let housing: number;
   let housingLabel: string;
   if (afterPurchase) {
-    housing = Math.round(mortgagePayment(state)) + ownershipCosts(state);
-    housingLabel = 'Hypotéka + vlastnictví';
+    housing = Math.round(mortgagePayment(state)) + ownershipCosts(state) + e.utilities;
+    housingLabel = 'Hypotéka + vlastnictví + energie';
   } else {
     housing = e.rent + e.utilities;
     housingLabel = 'Bydlení (nájem + energie)';

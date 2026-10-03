@@ -98,9 +98,7 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
 
 export function retirementReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
   const monthly = allocations.retirement;
-  if (monthly <= 0) {
-    return { key: 'retirement', label: 'Důchod', status: 'warning', headline: 'Zatím na důchod nespoříte nic.' };
-  }
+  const target = state.retirementMonthlyRent ?? DEFAULTS.retirementMonthlyRent;
   const years = yearsUntilRetirement(retirementAge(state));
   // Do projekce patří i to, co už je naspořeno. Bez toho vycházela renta
   // u lidí s velkými úsporami tak nízko, že se verdikt překlápěl na „zatím
@@ -110,27 +108,25 @@ export function retirementReadiness(state: WizardState, allocations: GoalAllocat
   // Bez toho stálo u třicátníka „v důchodu to vyjde na 95 962 Kč měsíčně",
   // jenže to byly koruny roku 2060; dnešními penězi je to zhruba třetina.
   // Vedle časové osy, která je v dnešních cenách celá, to bylo dvojí měřítko
-  // v jednom přehledu, a hranice „pod 8 000 Kč je to spíš doplněk" se
-  // porovnávala s číslem, které ve skutečnosti znamenalo necelé tři tisíce.
+  // v jednom přehledu. Cíl se porovnává s rentou ve stejné kupní síle.
   const rate = retirementReturn(state);
   const projection = retirementProjection(
     monthly, years, rate, DEFAULTS.averageCzInflation, retirementStartingCapital(state)
   );
   const finalValue = projection[projection.length - 1]?.portfolioValue ?? 0;
   const monthlyRent = finalValue * SAFE_WITHDRAWAL_RATE / 12;
-  // Renta pod ~8 000 Kč/měs je spíš doplněk k důchodu než plnohodnotný příjem.
-  const modest = monthlyRent < 8000;
+  const gap = Math.max(0, target - Math.round(monthlyRent));
   // Předpoklad se říká nahlas: bez něj vypadá číslo jako slib, a přitom
   // stojí na výnosu, který jde v Důchodu přepsat.
-  const sentence = `Spoříte ${czkMonthly(monthly)}, při výnosu ${percentCompact(rate)} ročně `
+  const sentence = `${monthly > 0 ? `Spoříte ${czkMonthly(monthly)}` : 'Zatím na důchod nespoříte nic, počítáme jen dnešní úspory'}, při výnosu ${percentCompact(rate)} ročně `
     + `to v důchodu v dnešních cenách vyjde zhruba na ${czkMonthly(monthlyRent)}.`;
   return {
     key: 'retirement',
     label: 'Důchod',
-    status: modest ? 'caution' : 'good',
-    headline: modest
-      ? `${sentence} Zatím spíš doplněk než plnohodnotný příjem.`
-      : sentence,
+    status: gap > 0 ? 'warning' : 'good',
+    headline: gap > 0
+      ? `${sentence} Do požadované renty ${czkMonthly(target)} chybí ${czkMonthly(gap)}.`
+      : `${sentence} Požadovaná renta ${czkMonthly(target)} vychází.`,
   };
 }
 

@@ -42,8 +42,8 @@ export function budgetNow(state: WizardState, allocations: GoalAllocations): Bud
 }
 
 /**
- * Rozpočet po koupi: místo nájmu a energií splátka s náklady na vlastnictví,
- * a bez odkládání na akontaci.
+ * Rozpočet po koupi: nájem nahradí splátka s náklady na vlastnictví.
+ * Energie zůstávají, odkládání na akontaci končí.
  */
 export function budgetAfterPurchase(state: WizardState, allocations: GoalAllocations): BudgetView {
   const disposable = totalMonthlyIncome(state) - expensesAfterPurchase(state);

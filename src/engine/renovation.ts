@@ -77,7 +77,7 @@ export function evaluateRenovation(state: WizardState): RenovationPhase | null {
   const disposableDuringRenovation = income - otherExpenses - housingDuringRenovation;
 
   // O kolik je tahle fáze dražší než cílový stav (plná splátka + vlastnictví).
-  const targetHousing = fullPayment + ownershipCosts(state);
+  const targetHousing = fullPayment + ownershipCosts(state) + state.expenses.utilities;
   const totalExtraCost = Math.max(0, housingDuringRenovation - targetHousing) * renovation.months;
 
   return {
