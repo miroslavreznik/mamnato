@@ -35,6 +35,7 @@ export default function ShareConfirm({ state, onCopy, onCancel }: {
     'měsíční výdaje po kategoriích',
     'kolik máte naspořeno',
     ...(goals.length > 0 ? [`vaše cíle: ${goals.join(', ').toLowerCase()}`] : []),
+    ...(state.allocationOverrides ? ['vámi nastavené měsíční částky spoření na cíle'] : []),
     ...(state.goals.includes('property') ? ['cenu nemovitosti, akontaci a parametry hypotéky'] : []),
     ...(state.goals.includes('retirement') ? ['požadovanou rentu z vlastních úspor'] : []),
     ...(state.parentalLeave?.enabled ? ['nastavení rodičovské'] : []),

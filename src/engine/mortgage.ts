@@ -115,11 +115,11 @@ export function mortgagePayment(state: WizardState): number {
   return monthlyMortgagePayment(loanAmount(state), mortgageRate(state), loanTermYears(state));
 }
 
-// Měsíční výdaje PO koupi: místo nájmu + energií se platí splátka hypotéky
-// a náklady na vlastnictví.
+// Po koupi nájem nahradí hypotéka a náklady na vlastnictví.
+// Energie zůstávají mezi výdaji, náklady na vlastnictví je nezahrnují.
 export function expensesAfterPurchase(state: WizardState): number {
   return totalMonthlyExpenses(state)
-    - state.expenses.rent - state.expenses.utilities
+    - state.expenses.rent
     + mortgagePayment(state) + ownershipCosts(state);
 }
 
@@ -134,7 +134,7 @@ export function expensesAfterPurchase(state: WizardState): number {
  */
 export function necessaryExpensesAfterPurchase(state: WizardState): number {
   return necessaryMonthlyExpenses(state)
-    - state.expenses.rent - state.expenses.utilities
+    - state.expenses.rent
     + mortgagePayment(state) + ownershipCosts(state);
 }
 

@@ -2,6 +2,14 @@ export type UserMode = 'individual' | 'couple' | 'family';
 
 export type FinancialGoal = 'property' | 'child' | 'retirement' | 'other' | 'reserve';
 
+/** Ruční měsíční částky. Chybějící hodnota znamená návrh aplikace. */
+export interface GoalAllocationOverrides {
+  downPayment?: number;
+  reserve?: number;
+  retirement?: number;
+  custom?: Record<string, number>;
+}
+
 export interface WizardState {
   version: string;
   currentStep: number;
@@ -54,6 +62,9 @@ export interface WizardState {
 
   // Step 5: Goals
   goals: FinancialGoal[];
+
+  // Součást uloženého i sdíleného plánu; vlastní cíle se adresují podle id.
+  allocationOverrides?: GoalAllocationOverrides;
 
   /**
    * Požadovaná měsíční renta z vlastních úspor v dnešních cenách.

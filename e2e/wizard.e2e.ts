@@ -253,7 +253,9 @@ test('souhrn ukáže rozpočet dnes i po koupi a odkládání na akontaci', asyn
     const text = await rozpocet.getByText(period, { exact: true }).locator('xpath=..').innerText()
     const match = text.match(/(−?[\d\s]+)\s*Kč/)
     const digits = Number((match?.[1] ?? '').replace(/\D/g, ''))
-    return match?.[1].startsWith('−') ? -digits : digits
+    // Přerostlé výdaje se zobrazují jako absolutní částka nad příjmem.
+    // Ta stále znamená schodek, ne vyšší disponibilní příjem.
+    return match?.[1].startsWith('−') || text.includes('přerostly příjem') ? -digits : digits
   }
   expect(await disposableIn('Po koupi')).toBeLessThan(await disposableIn('Dnes'))
 
@@ -663,7 +665,8 @@ test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ bro
   await pickGoal(recipient, 'retirement')
   await finish(recipient)
   const saved = () => recipient.evaluate(() => localStorage.getItem('mamnato_wizard_v1'))
-  expect(await saved()).toContain('12345')
+  const ownPlan = await saved()
+  expect(ownPlan).toContain('12345')
 
   // Otevře cizí odkaz: vidí cizí přehled, ale svoje data má pořád uložená.
   // Mezikrok přes about:blank je nutný, jinak by šlo jen o změnu fragmentu
@@ -671,12 +674,12 @@ test('sdílený odkaz nepřepíše data příjemce bez potvrzení', async ({ bro
   await recipient.goto('about:blank')
   await recipient.goto(sharedUrl)
   await expect(recipient.getByText(/přehled je z odkazu od někoho jiného/i)).toBeVisible()
-  expect(await saved()).toContain('12345')
+  expect(await saved()).toBe(ownPlan)
 
   // Ani úprava hodnot v cizím přehledu nesmí jeho data přepsat.
   await openTab(recipient, 'cile')
   await recipient.getByRole('textbox', { name: 'Měsíční částka k investování', exact: true }).fill('4321')
-  expect(await saved()).toContain('12345')
+  expect(await saved()).toBe(ownPlan)
 
   // Návrat ke svému přehledu data zachová.
   await recipient.getByRole('button', { name: /Zpět na můj přehled/ }).click()

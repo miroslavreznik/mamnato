@@ -26,7 +26,7 @@ import ExpenseEditor from './ExpenseEditor';
 import EditableHint from './EditableHint';
 import ShareConfirm from './ShareConfirm';
 import { goalsTabLabel } from '../../engine/goalNames';
-import { calculateDefaultAllocations } from '../../engine/allocation';
+import { calculateAllocations } from '../../engine/allocation';
 import { MAX_RESERVE_MONTHS } from '../../engine/reserve';
 import type { GoalAllocations } from '../../engine/allocation';
 import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
@@ -115,27 +115,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
    * časová osa kupovala pořád ve stejný měsíc. Změna jednoho čísla tak
    * mlčky neplatila pro zbytek stránky.
    */
-  const [allocOverrides, setAllocOverrides] = useState<{
-    downPayment?: number;
-    reserve?: number;
-    retirement?: number;
-    // `child` tu schválně není: kolik dítě stojí, se zadává v tabulce podle
-    // věku, ne jako jedna ruční částka. Viz `ChildCostPlanner`.
-    custom?: Record<string, number>;
-  }>({});
-
-  const defaultAllocations = useMemo(() => calculateDefaultAllocations(state), [state]);
-
-  const allocations = useMemo<GoalAllocations>(() => ({
-    downPayment: allocOverrides.downPayment ?? defaultAllocations.downPayment,
-    reserve: allocOverrides.reserve ?? defaultAllocations.reserve,
-    retirement: allocOverrides.retirement ?? defaultAllocations.retirement,
-    child: defaultAllocations.child,
-    // Vlastní cíle podle `id`, ne podle pořadí: smazáním prostředního cíle
-    // by se jinak zadané částky posunuly na sousedy.
-    custom: (state.customGoals ?? []).map((g, i) =>
-      allocOverrides.custom?.[g.id] ?? defaultAllocations.custom[i] ?? 0),
-  }), [allocOverrides, defaultAllocations, state.customGoals]);
+  const allocations = useMemo(() => calculateAllocations(state), [state]);
 
   // Vypnutý cíl nesmí dál ukrajovat z rozpočtu.
   const activeAllocations = useMemo<GoalAllocations>(() => ({
@@ -177,9 +157,15 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
       ? (customIndex >= 0 ? allocations.custom[customIndex] ?? 0 : 0)
       : allocations[goal as keyof Omit<GoalAllocations, 'custom'>] ?? 0;
     const safeValue = clampGoalAllocation(current, value, budgetNow(state, allocations));
-    setAllocOverrides((prev) => (goal === 'custom' && id
-      ? { ...prev, custom: { ...prev.custom, [id]: safeValue } }
-      : { ...prev, [goal]: safeValue }));
+    const previous = state.allocationOverrides ?? {};
+    const next = {
+      ...state,
+      allocationOverrides: goal === 'custom' && id
+        ? { ...previous, custom: { ...previous.custom, [id]: safeValue } }
+        : { ...previous, [goal]: safeValue },
+    };
+    setState(next);
+    saveState(next);
   };
 
   const handleChangeRetirementRent = (value: number) => {
@@ -554,7 +540,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
                 monthlyRent={state.retirementMonthlyRent ?? 30000}
                 onChangeRent={handleChangeRetirementRent}
                 freeMonthly={Math.max(0, activeGoalBudget.surplus)}
-                contributionIsSuggested={allocOverrides.retirement === undefined}
+                contributionIsSuggested={state.allocationOverrides?.retirement === undefined}
                 onChangeRate={handleChangeRetirementRate}
                 onChangeContribution={(v) => handleChangeAllocation('retirement', null, v)}
               />

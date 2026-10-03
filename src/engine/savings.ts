@@ -160,7 +160,7 @@ export function investmentComparison(
       // Po splacení hypotéky vlastník splátku neplatí. Dřív se s ní počítalo
       // i po splacení, takže u kratší hypotéky nájemník „investoval" rozdíl
       // proti splátce, která už neexistovala.
-      const currentOwnerCost = (repaid ? 0 : payment) + ownership * inflation;
+      const currentOwnerCost = (repaid ? 0 : payment) + (ownership + state.expenses.utilities) * inflation;
 
       const diff = currentOwnerCost - currentRent;
       ownerPortfolio = ownerPortfolio * (1 + monthlyReturn) + (diff < 0 ? -diff : 0);

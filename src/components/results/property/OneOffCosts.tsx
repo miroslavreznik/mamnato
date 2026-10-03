@@ -7,15 +7,15 @@ import Disclosure from '../../ui/Disclosure';
 /**
  * Jednorázové náklady koupě.
  *
- * Nejsou velké proti ceně nemovitosti, ale odcházejí z rezervy hned na
- * začátku, tedy z peněz, o které se opírá verdikt.
+ * Informativní odhad mimo časovou osu a výpočet rezervy.
  */
 export default function OneOffCosts({ state }: { state: WizardState }) {
   const costs = purchaseOneOffCosts(state);
   if (!costs) return null;
 
   return (
-    <div className="mt-4 p-3 rounded-lg bg-sunken">
+    <aside className="mt-4 p-3 rounded-lg border border-line bg-sunken" aria-label="Informace o jednorázových nákladech koupě">
+      <p className="text-xs font-medium text-ink-muted mb-1">Pro vaši informaci</p>
       <p className="text-sm font-medium text-ink-label mb-1">
         Kromě akontace počítejte s jednorázovými náklady
         <Tooltip text="Poplatky a služby, které koupi na hypotéku doprovázejí. Daň z nabytí nemovitosti byla zrušena v roce 2020, takže tu není. Ceny služeb se liší podle poskytovatele, proto jsou uvedená rozpětí. Stěhování a vybavení sem nepočítáme, ta se u každého liší příliš." />
@@ -23,7 +23,7 @@ export default function OneOffCosts({ state }: { state: WizardState }) {
       <p className="text-xs text-ink-muted mb-2">
         Dohromady zhruba{' '}
         <span className="font-semibold text-ink">{czk(costs.min)} až {czk(costs.max)}</span>.
-        O tuhle částku se rezerva sníží hned při koupi, ještě než začnete splácet.
+        {' '}Je to odhad poplatků při koupi. V časové ose, rezervě ani verdiktu se automaticky neodečítá; počítejte s ním zvlášť.
       </p>
       {/* Součet je odpověď, rozpis je jeho odůvodnění. */}
       <Disclosure summary="Rozpis položek">
@@ -36,6 +36,6 @@ export default function OneOffCosts({ state }: { state: WizardState }) {
           ))}
         </div>
       </Disclosure>
-    </div>
+    </aside>
   );
 }

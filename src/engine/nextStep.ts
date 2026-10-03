@@ -7,7 +7,7 @@ import { budgetNow, budgetAfterPurchase } from './budget';
 import { evaluateParentalLeave } from './parentalLeave';
 import { reserveStatus } from './reserve';
 import { monthsUntilDownPaymentReady } from './wealthTimeline';
-import { MIN_RESERVE_MONTHS_AFTER_PURCHASE } from './readiness';
+import { MIN_RESERVE_MONTHS_AFTER_PURCHASE, retirementReadiness } from './readiness';
 import { DEFAULTS } from './defaults';
 import { czk, czkMonthly, monthYearIn, formatMonths } from './format';
 
@@ -228,22 +228,31 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
     };
   }
 
-  // 5. Na důchod nejde nic.
-  if (state.goals.includes('retirement') && allocations.retirement <= 0) {
+  // 5. Renta neplní uživatelův cíl, i když už na důchod něco odkládá.
+  const retirement = state.goals.includes('retirement') ? retirementReadiness(state, allocations) : null;
+  if (retirement?.status === 'warning' && allocations.retirement <= 0) {
     const monthly = Math.min(free, Math.max(500, Math.round(totalMonthlyIncome(state) * 0.05 / 500) * 500));
     return {
       key: 'retirement',
       action: monthly > 0
         ? 'Založte si důchodové spoření a nastavte si trvalý příkaz.'
         : 'Na důchod zatím nezbývá nic. Vraťte se k tomu, až se uvolní peníze.',
-      why: 'U důchodu rozhoduje spíš to, kdy začnete, než kolik odkládáte: '
-        + 'tisícovka měsíčně je za deset let asi 170 tisíc, ale za třicet let přes milion.'
+      why: `${retirement.headline} Navržená částka je první krok, dosažení požadované renty si ověřte v sekci Důchod.`
         + (leaveLimits(state, allocations)
           ? ' Částka je podle nejhoršího měsíce rodičovské, aby se dala udržet i tehdy.'
           : ''),
       monthly: monthly > 0 ? monthly : undefined,
       section: 'cile',
       actionLabel: 'Nastavit částku',
+    };
+  }
+  if (retirement?.status === 'warning') {
+    return {
+      key: 'retirement',
+      action: 'Upravte důchodový plán, aby dosáhl na požadovanou rentu.',
+      why: `${retirement.headline} Zvažte vyšší měsíční odkládání nebo nižší požadovanou rentu.`,
+      section: 'cile',
+      actionLabel: 'Upravit důchod',
     };
   }
 

@@ -159,15 +159,15 @@ describe('doporučená částka musí jít udržet', () => {
     const state = par({ parentalLeave: undefined });
     const s = nextStep(state, calculateDefaultAllocations(state));
     expect(s.monthly).toBeLessThan(33667);
-    expect(Math.round(s.monthly!)).toBe(24096);
+    expect(Math.round(s.monthly!)).toBe(20096);
   });
 
   it('s rodičovskou se řídí nejhorším měsícem, a řekne to', () => {
-    const state = par();
+    const state = par({ income: { person1NetMonthly: 50000, person2NetMonthly: 38000 } });
     const s = nextStep(state, calculateDefaultAllocations(state));
-    // Během rodičovského příspěvku zbývá 1 253 Kč; doporučit 24 096 Kč
+    // I s energiemi zbývá v nejhorším měsíci 2 253 Kč; doporučit 25 096 Kč
     // by znamenalo slíbit trvalý příkaz, který za rok nejde platit.
-    expect(Math.round(s.monthly!)).toBe(1253);
+    expect(Math.round(s.monthly!)).toBe(2253);
     expect(s.why).toMatch(/nejhorší.*měsíc.*rodičovské/i);
   });
 });

@@ -4,7 +4,7 @@ import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
 import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment } from './mortgage';
 import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
 import { yearsUntilRetirement, retirementAge } from './savings';
-import { calculateDefaultAllocations, type GoalAllocations } from './allocation';
+import { calculateAllocations, type GoalAllocations } from './allocation';
 import { reserveStatus } from './reserve';
 
 // Časová osa úspor: měsíc po měsíci simuluje vývoj úspor domácnosti přes
@@ -148,7 +148,7 @@ export function wealthTimeline(
 
   const baseIncome = totalMonthlyIncome(state);
   const baseExpenses = totalMonthlyExpenses(state);
-  const rent = state.expenses.rent + state.expenses.utilities;
+  const rent = state.expenses.rent;
 
   // Cílová akontace: požadovaná dle LTV; když si uživatel vyhradil víc, platí jeho volba.
   const price = totalProjectCost(state);
@@ -183,7 +183,7 @@ export function wealthTimeline(
   //
   // Třetí, **nouzová rezerva**, končí naplněním. Je to cíl s koncem, ne trvalý
   // výdaj: od chvíle, kdy je plná, se ty peníze uvolní na cokoli jiného.
-  const alloc = opts.allocations ?? calculateDefaultAllocations(state);
+  const alloc = opts.allocations ?? calculateAllocations(state);
   const customTotal = alloc.custom.reduce((sum, v) => sum + v, 0);
   const goalsAlways = alloc.retirement + customTotal;
 

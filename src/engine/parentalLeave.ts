@@ -3,7 +3,7 @@ import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable } from './c
 import { effectiveDownPayment, expensesAfterPurchase, downPaymentGap } from './mortgage';
 import { estimate, type Estimate } from './estimate';
 import { monthlyChildCost, plannedChildren } from './childCost';
-import { calculateDefaultAllocations, monthsToSaveAtAllocation } from './allocation';
+import { calculateAllocations, monthsToSaveAtAllocation } from './allocation';
 
 // Rodičovský příspěvek na jedno dítě (od 2024), celkový balík na celou dobu.
 export const RODICOVSKA_POOL = 350000;
@@ -255,7 +255,7 @@ function leaveStartContext(state: WizardState): { afterPurchase: boolean; reserv
   const gap = downPaymentGap(state);
   const purchaseMonth = gap <= 0
     ? 0
-    : monthsToSaveAtAllocation(state, calculateDefaultAllocations(state).downPayment);
+    : monthsToSaveAtAllocation(state, calculateAllocations(state).downPayment);
   const afterPurchase = purchaseMonth <= start;
 
   if (!afterPurchase) {
@@ -288,8 +288,8 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   const childCostAvg = childCostOverPhase(state, 0, pl.durationMonths);
   const disposableDuringLeave = incomeDuringLeave - expenses - childCostAvg;
 
-  // Výdaje, se kterými se během rodičovské reálně počítá: po koupi mizí nájem
-  // a energie, přibývá splátka a náklady na vlastnictví.
+  // Po koupi mizí nájem, přibývá splátka a náklady na vlastnictví.
+  // Energie zůstávají mezi výdaji i během rodičovské.
   //
   // **A přibude dítě.** Rodičovská je z definice doba, kdy je doma miminko,
   // a to podle tabulky ČSÚ stojí osm tisíc měsíčně. Dokud se nepočítalo,

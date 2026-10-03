@@ -94,10 +94,10 @@ describe('verdikt při schodku na rodičovské', () => {
 
   it('tenká rezerva po volnu drží „pozor", ale řekne to nahlas', () => {
     // Rezerva schodek pokryje, ale skoro nic po ní nezbyde.
-    // Schodek nově zahrnuje i náklad na dítě (8 000 Kč × 36 měsíců), takže
+    // Schodek zahrnuje dítě a energie ((8 000 + 6 000 Kč) × 36 měsíců), takže
     // rezerva musí být o tolik vyšší, aby scénář zůstal ten samý.
     const state = buyingCoupleOnLeave({
-      savings: { totalSavings: 3460000 + 8000 * 36, downPaymentFromSavings: 2510000 },
+      savings: { totalSavings: 3460000 + (8000 + 6000) * 36, downPaymentFromSavings: 2510000 },
       childInMonths: 0, // dítě hned, jinak rezerva do jeho příchodu vyroste
     });
     const leave = evaluateParentalLeave(state)!;

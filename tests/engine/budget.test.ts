@@ -56,10 +56,10 @@ describe('clampGoalAllocation', () => {
 });
 
 describe('budgetAfterPurchase', () => {
-  it('nájem a energie nahradí splátka s náklady na vlastnictví', () => {
+  it('nájem nahradí splátka a vlastnictví, energie zůstávají', () => {
     const state = makeState();
     const b = budgetAfterPurchase(state, allocs({ retirement: 5000 }));
-    const expected = 60000 - (29000 - 12000 - 3500 + mortgagePayment(state) + ownershipCosts(state));
+    const expected = 60000 - (29000 - 12000 + mortgagePayment(state) + ownershipCosts(state));
     expect(b.disposable).toBeCloseTo(expected, 6);
   });
 
