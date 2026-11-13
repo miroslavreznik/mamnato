@@ -36,7 +36,7 @@ test('ruční odkládání přežije reload a sdílený odkaz včetně nuly', as
   await input(page, 'Kolik měsíčně odkládám na rezervu').fill('2000')
   await page.getByRole('slider', { name: 'Kolik na tento cíl měsíčně dávám' }).fill('1500')
   await page.locator('#tab-bydleni').click()
-  await page.getByRole('slider', { name: 'Měsíční odkládání na akontaci' }).fill('4000')
+  await page.getByRole('slider', { name: 'Měsíční odkládání na koupi' }).fill('4000')
 
   const verify = async (p: Page) => {
     await p.locator('#tab-cile').click()
@@ -44,7 +44,7 @@ test('ruční odkládání přežije reload a sdílený odkaz včetně nuly', as
     expect(digits(await input(p, 'Kolik měsíčně odkládám na rezervu').inputValue())).toBe('2000')
     await expect(p.getByRole('slider', { name: 'Kolik na tento cíl měsíčně dávám' })).toHaveValue('1500')
     await p.locator('#tab-bydleni').click()
-    await expect(p.getByRole('slider', { name: 'Měsíční odkládání na akontaci' })).toHaveValue('4000')
+    await expect(p.getByRole('slider', { name: 'Měsíční odkládání na koupi' })).toHaveValue('4000')
     await p.locator('#tab-souhrn').click()
     return p.locator('#souhrn').getByTestId('cile-prehled').innerText()
   }
@@ -90,17 +90,59 @@ test('požadovaná renta přepočítá připravenost i hlavní odpověď', async
   await expect(page.locator('#souhrn')).toContainText('Upravte důchodový plán, aby dosáhl na požadovanou rentu.')
 })
 
-test('bydlení uvádí energie po koupi a poplatky jako samostatnou informaci', async ({ page }) => {
+test('bydlení uvádí provoz a zahrnuje jednorázové poplatky do plánu', async ({ page }) => {
   await openPlan(page, { goals: ['property'], savings: { totalSavings: 1500000 } })
   await page.locator('#tab-bydleni').click()
+  await page.getByRole('button', { name: 'Srovnání koupě a nájmu' }).click()
   await expect(page.getByText('Energie a poplatky:', { exact: true })).toHaveCount(2)
   await expect(page.getByText('Náklady na vlastnictví (bez energií):', { exact: true })).toBeVisible()
   const fees = page.getByRole('complementary', { name: 'Informace o jednorázových nákladech koupě' })
-  await expect(fees).toContainText('Pro vaši informaci')
-  await expect(fees).toContainText('V časové ose, rezervě ani verdiktu se automaticky neodečítá')
+  await expect(fees).toContainText('Jednorázové náklady zahrnuté do plánu')
   await page.setViewportSize({ width: 375, height: 812 })
   await expect(fees).toBeVisible()
   // Grafy přepočítají šířku přes ResizeObserver. WebKit po změně viewportu
   // může ještě jeden snímek držet původní desktopovou šířku.
   await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0)
+})
+
+test('plán koupě a kalkulačka používají stejnou splátku i před naspořením', async ({ page }) => {
+  await openPlan(page, {
+    goals: ['property'],
+    mode: 'couple',
+    person1Age: 37,
+    person2Age: 37,
+    income: { person1NetMonthly: 45000, person2NetMonthly: 27000 },
+    savings: { totalSavings: 0 },
+    expenses: { rent: 19000, utilities: 5500, insurance: 1500, food: 11000, transport: 5000, other: 7000, existingLoans: 0, children: 0 },
+    property: { targetPrice: 6000000, mortgageRate: 0.048, loanTermYears: 30 },
+    allocationOverrides: { downPayment: 20000 },
+  })
+  const overview = page.locator('#souhrn')
+  await expect(overview.getByRole('heading', { name: /Koupě vychází za/ })).toBeVisible()
+  await expect(overview.getByTestId('kpi-Měsíční splátka')).toContainText(/25\s184/)
+  await expect(overview.getByText(/zbývalo 11\s816 Kč měsíčně/)).toBeVisible()
+  await page.locator('#tab-bydleni').click()
+  await expect(page.locator('#bydleni').getByText(/25\s184 Kč\/měs\./).first()).toBeVisible()
+})
+
+test('Co kdyby ukáže dopad poklesu příjmu a skutečné refixace', async ({ page }) => {
+  await openPlan(page, {
+    goals: ['property'],
+    mode: 'couple',
+    person1Age: 38,
+    person2Age: 38,
+    income: { person1NetMonthly: 50000, person2NetMonthly: 30000 },
+    expenses: { rent: 18000, utilities: 4000, insurance: 3000, food: 12000, transport: 6000, other: 12000, existingLoans: 4000, children: 0 },
+    savings: { totalSavings: 1550000 },
+    property: { targetPrice: 6000000, mortgageRate: 0.05, loanTermYears: 30, fixationYears: 5, purchaseCosts: 100000, ownedUtilities: 1500 },
+  })
+  await page.locator('#tab-cokdyby').click()
+  const tab = page.locator('#cokdyby')
+  await expect(tab.getByRole('heading', { name: 'Co když klesne příjem nebo stoupne sazba?' })).toBeVisible()
+  await expect(tab.getByText(/31\s153 Kč měsíčně/)).toBeVisible()
+  const loss = tab.getByRole('textbox', { name: 'Pokles příjmu za měsíc' })
+  await expect(tab.getByRole('listitem').filter({ hasText: 'Nižší příjem po koupi' })).toContainText(/4\s267 Kč/)
+  await expect(tab.getByRole('listitem').filter({ hasText: 'Vyšší sazba a nižší příjem najednou' })).toContainText(/9\s653 Kč/)
+  await loss.fill('10000')
+  await expect(tab.getByRole('listitem').filter({ hasText: 'Nižší příjem po koupi' })).toContainText(/733 Kč/)
 })

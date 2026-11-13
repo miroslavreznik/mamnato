@@ -1,9 +1,10 @@
 import type { WizardState } from '../types';
-import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable } from './cashflow';
-import { effectiveDownPayment, expensesAfterPurchase, downPaymentGap } from './mortgage';
+import { monthlyIncomeAt, totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
+import { expensesAfterPurchase, liquidSavings } from './mortgage';
 import { estimate, type Estimate } from './estimate';
 import { monthlyChildCost, plannedChildren } from './childCost';
-import { calculateAllocations, monthsToSaveAtAllocation } from './allocation';
+import { wealthTimeline, type WealthTimelineResult } from './wealthTimeline';
+import type { GoalAllocations } from './allocation';
 
 // Rodičovský příspěvek na jedno dítě (od 2024), celkový balík na celou dobu.
 export const RODICOVSKA_POOL = 350000;
@@ -227,50 +228,11 @@ function childCostOverPhase(state: WizardState, fromMonth: number, months: numbe
   return sum / whole;
 }
 
-/**
- * Kdy rodičovská začne a co v tu chvíli platí.
- *
- * Dřív se počítalo, jako by volno začínalo dnes a domácnost už bydlela ve
- * svém: výdaje se braly po koupi, rezerva jako dnešní úspory minus akontace.
- * Termín dítěte přitom rozhoduje o obojím. Kdo čeká dítě za pět let, bude
- * mít do té doby naspořeno o pět let víc; kdo ho čeká dřív, než na akontaci
- * dosáhne, bude během volna platit nájem, ne splátku.
- *
- * Proto se termín stal zadaným údajem (`state.childInMonths`) a tahle funkce
- * z něj odvodí obojí. Zůstatek se skládá stejně jako na časové ose: měsíc po
- * měsíci přiteče disponibilní částka, při koupi odejde akontace a od té
- * chvíle se počítá s rozpočtem po koupi.
- */
-function leaveStartContext(state: WizardState): { afterPurchase: boolean; reserve: number } {
-  const start = Math.max(0, Math.round(state.childInMonths ?? 12));
-  const disposable = monthlyDisposable(state);
-
-  if (!state.goals.includes('property')) {
-    return { afterPurchase: false, reserve: Math.max(0, state.savings.totalSavings + disposable * start) };
-  }
-
-  // Kdy se koupí: hned, když je akontace pokrytá, jinak až se dospoří.
-  // Bere se odkládání, které appka nabízí, ne celá disponibilní částka,
-  // stejně jako to dělá časová osa.
-  const gap = downPaymentGap(state);
-  const purchaseMonth = gap <= 0
-    ? 0
-    : monthsToSaveAtAllocation(state, calculateAllocations(state).downPayment);
-  const afterPurchase = purchaseMonth <= start;
-
-  if (!afterPurchase) {
-    return { afterPurchase, reserve: Math.max(0, state.savings.totalSavings + disposable * start) };
-  }
-
-  const disposableAfter = totalMonthlyIncome(state) - expensesAfterPurchase(state);
-  const atPurchase = state.savings.totalSavings + disposable * purchaseMonth - effectiveDownPayment(state);
-  return {
-    afterPurchase,
-    reserve: Math.max(0, atPurchase + disposableAfter * (start - purchaseMonth)),
-  };
-}
-
-export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
+export function evaluateParentalLeave(
+  state: WizardState,
+  projection?: WealthTimelineResult,
+  allocations?: GoalAllocations,
+): LeaveImpact | null {
   const pl = state.parentalLeave;
   if (!pl || !pl.enabled) return null;
 
@@ -281,11 +243,27 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   // a delší, prostý průměr obou by realitu posunul.
   const totalMonths = phases.reduce((s, p) => s + p.months, 0) || 1;
   const avgBenefit = phases.reduce((s, p) => s + p.monthlyBenefit * p.months, 0) / totalMonths;
-  const incomeDuringLeave = incomeNow - lostSalary + avgBenefit;
   const expenses = totalMonthlyExpenses(state);
 
   const disposableNow = incomeNow - expenses;
   const childCostAvg = childCostOverPhase(state, 0, pl.durationMonths);
+  const startMonth = Math.max(0, Math.round(state.childInMonths ?? 12));
+  const duration = Math.max(1, Math.round(pl.durationMonths));
+  const endMonth = startMonth + duration;
+  // Volno může být zapnuté i ve starších plánech bez samostatného cíle Dítě.
+  const timeline = projection && projection.childMonth !== null && projection.points.length > endMonth
+    ? projection
+    : wealthTimeline(state.goals.includes('child') ? state : { ...state, goals: [...state.goals, 'child'] }, { months: endMonth, allocations });
+  const atStart = timeline.points[startMonth];
+  const reserveAfter = Math.max(0, (timeline.purchaseMonth === startMonth
+    ? timeline.purchaseCashAfterClosing : atStart?.availableCash) ?? liquidSavings(state));
+  const startsAfterPurchase = timeline.purchaseMonth !== null && timeline.purchaseMonth <= startMonth;
+  const relevantExpenses = startsAfterPurchase ? expensesAfterPurchase(state) : expenses;
+  let incomeDuringLeave = 0;
+  for (let i = 0; i < duration; i++) {
+    incomeDuringLeave += monthlyIncomeAt(state, startMonth + i) - lostSalary + benefitAtLeaveMonth(phases, i);
+  }
+  incomeDuringLeave /= duration;
   const disposableDuringLeave = incomeDuringLeave - expenses - childCostAvg;
 
   // Po koupi mizí nájem, přibývá splátka a náklady na vlastnictví.
@@ -298,9 +276,7 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
   // správně, jenže jedno z těch čísel mluvilo o rodičovské bez dítěte.
   // Co se během volna platí, závisí na tom, jestli se do té doby stihne
   // koupit. Kdo čeká dítě dřív, než dospoří akontaci, platí dál nájem.
-  const start = leaveStartContext(state);
   const isBuying = state.goals.includes('property');
-  const relevantExpenses = start.afterPurchase ? expensesAfterPurchase(state) : expenses;
 
   let disposableDuringLeaveAfterPurchase: number | null = null;
   if (isBuying) {
@@ -309,39 +285,29 @@ export function evaluateParentalLeave(state: WizardState): LeaveImpact | null {
 
   const savingsLostTotal = Math.max(0, disposableNow - disposableDuringLeave) * pl.durationMonths;
 
-  // Rezerva, ze které se dá schodek během volna krýt: kolik jí bude
-  // v okamžiku, kdy volno začne. Když se do té doby kupuje, akontace už
-  // je pryč.
-  const reserveAfter = start.reserve;
-
-  // Schodek se počítá po fázích, protože během mateřské bývá výrazně menší
-  // než potom. Součet přes fáze je jediné poctivé číslo; `shortfallPerMonth`
-  // je nejhorší měsíc, aby se dalo říct „až tolik".
+  // Schodek ve stejných měsících jako na ose včetně přechodu na nové bydlení.
   let shortfallTotal = 0;
   let shortfallPerMonth = 0;
   let worstMonthlyDisposable = Infinity;
   let monthsUntilReserveGone = 0;
   let reserveLeft = reserveAfter;
   let reserveRanOut = false;
-  let elapsedMonths = 0;
-  for (const phase of phases) {
-    const disposable = incomeNow - lostSalary + phase.monthlyBenefit - relevantExpenses
-      - childCostOverPhase(state, elapsedMonths, phase.months);
-    elapsedMonths += phase.months;
+  for (let month = startMonth + 1; month <= endMonth; month++) {
+    const disposable = timeline.points[month].flow;
     worstMonthlyDisposable = Math.min(worstMonthlyDisposable, disposable);
     const monthly = Math.max(0, -disposable);
-    shortfallTotal += monthly * phase.months;
+    shortfallTotal += monthly;
     shortfallPerMonth = Math.max(shortfallPerMonth, monthly);
 
     if (reserveRanOut) continue;
     if (monthly === 0) {
-      monthsUntilReserveGone += phase.months;
+      monthsUntilReserveGone++;
       continue;
     }
     const affordable = reserveLeft / monthly;
-    if (affordable >= phase.months) {
-      monthsUntilReserveGone += phase.months;
-      reserveLeft -= monthly * phase.months;
+    if (affordable >= 1) {
+      monthsUntilReserveGone++;
+      reserveLeft -= monthly;
     } else {
       monthsUntilReserveGone += Math.floor(affordable);
       reserveLeft = 0;

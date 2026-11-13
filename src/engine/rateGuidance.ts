@@ -6,6 +6,10 @@ import {
   mortgageRate,
   loanTermYears,
   totalProjectCost,
+  bankAppraisal,
+  fixationYears,
+  liquidSavings,
+  renovationCost,
 } from './mortgage';
 
 // Banky v ČR neúčtují jednu sazbu, odstupňovávají ji podle LTV (poměru úvěru
@@ -30,20 +34,35 @@ export const LTV_BANDS: LtvBand[] = [
   { key: 'over', maxLtv: Infinity, label: 'nad 90 % LTV', ratePremium: 0.003, available: false },
 ];
 
-// LTV = jaká část ceny je půjčená. 0 když cena není zadaná.
+// Pro nabídku sazby posuzujeme úvěr při koupi a hodnotu zástavy.
 export function ltv(state: WizardState): number {
-  const price = totalProjectCost(state);
-  if (price <= 0) return 0;
-  return loanAmount(state) / price;
+  const appraisal = bankAppraisal(state);
+  return appraisal > 0 ? loanAmount(state) / appraisal : 0;
 }
 
 export function ltvBandFor(ltvValue: number): LtvBand {
   return LTV_BANDS.find((b) => ltvValue <= b.maxLtv) ?? LTV_BANDS[LTV_BANDS.length - 1];
 }
 
-// Splátka při jiné sazbě (stejná jistina i splatnost), pro modelování refixace.
+// Odhad nabídky, pokud se výchozí sazba změní ještě před čerpáním.
 export function paymentAtRate(state: WizardState, rate: number): number {
   return monthlyMortgagePayment(loanAmount(state), rate, loanTermYears(state));
+}
+
+export function paymentAfterRefixation(state: WizardState, newRate: number): number | null {
+  const term = loanTermYears(state) * 12;
+  const renovationMonths = renovationCost(state) > 0 ? state.property.renovation?.months ?? 0 : 0;
+  const elapsed = Math.max(0, fixationYears(state) * 12 - renovationMonths);
+  const principal = loanAmount(state);
+  if (elapsed >= term || principal <= 0) return null;
+
+  const rate = mortgageRate(state);
+  const monthlyRate = rate / 12;
+  const payment = monthlyMortgagePayment(principal, rate, term / 12);
+  const remaining = monthlyRate === 0
+    ? principal - elapsed * payment
+    : payment * -Math.expm1(-(term - elapsed) * Math.log1p(monthlyRate)) / monthlyRate;
+  return monthlyMortgagePayment(Math.max(0, remaining), newRate, (term - elapsed) / 12);
 }
 
 export interface LtvRateAdvice {
@@ -64,8 +83,9 @@ export interface LtvRateAdvice {
 // Poradí, jestli se vyplatí doplatit akontaci kvůli lepšímu pásmu sazby.
 // Vrací null, když nemovitost nemá cenu (nedá se počítat LTV).
 export function ltvRateAdvice(state: WizardState): LtvRateAdvice | null {
-  const price = totalProjectCost(state);
-  if (price <= 0) return null;
+  const projectCost = totalProjectCost(state);
+  const appraisal = bankAppraisal(state);
+  if (appraisal <= 0 || projectCost <= 0) return null;
 
   const current = ltv(state);
   const band = ltvBandFor(current);
@@ -79,19 +99,17 @@ export function ltvRateAdvice(state: WizardState): LtvRateAdvice | null {
     };
   }
 
-  const dp = effectiveDownPayment(state);
-  // Aby úvěr klesl pod hranici pásma, musí akontace pokrýt zbytek ceny.
-  // Zaokrouhleno na celé koruny, jde o částku, kterou uživatel doplácí.
-  const dpForNextBand = Math.round(price - nextBand.maxLtv * price);
+  const dp = projectCost - loanAmount(state);
+  const dpForNextBand = Math.ceil(projectCost - nextBand.maxLtv * appraisal);
   const extraDownPayment = Math.max(0, dpForNextBand - dp);
-  const affordable = dp + extraDownPayment <= state.savings.totalSavings;
+  const affordable = Math.max(effectiveDownPayment(state), dp + extraDownPayment) <= liquidSavings(state);
 
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
   const rateDrop = Math.max(0, band.ratePremium - nextBand.ratePremium);
   const paymentNow = monthlyMortgagePayment(loanAmount(state), rate, term);
   const paymentNext = monthlyMortgagePayment(
-    Math.max(0, price - (dp + extraDownPayment)),
+    Math.max(0, projectCost - (dp + extraDownPayment)),
     Math.max(0, rate - rateDrop),
     term
   );

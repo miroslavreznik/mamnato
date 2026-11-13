@@ -171,9 +171,9 @@ describe('postPurchaseRunwayMonths', () => {
 describe('dti', () => {
   it('calculates DTI as loan / annual income', () => {
     const state = makeState();
-    // loan = 5500000 - 500000 = 5000000; annual = 36000 * 12 = 432000
+    // Úvěr při plánované koupi: 5 500 000 − 1 100 000. Příjem za rok: 432 000.
     const result = dti(state);
-    expect(result).toBeCloseTo(5000000 / 432000, 2);
+    expect(result).toBeCloseTo(4400000 / 432000, 2);
   });
 
   it('returns Infinity when income is 0', () => {
@@ -183,8 +183,8 @@ describe('dti', () => {
 
   it('includes existing debt principal in total debt', () => {
     const state = makeState({ existingDebtPrincipal: 200000 });
-    // total debt = 5000000 + 200000 = 5200000; annual = 432000
-    expect(dti(state)).toBeCloseTo(5200000 / 432000, 2);
+    // Úvěr při koupi 4 400 000 + stávající dluh 200 000.
+    expect(dti(state)).toBeCloseTo(4600000 / 432000, 2);
   });
 
   it('is unchanged when existing debt principal is absent', () => {

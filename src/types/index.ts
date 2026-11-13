@@ -2,6 +2,8 @@ export type UserMode = 'individual' | 'couple' | 'family';
 
 export type FinancialGoal = 'property' | 'child' | 'retirement' | 'other' | 'reserve';
 
+export type MortgageFlow = 'property' | 'price';
+
 /** Ruční měsíční částky. Chybějící hodnota znamená návrh aplikace. */
 export interface GoalAllocationOverrides {
   downPayment?: number;
@@ -14,6 +16,7 @@ export interface WizardState {
   version: string;
   currentStep: number;
   completedSteps: number[];
+  mortgageFlow?: MortgageFlow;
 
   // Step 1: Mode
   mode: UserMode;
@@ -28,6 +31,8 @@ export interface WizardState {
     person1NetMonthly: number;
     person2NetMonthly?: number;
     parentalAllowance?: number;
+    parentalAllowanceRemainingMonths?: number;
+    otherNetMonthly?: number;
   };
 
   // Věk žadatelů, ovlivňuje limit LTV (mladší 36 let), horizont spoření na důchod
@@ -45,6 +50,8 @@ export interface WizardState {
     children: number;
     utilities: number;
     other: number;
+    // Souhrnná položka z krátkého průvodce, kde se jídlo a další nezbytné výdaje zadávají dohromady.
+    essentials?: number;
     // Nepovinný podrobný rozpis zbytných výdajů (klíč „skupina.položka" → částka).
     // Když je vyplněn, `other` se drží jako jeho součet.
     discretionaryBreakdown?: Record<string, number>;
@@ -78,6 +85,10 @@ export interface WizardState {
   // Step 6: Property
   property: {
     targetPrice: number;
+    bankAppraisal?: number;
+    purchaseCosts?: number;
+    targetMonthlySurplus?: number;
+    ownedUtilities?: number;
     ownershipCosts?: number;
     mortgageRate?: number;
     fixationYears?: number;

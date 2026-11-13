@@ -1,77 +1,120 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { WizardState } from './types';
 import WizardContainer from './components/wizard/WizardContainer';
+import QuickMortgageWizard from './components/wizard/QuickMortgageWizard';
 import ResultsDashboard from './components/results/ResultsDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
 import AppBar from './components/ui/AppBar';
 import Callout from './components/ui/Callout';
-import { loadState, clearState } from './store/localStorage';
-import { loadedFromShare, sharedStateToShow, sharedReplacesExisting, acceptSharedState, discardSharedState } from './store/shareLink';
+import { targetMonthlySurplus } from './engine/purchasePlan';
+import { loadState, clearState, saveState } from './store/localStorage';
+import { createInitialState } from './store/wizardStore';
+import { createQuickMortgageState } from './store/quickMortgageState';
+import { bootstrapSharedState, loadedFromShare, sharedStateToShow, sharedReplacesExisting, acceptSharedState, discardSharedState } from './store/shareLink';
 
 type View = 'welcome' | 'wizard' | 'results';
+type Flow = 'full' | NonNullable<WizardState['mortgageFlow']>;
+
+const resultStep = (state: WizardState) => state.mortgageFlow ? 4 : 8;
 
 function App() {
   // Sdílený přehled z odkazu (viz main.tsx) → rovnou výsledky.
   const [view, setView] = useState<View>(() => (loadedFromShare() ? 'results' : 'welcome'));
-  const [returnToStep, setReturnToStep] = useState<number | null>(null);
-  // Cizí přehled se zobrazuje jen dokud se uživatel nerozhodne; do té doby je
-  // zápis do localStorage zamčený, aby o svá data nepřišel ani úpravou hodnot.
-  const [shared, setShared] = useState<WizardState | null>(() => sharedStateToShow());
-  const [sharedConflict, setSharedConflict] = useState(() => sharedReplacesExisting());
+  const [state, setState] = useState(() => sharedStateToShow() ?? loadState());
+  const [editing, setEditing] = useState(false);
+  const [sharedConflict, setSharedConflict] = useState(sharedReplacesExisting);
+  const [planRevision, setPlanRevision] = useState(0);
+
+  useEffect(() => {
+    const openSharedLink = () => {
+      if (!bootstrapSharedState()) return;
+      setState(sharedStateToShow());
+      setSharedConflict(sharedReplacesExisting());
+      setEditing(false);
+      setPlanRevision((revision) => revision + 1);
+      setView('results');
+    };
+    window.addEventListener('hashchange', openSharedLink);
+    return () => window.removeEventListener('hashchange', openSharedLink);
+  }, []);
+
+  // Jeden rozpracovaný plán pro přehled i průvodce. Zámek v úložišti
+  // brání zápisu, dokud příjemce sdílený plán výslovně nepřevezme.
+  const handleStateChange = useCallback((next: WizardState) => {
+    setState(next);
+    saveState(next);
+  }, []);
 
   const keepShared = () => {
-    if (!shared) return;
-    acceptSharedState(shared);
+    if (!state) return;
+    acceptSharedState(state);
     setSharedConflict(false);
   };
 
   const keepOwn = () => {
     discardSharedState();
-    setShared(null);
+    const own = loadState();
+    setState(own);
     setSharedConflict(false);
-    setView('results');
+    setEditing(false);
+    setPlanRevision((revision) => revision + 1);
+    setView(own ? own.currentStep >= resultStep(own) ? 'results' : 'wizard' : 'welcome');
   };
 
-  const handleComplete = useCallback(() => {
-    setReturnToStep(null);
+  const handleComplete = useCallback((next: WizardState) => {
+    handleStateChange({ ...next, currentStep: resultStep(next) });
+    setEditing(false);
     setView('results');
-  }, []);
+  }, [handleStateChange]);
 
-  const handleStart = () => {
-    if (loadState() && !window.confirm('Opravdu chcete začít znovu? Všechna zadaná data budou smazána.')) {
-      return;
+  const clearPlan = () => {
+    if (state && !window.confirm('Opravdu chcete začít znovu? Všechna zadaná data budou smazána.')) {
+      return false;
     }
     discardSharedState();
-    setShared(null);
     setSharedConflict(false);
     clearState();
-    setReturnToStep(null);
+    setState(null);
+    setEditing(false);
+    return true;
+  };
+
+  const handleStart = (flow: Flow) => {
+    if (!clearPlan()) return;
+    handleStateChange(flow === 'full' ? createInitialState() : createQuickMortgageState(flow));
     setView('wizard');
   };
 
   const handleResume = () => {
-    setReturnToStep(null);
-    setView('wizard');
+    if (state) setView(state.currentStep >= resultStep(state) ? 'results' : 'wizard');
   };
 
   const handleEdit = () => {
-    // Dokud je cizí přehled otevřený, zobrazuje se on, ne uložená data.
-  const state = shared ?? loadState();
-    const hasProperty = state?.goals.includes('property');
-    const hasOther = state?.goals.includes('other');
-    setReturnToStep(hasProperty ? 6 : hasOther ? 7 : 5);
+    if (!state) return;
+    const step = state.mortgageFlow ? 3 : state.goals.includes('property') ? 6 : state.goals.includes('other') ? 7 : 5;
+    setState({ ...state, currentStep: step });
+    setEditing(true);
+    setView('wizard');
+  };
+
+  const handleExpandPlan = () => {
+    if (!state?.mortgageFlow) return;
+    handleStateChange({
+      ...state,
+      property: { ...state.property, targetMonthlySurplus: targetMonthlySurplus(state) },
+      mortgageFlow: undefined,
+      currentStep: 5,
+      completedSteps: [1, 2, 3, 4],
+    });
+    setEditing(false);
     setView('wizard');
   };
 
   const handleReset = () => {
-    if (window.confirm('Opravdu chcete začít znovu? Všechna zadaná data budou smazána.')) {
-      clearState();
-      setView('welcome');
-    }
+    if (clearPlan()) setView('welcome');
   };
 
-  // Dokud je cizí přehled otevřený, zobrazuje se on, ne uložená data.
-  const state = shared ?? loadState();
+  const goBackToResults = editing && state ? () => handleComplete(state) : undefined;
 
   // Cizí přehled: dokud uživatel nerozhodne, nic se neukládá. Banner je stejný
   // na výsledcích i v průvodci, jen se vkládá do jinak širokého sloupce.
@@ -107,8 +150,11 @@ function App() {
           vědí, která záložka je vybraná. Průvodci a úvodu stačí značka. */}
       {view === 'results' && state ? (
         <ResultsDashboard
+          key={planRevision}
           state={state}
+          onStateChange={handleStateChange}
           onEdit={handleEdit}
+          onExpandPlan={state.mortgageFlow ? handleExpandPlan : undefined}
           onReset={handleReset}
           onHome={() => setView('welcome')}
           banner={conflictBanner}
@@ -118,19 +164,29 @@ function App() {
           <AppBar onHome={() => setView('welcome')} />
           {/* Průvodce je širší než úvod: vedle formuláře stojí průběžný náhled.
               Samotný formulář zůstává úzký, čte se po řádcích. */}
-          <main className={`mx-auto px-4 py-8 sm:py-10 ${view === 'wizard' ? 'max-w-app' : 'max-w-wizard'}`}>
+          <main className={`mx-auto px-4 py-8 sm:py-10 ${view === 'wizard' ? 'max-w-app' : 'max-w-4xl'}`}>
             {conflictBanner}
-            {view === 'wizard' ? (
-              <WizardContainer
-                onComplete={handleComplete}
-                returnToStep={returnToStep}
-                resumeSavedState={!returnToStep}
-                // Zpátky na přehled jen tomu, kdo z něj přišel. Kdo průvodce
-                // teprve vyplňuje, žádný přehled ještě nemá.
-                onBackToResults={returnToStep ? () => setView('results') : undefined}
-              />
+            {view === 'wizard' && state ? (
+              state.mortgageFlow ? (
+                <QuickMortgageWizard
+                  key={planRevision}
+                  flow={state.mortgageFlow}
+                  initialState={state}
+                  onStateChange={handleStateChange}
+                  onComplete={handleComplete}
+                  onBackToResults={goBackToResults}
+                />
+              ) : (
+                <WizardContainer
+                  key={planRevision}
+                  initialState={state}
+                  onStateChange={handleStateChange}
+                  onComplete={handleComplete}
+                  onBackToResults={goBackToResults}
+                />
+              )
             ) : (
-              <WelcomeScreen onStart={handleStart} onResume={handleResume} />
+              <WelcomeScreen onStart={handleStart} onResume={handleResume} hasSavedData={!!state} />
             )}
           </main>
         </>

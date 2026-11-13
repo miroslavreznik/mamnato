@@ -1,7 +1,8 @@
 import type { WizardState } from '../types';
 import { monthlyDisposable } from './cashflow';
-import { dsti, dti, downPaymentGap, monthsToSaveDownPayment, necessaryExpensesAfterPurchase } from './mortgage';
+import { dsti, dti, necessaryExpensesAfterPurchase } from './mortgage';
 import { DEFAULTS } from './defaults';
+import { purchaseCashPlan } from './purchasePlan';
 
 export type ScenarioId =
   | 'cannot_afford_cashflow'
@@ -56,9 +57,9 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
     no_savings: {
       id: 'no_savings',
       icon: '\uD83D\uDC22',
-      title: 'Na akontaci budete spořit více než 5 let',
+      title: 'Na koupi budete spořit více než 5 let',
       description:
-        'I kdybyste na akontaci odkládali všechno, co vám měsíčně zbývá, trvalo by víc než 5 let, než ji naspoříte. To není konec světa, ale je to signál, že je potřeba buď zrychlit spoření, nebo přehodnotit cílovou nemovitost.',
+        'I kdybyste na koupi odkládali všechno, co vám měsíčně zbývá, potřebnou hotovost byste naspořili za více než pět let. Pomůže vyšší měsíční odkládání nebo levnější nemovitost.',
       tips: [
         'Zkuste v průvodci snížit cenu cílové nemovitosti. Menší nebo vzdálenější nemovitost může být rozumným mezikrokem.',
         'Každý měsíc navíc odkládaný stranou zkrátí čekání. Zvyšte měsíční úspory o 2 000–5 000 Kč a sledujte, jak se horizont mění.',
@@ -70,7 +71,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       icon: '\u2696\uFE0F',
       title: 'Dosažitelné, ale s malou rezervou',
       description:
-        'Čísla vycházejí: na hypotéku dosáhnete a úspory na akontaci naspoříte v rozumném horizontu. Zároveň ale nebude mnoho prostoru pro neočekávané výdaje. Je důležité mít před koupí vytvořenou finanční rezervu.',
+        'Rozpočet je napjatý nebo hotovost na koupi ještě chybí. Před koupí si ověřte nabídku banky a nechte si stranou potřebnou rezervu.',
       tips: [
         `Před podpisem smlouvy mějte stranou nouzový fond, ideálně 3–6 měsíců nezbytných výdajů (pro vás to je ${emergencyFund} Kč, už se splátkou místo nájmu). Tuto částku nezapočítávejte do akontace.`,
         'Zvažte fixaci úrokové sazby na delší období (7–10 let). Ochráníte se před růstem sazeb v době, kdy bude váš rozpočet napnutý.',
@@ -80,9 +81,9 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
     ready_in_1_2_years: {
       id: 'ready_in_1_2_years',
       icon: '\uD83C\uDFAF',
-      title: 'Jste blízko: ještě 1 až 2 roky spoření',
+      title: 'Na koupi už zbývá dospořit část úspor',
       description:
-        'Na akontaci vám chybí už jen kousek a při aktuálním tempu tam do 2 let dotáhnete. Teď je ideální čas připravit se na celý proces koupě dopředu, abyste byli připraveni jednat rychle.',
+        'Vlastní vklad, výdaje při koupi a rezervu byste při odkládání celé volné částky pokryli nejvýše za dva roky. Termín při zvoleném spoření najdete v časové ose.',
       tips: [
         'Začněte sledovat realitní trh ve vámi preferované lokalitě, třeba na Sreality.cz nebo Bezrealitky.cz. Pochopíte reálné ceny dříve, než budete kupovat.',
         'Nechte si udělat předschválení hypotéky (nezávazné). Zjistíte, na jakou částku dosáhnete, a při koupi budete mít navrch.',
@@ -94,7 +95,7 @@ function buildScenarios(state: WizardState): Record<ScenarioId, Scenario> {
       icon: '\u2705',
       title: 'Jste finančně připraveni na koupi',
       description:
-        'Máte dostatek úspor na akontaci a splátka hypotéky je v rozumném poměru k vašemu příjmu. Banka ale vždy provede vlastní posouzení bonity a hodnoty zástavy.',
+        'Máte dostatek úspor na vklad, výdaje při koupi a rezervu. Splátka je v rozumném poměru k příjmu. Banka provede vlastní posouzení bonity a hodnoty zástavy.',
       tips: [
         'Před podpisem nechte nemovitost zkontrolovat. Právní čistota (výpis z katastru, věcná břemena) a technický stav (vlhkost, elektrika, střecha) mohou výrazně ovlivnit skutečné náklady.',
         'Porovnejte nabídky alespoň 3 bank nebo využijte hypotečního poradce. Rozdíl 0,3 % na sazbě znamená na 30 letech desítky tisíc korun.',
@@ -120,8 +121,8 @@ export function evaluateScenario(state: WizardState): Scenario {
   const disposable = monthlyDisposable(state);
   const dstiValue = dsti(state);
   const dtiValue = dti(state);
-  const gap = downPaymentGap(state);
-  const months = monthsToSaveDownPayment(state);
+  const gap = purchaseCashPlan(state).cashGap;
+  const months = disposable > 0 ? Math.ceil(gap / disposable) : Infinity;
 
   const scenarios = buildScenarios(state);
 

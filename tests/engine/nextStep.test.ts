@@ -3,6 +3,9 @@ import { nextStep } from '../../src/engine/nextStep';
 import { calculateDefaultAllocations, type GoalAllocations } from '../../src/engine/allocation';
 import { necessaryExpensesAfterPurchase } from '../../src/engine/mortgage';
 import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
+import { purchaseCashPlan } from '../../src/engine/purchasePlan';
+import { wealthTimeline } from '../../src/engine/wealthTimeline';
+import { monthYearIn } from '../../src/engine/format';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -59,20 +62,19 @@ describe('a co teď', () => {
     });
     const s = nextStep(state, calculateDefaultAllocations(state));
     expect(s.key).toBe('payment_too_high');
-    expect(s.action).toMatch(/cenu přibližně/);
+    expect(s.action).toMatch(/snížit cenu bytu/);
     expect(s.section).toBe('bydleni');
   });
 
-  it('chybějící akontace dostane částku i termín', () => {
+  it('chybějící hotovost dostane částku i termín', () => {
     const state = makeState({ goals: ['property'], savings: { totalSavings: 500000 } });
     const s = nextStep(state, alloc({ downPayment: 10000 }));
     expect(s.key).toBe('down_payment');
     expect(s.monthly).toBe(10000);
-    // Chybí 120 000 Kč, při 10 000 měsíčně to je dvanáct měsíců.
-    expect(s.done).toMatch(/20\d\d/);
-    // Částka je ve větě nahoře, ne ve vysvětlení: dvakrát pod sebou by to
-    // bylo totéž číslo.
-    expect(hasAmount(s.action, 120000)).toBe(true);
+    const { purchaseMonth } = wealthTimeline(state, { allocations: alloc({ downPayment: 10000 }) });
+    expect(purchaseMonth).not.toBeNull();
+    expect(s.done).toBe(monthYearIn(purchaseMonth!));
+    expect(hasAmount(s.action, purchaseCashPlan(state).cashGap)).toBe(true);
   });
 
   it('kdo na důchod neodkládá nic, dostane konkrétní částku', () => {
@@ -105,8 +107,7 @@ describe('a co teď', () => {
 });
 
 describe('nouzová rezerva se počítá z výdajů, které v tu dobu platí', () => {
-  // Akontace je pokrytá, takže se kupuje hned, ale po jejím zaplacení zbyde
-  // sotva měsíc výdajů.
+  // Vklad je pokrytý, ale po poplatcích ještě nezbyde cílová rezerva.
   const kupujici = () => makeState({ goals: ['property'], savings: { totalSavings: 700000 } });
 
   it('u kupujícího je cíl tři měsíce výdajů po koupi, ne dnešních', () => {
@@ -114,8 +115,10 @@ describe('nouzová rezerva se počítá z výdajů, které v tu dobu platí', ()
     // vyšlo správně, ale částka byla o čtvrtinu nižší, než na jakou se spoří.
     const state = kupujici();
     const s = nextStep(state, calculateDefaultAllocations(state));
-    expect(s.key).toBe('reserve');
-    expect(hasAmount(s.action, Math.round(necessaryExpensesAfterPurchase(state) * 3))).toBe(true);
+    expect(s.key).toBe('down_payment');
+    const plan = purchaseCashPlan(state);
+    expect(hasAmount(s.action, plan.cashGap)).toBe(true);
+    expect(plan.reserveTarget).toBe(Math.ceil(necessaryExpensesAfterPurchase(state) * 3));
     expect(hasAmount(s.action, Math.round(necessaryMonthlyExpenses(state) * 3))).toBe(false);
   });
 
@@ -124,7 +127,7 @@ describe('nouzová rezerva se počítá z výdajů, které v tu dobu platí', ()
     // měsíce života stojí necelých šest tisíc.
     const state = kupujici();
     const s = nextStep(state, calculateDefaultAllocations(state));
-    expect(s.why).toMatch(/^To jsou 3 měsíce nezbytných výdajů, chybí do nich/);
+    expect(s.why).toMatch(/rezervu na 3 měsíce/);
   });
 
   it('kdo nemá stranou nic, nečte tutéž částku dvakrát', () => {

@@ -15,7 +15,7 @@ import { test, expect, type Page } from '@playwright/test'
 
 async function toResults(page: Page) {
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
   await page.getByTestId('goal-property').click()
   await page.getByTestId('goal-retirement').click()

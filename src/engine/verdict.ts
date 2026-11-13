@@ -1,7 +1,7 @@
 import type { LeaveImpact } from './parentalLeave';
 import type { GoalReadiness, GoalStatus } from './readiness';
 import type { BudgetView } from './budget';
-import { czk, czkMonthly } from './format';
+import { czk, czkMonthly, monthYearIn } from './format';
 
 /**
  * Přímá odpověď na otázku z názvu appky.
@@ -142,6 +142,13 @@ export interface TightReason {
   lowSavingsRate: boolean;
 }
 
+interface PurchaseVerdict {
+  cashGap: number;
+  purchaseMonth: number | null;
+  monthlyShortfall: number;
+  monthlySurplusAfterGoals: number;
+}
+
 export function buildVerdict(
   status: OverallStatusKey,
   goals: GoalReadiness[],
@@ -150,10 +157,11 @@ export function buildVerdict(
   leave: LeaveImpact | null,
   budget: BudgetView | null = null,
   budgetAfter: BudgetView | null = null,
-  tight: TightReason = { thinReserve: false, lowSavingsRate: false }
+  tight: TightReason = { thinReserve: false, lowSavingsRate: false },
+  purchase: PurchaseVerdict | null = null
 ): Verdict {
   return {
-    ...buildAnswer(status, goals, hasGoals, disposable, leave, budget, budgetAfter, tight),
+    ...buildAnswer(status, goals, hasGoals, disposable, leave, budget, budgetAfter, tight, purchase),
     questions: buildVerdictQuestions(goals, budgetAfter),
   };
 }
@@ -166,7 +174,8 @@ function buildAnswer(
   leave: LeaveImpact | null,
   budget: BudgetView | null,
   budgetAfter: BudgetView | null,
-  tight: TightReason
+  tight: TightReason,
+  purchase: PurchaseVerdict | null
 ): Omit<Verdict, 'questions'> {
   // Bez zvolených cílů není na co odpovídat, tak aspoň zhodnotíme rozpočet.
   if (!hasGoals) {
@@ -205,6 +214,24 @@ function buildAnswer(
       headline: 'Máte na to',
       qualifier: 'ale během rodičovské budete sahat do úspor',
       reason: `Během rodičovské vám bude chybět ${czkMonthly(leave.shortfallPerMonth)}, celkem ${czk(leave.shortfallTotal)}. Rezerva to pokryje a zbyde vám ${czk(leave.reserveLeftAfterLeave)}.`,
+    };
+  }
+
+  if (status !== 'fix_budget' && purchase && (purchase.cashGap > 0 || purchase.monthlyShortfall > 0)) {
+    const missingCash = purchase.cashGap > 0;
+    const timing = purchase.purchaseMonth !== null && purchase.purchaseMonth > 0
+      ? `Při nastaveném spoření vychází koupě ${monthYearIn(purchase.purchaseMonth)}. `
+      : '';
+    const after = purchase.monthlySurplusAfterGoals >= 0
+      ? `Po nastěhování by vám po výdajích a cílech zbylo ${czkMonthly(purchase.monthlySurplusAfterGoals)}.`
+      : `Po nastěhování by vám v rozpočtu chybělo ${czkMonthly(-purchase.monthlySurplusAfterGoals)}.`;
+    return {
+      answer: 'no_but',
+      headline: missingCash ? `Na koupi dnes chybí ${czk(purchase.cashGap)}` : 'Tahle cena se do rozpočtu nevejde',
+      qualifier: '',
+      reason: timing + (budget?.fits && purchase.monthlySurplusAfterGoals < 0 ? 'Dnes rozpočet vychází. ' : '')
+        + after + (purchase.monthlyShortfall > 0 && purchase.monthlySurplusAfterGoals >= 0
+        ? ` Do částky, kterou si chcete každý měsíc nechat volnou, chybí ${czkMonthly(purchase.monthlyShortfall)}.` : ''),
     };
   }
 

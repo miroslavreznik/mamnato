@@ -121,7 +121,7 @@ describe('evaluateOverall', () => {
       mode: 'couple',
       goals: ['property', 'child'],
       income: { person1NetMonthly: 45000, person2NetMonthly: 30000 },
-      savings: { totalSavings: 1050000 }, // po akontaci zbyde jen 50 000 Kč
+      savings: { totalSavings: 1200000 }, // pokryje koupi, nikoli dlouhý výpadek příjmu
       childInMonths: 0, // dítě hned, jinak se do jeho příchodu ještě spoří
       property: { targetPrice: 5000000, mortgageRate: 0.052, loanTermYears: 30 },
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
@@ -249,7 +249,7 @@ describe('tvrzení musí platit, ne jen znít dobře', () => {
       goals: ['property', 'child'],
       person1Age: 31,
       person2Age: 29,
-      income: { person1NetMonthly: 52000, person2NetMonthly: 41000 },
+      income: { person1NetMonthly: 58000, person2NetMonthly: 41000 },
       expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
       savings: { totalSavings: 1100000 },
       property: { targetPrice: 6200000, loanTermYears: 30 },
@@ -268,8 +268,8 @@ describe('tvrzení musí platit, ne jen znít dobře', () => {
       mode: 'couple',
       income: { person1NetMonthly: 52000, person2NetMonthly: 41000 },
       expenses: { rent: 19000, existingLoans: 0, insurance: 1800, food: 9000, transport: 4000, children: 0, utilities: 4500, other: 5000 },
-      savings: { totalSavings: 1100000 },
-      property: { targetPrice: 6200000, loanTermYears: 30 },
+      savings: { totalSavings: 2200000 },
+      property: { targetPrice: 8000000, loanTermYears: 30 },
     });
     const v = evaluateOverall(state, allocs({ downPayment: 24850 })).verdict;
     expect(v.reason).toContain('u cíle níže');

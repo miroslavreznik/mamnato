@@ -63,7 +63,7 @@ describe('režim co kdyby', () => {
     });
     const result = evaluateWhatIf(state, allocs(), new Set(['other']), new Set())!;
     expect(result.improved).toBe(false);
-    expect(result.hint).toContain('škrtáním výdajů nespravíte');
+    expect(result.hint).toContain('poměr splátek k příjmům se tím nezmění');
   });
 
   it('když úspora zkrátí čekání na akontaci, řekne o kolik', () => {

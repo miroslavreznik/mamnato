@@ -6,8 +6,8 @@ import { calculateDefaultAllocations } from '../../src/engine/allocation';
 import { reserveStatus } from '../../src/engine/reserve';
 import { monthsUntilDownPaymentReady } from '../../src/engine/wealthTimeline';
 import {
-  postPurchaseRunwayMonths, downPaymentGap, requiredDownPayment,
-  downPaymentFraction, totalProjectCost,
+  postPurchaseRunwayMonths, downPaymentGap, minimumDownPayment,
+  bankAppraisal,
 } from '../../src/engine/mortgage';
 import { emergencyRunwayMonths } from '../../src/engine/cashflow';
 import { incomeFlow } from '../../src/engine/expenseBreakdown';
@@ -229,27 +229,22 @@ function auditAll(): string[] {
     }
 
     if (buying) {
-      // Termín akontace v dlaždici a měsíc koupě na stuze.
+      // Akontace se naspoří dřív nebo ve stejném měsíci jako celé financování.
       const tileMonths = monthsUntilDownPaymentReady(state, alloc);
       if (downPaymentGap(state) > 0 && path.earliestPurchaseMonth !== null && isFinite(tileMonths)) {
-        rule('akontace: dlaždice vs. stuha', Math.abs(tileMonths - path.earliestPurchaseMonth) <= 1,
-          () => `dlaždice ${tileMonths}, stuha ${path.earliestPurchaseMonth}`);
+        rule('akontace: dlaždice vs. stuha', tileMonths === path.timeline.earliestDownPaymentMonth && tileMonths <= path.earliestPurchaseMonth,
+          () => `akontace ${tileMonths}, koupě ${path.earliestPurchaseMonth}`);
       }
 
       // Proužek pokrytí a chybějící částka měří proti témuž základu.
-      // Proužek pokrytí i mezera musí měřit proti celé investici. Kdyby se
-      // jedno z nich vrátilo k holé ceně, u rekonstrukce se rozejdou.
-      const meterBase = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
+      const meterBase = minimumDownPayment(state);
       const gapBase = effectiveDownPayment(state) + downPaymentGap(state);
       rule('akontace: základ proužku', Math.abs(meterBase - gapBase) < 1 || downPaymentGap(state) === 0,
         () => `proužek ${meterBase}, mezera+akontace ${gapBase}`);
 
-      // Krok „A co teď" slibuje týž termín jako dlaždice.
-      // Obojí staví na `monthsUntilDownPaymentReady`, takže musí sedět
-      // na měsíc; kdyby se jedno z nich vrátilo k dělení, rozejdou se.
-      if (step.key === 'down_payment' && step.monthly && isFinite(tileMonths) && path.earliestPurchaseMonth !== null) {
-        rule('akontace: krok vs. dlaždice', Math.abs(tileMonths - path.earliestPurchaseMonth) <= 1,
-          () => `krok/dlaždice ${tileMonths}, stuha ${path.earliestPurchaseMonth}`);
+      if (step.key === 'down_payment' && path.purchaseMonth !== null) {
+        rule('akontace: krok vs. dlaždice', step.done === monthYearIn(path.purchaseMonth) && summary.purchase?.purchaseMonth === path.purchaseMonth,
+          () => `krok ${step.done}, souhrn ${summary.purchase?.purchaseMonth}, stuha ${path.purchaseMonth}`);
       }
     }
 
@@ -322,8 +317,8 @@ function auditAll(): string[] {
       const rows = buildAssumptions(state);
       const row = (label: string) => rows.find((r) => r.label === label)?.value ?? '';
       const digits = (t: string) => t.replace(/\D/g, '');
-      rule('předpoklady: akontace', digits(row('Akontace z vlastních peněz')).startsWith(digits(czk(effectiveDownPayment(state)))),
-        () => `${row('Akontace z vlastních peněz')} vs. ${czk(effectiveDownPayment(state))}`);
+      rule('předpoklady: akontace', digits(row('Akontace při plánované koupi')).startsWith(digits(czk(downPaymentTarget(state)))),
+        () => `${row('Akontace při plánované koupi')} vs. ${czk(downPaymentTarget(state))}`);
       rule('předpoklady: výše hypotéky', digits(row('Výše hypotéky')) === digits(czk(loanAmount(state))),
         () => `${row('Výše hypotéky')} vs. ${czk(loanAmount(state))}`);
       rule('předpoklady: vlastnictví', digits(row('Náklady na vlastnictví')) === digits(czk(ownershipCosts(state))),
@@ -383,10 +378,10 @@ function auditAll(): string[] {
         () => `věta „${retirementRow.headline}", spočteno ${czk(rent)}`);
     }
 
-    // LTV se počítá z celé investice, stejně jako výše hypotéky.
+    // LTV porovnává úvěr s odhadem zástavy.
     if (buying) {
-      rule('LTV: základ', Math.abs(ltv(state) - loanAmount(state) / totalProjectCost(state)) < 1e-9,
-        () => `${ltv(state)} vs. ${loanAmount(state) / totalProjectCost(state)}`);
+      rule('LTV: základ', Math.abs(ltv(state) - loanAmount(state) / bankAppraisal(state)) < 1e-9,
+        () => `${ltv(state)} vs. ${loanAmount(state) / bankAppraisal(state)}`);
     }
 
     // Průběžný náhled v průvodci počítá z týchž čísel jako výsledky.

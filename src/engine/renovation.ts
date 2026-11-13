@@ -4,8 +4,9 @@ import {
   mortgageRate,
   mortgagePayment,
   renovationCost,
-  effectiveDownPayment,
+  plannedDownPayment,
   ownershipCosts,
+  ownedUtilities,
 } from './mortgage';
 import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
 
@@ -54,7 +55,7 @@ export function evaluateRenovation(state: WizardState): RenovationPhase | null {
   const total = loanAmount(state);
   // Na koupi se čerpá hned, zbytek (rekonstrukce) postupně. Vlastní peníze
   // jdou do koupě jako první, takže banka doplácí zbytek kupní ceny.
-  const drawnAtPurchase = Math.max(0, state.property.targetPrice - effectiveDownPayment(state));
+  const drawnAtPurchase = Math.max(0, state.property.targetPrice - plannedDownPayment(state));
   const drawnAtEnd = total;
 
   const interestOnlyStart = drawnAtPurchase * monthlyRate;
@@ -77,7 +78,7 @@ export function evaluateRenovation(state: WizardState): RenovationPhase | null {
   const disposableDuringRenovation = income - otherExpenses - housingDuringRenovation;
 
   // O kolik je tahle fáze dražší než cílový stav (plná splátka + vlastnictví).
-  const targetHousing = fullPayment + ownershipCosts(state) + state.expenses.utilities;
+  const targetHousing = fullPayment + ownershipCosts(state) + ownedUtilities(state);
   const totalExtraCost = Math.max(0, housingDuringRenovation - targetHousing) * renovation.months;
 
   return {

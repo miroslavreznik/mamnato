@@ -122,7 +122,10 @@ describe('uložené a sdílené měsíční odkládání', () => {
 
   it('výpočet osy používá uložené odkládání bez dalšího parametru', () => {
     const state = plan({ savings: { totalSavings: 700000 }, allocationOverrides: { downPayment: 5000 } });
-    expect(wealthTimeline(state, { months: 60 }).purchaseMonth).toBe(20);
+    const projection = wealthTimeline(state, { months: 120 });
+    expect(projection.earliestDownPaymentMonth).toBe(20);
+    expect(projection.purchaseMonth).toBeGreaterThan(20);
+    expect(projection.points[1].purchaseFund).toBe(705000);
     expect(wealthTimeline({ ...state, allocationOverrides: { downPayment: 0 } }, { months: 60 }).purchaseMonth).toBeNull();
   });
 });

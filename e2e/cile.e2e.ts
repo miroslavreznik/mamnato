@@ -23,7 +23,7 @@ const digits = (s: string | null) => Number((s ?? '').replace(/[^\d]/g, ''))
 async function toGoals(page: Page) {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   await page.getByTestId('mode-couple').click()
   await page.getByTestId('wizard-next').click()
   await num(page, 'Čistý měsíční příjem: osoba 1').fill('45000')
@@ -45,7 +45,7 @@ const slider = (page: Page, i = 0) =>
 
 test('cílová renta se zadává v průvodci a přenese do plánu důchodu', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
   await page.getByTestId('goal-retirement').click()
 
@@ -63,7 +63,7 @@ test('cílová renta se zadává v průvodci a přenese do plánu důchodu', asy
 
 test('důchod ani vlastní cíl nemohou přidělit stejné peníze podruhé', async ({ page }) => {
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
   await page.getByTestId('goal-retirement').click()
   await page.getByTestId('goal-other').click()

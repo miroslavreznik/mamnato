@@ -1,5 +1,5 @@
 import type { WizardState } from '../../types';
-import { mortgageRate, loanAmount as loanAmountOf, mortgagePayment, ownershipCosts as ownershipCostsOf } from '../../engine/mortgage';
+import { mortgageRate, loanAmount as loanAmountOf, mortgagePayment, ownedUtilities, ownershipCosts as ownershipCostsOf } from '../../engine/mortgage';
 import { formatNumber as fmt } from '../../engine/format';
 import Card from '../ui/Card';
 
@@ -16,7 +16,8 @@ export default function MortgageVsRent({ state }: Props) {
   const loanAmount = loanAmountOf(state);
   const payment = mortgagePayment(state);
   const ownershipCosts = ownershipCostsOf(state);
-  const totalOwnership = payment + ownershipCosts + utilities;
+  const nextUtilities = ownedUtilities(state);
+  const totalOwnership = payment + ownershipCosts + nextUtilities;
 
   // Část první splátky jde na úrok, část na jistinu (= spoření do vlastního majetku).
   const firstInterest = loanAmount * (rate / 12);
@@ -64,7 +65,7 @@ export default function MortgageVsRent({ state }: Props) {
             </div>
             <div className="flex justify-between">
               <span>Energie a poplatky:</span>
-              <span>{fmt(utilities)} Kč</span>
+              <span>{fmt(nextUtilities)} Kč</span>
             </div>
           </div>
           <div className="border-t border-line mt-2 pt-2 text-center">
@@ -80,12 +81,14 @@ export default function MortgageVsRent({ state }: Props) {
         </span>
       </div>
 
-      <p className="mt-3 text-xs text-ink-muted text-center">
-        Energie a poplatky po koupi odhadujeme stejnou částkou jako dnes. Upravíte ji v Rozpočtu.
-      </p>
+      {state.property.ownedUtilities === undefined && (
+        <p className="mt-3 text-xs text-ink-muted text-center">
+          Energie a služby v novém bytě odhadujeme podle dnešních záloh. Můžete je změnit v nastavení nákladů a rezervy.
+        </p>
+      )}
       <p className="mt-3 text-xs text-ink-muted text-center">
         Zpočátku ale ~{fmt(firstPrincipal)} Kč ze splátky spoříte do vlastní nemovitosti (jistina), takže „čistý náklad navíc" oproti nájmu je jen zhruba{' '}
-        <span className="font-medium text-ink-label">{effectiveDiff > 0 ? `${fmt(effectiveDiff)} Kč` : '0 Kč (vlastnictví vychází levněji)'}</span>. Celkový dopad na majetek ukazuje graf níže.
+        <span className="font-medium text-ink-label">{effectiveDiff > 0 ? `${fmt(effectiveDiff)} Kč` : '0 Kč (vlastnictví vychází levněji)'}</span>.
       </p>
     </Card>
   );

@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import { wealthTimeline, planHorizonMonths } from './wealthTimeline';
-import type { WealthPoint } from './wealthTimeline';
+import type { WealthPoint, WealthTimelineResult } from './wealthTimeline';
 import { necessaryMonthlyExpenses, totalMonthlyIncome } from './cashflow';
 import { necessaryExpensesAfterPurchase } from './mortgage';
 import type { GoalAllocations } from './allocation';
@@ -36,6 +36,7 @@ export interface TightestPoint {
 }
 
 export interface Journey {
+  timeline: WealthTimelineResult;
   points: WealthPoint[];
   /** Napětí rozpočtu pro každý bod, ve stejném pořadí jako `points`. */
   tension: Tension[];
@@ -53,6 +54,8 @@ export interface Journey {
   horizonMonths: number;
   /** Nejdřívější možný měsíc koupě, tedy mez pro posun události po ose. */
   earliestPurchaseMonth: number | null;
+  purchaseMonth: number | null;
+  purchaseCashAfterClosing: number | null;
 }
 
 /**
@@ -471,6 +474,7 @@ export function journey(
   });
 
   return {
+    timeline: tl,
     points: tl.points,
     tension,
     severity,
@@ -481,5 +485,7 @@ export function journey(
     tightest,
     horizonMonths,
     earliestPurchaseMonth: tl.earliestPurchaseMonth,
+    purchaseMonth: tl.purchaseMonth,
+    purchaseCashAfterClosing: tl.purchaseCashAfterClosing,
   };
 }

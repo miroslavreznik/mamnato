@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { normalizeState } from '../../src/store/localStorage';
+import { createInitialState, wizardReducer } from '../../src/store/wizardStore';
 
 describe('normalizeState', () => {
   it('rejects non-state shapes', () => {
@@ -72,5 +73,37 @@ describe('normalizeState', () => {
       goals: [],
     })!;
     expect(s.expenses.discretionaryBreakdown).toEqual({ 'leisure.dining': 2000 });
+  });
+
+  it('caps stale manual down payments to the savings available after loading and editing', () => {
+    const initial = createInitialState();
+    const legacy = {
+      ...initial,
+      goals: ['property'],
+      savings: { totalSavings: 200000, downPaymentFromSavings: 1210000 },
+    };
+    expect(normalizeState(legacy)?.savings.downPaymentFromSavings).toBe(200000);
+
+    const state = { ...initial, savings: { totalSavings: 1500000, downPaymentFromSavings: 1210000 } };
+    const lowered = wizardReducer(state, { type: 'UPDATE_SAVINGS', field: 'totalSavings', value: 200000 });
+    expect(lowered.savings.downPaymentFromSavings).toBe(200000);
+    const mixed = normalizeState({
+      ...legacy,
+      savings: {
+        ...legacy.savings,
+        totalSavings: 1250000,
+        breakdown: { current: 100000, savingsAccount: 150000, investments: 1000000 },
+      },
+    });
+    expect(mixed?.savings.totalSavings).toBe(1250000);
+    expect(mixed?.savings.downPaymentFromSavings).toBe(250000);
+
+    const oldTotalOverride = normalizeState({
+      ...legacy,
+      savings: { ...legacy.savings, breakdown: mixed?.savings.breakdown },
+    });
+    expect(oldTotalOverride?.savings.totalSavings).toBe(200000);
+    expect(oldTotalOverride?.savings.downPaymentFromSavings).toBe(200000);
+    expect(oldTotalOverride?.savings.breakdown).toBeUndefined();
   });
 });

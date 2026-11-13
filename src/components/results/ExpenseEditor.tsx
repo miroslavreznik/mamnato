@@ -1,5 +1,5 @@
 import type { WizardState } from '../../types';
-import { NECESSARY_EXPENSE_FIELDS, DISCRETIONARY_EXPENSE_FIELD } from '../../engine/expenseFields';
+import { NECESSARY_EXPENSE_FIELDS, DISCRETIONARY_EXPENSE_FIELD, AGGREGATE_EXPENSE_FIELD } from '../../engine/expenseFields';
 import { DISCRETIONARY_GROUPS, discretionaryGroupTotals, hasDiscretionaryBreakdown, itemKey } from '../../engine/discretionary';
 import {
   totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable, savingsRate,
@@ -9,6 +9,7 @@ import NumField from '../ui/NumField';
 import Tooltip from '../ui/Tooltip';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
+import Disclosure from '../ui/Disclosure';
 import { fieldClass } from '../ui/fieldClass';
 
 /**
@@ -74,8 +75,13 @@ export default function ExpenseEditor({ state, onChange, onChangeDiscretionaryIt
   const breakdown = state.expenses.discretionaryBreakdown;
   const detailed = hasDiscretionaryBreakdown(breakdown);
   const groups = discretionaryGroupTotals(breakdown);
+  const housingFields = ['rent', 'utilities', 'existingLoans'];
 
-  const fields = NECESSARY_EXPENSE_FIELDS.filter((c) => !c.familyOnly || state.mode === 'family');
+  const fields = NECESSARY_EXPENSE_FIELDS.filter((c) => {
+    if (c.familyOnly && state.mode !== 'family') return false;
+    return !state.mortgageFlow || housingFields.includes(c.field);
+  });
+  if (state.expenses.essentials !== undefined) fields.push(AGGREGATE_EXPENSE_FIELD);
 
   return (
     <Card
@@ -90,7 +96,7 @@ export default function ExpenseEditor({ state, onChange, onChangeDiscretionaryIt
               key={c.field}
               label={c.short}
               tooltip={c.tooltip}
-              value={state.expenses[c.field as keyof typeof state.expenses] as number}
+              value={(state.expenses[c.field as keyof typeof state.expenses] as number | undefined) ?? 0}
               step={c.step}
               onChange={(v) => onChange(c.field, v)}
             />
@@ -100,36 +106,37 @@ export default function ExpenseEditor({ state, onChange, onChangeDiscretionaryIt
         <div className="mt-6 md:mt-0">
           <p className="pb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted">Zbytné</p>
           {detailed ? (
-            <div className="space-y-3">
-              {DISCRETIONARY_GROUPS.map((g) => (
-                <div key={g.key}>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-ink-label">{g.label}</span>
-                    <span className="text-xs text-ink-muted tabular-nums">
-                      {czk(groups.find((x) => x.key === g.key)!.amount)}
-                    </span>
+            <Disclosure summary="Upravit podrobný rozpis zbytných výdajů">
+              <div className="space-y-3">
+                {DISCRETIONARY_GROUPS.map((g) => (
+                  <div key={g.key}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-ink-label">{g.label}</span>
+                      <span className="text-xs text-ink-muted tabular-nums">
+                        {czk(groups.find((x) => x.key === g.key)!.amount)}
+                      </span>
+                    </div>
+                    <div className="divide-y divide-line">
+                      {g.items.map((it) => {
+                        const key = itemKey(g.key, it.key);
+                        return (
+                          <Row
+                            key={key}
+                            label={it.label}
+                            value={breakdown?.[key] ?? 0}
+                            step={200}
+                            onChange={(v) => onChangeDiscretionaryItem(key, v)}
+                          />
+                        );
+                      })}
+                    </div>
                   </div>
-                  <div className="divide-y divide-line">
-                    {g.items.map((it) => {
-                      const key = itemKey(g.key, it.key);
-                      return (
-                        <Row
-                          key={key}
-                          label={it.label}
-                          value={breakdown?.[key] ?? 0}
-                          step={200}
-                          onChange={(v) => onChangeDiscretionaryItem(key, v)}
-                        />
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-              <p className="text-xs text-ink-muted">
-                Zbytné výdaje jsou součtem rozpisu, proto se nezadávají jedním číslem.
-                Rozpis se dá zrušit v průvodci.
-              </p>
-            </div>
+                ))}
+                <p className="text-xs text-ink-muted">
+                  Zbytné výdaje jsou součtem rozpisu. Rozpis se dá zrušit v průvodci.
+                </p>
+              </div>
+            </Disclosure>
           ) : (
             <div className="divide-y divide-line">
               <Row

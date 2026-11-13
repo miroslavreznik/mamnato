@@ -63,16 +63,16 @@ describe('evaluateParentalLeave', () => {
   it('reports reserve coverage of the leave shortfall', () => {
     const state = makeState({
       goals: ['child', 'property'],
-      savings: { totalSavings: 1200000, downPaymentFromSavings: 1000000 }, // rezerva 200k
+      savings: { totalSavings: 1200000, downPaymentFromSavings: 1000000 }, // rezerva 178 700 Kč po poplatcích
       // Dítě hned: rezerva je pak přesně to, co zbude po akontaci. Kdo ho
       // čeká později, má do té doby naspořeno víc a rezerva je jiná.
       childInMonths: 0,
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 5000 },
     });
     const r = evaluateParentalLeave(state)!;
-    expect(r.reserveAfter).toBe(200000);
+    expect(r.reserveAfter).toBe(178700);
     if (r.shortfallPerMonth > 0) {
-      expect(r.monthsCovered).toBe(Math.floor(200000 / r.shortfallPerMonth));
+      expect(r.monthsCovered).toBe(Math.floor(178700 / r.shortfallPerMonth));
       expect(r.shortfallTotal).toBe(r.shortfallPerMonth * 36);
     }
   });

@@ -33,31 +33,31 @@ import { hasDiscretionaryBreakdown } from '../../engine/discretionary';
 import { withExcludedExpenses, withExcludedGoals, isGoalActive } from '../../engine/expenseBreakdown';
 import { parentalLeaveApplicable } from '../../engine/parentalLeave';
 import type { CustomGoal, ParentalLeave } from '../../types';
-import { saveState } from '../../store/localStorage';
 import { buildShareUrl } from '../../store/shareLink';
+import { clampDownPayment } from '../../engine/mortgage';
 import Disclaimer from '../ui/Disclaimer';
 import PlausibilityNotes, { PlausibilityHint } from '../ui/PlausibilityNotes';
 import AssumptionsCard from './AssumptionsCard';
 import GoalPlannerPanel from './GoalPlannerPanel';
+import Disclosure from '../ui/Disclosure';
+import { maxAffordableProperty } from '../../engine/purchasePlan';
+import type { PurchaseSetting } from '../wizard/PurchaseFields';
 import { czkPerMonth } from '../../engine/format';
 import { budgetNow, clampGoalAllocation } from '../../engine/budget';
 import Callout from '../ui/Callout';
 
 interface ResultsDashboardProps {
   state: WizardState;
+  onStateChange: (state: WizardState) => void;
   onEdit: () => void;
+  onExpandPlan?: () => void;
   onReset: () => void;
   onHome: () => void;
   /** Upozornění na cizí přehled. Kreslí ho App, ale patří dovnitř sloupce. */
   banner?: ReactNode;
 }
 
-export default function ResultsDashboard({ state: initialState, onEdit, onReset, onHome, banner }: ResultsDashboardProps) {
-  // Výsledková stránka pracuje s vlastní kopií stavu, aby úpravy cílů (např.
-  // ve „Vlastní finanční cíle") okamžitě přepočítaly souhrn i grafy a zároveň
-  // se uložily do prohlížeče.
-  const [state, setState] = useState<WizardState>(initialState);
-
+export default function ResultsDashboard({ state, onStateChange, onEdit, onReset, onHome, onExpandPlan, banner }: ResultsDashboardProps) {
   const hasProperty = state.goals.includes('property');
   const hasRetirement = state.goals.includes('retirement');
   const hasOther = state.goals.includes('other');
@@ -96,10 +96,35 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
   // „Živý" stav, ze kterého počítají všechny karty (kromě rozpočtu, který
   // potřebuje původní hodnoty, aby šlo položky zase zapnout).
-  const activeState = useMemo(
+  const activeInputs = useMemo(
     () => withExcludedGoals(withExcludedExpenses(state, excludedExpenses), excludedGoals),
     [state, excludedExpenses, excludedGoals]
   );
+  const priceEstimate = useMemo(
+    () => activeInputs.mortgageFlow === 'price' && activeInputs.goals.includes('property')
+      ? maxAffordableProperty(activeInputs)
+      : undefined,
+    [activeInputs],
+  );
+  const activeState = useMemo(() => {
+    if (!priceEstimate) return activeInputs;
+    return {
+      ...activeInputs,
+      property: { ...activeInputs.property, targetPrice: priceEstimate.price },
+      savings: { ...activeInputs.savings, downPaymentFromSavings: priceEstimate.downPayment },
+      goals: priceEstimate.price > 0 ? activeInputs.goals : activeInputs.goals.filter((goal) => goal !== 'property'),
+    };
+  }, [activeInputs, priceEstimate]);
+  const baselineState = useMemo(() => {
+    if (state.mortgageFlow !== 'price') return state;
+    const estimate = maxAffordableProperty(state);
+    return {
+      ...state,
+      property: { ...state.property, targetPrice: estimate.price },
+      savings: { ...state.savings, downPaymentFromSavings: estimate.downPayment },
+    };
+  }, [state]);
+  const propertyCalculationAvailable = hasProperty && priceEstimate?.price !== 0;
 
   /**
    * Kolik měsíčně jde na který cíl.
@@ -164,8 +189,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
         ? { ...previous, custom: { ...previous.custom, [id]: safeValue } }
         : { ...previous, [goal]: safeValue },
     };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   const handleChangeRetirementRent = (value: number) => {
@@ -173,31 +197,27 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
       ...state,
       retirementMonthlyRent: Math.min(500000, Math.max(0, Math.round(value))),
     };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   // Úprava vlastních cílů v detailu. Alokace se dorovnávat nemusí: drží se
   // podle `id` a nezadaný cíl si vezme výchozí rozdělení.
   const handleChangeCustomGoals = (goals: CustomGoal[]) => {
     const next = { ...state, customGoals: goals };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   // Očekávané výnosy z karty důchodu. Z akciové řady počítá i verdikt.
   const handleChangeRetirementRate = (key: string, rate: number) => {
     const next = { ...state, retirementRates: { ...state.retirementRates, [key]: rate } };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   // Náklady na dítě z karty (počet dětí, částky dle věku, VŠ). Patří do plánu:
   // počítá z nich časová osa, rodičovská i rozdělení peněz na cíle.
   const handleChangeChildCosts = (patch: NonNullable<WizardState['childCosts']>) => {
     const next = { ...state, childCosts: { ...state.childCosts, ...patch } };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   /**
@@ -208,8 +228,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
    */
   const handleChangeReserveMonths = (months: number) => {
     const next = { ...state, reserveMonths: Math.min(MAX_RESERVE_MONTHS, Math.max(1, Math.round(months))) };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   /**
@@ -221,22 +240,19 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
    */
   const handleDismissCheck = (key: string) => {
     const next = { ...state, dismissedChecks: [...(state.dismissedChecks ?? []), key] };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   const handleChangeParentalLeave = (value: ParentalLeave | undefined) => {
     const next = { ...state, parentalLeave: value };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   // Akontace jde upravit přímo ve výsledcích, změna se uloží a přepočítá vše.
   const handleChangeDownPayment = (value: number) => {
-    const clamped = Math.max(0, Math.min(value, state.savings.totalSavings));
+    const clamped = clampDownPayment(state, value);
     const next = { ...state, savings: { ...state.savings, downPaymentFromSavings: clamped } };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   /**
@@ -249,16 +265,14 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
    */
   const handleChangeChildTiming = (months: number) => {
     const next = { ...state, childInMonths: Math.min(480, Math.max(0, Math.round(months))) };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   // Výdaje jdou přepsat přímo v Rozpočtu. Zapisuje se do zadaného stavu,
   // ne do toho po „co kdyby": jsou to skutečné údaje, ne úvaha nad grafem.
   const handleChangeExpense = (field: string, value: number) => {
     const next = { ...state, expenses: { ...state.expenses, [field]: Math.max(0, value) } };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   // Položka podrobného rozpisu zbytných výdajů. Souhrnné `other` je jejich
@@ -267,16 +281,22 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
     const breakdown = { ...(state.expenses.discretionaryBreakdown ?? {}), [key]: Math.max(0, value) };
     const other = Object.values(breakdown).reduce((sum, v) => sum + (v ?? 0), 0);
     const next = { ...state, expenses: { ...state.expenses, discretionaryBreakdown: breakdown, other } };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
   };
 
   // Úroková sazba jde stejně jako akontace ladit přímo ve výsledcích.
   const handleChangeRate = (value: number) => {
     const clamped = Math.max(0.001, Math.min(value, 0.20));
     const next = { ...state, property: { ...state.property, mortgageRate: clamped } };
-    setState(next);
-    saveState(next);
+    onStateChange(next);
+  };
+
+  const handleChangePurchaseSetting = (field: PurchaseSetting, value: number | undefined) => {
+    if (field === 'reserveMonths') {
+      onStateChange({ ...state, reserveMonths: value });
+      return;
+    }
+    onStateChange({ ...state, property: { ...state.property, [field]: value } });
   };
 
   // Sdílení přehledu odkazem, stav se zakóduje do URL, nic se neposílá na server.
@@ -409,6 +429,8 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             allocations={activeAllocations}
             onOpenSection={selectTab}
             onChangeChildTiming={handleChangeChildTiming}
+            affordableProperty={priceEstimate}
+            onExpandPlan={onExpandPlan}
           />
           {hasNoGoals && (
             <div className="bg-tint-caution border border-line rounded-xl p-6 text-center">
@@ -429,7 +451,9 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
             setExcludedGoals={setExcludedGoals}
           />
           {hasDiscretionaryBreakdown(activeState.expenses.discretionaryBreakdown) && (
-            <DiscretionaryBreakdownChart state={activeState} />
+            <Disclosure summary="Podrobný rozpis zbytných výdajů">
+              <DiscretionaryBreakdownChart state={activeState} />
+            </Disclosure>
           )}
           <ExpenseEditor
             state={state}
@@ -442,56 +466,37 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
 
         {/* Bydlení a hypotéka */}
         {hasProperty && (
-          <ResultsSection id="bydleni" title="Vlastní bydlení" subtitle="Největší položka plánu: akontace, splátka, limity a srovnání s nájmem" active={isVisible('bydleni')}>
-            <nav aria-label="Části sekce vlastní bydlení" className="no-print flex flex-wrap gap-2">
-              {[
-                ['bydleni-dostupnost', 'Dostupnost hypotéky'],
-                ['bydleni-srovnani', 'Koupě vs. nájem'],
-                ['bydleni-dane', 'Daně a odpočty'],
-              ].map(([id, label]) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                  className="min-h-[44px] px-4 rounded-full border border-line text-sm font-semibold text-ink-body hover:bg-sunken"
-                >
-                  {label}
-                </button>
-              ))}
-            </nav>
-            <div id="bydleni-dostupnost" className="scroll-mt-36 space-y-6">
-              <div>
-                <h3 className="type-section text-ink">Dostupnost hypotéky</h3>
-                <p className="text-sm text-ink-muted">Akontace, měsíční splátka a orientační bankovní obezřetnost.</p>
-              </div>
-            <SavingsChart state={activeState} allocations={activeAllocations} />
-            <PropertyAffordability
-              state={activeState}
-              onChangeDownPayment={handleChangeDownPayment}
-              onChangeRate={handleChangeRate}
-              monthlySaving={allocations.downPayment}
-              onChangeMonthlySaving={(v) => handleChangeAllocation('downPayment', null, v)}
-            />
-            <DtiDstiIndicator state={activeState} />
-            </div>
-            <div id="bydleni-srovnani" className="scroll-mt-36 space-y-6">
-              <div>
-                <h3 className="type-section text-ink">Koupě vs. nájem</h3>
-                <p className="text-sm text-ink-muted">Srovnání čistého jmění včetně vlastního kapitálu v nemovitosti.</p>
-              </div>
-            <MortgageVsRent state={activeState} />
-            <InvestmentComparisonChart
-              state={activeState}
-              onChangeReturn={(rate) => handleChangeRetirementRate('sp500', rate)}
-            />
-            </div>
-            <div id="bydleni-dane" className="scroll-mt-36 space-y-6">
-              <div>
-                <h3 className="type-section text-ink">Daně a odpočty</h3>
-                <p className="text-sm text-ink-muted">Orientační dopad odpočtu zaplacených úroků.</p>
-              </div>
-            <TaxReliefCard state={activeState} />
-            </div>
+          <ResultsSection id="bydleni" title="Vlastní bydlení" subtitle="Vlastní peníze při koupi a měsíční splátka" active={isVisible('bydleni')}>
+            {propertyCalculationAvailable ? (
+              <>
+                <PropertyAffordability
+                  state={activeState}
+                  onChangeDownPayment={priceEstimate ? undefined : handleChangeDownPayment}
+                  onChangeRate={handleChangeRate}
+                  monthlySaving={allocations.downPayment}
+                  onChangeMonthlySaving={priceEstimate ? undefined : (v) => handleChangeAllocation('downPayment', null, v)}
+                  onChangePurchaseSetting={handleChangePurchaseSetting}
+                />
+                {!priceEstimate && <SavingsChart state={activeState} allocations={activeAllocations} />}
+                <Disclosure summary="Bankovní ukazatele DTI a DSTI">
+                  <DtiDstiIndicator state={activeState} />
+                </Disclosure>
+                <Disclosure summary="Srovnání koupě a nájmu">
+                  <div className="space-y-6">
+                    <MortgageVsRent state={activeState} />
+                    <InvestmentComparisonChart
+                      state={activeState}
+                      onChangeReturn={(rate) => handleChangeRetirementRate('sp500', rate)}
+                    />
+                  </div>
+                </Disclosure>
+                <Disclosure summary="Daně a odpočty">
+                  <TaxReliefCard state={activeState} />
+                </Disclosure>
+              </>
+            ) : (
+              <Callout tone="caution">V tomto rozpočtu zatím cena bytu nevychází. Upravte údaje a zkuste další variantu.</Callout>
+            )}
           </ResultsSection>
         )}
 
@@ -602,7 +607,7 @@ export default function ResultsDashboard({ state: initialState, onEdit, onReset,
           <WhatIfProvider
             state={activeState}
             allocations={activeAllocations}
-            allGoals={state}
+            allGoals={baselineState}
             allGoalAllocations={allocations}
             excludedGoals={excludedGoals}
             onToggleGoal={toggleGoal}

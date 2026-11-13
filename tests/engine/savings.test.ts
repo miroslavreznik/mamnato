@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { savingsProjection, investmentComparison, retirementProjection, retirementStartingCapital, goalProgress, fourPercentTarget, yearOfReachingTarget, yearsUntilRetirement, estimatedStatutoryRetirementAge } from '../../src/engine/savings';
 import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
-import { effectiveDownPayment, necessaryExpensesAfterPurchase } from '../../src/engine/mortgage';
+import { necessaryExpensesAfterPurchase } from '../../src/engine/mortgage';
+import { purchaseCashPlan } from '../../src/engine/purchasePlan';
 import type { CustomGoal } from '../../src/types';
 import type { WizardState } from '../../src/types';
 
@@ -58,21 +59,25 @@ describe('investmentComparison', () => {
     expect(data[30].year).toBe(30);
   });
 
-  it('property net worth starts at savings minus loan gap', () => {
+  it('property net worth starts at the down payment planned for purchase', () => {
     const state = makeState();
     const data = investmentComparison(state, 0.03, 0.07, 0.03, 30);
-    // Year 0: property value = 5500000, remaining loan = 5000000
-    // net worth = 5500000 - 5000000 = 500000
-    expect(data[0].propertyNetWorth).toBe(500000);
+    expect(data[0].propertyNetWorth).toBe(1100000);
   });
 
-  it('všechny tři varianty startují na stejné částce', () => {
-    // Bez společného startu by se čáry nedaly porovnávat: vlastník dá akontaci
-    // do nemovitosti, nájemník ji investuje, třetí ji nechá ležet.
-    const data = investmentComparison(makeState(), 0.03, 0.07, 0.03, 30);
-    expect(data[0].rentInvestNetWorth).toBe(500000);
-    expect(data[0].rentNoInvestNetWorth).toBe(500000);
-    expect(data[0].propertyNetWorth).toBe(500000);
+  it('nájemníkovi zůstane hotovost, kterou by vlastník zaplatil při koupi', () => {
+    const state = makeState({ property: { targetPrice: 5500000, purchaseCosts: 100000 } });
+    const data = investmentComparison(state, 0.03, 0.07, 0.03, 30);
+    expect(data[0].rentInvestNetWorth).toBe(1200000);
+    expect(data[0].rentNoInvestNetWorth).toBe(1200000);
+    expect(data[0].propertyNetWorth).toBe(1100000);
+  });
+
+  it('vyšší energie v novém bytě zvýší částku, kterou může investovat nájemník', () => {
+    const property = { targetPrice: 5500000, purchaseCosts: 100000 };
+    const standard = investmentComparison(makeState({ property }));
+    const higherUtilities = investmentComparison(makeState({ property: { ...property, ownedUtilities: 7000 } }));
+    expect(higherUtilities[1].rentInvestNetWorth).toBeGreaterThan(standard[1].rentInvestNetWorth);
   });
 
   it('kdo rozdíl neinvestuje, tomu jmění neroste', () => {
@@ -230,12 +235,20 @@ describe('retirementStartingCapital', () => {
     // rezerva, podruhé jako investované portfolio. A rezerva se u kupujícího
     // poměřuje splátkou, ne nájmem, takže je vyšší; s dnešními výdaji tady
     // vycházel důchodový kapitál větší, než kolik doopravdy zbývá.
-    const state = makeState({ goals: ['property', 'retirement'], savings: { totalSavings: 2000000 } });
+    const state = makeState({ goals: ['property', 'retirement'], savings: { totalSavings: 2000000 }, property: { targetPrice: 5500000, purchaseCosts: 100000 } });
     const reserve = necessaryExpensesAfterPurchase(state) * 3;
     // Celé koruny: je to částka do pole, ne mezivýsledek.
     expect(retirementStartingCapital(state))
-      .toBe(Math.round(2000000 - effectiveDownPayment(state) - reserve));
+      .toBe(2000000 - purchaseCashPlan(state).cashRequired);
     expect(reserve).toBeGreaterThan(necessaryMonthlyExpenses(state) * 3);
+  });
+
+  it('nedostatek hotovosti na koupi nesnižuje už investované peníze', () => {
+    const state = makeState({
+      goals: ['property', 'retirement'],
+      savings: { totalSavings: 1500000, breakdown: { current: 0, savingsAccount: 1000000, investments: 500000 } },
+    });
+    expect(retirementStartingCapital(state)).toBe(500000);
   });
 
   it('bez bydlení se akontace neodečítá', () => {

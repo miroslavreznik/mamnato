@@ -1,12 +1,11 @@
 import type { WizardState, CustomGoal } from '../types';
 import type { GoalAllocations } from './allocation';
-import { evaluateOverall, type Verdict } from './summary';
+import { evaluateOverall, type OverallSummary, type Verdict } from './summary';
 import { withExcludedExpenses, withExcludedGoals, isGoalActive } from './expenseBreakdown';
 import { evaluateScenario } from './scenarios';
-import { dsti, downPaymentGap } from './mortgage';
-import { monthsToSaveAtAllocation } from './allocation';
-import { monthlyDisposable } from './cashflow';
+import { dsti } from './mortgage';
 import { endSentence, formatMonths } from './format';
+import type { WealthTimelineResult } from './wealthTimeline';
 
 /**
  * Režim „co kdyby": co udělá vypnutí výdaje nebo cíle s odpovědí „Mám na to?".
@@ -76,10 +75,11 @@ export function compareScenarios(
   baselineState: WizardState,
   baselineAllocations: GoalAllocations,
   currentState: WizardState,
-  currentAllocations: GoalAllocations
+  currentAllocations: GoalAllocations,
+  timelines?: { baseline: WealthTimelineResult; current: WealthTimelineResult },
 ): WhatIfResult {
-  const baseline = evaluateOverall(baselineState, baselineAllocations);
-  const now = evaluateOverall(currentState, currentAllocations);
+  const baseline = evaluateOverall(baselineState, baselineAllocations, timelines?.baseline);
+  const now = evaluateOverall(currentState, currentAllocations, timelines?.current);
 
   const improved = RANK[now.verdict.answer] > RANK[baseline.verdict.answer];
   const worsened = RANK[now.verdict.answer] < RANK[baseline.verdict.answer];
@@ -89,36 +89,31 @@ export function compareScenarios(
     now: now.verdict,
     improved,
     worsened,
-    hint: buildHint(baselineState, currentState, baselineAllocations, improved),
+    hint: buildHint(currentState, baseline.purchase, now.purchase, improved),
   };
 }
 
 function buildHint(
-  state: WizardState,
   adjusted: WizardState,
-  allocations: GoalAllocations,
+  baseline: OverallSummary['purchase'],
+  current: OverallSummary['purchase'],
   improved: boolean
 ): string {
   const generic = 'Na celkovou odpověď to zatím nestačí. Zkuste vypnout i něco dalšího.';
   if (improved || !adjusted.goals.includes('property')) return generic;
 
-  // Splátka nad limit bank je slepá ulička: tohle uživatel škrtáním výdajů
-  // nespraví a musí se to říct nahlas, ať nezkouší dál.
+  // Bankovní vodítko je poměr splátek k příjmu domácnosti.
   if (evaluateScenario(adjusted).id === 'cannot_afford_dsti') {
     const dstiPct = Math.round(dsti(adjusted) * 100);
-    return `Splátka by zabrala ${dstiPct} % čistého příjmu, což je nad tím, co banky obvykle schválí. Tohle škrtáním výdajů nespravíte: pomohla by levnější nemovitost, vyšší akontace, delší splatnost nebo vyšší příjem.`;
+    return `Splátky by zabraly ${dstiPct} % čistého příjmu a banka může úvěr posoudit obezřetněji. Nižší běžné výdaje pomůžou vašemu rozpočtu, poměr splátek k příjmům se tím nezmění.`;
   }
 
-  // Chybí akontace: verdikt se sice nehnul, ale úspora zkracuje čekání,
-  // což je konkrétní a měřitelný přínos. Počítá se s tím, že ušetřené peníze
-  // půjdou právě na akontaci, tedy k tomu, co na ni uživatel odkládá už teď.
-  if (downPaymentGap(adjusted) > 0) {
-    const freed = Math.max(0, monthlyDisposable(adjusted) - monthlyDisposable(state));
-    const before = monthsToSaveAtAllocation(state, allocations.downPayment);
-    const after = monthsToSaveAtAllocation(adjusted, allocations.downPayment + freed);
+  if (baseline && current && current.cashGap > 0) {
+    const before = baseline.purchaseMonth ?? Infinity;
+    const after = current.purchaseMonth ?? Infinity;
     return after < before
-      ? endSentence(`Verdikt se zatím nezměnil, ale chybějící akontaci díky tomu naspoříte za ${formatMonths(after, true)} místo ${formatMonths(before, true)}`)
-      : 'Zbývá naspořit akontaci. Na celkovou odpověď to zatím nestačí.';
+      ? endSentence(`Na koupi včetně nákladů a rezervy naspoříte za ${formatMonths(after, true)}${Number.isFinite(before) ? ` místo ${formatMonths(before, true)}` : ''}`)
+      : 'Zbývá naspořit hotovost na koupi včetně nákladů a rezervy.';
   }
 
   return generic;

@@ -23,7 +23,7 @@ function contrast(a: string, b: string): number {
 
 async function openFirstTooltip(page: Page) {
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   await page.getByTestId('wizard-next').click() // → Příjmy, kde jsou nápovědy
   await page.getByRole('button', { name: 'Nápověda' }).first().click()
   const tip = page.getByRole('tooltip').first()

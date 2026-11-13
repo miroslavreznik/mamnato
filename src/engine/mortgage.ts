@@ -1,7 +1,10 @@
 import type { WizardState } from '../types';
 import { DEFAULTS } from './defaults';
 import { estimate, type Estimate } from './estimate';
-import { totalMonthlyIncome, monthlyDisposable, necessaryMonthlyExpenses, totalMonthlyExpenses } from './cashflow';
+import { liquidSavings, totalMonthlyIncome, monthlyDisposable, necessaryMonthlyExpenses, totalMonthlyExpenses } from './cashflow';
+import { purchaseClosingCosts } from './purchaseCosts';
+
+export { liquidSavings } from './cashflow';
 
 export function monthlyMortgagePayment(
   loanAmount: number,
@@ -19,25 +22,36 @@ export function renovationCost(state: WizardState): number {
   return state.property.renovation?.cost ?? 0;
 }
 
-/**
- * Celková investice do bydlení: kupní cena plus rekonstrukce.
- *
- * Banka půjčuje proti hodnotě nemovitosti PO rekonstrukci, takže i akontace
- * i LTV se počítají z téhle částky, ne jen z kupní ceny. Bez toho by
- * rekonstrukce vypadala jako peníze, které se objeví odnikud.
- */
+/** Kupní cena plus rekonstrukce. Vedlejší hotovostní náklady se vedou zvlášť. */
 export function totalProjectCost(state: WizardState): number {
   return state.property.targetPrice + renovationCost(state);
 }
 
+/** Bankovní odhad hodnoty zástavy. Bez odhadu používáme kupní cenu bytu. */
+export function bankAppraisal(state: WizardState): number {
+  return state.property.bankAppraisal ?? state.property.targetPrice;
+}
+
+export function clampDownPayment(state: WizardState, amount: number): number {
+  return Math.max(0, Math.min(amount, liquidSavings(state), totalProjectCost(state)));
+}
+
 export function effectiveDownPayment(state: WizardState): number {
-  if (state.savings.downPaymentFromSavings != null) return state.savings.downPaymentFromSavings;
-  // Výchozí: povinné minimum dle LTV (zbytek úspor zůstává jako rezerva),
-  // omezené tím, co skutečně máte naspořeno.
-  return Math.min(
-    state.savings.totalSavings,
-    requiredDownPayment(totalProjectCost(state), downPaymentFraction(state))
-  );
+  return clampDownPayment(state, state.savings.downPaymentFromSavings ?? minimumDownPayment(state));
+}
+
+/** Vlastní peníze potřebné při koupi, pokud maximální úvěr určuje hodnota zástavy. */
+export function minimumDownPayment(state: WizardState): number {
+  const project = totalProjectCost(state);
+  const value = bankAppraisal(state);
+  // Odčítáme zaokrouhlený úvěr, aby nezaokrouhlené LTV nepřekročilo hranici.
+  const maxLoan = Math.floor(value - requiredDownPayment(value, downPaymentFraction(state)));
+  return Math.max(0, project - maxLoan);
+}
+
+/** Akontace ve chvíli koupě, až budou vlastní prostředky na úvěr naspořené. */
+export function plannedDownPayment(state: WizardState): number {
+  return Math.max(minimumDownPayment(state), effectiveDownPayment(state));
 }
 
 export function fixationYears(state: WizardState): number {
@@ -107,7 +121,7 @@ export function isOwnershipCostsOverridden(state: WizardState): boolean {
 
 // Výše hypotéky = cena nemovitosti minus akontace (nikdy záporná).
 export function loanAmount(state: WizardState): number {
-  return Math.max(0, totalProjectCost(state) - effectiveDownPayment(state));
+  return Math.max(0, totalProjectCost(state) - plannedDownPayment(state));
 }
 
 // Odhadovaná měsíční splátka hypotéky pro zvolenou akontaci a parametry úvěru.
@@ -115,12 +129,15 @@ export function mortgagePayment(state: WizardState): number {
   return monthlyMortgagePayment(loanAmount(state), mortgageRate(state), loanTermYears(state));
 }
 
-// Po koupi nájem nahradí hypotéka a náklady na vlastnictví.
-// Energie zůstávají mezi výdaji, náklady na vlastnictví je nezahrnují.
+export function ownedUtilities(state: WizardState): number {
+  return state.property.ownedUtilities ?? state.expenses.utilities;
+}
+
+// Po koupi nastoupí splátka, náklady na vlastnictví a energie nového bytu.
 export function expensesAfterPurchase(state: WizardState): number {
   return totalMonthlyExpenses(state)
-    - state.expenses.rent
-    + mortgagePayment(state) + ownershipCosts(state);
+    - state.expenses.rent - state.expenses.utilities
+    + mortgagePayment(state) + ownershipCosts(state) + ownedUtilities(state);
 }
 
 /**
@@ -134,8 +151,8 @@ export function expensesAfterPurchase(state: WizardState): number {
  */
 export function necessaryExpensesAfterPurchase(state: WizardState): number {
   return necessaryMonthlyExpenses(state)
-    - state.expenses.rent
-    + mortgagePayment(state) + ownershipCosts(state);
+    - state.expenses.rent - state.expenses.utilities
+    + mortgagePayment(state) + ownershipCosts(state) + ownedUtilities(state);
 }
 
 // Věk žadatelů (kladné hodnoty), seřazeno není potřeba.
@@ -177,8 +194,7 @@ export function requiredDownPayment(
 }
 
 export function downPaymentGap(state: WizardState): number {
-  const required = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
-  return Math.max(0, required - effectiveDownPayment(state));
+  return Math.max(0, minimumDownPayment(state) - effectiveDownPayment(state));
 }
 
 export function monthsToSaveDownPayment(state: WizardState): number {
@@ -197,15 +213,16 @@ export function totalLoanInterest(loanAmount: number, annualRate: number, termYe
 
 // Kolik měsíců vydrží rezerva PO koupi: po zaplacení akontace zbyde méně úspor
 // a místo nájmu se platí (obvykle vyšší) hypotéka + náklady na vlastnictví.
-export function postPurchaseRunwayMonths(state: WizardState): number {
-  const reserveAfter = Math.max(0, state.savings.totalSavings - effectiveDownPayment(state));
+export function postPurchaseRunwayMonths(state: WizardState, cashAfterClosing?: number): number {
+  const reserveAfter = Math.max(0, cashAfterClosing
+    ?? liquidSavings(state) - plannedDownPayment(state) - purchaseClosingCosts(state));
   const necessaryAfter = necessaryExpensesAfterPurchase(state);
   if (necessaryAfter <= 0) return Infinity;
   return reserveAfter / necessaryAfter;
 }
 
 export function dti(state: WizardState): number {
-  const newLoan = totalProjectCost(state) - effectiveDownPayment(state);
+  const newLoan = loanAmount(state);
   // Limit ČNB se vztahuje na celkový dluh, tedy vč. zůstatku stávajících úvěrů.
   const totalDebt = newLoan + (state.existingDebtPrincipal ?? 0);
   const annualIncome = totalMonthlyIncome(state) * 12;

@@ -10,7 +10,7 @@ import { test, expect, type Page } from '@playwright/test'
 
 async function toWhatIf(page: Page) {
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
   await page.getByTestId('goal-property').click()
   await page.getByTestId('wizard-next').click()
@@ -61,12 +61,14 @@ test('vrátit původní scénář zahodí posuvníky', async ({ page }) => {
 
 test('posuvníky nemění Cestu, jsou to jen úvahy', async ({ page }) => {
   await toWhatIf(page)
+  const payment = page.getByTestId('kpi-Měsíční splátka')
+  const originalPayment = await payment.textContent()
   await page.getByRole('slider', { name: 'Cena nemovitosti' }).fill('3000000')
 
   // Na Cestě musí zůstat splátka podle skutečně zadané ceny. Kdyby ji
   // posuvník změnil, přestalo by být poznat, co uživatel má a co si přeje.
   await page.locator('#tab-souhrn').click()
-  await expect(page.locator('#souhrn')).toContainText('28 857')
+  await expect(payment).toHaveText(originalPayment ?? '')
 })
 
 /**
@@ -88,7 +90,7 @@ test.describe('odkládání cílů', () => {
   async function toWhatIf(page: Page) {
     await page.setViewportSize({ width: 1280, height: 900 })
     await page.goto('/')
-    await page.getByRole('button', { name: /Spustit přehled/ }).click()
+    await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
     await page.getByTestId('mode-couple').click()
     await page.getByTestId('wizard-next').click()
     await num(page, 'Čistý měsíční příjem: osoba 1').fill('48000')
@@ -121,19 +123,18 @@ test.describe('odkládání cílů', () => {
     }).toBe(true)
   }
 
-  test('odložení důchodu uvolní peníze, ale cestou nehne', async ({ page }) => {
+  test('odložení důchodu uvolní peníze a může změnit termín koupě', async ({ page }) => {
     await toWhatIf(page)
     await waitForRibbonLayout(page)
     const before = await ribbonPath(page).getAttribute('d')
 
     await page.getByTestId('whatif-goal-retirement').click()
 
-    // Tvar se nezmění, takže se ani neslibuje duch, který by nebyl vidět.
-    expect(await ribbonPath(page).getAttribute('d')).toBe(before)
-    await expect(ghost(page)).toHaveCount(0)
-    await expect(page.getByText(/Na časové ose to nevypadá jinak/)).toBeVisible()
+    // Pokud se dostupná hotovost nebo termín koupě změnily, jde porovnat
+    // novou osu s původní. Jinak se překrývající obrys nekreslí.
+    const after = await ribbonPath(page).getAttribute('d')
+    await expect(ghost(page)).toHaveCount(after === before ? 0 : 1)
 
-    // Zato volných peněz přibude, a to je celý účinek odložení.
     // Popisek dlaždice říká, k jakému stavu se váže: scénář kupuje,
     // takže „po koupi".
     const tile = page.getByText('Volných po koupi').locator('..')

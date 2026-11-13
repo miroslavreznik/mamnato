@@ -155,9 +155,11 @@ describe('rezerva na časové ose', () => {
       goals: ['property', 'reserve'],
       savings: { totalSavings: 300000 },
     });
-    const withReserve = wealthTimeline(state, { months: 240 });
-    const without = wealthTimeline({ ...state, goals: ['property'] }, { months: 240 });
-    expect(withReserve.purchaseMonth).toBeGreaterThan(without.purchaseMonth!);
+    const withReserve = wealthTimeline(state, { months: 240, allocations: alloc({ downPayment: 50000, reserve: 10000 }) });
+    const without = wealthTimeline({ ...state, goals: ['property'] }, { months: 240, allocations: alloc({ downPayment: 50000 }) });
+    const point = withReserve.points[1];
+    expect(point.purchaseFund! - state.savings.totalSavings).toBeLessThanOrEqual(point.flow);
+    expect(point.downPaymentFund).toBeLessThan(without.points[1].downPaymentFund);
   });
 });
 

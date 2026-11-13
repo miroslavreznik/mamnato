@@ -1,7 +1,8 @@
 import type { WizardState } from '../../../types';
-import { downPaymentGap } from '../../../engine/mortgage';
 import { monthlyDisposable } from '../../../engine/cashflow';
-import { monthsToSaveAtAllocation } from '../../../engine/allocation';
+import { calculateAllocations } from '../../../engine/allocation';
+import { purchaseCashPlan } from '../../../engine/purchasePlan';
+import { wealthTimeline } from '../../../engine/wealthTimeline';
 import { czk, czkPerMonth, formatMonths } from '../../../engine/format';
 import { StepButton, SliderCard } from './shared';
 
@@ -9,30 +10,26 @@ import { StepButton, SliderCard } from './shared';
 const STEP = 500;
 
 /**
- * Kolik měsíčně odkládat na chybějící akontaci.
- *
- * Akontace je cíl jako každý jiný: něco na ni měsíčně jde a podle toho se
- * počítá, kdy bude naspořená. Dřív appka mlčky předpokládala, že na ni jde
- * celá disponibilní částka, takže slibovala termín, který platil jen tomu,
- * kdo nespoří na nic dalšího.
+ * Odkládání na koupi včetně peněz, které při koupi potřebujeme navíc k akontaci.
  */
 export default function MonthlySavingSlider({ state, value, onChange }: {
   state: WizardState;
   value: number;
   onChange: (value: number) => void;
 }) {
-  const gap = downPaymentGap(state);
+  const gap = purchaseCashPlan(state).cashGap;
   if (gap <= 0) return null;
 
   const disposable = monthlyDisposable(state);
   const max = Math.max(STEP, Math.ceil(disposable / STEP) * STEP);
-  const months = monthsToSaveAtAllocation(state, value);
+  const timeline = wealthTimeline(state, { allocations: { ...calculateAllocations(state), downPayment: value } });
+  const ready = timeline.earliestCashReadyMonth;
   const share = disposable > 0 ? (value / disposable) * 100 : 0;
 
   return (
     <SliderCard>
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <span className="text-sm font-medium text-ink-label">Kolik měsíčně odkládat na akontaci</span>
+        <span className="text-sm font-medium text-ink-label">Kolik měsíčně odkládat na koupi</span>
         <span className="shrink-0 text-sm font-bold text-ink whitespace-nowrap">{czkPerMonth(value)}</span>
       </div>
 
@@ -47,7 +44,7 @@ export default function MonthlySavingSlider({ state, value, onChange }: {
           step={STEP}
           value={Math.min(value, max)}
           onChange={(e) => onChange(Number(e.target.value))}
-          aria-label="Měsíční odkládání na akontaci"
+          aria-label="Měsíční odkládání na koupi"
           className="flex-1 min-w-0 h-2 rounded-lg appearance-none cursor-pointer accent-brand bg-shell"
         />
         <StepButton onClick={() => onChange(Math.min(max, value + STEP))} disabled={value >= max} label="Zvýšit měsíční odkládání">
@@ -61,9 +58,9 @@ export default function MonthlySavingSlider({ state, value, onChange }: {
       </div>
 
       <p className="mt-1.5 text-sm text-ink-body">
-        {value > 0
-          ? <>Chybějících {czk(gap)} takhle naspoříte za <span className="font-semibold text-ink">{formatMonths(months)}</span>.</>
-          : <>Dokud na akontaci nic neodkládáte, chybějících {czk(gap)} nenaspoříte.</>}
+        {ready != null
+          ? <>Celou potřebnou hotovost byste měli za <span className="font-semibold text-ink">{formatMonths(ready)}</span>.</>
+          : <>Na koupi s nastavenými náklady a rezervou dnes chybí {czk(gap)}. V časovém horizontu plánu se potřebná hotovost nenaspoří.</>}
       </p>
 
       {value > disposable && disposable > 0 && (

@@ -26,7 +26,7 @@ const digits = (s: string | null) => (s ?? '').replace(/[^\d]/g, '')
 async function toResults(page: Page, opts: { savings: string; goals: string[] }) {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   await page.getByTestId('mode-couple').click()
   await page.getByTestId('wizard-next').click()
   await num(page, 'Čistý měsíční příjem: osoba 1').fill('48000')
@@ -54,7 +54,7 @@ async function readings(page: Page) {
   return {
     verdikt: await page.locator('#souhrn h2').first().innerText(),
     splatka: await tile('Měsíční splátka'),
-    akontace: await tile('Chybějící akontace'),
+    akontace: await tile('Kolik dnes chybí na koupi'),
     rezerva: await tile('Rezerva po koupi vydrží'),
     mesicKoupe: (await koupe.count()) > 0 ? await koupe.getAttribute('aria-valuenow') : null,
     rozpocet: digits(await page.locator('#souhrn').getByText(/Po všech výdajích/).innerText()),
@@ -86,7 +86,8 @@ test('změna sazby se propíše do splátky, rezervy i zadluženosti', async ({ 
   const pred = await readings(page)
 
   await page.locator('#tab-bydleni').click()
-  const dsti = page.getByText(/DSTI/).first()
+  await page.getByRole('button', { name: 'Bankovní ukazatele DTI a DSTI' }).click()
+  const dsti = page.locator('#bydleni').getByRole('heading', { name: /Ukazatele zadluženosti/ })
   const dstiPred = digits(await dsti.locator('..').innerText())
 
   const sazba = page.getByRole('slider', { name: 'Úroková sazba' })
@@ -135,6 +136,7 @@ test('počet dětí platí pro celý plán, ne jen pro náklady', async ({ page 
 
   // Zvýhodnění na dítě zná pořadí, ne jen to první.
   await page.locator('#tab-bydleni').click()
+  await page.getByRole('button', { name: 'Daně a odpočty' }).click()
   await expect(page.locator('#bydleni').getByText('Daňové zvýhodnění na 2 děti')).toBeVisible()
 
   // A popisky mluví v množném čísle, včetně úchopu na stuze.
@@ -181,6 +183,7 @@ test('výnos v Důchodu platí i pro větu o rentě a graf koupě vs. nájem', a
 
   // …a graf koupě vs. nájem taky, je to jeden a týž předpoklad.
   await page.locator('#tab-bydleni').click()
+  await page.getByRole('button', { name: 'Srovnání koupě a nájmu' }).click()
   await page.waitForTimeout(300)
   expect(digits(await num(page, 'Výnos investic').inputValue()), 'výnos v Bydlení').toBe('4')
 })

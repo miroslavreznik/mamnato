@@ -35,7 +35,7 @@ function buyingCoupleOnLeave(overrides: Partial<WizardState> = {}): WizardState 
 
 describe('krytí schodku během rodičovské', () => {
   it('spočítá, co z rezervy zbyde a na kolik měsíců to potom vystačí', () => {
-    const leave = evaluateParentalLeave(buyingCoupleOnLeave())!;
+    const leave = evaluateParentalLeave(buyingCoupleOnLeave(), undefined, allocs())!;
     expect(leave.shortfallPerMonth).toBeGreaterThan(0);
     expect(leave.coversWholeLeave).toBe(true);
     expect(leave.reserveLeftAfterLeave).toBe(leave.reserveAfter - leave.shortfallTotal);
@@ -44,7 +44,8 @@ describe('krytí schodku během rodičovské', () => {
 
   it('rezerva, která nestačí na celé volno, se pozná', () => {
     const state = buyingCoupleOnLeave({
-      savings: { totalSavings: 2700000, downPaymentFromSavings: 2510000 },
+      savings: { totalSavings: 2900000, downPaymentFromSavings: 2510000 },
+      childInMonths: 0,
     });
     const leave = evaluateParentalLeave(state)!;
     expect(leave.coversWholeLeave).toBe(false);
@@ -75,7 +76,7 @@ describe('verdikt při schodku na rodičovské', () => {
 
   it('zdůvodnění uvede měsíční i celkový schodek a co zbyde', () => {
     const s = evaluateOverall(buyingCoupleOnLeave(), allocs());
-    const leave = evaluateParentalLeave(buyingCoupleOnLeave())!;
+    const leave = evaluateParentalLeave(buyingCoupleOnLeave(), undefined, allocs())!;
     const czk = (n: number) => Math.round(n).toLocaleString('cs-CZ');
     expect(s.verdict.reason).toContain(czk(leave.shortfallPerMonth));
     expect(s.verdict.reason).toContain(czk(leave.shortfallTotal));
@@ -84,7 +85,8 @@ describe('verdikt při schodku na rodičovské', () => {
 
   it('nepokrytý schodek verdikt shodí, a řekne na kolik měsíců rezerva stačí', () => {
     const state = buyingCoupleOnLeave({
-      savings: { totalSavings: 2700000, downPaymentFromSavings: 2510000 },
+      savings: { totalSavings: 2900000, downPaymentFromSavings: 2510000 },
+      childInMonths: 0,
     });
     const s = evaluateOverall(state, allocs());
     expect(s.verdict.headline).toBe('Zatím na to nemáte');
@@ -114,7 +116,8 @@ describe('verdikt při schodku na rodičovské', () => {
     expect(covered.tips.some((t) => t.text.includes('dotovat z úspor'))).toBe(true);
 
     const state = buyingCoupleOnLeave({
-      savings: { totalSavings: 2700000, downPaymentFromSavings: 2510000 },
+      savings: { totalSavings: 2900000, downPaymentFromSavings: 2510000 },
+      childInMonths: 0,
     });
     const short = evaluateOverall(state, allocs());
     expect(short.tips.some((t) => t.text.includes('na který rezerva nestačí'))).toBe(true);

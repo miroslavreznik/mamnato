@@ -48,7 +48,7 @@ async function start(page: Page, width = 1280) {
   }, 'dark')
   await page.setViewportSize({ width, height: 900 })
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
 }
 
 /**

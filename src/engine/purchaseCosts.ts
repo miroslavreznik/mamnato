@@ -7,9 +7,7 @@ import type { WizardState } from '../types';
  * začátku, tedy z peněz, o které se opírá verdikt. Uživatel se na ně
  * neptá, jsou to standardní položky každé koupě na hypotéku.
  *
- * Ceny služeb se liší podle poskytovatele, proto se uvádí rozpětí a
- * počítá se se středem. Daň z nabytí nemovitosti byla zrušena v roce 2020,
- * takže tu nefiguruje.
+ * Ceny služeb se liší podle poskytovatele. Výchozí odhad je střed rozpětí.
  */
 
 export interface PurchaseCostItem {
@@ -65,4 +63,9 @@ export function purchaseOneOffCosts(state: WizardState): PurchaseCosts | null {
   const min = items.reduce((s, i) => s + i.min, 0);
   const max = items.reduce((s, i) => s + i.max, 0);
   return { items, min, max, typical: Math.round((min + max) / 2) };
+}
+
+/** Hotovost potřebná vedle akontace, včetně případných vlastních odhadů. */
+export function purchaseClosingCosts(state: WizardState): number {
+  return state.property.purchaseCosts ?? purchaseOneOffCosts(state)?.typical ?? 0;
 }

@@ -1,7 +1,7 @@
 import type { WizardState } from '../../../types';
 import { mortgageRate, mortgagePayment, fixationYears as fixationYearsOf } from '../../../engine/mortgage';
-import { ltvRateAdvice, paymentAtRate } from '../../../engine/rateGuidance';
-import { czk, czkPerMonth, formatMonths, formatYears, formatRate } from '../../../engine/format';
+import { ltvRateAdvice, paymentAfterRefixation } from '../../../engine/rateGuidance';
+import { czk, czkMonthly, czkPerMonth, formatYears, formatRate } from '../../../engine/format';
 import Tooltip from '../../ui/Tooltip';
 import { StepButton, SliderCard } from './shared';
 import Disclosure from '../../ui/Disclosure';
@@ -16,8 +16,7 @@ const STEP = 0.001;
  * Úroková sazba: druhá hlavní páka splátky, hned po akontaci.
  *
  * Pod posuvníkem je všechno, co sazbu v realitě určuje: pásmo LTV, upozornění
- * na odhad banky (LTV počítáme z ceny, banka ze svého odhadu) a riziko
- * refixace včetně toho, jestli fixace nekončí zrovna během rodičovské.
+ * na odhad banky a riziko změny sazby po fixaci.
  */
 export default function RateSlider({ state, onChange }: {
   state: WizardState;
@@ -26,14 +25,9 @@ export default function RateSlider({ state, onChange }: {
   const rate = mortgageRate(state);
   const advice = ltvRateAdvice(state);
   const ltvPct = advice ? Math.round(advice.ltv * 100) : 0;
-  const paymentPlus1pp = paymentAtRate(state, rate + 0.01) - mortgagePayment(state);
+  const refixedPayment = paymentAfterRefixation(state, rate + 0.01);
 
   const fixationYears = fixationYearsOf(state);
-  // Konec fixace uprostřed rodičovské je nejhorší možné načasování: splátka
-  // povyskočí zrovna ve chvíli, kdy je rozpočet nejtenčí.
-  const leaveMonths = state.parentalLeave?.enabled ? state.parentalLeave.durationMonths : 0;
-  const fixationEndsDuringLeave = leaveMonths > 0 && fixationYears * 12 <= leaveMonths;
-
   const clampStep = (next: number) => Number(next.toFixed(4));
 
   return (
@@ -96,9 +90,8 @@ export default function RateSlider({ state, onChange }: {
 
           <Disclosure summary="Pozor na odhad banky">
             <p className="pb-1">
-              LTV počítáme z ceny, kterou jste zadali. Banka ho ale počítá ze svého odhadu, a ten
-              bývá spíš konzervativní. Když odhadce dům ocení níž, spadnete do horšího pásma a
-              rozdíl musíte doplatit z vlastních peněz. Vyplatí se nechat si odhad udělat u víc bank.
+              Banka porovnává úvěr s hodnotou nemovitosti podle odhadu. Pokud odhad neznáte,
+              použijeme kupní cenu. Nižší odhad může zvýšit částku, kterou zaplatíte z vlastních peněz.
             </p>
           </Disclosure>
 
@@ -113,21 +106,12 @@ export default function RateSlider({ state, onChange }: {
             </p>
           )}
 
-          <p>
-            <span className="font-medium text-ink-label">Riziko refixace:</span>{' '}
-            kdyby sazba za {formatYears(fixationYears)} stoupla o 1 p. b.,
-            splátka povyskočí o ~{czkPerMonth(paymentPlus1pp)}.
-            {fixationEndsDuringLeave && (
-              <>
-                {' '}<span className="text-caution">
-                  Fixace vám navíc skončí ve chvíli, kdy podle svého plánu můžete být na rodičovské
-                  (rodičovskou máte nastavenou na {formatMonths(leaveMonths)}). Skokové zvýšení splátky by
-                  tak padlo do nejtenčího období rozpočtu. Delší fixace tomu předejde, i za cenu
-                  o něco vyšší sazby.
-                </span>
-              </>
-            )}
-          </p>
+          {refixedPayment != null && (
+            <p>
+              Po {formatYears(fixationYears)} fixace by zvýšení sazby o 1 procentní bod zvedlo splátku
+              přibližně o {czkMonthly(Math.max(0, refixedPayment - mortgagePayment(state)))}.
+            </p>
+          )}
 
           <p className="text-ink-faint">
             Přirážky podle LTV jsou orientační, konkrétní sazbu potvrdí až banka.

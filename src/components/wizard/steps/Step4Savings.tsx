@@ -37,6 +37,7 @@ export default function Step4Savings() {
         onChange={(v) => dispatch({ type: 'UPDATE_SAVINGS', field: 'totalSavings', value: v })}
         tooltip="Kolik máte celkem naspořeno a jste ochotni použít na své finanční cíle."
         step={50000}
+        commitOnBlur
         disabled={showBreakdown}
       />
 
@@ -53,7 +54,7 @@ export default function Step4Savings() {
       {showBreakdown && (
         <div className="mt-3 p-4 bg-sunken rounded-xl">
           <p className="text-xs text-ink-muted mb-3">
-            Rozdělením úspor zjistíte, kolik peněz zbytečně leží bez zhodnocení. Celkové úspory se dopočítají automaticky.
+            Pro koupi bytu a nouzovou rezervu počítáme s penězi na účtech. Investice zůstávají součástí dlouhodobého plánu.
           </p>
 
           <NumberInput
@@ -62,6 +63,7 @@ export default function Step4Savings() {
             onChange={(v) => dispatch({ type: 'UPDATE_SAVINGS_BREAKDOWN', field: 'current', value: v })}
             tooltip="Peníze na běžném účtu. Typicky bez úroku nebo s minimálním úrokem, takže ztrácejí tempo s inflací."
             step={10000}
+            commitOnBlur
           />
           <NumberInput
             label="Spořicí účet / termínovaný vklad"
@@ -69,6 +71,7 @@ export default function Step4Savings() {
             onChange={(v) => dispatch({ type: 'UPDATE_SAVINGS_BREAKDOWN', field: 'savingsAccount', value: v })}
             tooltip="Peníze na spořicím účtu nebo termínovaném vkladu, které nesou úrok."
             step={10000}
+            commitOnBlur
           />
           <NumberInput
             label="Investice (fondy, ETF, akcie)"
@@ -76,6 +79,7 @@ export default function Step4Savings() {
             onChange={(v) => dispatch({ type: 'UPDATE_SAVINGS_BREAKDOWN', field: 'investments', value: v })}
             tooltip="Hodnota investičního portfolia: podílové fondy, ETF, akcie a podobně."
             step={10000}
+            commitOnBlur
           />
 
           <div className="flex justify-between text-sm pt-2 border-t border-line">

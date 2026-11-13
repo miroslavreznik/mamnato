@@ -54,8 +54,7 @@ export function clearShareHash(): void {
 }
 
 /**
- * Jednorázový bootstrap při startu (mimo React render, takže se pod StrictMode
- * nespouští dvakrát).
+ * Otevře platný sdílený odkaz při startu nebo při změně fragmentu URL.
  *
  * Sdílený přehled se **neukládá automaticky**. Dřív se ukládal, takže kdokoli
  * si otevřel cizí odkaz, nenávratně přišel o svůj vlastní rozpracovaný plán,
@@ -68,20 +67,18 @@ export function clearShareHash(): void {
 let sharedState: WizardState | null = null;
 let replacesExisting = false;
 
-export function bootstrapSharedState(): void {
+export function bootstrapSharedState(): boolean {
   const shared = readSharedState();
-  if (!shared) return;
+  if (!shared) return false;
 
   clearShareHash();
   sharedState = shared;
-
-  if (loadState() === null) {
+  replacesExisting = loadState() !== null;
+  setPersistenceEnabled(!replacesExisting);
+  if (!replacesExisting) {
     saveState(shared);
-    return;
   }
-
-  replacesExisting = true;
-  setPersistenceEnabled(false);
+  return true;
 }
 
 export function loadedFromShare(): boolean {
@@ -101,9 +98,8 @@ export function sharedReplacesExisting(): boolean {
 
 // Uživatel sdílený přehled přijal: odemknout zápis a uložit.
 export function acceptSharedState(state: WizardState): void {
-  setPersistenceEnabled(true);
+  discardSharedState();
   saveState(state);
-  replacesExisting = false;
 }
 
 // Uživatel se vrací ke svému přehledu: sdílený zahodit, zápis odemknout.

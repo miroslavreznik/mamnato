@@ -4,6 +4,7 @@ import NumField from '../../ui/NumField';
 import Tooltip from '../../ui/Tooltip';
 import StepNavigation from '../StepNavigation';
 import { fieldClass } from '../../ui/fieldClass';
+import { totalMonthlyIncome } from '../../../engine/cashflow';
 
 // Nepovinné pole pro věk (prázdné = nezadáno). Věk ovlivňuje akontaci,
 // horizont spoření na důchod a splatnost hypotéky.
@@ -78,24 +79,52 @@ export default function Step2Income() {
         </>
       )}
 
-      {isFamily && (
-        <NumberInput
-          label="Rodičovský příspěvek / ostatní příjmy (nyní)"
-          value={state.income.parentalAllowance ?? 0}
-          onChange={(v) => dispatch({ type: 'UPDATE_INCOME', field: 'parentalAllowance', value: v })}
-          tooltip="Jen příjmy, které máte teď: rodičovský příspěvek, přídavky na děti, jiné pravidelné příjmy. Budoucí výpadek příjmu na rodičovské se počítá zvlášť ve výsledcích (karta Rodičovská)."
-          step={1000}
-        />
+      {(isFamily || !!state.income.otherNetMonthly || !!state.income.parentalAllowance) && (
+        <>
+          <NumberInput
+            label="Další pravidelné příjmy"
+            value={state.income.otherNetMonthly ?? 0}
+            onChange={(v) => dispatch({ type: 'UPDATE_INCOME', field: 'otherNetMonthly', value: v })}
+          />
+          <NumberInput
+            label="Rodičovský příspěvek, který už pobíráte"
+            value={state.income.parentalAllowance ?? 0}
+            onChange={(v) => {
+              if (v > 0 && !state.income.parentalAllowance && state.income.parentalAllowanceRemainingMonths == null) {
+                dispatch({ type: 'UPDATE_INCOME', field: 'parentalAllowanceRemainingMonths', value: 12 });
+              }
+              dispatch({ type: 'UPDATE_INCOME', field: 'parentalAllowance', value: v });
+            }}
+          />
+          {!!state.income.parentalAllowance && (
+            <>
+              <NumberInput
+                label="Za kolik měsíců rodičovský příspěvek skončí"
+                value={state.income.parentalAllowanceRemainingMonths ?? 0}
+                onChange={(v) => dispatch({
+                  type: 'UPDATE_INCOME',
+                  field: 'parentalAllowanceRemainingMonths',
+                  value: Math.round(Math.max(0, Math.min(1200, v))),
+                })}
+                tooltip="Nula znamená, že příspěvek skončil. Pokud po rodičovské čekáte jiný příjem, můžete ho porovnat v části Co kdyby."
+                suffix="měsíců"
+                step={1}
+                max={1200}
+              />
+              {state.income.parentalAllowanceRemainingMonths == null && (
+                <p className="mb-4 text-sm text-caution">
+                  Starší plán počítá s touto částkou bez konce. Doplňte zbývající měsíce nebo částku přesuňte mezi pravidelné příjmy.
+                </p>
+              )}
+            </>
+          )}
+        </>
       )}
 
       <div className="mt-4 p-3 bg-sunken rounded-lg text-sm text-ink-body">
         Celkový příjem domácnosti:{' '}
         <span className="font-semibold text-ink">
-          {(
-            (state.income.person1NetMonthly ?? 0) +
-            (state.income.person2NetMonthly ?? 0) +
-            (state.income.parentalAllowance ?? 0)
-          ).toLocaleString('cs-CZ')}{' '}
+          {totalMonthlyIncome(state).toLocaleString('cs-CZ')}{' '}
           Kč/měs.
         </span>
       </div>

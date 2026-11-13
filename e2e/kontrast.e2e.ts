@@ -132,7 +132,7 @@ async function walk(page: Page, scheme: 'light' | 'dark'): Promise<string[]> {
   }
 
   await collect('úvod')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   await collect('průvodce')
 
   // Nápověda je nejčastější oběť: leží nad obsahem a má vlastní podklad.

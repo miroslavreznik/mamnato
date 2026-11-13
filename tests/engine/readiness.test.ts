@@ -26,39 +26,30 @@ const allocs = (o: Partial<GoalAllocations> = {}): GoalAllocations => ({
 describe('propertyReadiness', () => {
   it('pokrytou akontaci pozná', () => {
     const r = propertyReadiness(makeState(), allocs());
-    expect(r.headline).toMatch(/Akontaci máte pokrytou/);
+    expect(r.headline).toMatch(/Vlastní vklad, jednorázové náklady a rezerva jsou pokryté/);
   });
 
-  it('neopakuje čísla z dlaždic nad sebou', () => {
-    // Splátka, DSTI i termín naspoření jsou v dlaždicích. Věta u cíle říká,
-    // co z nich plyne, ne je znovu vypisuje.
-    const cases = [
-      propertyReadiness(makeState(), allocs()),
-      propertyReadiness(makeState({ savings: { totalSavings: 0 } }), allocs({ downPayment: 10000 })),
-      propertyReadiness(makeState({ savings: { totalSavings: 0 } }), allocs()),
-    ];
-    for (const r of cases) {
-      expect(r.headline).not.toMatch(/\d/);
-    }
-  });
-
-  it('u chybějící akontace řekne, že se ještě dospořuje', () => {
+  it('u chybějící hotovosti uvede termín koupě se započtením nákladů a rezervy', () => {
     const state = makeState({ savings: { totalSavings: 0 } });
     const r = propertyReadiness(state, allocs({ downPayment: 10000 }));
-    expect(r.headline).toMatch(/dospoř/);
+    expect(r.status).toBe('caution');
+    expect(r.headline).toMatch(/Koupě vychází za .* včetně jednorázových nákladů a rezervy/);
   });
 
   it('nulové odkládání nesmí slibovat termín', () => {
     const state = makeState({ savings: { totalSavings: 0 } });
     const r = propertyReadiness(state, allocs({ downPayment: 0 }));
-    expect(r.headline).toMatch(/zatím na ni nic neodkládáte/);
+    expect(r.headline).toMatch(/nemá koupě v plánu termín/);
     expect(r.headline).not.toMatch(/naspoříte za/);
   });
 
   it('splátku v pásmu obezřetnosti pojmenuje bez tvrzení o automatickém zamítnutí', () => {
-    const state = makeState({ income: { person1NetMonthly: 30000 }, property: { targetPrice: 8000000, mortgageRate: 0.052, loanTermYears: 30 } });
+    const state = makeState({
+      income: { person1NetMonthly: 76000 }, savings: { totalSavings: 2200000 },
+      property: { targetPrice: 8000000, mortgageRate: 0.052, loanTermYears: 30 },
+    });
     const r = propertyReadiness(state, allocs({ downPayment: 5000 }));
-    expect(r.status).toBe('warning');
+    expect(r.status).toBe('caution');
     expect(r.headline).toMatch(/pásmu zvýšené bankovní obezřetnosti/);
     expect(r.headline).toMatch(/konečné posouzení udělá banka/);
   });
@@ -86,16 +77,16 @@ describe('rezerva po zaplacení akontace', () => {
     // Scénář hypotéky rezervu nezná, sleduje jen dostupnost úvěru. Bez
     // tohohle kroku dostal cíl zelenou i ten, komu po akontaci nezbyde nic.
     const state = makeState({ savings: { totalSavings: 800000 } });
-    const r = propertyReadiness(state, allocs());
+    const r = propertyReadiness(state, allocs({ downPayment: 5000 }));
     expect(r.status).toBe('caution');
-    expect(r.headline).toMatch(/nezbyla rezerva na nečekané výdaje/);
+    expect(r.headline).toMatch(/Koupě vychází za .* rezervy/);
   });
 
   it('kdo si rezervu nechá, zelenou neztrácí', () => {
     const state = makeState({ savings: { totalSavings: 2000000 } });
     const r = propertyReadiness(state, allocs());
     expect(r.status).toBe('good');
-    expect(r.headline).not.toMatch(/rezerva/);
+    expect(r.headline).toMatch(/rezerva jsou pokryté/);
   });
 });
 

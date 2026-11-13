@@ -13,6 +13,7 @@ import JourneyRibbon from './JourneyRibbon';
 import JourneyRange, { JourneyRangeNote, DEFAULT_VIEW_MONTHS } from './JourneyRange';
 import WhatIfPanel from './WhatIfPanel';
 import Callout from '../ui/Callout';
+import MortgageStress from './MortgageStress';
 
 /**
  * Záložka „Co kdyby": samostatný prostor na hraní si s plánem.
@@ -57,13 +58,11 @@ export default function WhatIfTab() {
     overrides, setOverride,
   } = useWhatIf();
 
-  const comparison = compareScenarios(baseline, baselineAllocations, current, currentAllocations);
-
   // Termíny událostí jsou tady posuvník jako každý jiný: „co kdybychom měli
   // dítě až za čtyři roky" nebo „co kdybychom s koupí rok počkali" je otázka
   // ze stejné rodiny jako „co kdyby byl byt o půl milionu levnější".
   // Původní scénář si drží termíny zadané, takže duch pod stuhou ukáže rozdíl.
-  const childOffset = overrides.childMonth ?? 12;
+  const childOffset = overrides.childMonth ?? current.childInMonths ?? 12;
   const purchaseAt = overrides.purchaseMonth ?? 0;
   const currentJourney = journey(current, {
     allocations: currentAllocations,
@@ -71,6 +70,10 @@ export default function WhatIfTab() {
     purchaseNotBeforeMonth: purchaseAt,
   });
   const baselineJourney = journey(baseline, { allocations: baselineAllocations });
+  const comparison = compareScenarios(baseline, baselineAllocations, current, currentAllocations, {
+    baseline: baselineJourney.timeline,
+    current: currentJourney.timeline,
+  });
   const earliestPurchase = currentJourney.earliestPurchaseMonth;
   const purchaseRange = earliestPurchase === null ? null : {
     min: earliestPurchase,
@@ -103,16 +106,24 @@ export default function WhatIfTab() {
   // kdy se ještě platí nájem) a u rezervy „0 měsíců" (protože rezerva po
   // koupi, která se nekoná, je nesmysl). Takhle měří obě varianty totéž
   // a rozdíl mezi nimi je právě to, co uživatel právě udělal.
-  const runwayNow = buysNow ? postPurchaseRunwayMonths(current) : emergencyRunwayMonths(current);
-  const runwayBefore = hasProperty ? postPurchaseRunwayMonths(baseline) : emergencyRunwayMonths(baseline);
+  const runwayNow = buysNow
+    ? postPurchaseRunwayMonths(current, currentJourney.purchaseCashAfterClosing ?? undefined)
+    : emergencyRunwayMonths(current);
+  const runwayBefore = hasProperty
+    ? postPurchaseRunwayMonths(baseline, baselineJourney.purchaseCashAfterClosing ?? undefined)
+    : emergencyRunwayMonths(baseline);
 
   // Volné peníze, ne disponibilní částka.
   //
   // Disponibilní částka cíle nezná, takže odložením cíle nehne ani o korunu
   // a všechny tři dlaždice hlásily „beze změny" i po odložení důchodu.
   // Přitom právě uvolněné peníze jsou to, co odložení dělá.
-  const freeNow = (buysNow ? budgetAfterPurchase : budgetNow)(current, currentAllocations).surplus;
-  const freeBefore = (hasProperty ? budgetAfterPurchase : budgetNow)(baseline, baselineAllocations).surplus;
+  const freeNow = buysNow
+    ? budgetAfterPurchase(current, currentAllocations, currentJourney.purchaseMonth ?? 0).surplus
+    : budgetNow(current, currentAllocations).surplus;
+  const freeBefore = hasProperty
+    ? budgetAfterPurchase(baseline, baselineAllocations, baselineJourney.purchaseMonth ?? 0).surplus
+    : budgetNow(baseline, baselineAllocations).surplus;
 
   // Odložení cíle křivkou jmění nehne: spoření na cíl je pořád jmění, jen
   // leží jinde. Duch původní cesty by pak byl přesně pod živou stuhou
@@ -248,6 +259,8 @@ export default function WhatIfTab() {
             />
           )}
         </div>
+
+        {buysNow && <MortgageStress state={current} plan={currentJourney} />}
 
         {touched && postponed.length > 0 && !shapeChanged && (
           <Callout tone="neutral">

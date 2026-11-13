@@ -1,7 +1,9 @@
 import type { WizardState } from '../../../types';
 import {
   effectiveDownPayment,
-  downPaymentFraction,
+  clampDownPayment,
+  liquidSavings,
+  minimumDownPayment,
   loanAmount as loanAmountOf,
   mortgageRate,
   loanTermYears,
@@ -30,12 +32,11 @@ export default function DownPaymentSlider({ state, onChange }: {
   state: WizardState;
   onChange: (value: number) => void;
 }) {
-  const totalSavings = state.savings.totalSavings;
-  if (totalSavings <= 0) return null;
+  const maxDownPayment = clampDownPayment(state, liquidSavings(state));
+  if (maxDownPayment <= 0) return null;
 
   const projectCost = totalProjectCost(state);
   const dpValue = effectiveDownPayment(state);
-  const dpPct = Math.round(downPaymentFraction(state) * 100);
   const dpOfPrice = projectCost > 0 ? (dpValue / projectCost) * 100 : 0;
 
   const rate = mortgageRate(state);
@@ -48,15 +49,13 @@ export default function DownPaymentSlider({ state, onChange }: {
     reserve, reserveMonths, safeMax, safePct,
     paymentDelta, interestDelta, stockValue, interestSavedByReserve,
   } = downPaymentTradeoff(state);
-  // Kolik měsíců výdajů má po koupi zbýt. S cílem „nouzová rezerva" platí
-  // uživatelovo číslo, jinak doporučených šest.
   const minReserveMonths = reserveMonthsForTradeoff(state);
 
   return (
     <SliderCard>
       <div className="flex items-center justify-between mb-1.5">
         <span className="text-sm font-medium text-ink-label">Kolik dát z úspor na akontaci</span>
-        <span className={`text-xs ${dpOfPrice >= dpPct ? 'text-good' : 'text-caution'}`}>
+        <span className={`text-xs ${dpValue >= minimumDownPayment(state) ? 'text-good' : 'text-caution'}`}>
           {dpOfPrice.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} % z ceny
         </span>
       </div>
@@ -68,7 +67,7 @@ export default function DownPaymentSlider({ state, onChange }: {
         <input
           type="range"
           min={0}
-          max={totalSavings}
+          max={maxDownPayment}
           step={STEP}
           value={dpValue}
           onChange={(e) => onChange(Number(e.target.value))}
@@ -79,8 +78,8 @@ export default function DownPaymentSlider({ state, onChange }: {
           }}
         />
         <StepButton
-          onClick={() => onChange(Math.min(totalSavings, dpValue + STEP))}
-          disabled={dpValue >= totalSavings}
+          onClick={() => onChange(Math.min(maxDownPayment, dpValue + STEP))}
+          disabled={dpValue >= maxDownPayment}
           label="Zvýšit akontaci"
         >
           +
@@ -89,11 +88,11 @@ export default function DownPaymentSlider({ state, onChange }: {
 
       <div className="flex justify-between text-xs text-ink-faint mt-1">
         <span>0 Kč</span>
-        <span>{czk(totalSavings)}</span>
+        <span>{czk(maxDownPayment)}</span>
       </div>
 
       <div className="flex flex-wrap justify-between gap-x-2 text-sm mt-1.5">
-        <span className="text-ink-body">Zbývající rezerva po akontaci:</span>
+        <span className="text-ink-body">Hotovost po akontaci a poplatcích:</span>
         <span className={`font-semibold ${reserve <= 0 ? 'text-danger' : reserveMonths < minReserveMonths ? 'text-caution' : 'text-ink'}`}>
           {czk(reserve)}{reserve > 0 && isFinite(reserveMonths) ? ` (~${decimal(reserveMonths)} měs. výdajů)` : ''}
         </span>

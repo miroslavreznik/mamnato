@@ -31,10 +31,7 @@ describe('wealthTimeline', () => {
   });
 
   it('kupuje se z peněz vyhrazených na akontaci, ne z celého jmění', () => {
-    // Chybí 200 000 Kč akontace. Volných je 41 000 Kč měsíčně, ale na
-    // akontaci z nich jde jen část (výchozí rozdělení dává půlku, tedy
-    // 20 500 Kč), zbytek zůstává volný. Koupě proto nastane po deseti
-    // měsících, ne po pěti.
+    // Volných je 41 000 Kč měsíčně, ale na koupi jde jen polovina.
     //
     // Dřív se kupovalo, jakmile na akontaci stačilo *celé* jmění, tedy
     // i peníze odložené na důchod nebo na dítě. Na výsledcích pak stálo
@@ -42,11 +39,12 @@ describe('wealthTimeline', () => {
     // za rok a dva měsíce.
     const state = makeState({ goals: ['property'] }); // akontace 20 % z 5M = 1M > 800k
     const tl = wealthTimeline(state, { months: 60 });
-    expect(tl.purchaseMonth).toBe(10);
+    expect(tl.purchaseMonth).toBe(17);
 
     // Termín sedí s tím, co appka slibuje u chybějící akontace.
     const alloc = calculateDefaultAllocations(state);
-    expect(tl.purchaseMonth).toBe(monthsToSaveAtAllocation(state, alloc.downPayment));
+    expect(tl.earliestDownPaymentMonth).toBe(monthsToSaveAtAllocation(state, alloc.downPayment));
+    expect(tl.earliestDownPaymentMonth).toBe(10);
 
     // Po koupi je cash menší než před ní, akontace se odečetla.
     const m = tl.purchaseMonth!;
@@ -57,8 +55,10 @@ describe('wealthTimeline', () => {
     const state = makeState({ goals: ['property'] });
     const slow = wealthTimeline(state, { months: 60, allocations: { downPayment: 5000, reserve: 0, retirement: 0, child: 0, custom: [] } });
     const fast = wealthTimeline(state, { months: 60, allocations: { downPayment: 40000, reserve: 0, retirement: 0, child: 0, custom: [] } });
-    expect(slow.purchaseMonth).toBe(40);
-    expect(fast.purchaseMonth).toBe(5);
+    expect(slow.earliestDownPaymentMonth).toBe(40);
+    expect(slow.purchaseMonth).toBeNull();
+    expect(fast.earliestDownPaymentMonth).toBe(5);
+    expect(fast.purchaseMonth).toBe(9);
   });
 
   it('flow po cílech odečítá to, co na cíle jde, a po koupi už ne akontaci', () => {
@@ -79,7 +79,7 @@ describe('wealthTimeline', () => {
   it('child costs and parental leave push cash down and can go negative', () => {
     const state = makeState({
       goals: ['property', 'child'],
-      savings: { totalSavings: 1000000 }, // DP hned
+      savings: { totalSavings: 1300000 }, // vklad, poplatky a rezerva pokryté
       parentalLeave: { enabled: true, parent: 1, durationMonths: 36, monthlyBenefit: 9722 },
     });
     const withLeave = wealthTimeline(state, { months: 60, childOffsetMonths: 6 });
@@ -123,7 +123,7 @@ describe('cíle, které v čase končí', () => {
   });
 
   it('odkládání na akontaci končí koupí', () => {
-    const state = makeState({ goals: ['property'], savings: { totalSavings: 1000000 } });
+    const state = makeState({ goals: ['property'], savings: { totalSavings: 1300000 } });
     const a = { downPayment: 12000, reserve: 0, retirement: 4000, child: 0, custom: [] };
     const tl = wealthTimeline(state, { months: 36, allocations: a });
     expect(tl.purchaseMonth).toBe(0);
