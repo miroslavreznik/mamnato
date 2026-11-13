@@ -15,10 +15,20 @@ import { test, expect, type Page } from '@playwright/test'
  * neschová.
  */
 
-async function toResults(page: Page, goal: 'property' | 'child' | 'retirement' = 'property') {
+async function toResults(page: Page, goal: 'property' | 'child' | 'retirement' = 'property', income?: number) {
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
-  for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
+  const next = page.getByTestId('wizard-next')
+  await next.click()
+  if (income != null || goal === 'property') {
+    await page.getByRole('textbox', { name: 'Můj čistý měsíční příjem' }).fill(String(income ?? 70000))
+  }
+  await next.click()
+  await next.click()
+  if (goal === 'property' && income == null) {
+    await page.getByRole('textbox', { name: 'Celkové úspory' }).fill('1700000')
+  }
+  await next.click()
   await page.getByTestId(`goal-${goal}`).click()
   await page.getByTestId('wizard-next').click()
   if (goal === 'property') await page.getByTestId('wizard-next').click()
@@ -139,7 +149,7 @@ test('koupi jde odsunout na později a stuha se přepočítá', async ({ page })
 //
 // Každá šířka je vlastní test, ne cyklus v jednom: po prvním průchodu je
 // v localStorage uložený stav a uvítací obrazovka pak nabízí „Pokračovat"
-// místo „Spustit přehled", takže druhé kolo neprojde ani na začátku.
+// místo „Sestavit finanční plán", takže druhé kolo neprojde ani na začátku.
 for (const width of [390, 1280]) {
   test(`dotykový cíl úchopu má 44 px na šířce ${width} px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 })
@@ -154,7 +164,7 @@ test('schodkový úsek nese kromě barvy i vzorek', async ({ page }) => {
   // Jantarová a červená se od sebe těžko poznají i bez poruchy barvocitu
   // (naměřeno ΔE 10,7) a v tisku vůbec. Schodek proto musí být poznat
   // i tvarem, ne jen odstínem.
-  await toResults(page, 'property')
+  await toResults(page, 'property', 22000)
 
   const hatch = page.locator('#souhrn svg path[stroke-dasharray="2 6"]')
   await expect(hatch).toHaveCount(1)
@@ -189,7 +199,7 @@ test('popisky na stuze se nepřekrývají', async ({ page }) => {
 
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   await page.getByTestId('mode-couple').click()
   await page.getByTestId('wizard-next').click()
   await num('Čistý měsíční příjem: osoba 1').fill('48000')

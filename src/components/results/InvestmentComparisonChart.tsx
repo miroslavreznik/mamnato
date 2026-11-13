@@ -56,14 +56,14 @@ export default function InvestmentComparisonChart({ state, onChangeReturn }: Pro
 
   return (
     <Card title="Koupě vs. nájem: vývoj čistého jmění" subtitle={<>Všechny tři čáry ukazují <span className="text-ink-body">čisté jmění</span>, tedy co byste měli, kdybyste
-        všechno prodali a doplatili dluhy. Startují na stejné částce: vlastník ji dá do akontace, nájemník ji investuje.</>}>
+        všechno prodali a doplatili dluhy. Vlastník zaplatí akontaci a poplatky, nájemník si stejnou hotovost ponechá.</>}>
       {/* Bez tohohle vysvětlení nešlo poznat, co která čára znamená. Pod
           klapkou proto, že popisky čar jsou v legendě grafu; tohle je jejich
           rozvedení a na telefonu zabíralo třetinu obrazovky nad grafem. */}
       <Disclosure summary="Co která čára znamená" className="mb-2">
       <ul className="mb-4 space-y-1 text-xs text-ink-muted">
         <li><span className="font-medium text-ink-label">Koupě nemovitosti:</span> hodnota nemovitosti minus zbytek hypotéky. Když vyjde vlastnictví levněji než nájem, rozdíl se investuje.</li>
-        <li><span className="font-medium text-ink-label">Nájem a investování rozdílu:</span> nájemník investuje akontaci i to, oč měsíčně platí míň než vlastník.</li>
+        <li><span className="font-medium text-ink-label">Nájem a investování rozdílu:</span> nájemník investuje peníze ušetřené při koupi i to, oč měsíčně platí míň než vlastník.</li>
         <li><span className="font-medium text-ink-label">Nájem bez investování:</span> ušetřený rozdíl se utratí, takže jmění neroste. Nejčastější varianta v praxi.</li>
       </ul>
       </Disclosure>
@@ -169,7 +169,7 @@ export default function InvestmentComparisonChart({ state, onChangeReturn }: Pro
         </p>
         <p className="mt-2 text-xs text-ink-faint">
           Do srovnání nevstupuje jistota vlastního bydlení (nájem se dá vypovědět, hypotéka ne),
-          jednorázové náklady koupě ani odpočet úroků z daní. Počítá se s tím, že nájemník rozdíl
+          odpočet úroků z daní ani souběh bydlení při rekonstrukci. Počítá se s tím, že nájemník rozdíl
           opravdu každý měsíc investuje a nesáhne na něj, což se v praxi povede málokomu.
         </p>
         </Disclosure>

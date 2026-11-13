@@ -1,5 +1,5 @@
 import type { WizardState, FinancialGoal, UserMode, GoalAllocationOverrides } from '../types';
-import { createInitialState } from './wizardStore';
+import { constrainDownPayment, createInitialState } from './wizardStore';
 import { DEFAULTS, CHILD_COSTS_CZ } from '../engine/defaults';
 import { MAX_RESERVE_MONTHS } from '../engine/reserve';
 
@@ -28,6 +28,10 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 function num(v: unknown, fallback: number): number {
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : fallback;
+}
+
+function optionalAmount(value: unknown): number | undefined {
+  return value == null ? undefined : Math.max(0, num(value, 0));
 }
 
 function sanitizeNumberMap(obj: Record<string, unknown>): Record<string, number> {
@@ -76,15 +80,27 @@ export function normalizeState(raw: unknown): WizardState | null {
   const rSavings = isRecord(raw.savings) ? raw.savings : {};
   const rProperty = isRecord(raw.property) ? raw.property : {};
   const rBreakdown = isRecord(rSavings.breakdown) ? rSavings.breakdown : null;
+  const splitSavings = rBreakdown
+    ? {
+        current: Math.max(0, num(rBreakdown.current, 0)),
+        savingsAccount: Math.max(0, num(rBreakdown.savingsAccount, 0)),
+        investments: Math.max(0, num(rBreakdown.investments, 0)),
+      }
+    : undefined;
+  const splitTotal = splitSavings ? splitSavings.current + splitSavings.savingsAccount + splitSavings.investments : 0;
+  const totalSavings = Math.max(0, num(rSavings.totalSavings ?? splitTotal, base.savings.totalSavings));
+  // Starší verze po ruční změně celkové částky mohla nechat původní rozpis.
+  const breakdown = splitTotal === totalSavings ? splitSavings : undefined;
 
   const mode: UserMode = raw.mode === 'couple' || raw.mode === 'family' ? raw.mode : 'individual';
 
-  return {
+  return constrainDownPayment({
     version: CURRENT_VERSION,
     currentStep: num(raw.currentStep, base.currentStep),
     completedSteps: Array.isArray(raw.completedSteps)
       ? raw.completedSteps.filter((s): s is number => typeof s === 'number')
       : [],
+    mortgageFlow: raw.mortgageFlow === 'property' || raw.mortgageFlow === 'price' ? raw.mortgageFlow : undefined,
     mode,
     numberOfChildren: typeof raw.numberOfChildren === 'number' ? raw.numberOfChildren : base.numberOfChildren,
     applicantUnder36: typeof raw.applicantUnder36 === 'boolean' ? raw.applicantUnder36 : undefined,
@@ -132,6 +148,10 @@ export function normalizeState(raw: unknown): WizardState | null {
       person1NetMonthly: num(rIncome.person1NetMonthly, base.income.person1NetMonthly),
       person2NetMonthly: rIncome.person2NetMonthly != null ? num(rIncome.person2NetMonthly, 0) : undefined,
       parentalAllowance: rIncome.parentalAllowance != null ? num(rIncome.parentalAllowance, 0) : undefined,
+      otherNetMonthly: optionalAmount(rIncome.otherNetMonthly),
+      parentalAllowanceRemainingMonths: rIncome.parentalAllowanceRemainingMonths == null
+        ? undefined
+        : Math.min(1200, Math.max(0, Math.round(num(rIncome.parentalAllowanceRemainingMonths, 0)))),
     },
     expenses: {
       rent: num(rExpenses.rent, base.expenses.rent),
@@ -142,26 +162,25 @@ export function normalizeState(raw: unknown): WizardState | null {
       children: num(rExpenses.children, base.expenses.children),
       utilities: num(rExpenses.utilities, base.expenses.utilities),
       other: num(rExpenses.other, base.expenses.other),
+      essentials: optionalAmount(rExpenses.essentials),
       discretionaryBreakdown: isRecord(rExpenses.discretionaryBreakdown)
         ? sanitizeNumberMap(rExpenses.discretionaryBreakdown)
         : undefined,
     },
     existingDebtPrincipal: raw.existingDebtPrincipal != null ? num(raw.existingDebtPrincipal, 0) : undefined,
     savings: {
-      totalSavings: num(rSavings.totalSavings, base.savings.totalSavings),
-      downPaymentFromSavings: rSavings.downPaymentFromSavings != null ? num(rSavings.downPaymentFromSavings, 0) : undefined,
-      breakdown: rBreakdown
-        ? {
-            current: num(rBreakdown.current, 0),
-            savingsAccount: num(rBreakdown.savingsAccount, 0),
-            investments: num(rBreakdown.investments, 0),
-          }
-        : undefined,
+      totalSavings,
+      downPaymentFromSavings: optionalAmount(rSavings.downPaymentFromSavings),
+      breakdown,
     },
     goals: raw.goals.filter((g): g is FinancialGoal => VALID_GOALS.includes(g as FinancialGoal)),
     allocationOverrides: allocationOverrides(raw.allocationOverrides),
     property: {
-      targetPrice: num(rProperty.targetPrice, base.property.targetPrice),
+      targetPrice: Math.max(0, num(rProperty.targetPrice, base.property.targetPrice)),
+      bankAppraisal: optionalAmount(rProperty.bankAppraisal),
+      purchaseCosts: optionalAmount(rProperty.purchaseCosts),
+      targetMonthlySurplus: optionalAmount(rProperty.targetMonthlySurplus),
+      ownedUtilities: optionalAmount(rProperty.ownedUtilities),
       // Chybějící náklady na vlastnictví jsou platný stav („odhadni z ceny").
       ownershipCosts: rProperty.ownershipCosts != null ? num(rProperty.ownershipCosts, 0) : undefined,
       // Chybějící sazba je platný stav (znamená „řiď se fixací"), takže se
@@ -196,7 +215,7 @@ export function normalizeState(raw: unknown): WizardState | null {
             : undefined,
         }
       : undefined,
-  };
+  });
 }
 
 /**

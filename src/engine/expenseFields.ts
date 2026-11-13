@@ -76,3 +76,11 @@ export const DISCRETIONARY_EXPENSE_FIELD: ExpenseField = {
   tooltip: 'Výdaje, které lze při výpadku příjmů omezit: zábava, sport, dovolená, restaurace nad rámec běžné stravy, předplatné služeb. Slouží k výpočtu doporučené rezervy a odolnosti rozpočtu.',
   step: 500,
 };
+
+export const AGGREGATE_EXPENSE_FIELD = {
+  field: 'essentials',
+  label: 'Souhrn nezbytných výdajů z rychlého výpočtu',
+  short: 'Souhrn nezbytných výdajů',
+  tooltip: 'Pokud už jsou jídlo, doprava, pojistky nebo výdaje na děti v souhrnu, nezadávejte je současně do dalších polí. Při rozpisu souhrn snižte.',
+  step: 500,
+} as const;

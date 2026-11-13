@@ -1,7 +1,7 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
-import { monthlyDisposable, totalMonthlyIncome } from './cashflow';
-import { expensesAfterPurchase } from './mortgage';
+import { monthlyDisposable } from './cashflow';
+import { purchaseCashPlan } from './purchasePlan';
 
 /**
  * Měsíční rozpočet ve dvou obdobích: „dnes" a „po koupi".
@@ -43,11 +43,13 @@ export function budgetNow(state: WizardState, allocations: GoalAllocations): Bud
 
 /**
  * Rozpočet po koupi: nájem nahradí splátka s náklady na vlastnictví.
- * Energie zůstávají, odkládání na akontaci končí.
+ * Provoz odpovídá novému bytu a odkládání na koupi končí.
  */
-export function budgetAfterPurchase(state: WizardState, allocations: GoalAllocations): BudgetView {
-  const disposable = totalMonthlyIncome(state) - expensesAfterPurchase(state);
-  return view(disposable, nonHousingGoals(allocations));
+export function budgetAfterPurchase(state: WizardState, allocations: GoalAllocations, month = 0): BudgetView {
+  const purchase = purchaseCashPlan(state, month);
+  const disposable = purchase.monthlySurplus;
+  // Splněný cíl rezervy po koupi už nevyžaduje další měsíční odkládání.
+  return view(disposable, nonHousingGoals(allocations) - allocations.reserve);
 }
 
 /**

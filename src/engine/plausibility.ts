@@ -66,7 +66,16 @@ export function plausibilityNotes(state: WizardState): PlausibilityNote[] {
   const expenses = totalMonthlyExpenses(state);
 
   const perAdult = e.food / adults(state);
-  if (e.food <= 0) {
+  if (e.essentials !== undefined && e.essentials + e.food + e.transport + e.insurance + e.children < MIN_FOOD_PER_ADULT * adults(state)) {
+    notes.push({
+      key: 'essentials_low',
+      field: 'essentials',
+      tone: 'caution',
+      title: 'Nezbytné výdaje jsou velmi nízké',
+      detail: 'Ověřte, že počítáte s jídlem, dopravou, pojištěním a dalšími pravidelnými výdaji celé domácnosti.',
+    });
+  }
+  if (e.essentials === undefined && e.food <= 0) {
     notes.push({
       key: 'food_zero',
       field: 'food',
@@ -74,7 +83,7 @@ export function plausibilityNotes(state: WizardState): PlausibilityNote[] {
       title: 'Jídlo je na nule',
       detail: 'Nejspíš jen nevyplněné. Bez téhle položky vychází rozpočet o celý nákup měsíčně lépe, než jaký doopravdy je.',
     });
-  } else if (perAdult < MIN_FOOD_PER_ADULT) {
+  } else if (e.essentials === undefined && perAdult < MIN_FOOD_PER_ADULT) {
     notes.push({
       key: 'food_low',
       field: 'food',
@@ -102,7 +111,7 @@ export function plausibilityNotes(state: WizardState): PlausibilityNote[] {
     });
   }
 
-  if (e.transport < MIN_TRANSPORT) {
+  if (e.essentials === undefined && e.transport < MIN_TRANSPORT) {
     notes.push({
       key: 'transport_low',
       field: 'transport',
@@ -112,7 +121,7 @@ export function plausibilityNotes(state: WizardState): PlausibilityNote[] {
     });
   }
 
-  if (e.insurance <= 0) {
+  if (e.essentials === undefined && e.insurance <= 0) {
     notes.push({
       key: 'insurance_zero',
       field: 'insurance',

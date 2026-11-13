@@ -63,7 +63,7 @@ describe('journey', () => {
     expect(j.tightest!.tension).not.toBe('deficit');
   });
 
-  it('u schodku pojmenuje nejtěsnější místo podle události, která mu předchází', () => {
+  it('nekoupí, pokud dlouhodobě nevychází rozpočet na splátku', () => {
     const state = makeState({
       goals: ['property'],
       savings: { totalSavings: 1200000 },
@@ -72,7 +72,9 @@ describe('journey', () => {
     });
     const j = journey(state, { months: 120 });
     expect(j.tightest?.tension).toBe('deficit');
-    expect(j.tightest?.title).toMatch(/^Po koupi \d{4}$/);
+    expect(j.tightest?.title).toMatch(/^Rozpočet \d{4}$/);
+    expect(j.purchaseMonth).toBeNull();
+    expect(j.events.some((event) => event.key === 'purchase')).toBe(false);
   });
 
   it('nejnižší bod je vždy poslední událost, ať padne kamkoli', () => {
@@ -293,8 +295,9 @@ describe('co zůstane mimo zobrazený úsek', () => {
     const state = makeState({
       goals: ['property', 'child'],
       person1Age: 30,
-      savings: { totalSavings: 300000 },
-      property: { targetPrice: 8000000, mortgageRate: 0.052, loanTermYears: 30 },
+      savings: { totalSavings: 1600000 },
+      property: { targetPrice: 6300000, mortgageRate: 0.052, loanTermYears: 30 },
+      parentalLeave: { enabled: true, parent: 2, durationMonths: 36, monthlyBenefit: 5000 },
     });
     const j = journey(state, { childOffsetMonths: 180 });
     expect(j.tightest!.tension).not.toBe('calm');

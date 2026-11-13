@@ -67,7 +67,7 @@ test('v průvodci je fokus na každém prvku vidět', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/')
   await noTransitions(page)
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
 
   const seen = await tabThrough(page, 40)
   expect(seen.length).toBeGreaterThan(3)
@@ -80,7 +80,7 @@ test('na výsledcích je fokus na každém prvku vidět včetně úchopu ve stuz
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/')
   await noTransitions(page)
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
   await page.getByTestId('goal-child').click()
   await page.getByTestId('wizard-next').click()
@@ -105,7 +105,7 @@ test('na výsledcích je fokus na každém prvku vidět včetně úchopu ve stuz
 test('do lišty záložek se vstoupí jednou a mezi nimi se jezdí šipkami', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 })
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   for (let i = 0; i < 4; i++) await page.getByTestId('wizard-next').click()
   await page.getByTestId('goal-retirement').click()
   await page.getByTestId('wizard-next').click()

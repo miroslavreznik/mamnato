@@ -4,6 +4,7 @@ import { downPaymentGap } from './mortgage';
 import { CHILD_COSTS_CZ } from './defaults';
 import { monthlyChildCost } from './childCost';
 import { reserveStatus } from './reserve';
+import { purchaseCashPlan } from './purchasePlan';
 
 /**
  * Kolik měsíčně jde na jednotlivé cíle.
@@ -84,7 +85,9 @@ export function calculateDefaultAllocations(state: WizardState): GoalAllocations
   // Odkládá se půlka volných peněz, a když by to trvalo přes pět let, tak víc.
   // Nikdy si ale nevezme víc, než co zbývá.
   if (state.goals.includes('property')) {
-    const gap = downPaymentGap(state);
+    const { cashGap } = purchaseCashPlan(state);
+    const reserveGap = state.goals.includes('reserve') ? reserveStatus(state).gap : 0;
+    const gap = Math.max(downPaymentGap(state), cashGap - reserveGap);
     if (gap > 0) {
       const afterChild = Math.max(0, disposable - allocs.child - allocs.reserve);
       const share = afterChild * DOWN_PAYMENT_SHARE;

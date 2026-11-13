@@ -1,13 +1,11 @@
 import type { WizardState } from '../../../types';
-import { purchaseOneOffCosts } from '../../../engine/purchaseCosts';
+import { purchaseClosingCosts, purchaseOneOffCosts } from '../../../engine/purchaseCosts';
 import { czk } from '../../../engine/format';
 import Tooltip from '../../ui/Tooltip';
 import Disclosure from '../../ui/Disclosure';
 
 /**
- * Jednorázové náklady koupě.
- *
- * Informativní odhad mimo časovou osu a výpočet rezervy.
+ * Náklady odečtené při koupi, s rozpětím výchozího odhadu.
  */
 export default function OneOffCosts({ state }: { state: WizardState }) {
   const costs = purchaseOneOffCosts(state);
@@ -15,18 +13,18 @@ export default function OneOffCosts({ state }: { state: WizardState }) {
 
   return (
     <aside className="mt-4 p-3 rounded-lg border border-line bg-sunken" aria-label="Informace o jednorázových nákladech koupě">
-      <p className="text-xs font-medium text-ink-muted mb-1">Pro vaši informaci</p>
       <p className="text-sm font-medium text-ink-label mb-1">
-        Kromě akontace počítejte s jednorázovými náklady
-        <Tooltip text="Poplatky a služby, které koupi na hypotéku doprovázejí. Daň z nabytí nemovitosti byla zrušena v roce 2020, takže tu není. Ceny služeb se liší podle poskytovatele, proto jsou uvedená rozpětí. Stěhování a vybavení sem nepočítáme, ta se u každého liší příliš." />
+        Jednorázové náklady zahrnuté do plánu
+        <Tooltip text="Vedle kupní ceny počítáme s poplatky za koupi. Stěhování a vybavení si můžete přičíst ve vlastním nastavení." />
       </p>
       <p className="text-xs text-ink-muted mb-2">
-        Dohromady zhruba{' '}
-        <span className="font-semibold text-ink">{czk(costs.min)} až {czk(costs.max)}</span>.
-        {' '}Je to odhad poplatků při koupi. V časové ose, rezervě ani verdiktu se automaticky neodečítá; počítejte s ním zvlášť.
+        <span className="font-semibold text-ink">{czk(purchaseClosingCosts(state))}</span>{' '}
+        {state.property.purchaseCosts === undefined
+          ? `jako střed odhadu poplatků ${czk(costs.min)} až ${czk(costs.max)}.`
+          : 'podle vaší zadané částky.'}
       </p>
       {/* Součet je odpověď, rozpis je jeho odůvodnění. */}
-      <Disclosure summary="Rozpis položek">
+      <Disclosure summary="Rozpis výchozího odhadu poplatků">
         <div className="space-y-1 pb-1">
           {costs.items.map((item) => (
             <div key={item.key} className="flex justify-between gap-3 text-xs">

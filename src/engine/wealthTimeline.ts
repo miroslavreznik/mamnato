@@ -1,11 +1,13 @@
 import type { WizardState } from '../types';
 import { monthlyChildCost } from './childCost';
-import { totalMonthlyIncome, totalMonthlyExpenses } from './cashflow';
-import { monthlyMortgagePayment, requiredDownPayment, downPaymentFraction, mortgageRate, loanTermYears, ownershipCosts, totalProjectCost, effectiveDownPayment } from './mortgage';
+import { monthlyIncomeAt, totalMonthlyExpenses } from './cashflow';
+import { loanAmount, loanTermYears, ownershipCosts, ownedUtilities, effectiveDownPayment, plannedDownPayment, liquidSavings, mortgagePayment } from './mortgage';
 import { parentSalary, leavePhases, benefitAtLeaveMonth } from './parentalLeave';
 import { yearsUntilRetirement, retirementAge } from './savings';
 import { calculateAllocations, type GoalAllocations } from './allocation';
 import { reserveStatus } from './reserve';
+import { purchaseCashPlan, targetMonthlySurplus } from './purchasePlan';
+import { evaluateRenovation } from './renovation';
 
 // Časová osa úspor: měsíc po měsíci simuluje vývoj úspor domácnosti přes
 // plánované životní události, spoření na akontaci, koupi (jednorázový pokles
@@ -41,6 +43,10 @@ import { reserveStatus } from './reserve';
 export interface WealthPoint {
   month: number;
   cash: number;
+  /** Likvidní peníze včetně rezervy, po odečtení ostatních cílů. */
+  availableCash?: number;
+  /** Hotovost vyhrazená na koupi, jednorázové náklady a rezervu. */
+  purchaseFund?: number;
   /**
    * Kolik ten měsíc přiteklo nebo odteklo (příjem − výdaje). Jednorázový
    * výdej akontace se sem nezapočítává, ten není opakovaný tok.
@@ -73,10 +79,13 @@ export interface WealthPoint {
 export interface WealthTimelineResult {
   points: WealthPoint[];
   purchaseMonth: number | null; // null = koupě se v horizontu nekoná
+  /** Likvidní peníze hned po úhradě akontace a jednorázových nákladů. */
+  purchaseCashAfterClosing: number | null;
+  /** Nejdřívější měsíc s naspořenou akontací a celou potřebnou hotovostí. */
+  earliestCashReadyMonth: number | null;
+  earliestDownPaymentMonth: number | null;
   /**
-   * Nejdřívější měsíc, kdy by se dalo koupit, tedy kdy je na akontaci
-   * naspořeno. Bez odkladu je stejný jako `purchaseMonth`; s odkladem říká,
-   * jak daleko doleva má smysl pustit úchop na stuze.
+   * Nejdřívější měsíc, kdy jsou dostupné vlastní peníze a vychází rozpočet.
    */
   earliestPurchaseMonth: number | null;
   childMonth: number | null;
@@ -146,17 +155,18 @@ export function wealthTimeline(
   const hasProperty = state.goals.includes('property');
   const hasChild = state.goals.includes('child');
 
-  const baseIncome = totalMonthlyIncome(state);
   const baseExpenses = totalMonthlyExpenses(state);
   const rent = state.expenses.rent;
+  const utilities = state.expenses.utilities;
 
   // Cílová akontace: požadovaná dle LTV; když si uživatel vyhradil víc, platí jeho volba.
-  const price = totalProjectCost(state);
   const targetDownPayment = downPaymentTarget(state);
-  const rate = mortgageRate(state);
   const term = loanTermYears(state);
   const ownership = ownershipCosts(state);
-  const mortgage = monthlyMortgagePayment(Math.max(0, price - targetDownPayment), rate, term);
+  const mortgage = mortgagePayment(state);
+  const renovation = evaluateRenovation(state);
+  const renovationMonths = renovation?.months ?? 0;
+  const renovatedUtilities = ownedUtilities(state);
 
   // Termín dítěte je zadaný údaj (`state.childInMonths`); `opts` ho přebíjí
   // jen v „Co kdyby", kde se s ním zkouší hýbat, aniž by se to uložilo.
@@ -188,7 +198,9 @@ export function wealthTimeline(
   const goalsAlways = alloc.retirement + customTotal;
 
   const points: WealthPoint[] = [];
-  let cash = state.savings.totalSavings;
+  let cash = liquidSavings(state);
+  let availableForClosing = liquidSavings(state);
+  let purchaseFund = availableForClosing;
   // Fond na akontaci: co je z úspor vyhrazeno teď, plus co se na ni měsíčně
   // odkládá. Kupuje se z něj, ne z celého jmění.
   let downPaymentFund = effectiveDownPayment(state);
@@ -199,6 +211,9 @@ export function wealthTimeline(
   const reserveGoal = state.goals.includes('reserve');
   let reserveFund = reserve.current;
   let purchaseMonth: number | null = null;
+  let purchaseCashAfterClosing: number | null = null;
+  let earliestDownPaymentMonth: number | null = null;
+  let earliestCashReadyMonth: number | null = null;
   let earliestPurchaseMonth: number | null = null;
   const notBefore = Math.max(0, Math.round(opts.purchaseNotBeforeMonth ?? 0));
   // Doplacení se odvozuje od koupě, ne od nuly: kdo kupuje za tři roky,
@@ -209,23 +224,32 @@ export function wealthTimeline(
   let firstNegativeMonth: number | null = null;
 
   // Nultý měsíc je výchozí stav, žádný tok se v něm ještě nestal.
-  points.push({ month: 0, cash: Math.round(cash), flow: 0, flowAfterGoals: 0, downPaymentFund: Math.round(downPaymentFund) });
+  points.push({ month: 0, cash: Math.round(cash), availableCash: Math.round(availableForClosing),
+    purchaseFund: Math.round(purchaseFund), flow: 0, flowAfterGoals: 0, downPaymentFund: Math.round(downPaymentFund) });
 
   for (let m = 0; m < horizon; m++) {
-    // Koupě: jakmile je na cílovou akontaci naspořeno (dynamicky, zohlední
-    // i to, že dítě nebo rodičovská spoření zpomalí), nejdřív ale v měsíci,
-    // na který si ji uživatel posunul.
+    // Akontace, ostatní hotovost a udržitelný měsíční rozpočet dozrávají
+    // různě rychle. Uložíme jejich termíny odděleně.
     if (hasProperty && purchaseMonth === null && downPaymentFund >= targetDownPayment) {
-      if (earliestPurchaseMonth === null) earliestPurchaseMonth = m;
-      if (m >= notBefore) {
+      earliestDownPaymentMonth ??= m;
+      const plan = purchaseCashPlan(state, m);
+      const cashReady = purchaseFund >= plan.cashRequired;
+      if (cashReady) earliestCashReadyMonth ??= m;
+      const monthlyReady = plan.monthlySurplus - goalsAlways - alloc.child >= targetMonthlySurplus(state);
+      if (cashReady && monthlyReady) earliestPurchaseMonth ??= m;
+      if (cashReady && monthlyReady && m >= notBefore) {
         purchaseMonth = m;
-        cash -= targetDownPayment;
-        const payoff = m + term * 12;
-        if (payoff <= horizon) mortgagePaidOffMonth = payoff;
+        const closingOutlay = targetDownPayment + plan.oneOffCosts;
+        availableForClosing -= closingOutlay;
+        purchaseCashAfterClosing = Math.round(availableForClosing);
+        reserveFund = availableForClosing;
+        cash -= closingOutlay;
+        const payoff = m + renovationMonths + term * 12;
+        if (loanAmount(state) > 0 && payoff <= horizon) mortgagePaidOffMonth = payoff;
       }
     }
 
-    let income = baseIncome;
+    let income = monthlyIncomeAt(state, m);
     if (leaveActive && m >= childMonth! && m < leaveEndMonth!) {
       // Dávka se během volna mění: mateřská na začátku, pak rodičovský
       // příspěvek. Plochý průměr by úbytek úspor rozložil špatně.
@@ -240,7 +264,10 @@ export function wealthTimeline(
       // za celý plán. Do desetiletého okna se to nevešlo, protože nejkratší
       // volitelná hypotéka je patnáctiletá.
       const repaid = mortgagePaidOffMonth !== null && m >= mortgagePaidOffMonth;
-      expenses = expenses - rent + (repaid ? 0 : mortgage) + ownership;
+      const stillRenovating = renovation && m < purchaseMonth + renovationMonths;
+      expenses = expenses - rent - utilities + (stillRenovating
+        ? renovation.housingDuringRenovation
+        : (repaid ? 0 : mortgage) + ownership + renovatedUtilities);
     }
     if (childMonth !== null && m >= childMonth) expenses += monthlyChildCost(state, (m - childMonth) / 12);
 
@@ -251,14 +278,20 @@ export function wealthTimeline(
     // `min(alloc, flow)` zvlášť, rozdělily by v hubeném měsíci tytéž peníze
     // dvakrát a osa by kupovala dřív, než na co domácnost má.
     let free = Math.max(0, flow);
-    const buildingReserve = reserveGoal && reserveFund < reserve.target;
+    const buildingReserve = reserveGoal && purchaseMonth === null && reserveFund < reserve.target;
+    let reserveSaving = 0;
     if (buildingReserve) {
-      const put = Math.min(alloc.reserve, free);
-      reserveFund += put;
-      free -= put;
+      reserveSaving = Math.min(alloc.reserve, free, reserve.target - reserveFund);
+      reserveFund += reserveSaving;
+      free -= reserveSaving;
     }
+    const childSaving = childMonth !== null && m < childMonth ? alloc.child : 0;
+    const purchaseSaving = purchaseMonth === null ? Math.min(alloc.downPayment, free) : 0;
+    const setAside = Math.min(free - purchaseSaving, goalsAlways + childSaving);
+    availableForClosing += flow - setAside;
     if (purchaseMonth === null) {
-      downPaymentFund += Math.min(alloc.downPayment, free);
+      purchaseFund = Math.max(0, Math.min(availableForClosing, purchaseFund + reserveSaving + purchaseSaving));
+      downPaymentFund = Math.max(0, Math.min(purchaseFund, targetDownPayment, downPaymentFund + purchaseSaving));
     }
 
     if (cash < minCash) {
@@ -274,6 +307,8 @@ export function wealthTimeline(
     points.push({
       month: m + 1,
       cash: Math.round(cash),
+      availableCash: Math.round(availableForClosing),
+      purchaseFund: Math.round(purchaseFund),
       flow: Math.round(flow),
       flowAfterGoals: Math.round(flow - goals),
       downPaymentFund: Math.round(downPaymentFund),
@@ -283,6 +318,9 @@ export function wealthTimeline(
   return {
     points,
     purchaseMonth,
+    purchaseCashAfterClosing,
+    earliestCashReadyMonth,
+    earliestDownPaymentMonth,
     earliestPurchaseMonth,
     childMonth,
     leaveEndMonth,
@@ -308,9 +346,7 @@ export function wealthTimeline(
  */
 /** Cílová částka akontace, ze které vychází časová osa i graf spoření. */
 export function downPaymentTarget(state: WizardState): number {
-  const required = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
-  const chosen = state.savings.downPaymentFromSavings;
-  return chosen != null ? Math.max(required, chosen) : required;
+  return plannedDownPayment(state);
 }
 
 export function monthsUntilDownPaymentReady(
@@ -318,6 +354,6 @@ export function monthsUntilDownPaymentReady(
   allocations: GoalAllocations
 ): number {
   if (!state.goals.includes('property')) return 0;
-  const { earliestPurchaseMonth } = wealthTimeline(state, { allocations });
-  return earliestPurchaseMonth ?? Infinity;
+  const { earliestDownPaymentMonth } = wealthTimeline(state, { allocations });
+  return earliestDownPaymentMonth ?? Infinity;
 }

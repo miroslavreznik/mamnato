@@ -1,13 +1,14 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
 import { monthlyDisposable, totalMonthlyIncome } from './cashflow';
-import { downPaymentGap, postPurchaseRunwayMonths, dsti, mortgagePayment, necessaryExpensesAfterPurchase, totalProjectCost } from './mortgage';
+import { dsti, mortgagePayment, totalProjectCost, youngestApplicantAge } from './mortgage';
 import { evaluateScenario } from './scenarios';
 import { budgetNow, budgetAfterPurchase } from './budget';
 import { evaluateParentalLeave } from './parentalLeave';
 import { reserveStatus } from './reserve';
-import { monthsUntilDownPaymentReady } from './wealthTimeline';
-import { MIN_RESERVE_MONTHS_AFTER_PURCHASE, retirementReadiness } from './readiness';
+import { wealthTimeline } from './wealthTimeline';
+import { retirementReadiness } from './readiness';
+import { purchaseCashPlan, targetMonthlySurplus } from './purchasePlan';
 import { DEFAULTS } from './defaults';
 import { czk, czkMonthly, monthYearIn, formatMonths } from './format';
 
@@ -58,15 +59,6 @@ export interface NextStep {
 }
 
 /**
- * Doporučená nouzová rezerva: tři měsíce nezbytných výdajů.
- *
- * Bere se z `readiness`, aby existovala jednou. Dokud tu stála vlastní
- * trojka, mohl se práh, podle kterého se hodnotí cíl bydlení, rozejít
- * s částkou, kterou tahle karta doporučuje odkládat.
- */
-const RESERVE_MONTHS = MIN_RESERVE_MONTHS_AFTER_PURCHASE;
-
-/**
  * „To je / To jsou" podle počtu měsíců.
  *
  * Čeština to nemá podle jednotného a množného čísla, ale podle číslovky:
@@ -95,8 +87,7 @@ function monthsCopula(months: number): string {
  *    1 253 Kč, tedy dvacetina toho, co appka doporučovala odkládat.
  */
 function spare(state: WizardState, allocations: GoalAllocations): number {
-  // Kupuje se hned, když je akontace pokrytá; pak platí rozpočet po koupi.
-  const buysNow = state.goals.includes('property') && downPaymentGap(state) <= 0;
+  const buysNow = state.goals.includes('property') && purchaseCashPlan(state).cashGap === 0;
   const budget = buysNow ? budgetAfterPurchase(state, allocations) : budgetNow(state, allocations);
 
   const leave = evaluateParentalLeave(state);
@@ -112,7 +103,7 @@ function spare(state: WizardState, allocations: GoalAllocations): number {
 function leaveLimits(state: WizardState, allocations: GoalAllocations): boolean {
   const leave = evaluateParentalLeave(state);
   if (!leave) return false;
-  const buysNow = state.goals.includes('property') && downPaymentGap(state) <= 0;
+  const buysNow = state.goals.includes('property') && purchaseCashPlan(state).cashGap === 0;
   const budget = buysNow ? budgetAfterPurchase(state, allocations) : budgetNow(state, allocations);
   return leave.worstMonthlyDisposable - (budget.allocated - allocations.child) < budget.surplus;
 }
@@ -138,6 +129,18 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
   // 2. Splátka v pásmu zvýšené obezřetnosti. Musí být dřív než spoření:
   // nejdřív je potřeba ověřit dostupnou výši úvěru u konkrétní banky.
   if (buying) {
+    const plan = purchaseCashPlan(state);
+    const postPurchase = budgetAfterPurchase(state, allocations);
+    const budgetGap = targetMonthlySurplus(state) - postPurchase.surplus;
+    if (budgetGap > 0) {
+      return {
+        key: 'payment_too_high',
+        action: 'Zkuste snížit cenu bytu.',
+        why: `Po nastěhování vám do zvoleného rozpočtu chybí ${czkMonthly(budgetGap)}. Upravte cenu a podívejte se, při které už vychází.`,
+        section: 'bydleni',
+        actionLabel: 'Zkusit jinou cenu',
+      };
+    }
     const scenario = evaluateScenario(state);
     if (scenario.id === 'cannot_afford_dsti' || dsti(state) > DEFAULTS.dstiCaution) {
       const income = totalMonthlyIncome(state);
@@ -159,32 +162,22 @@ export function nextStep(state: WizardState, allocations: GoalAllocations): Next
       };
     }
 
-    // 3. Chybějící akontace. Je to aktivní spořicí cíl, takže má přednost
-    // před rezervou; rezerva se k ní připočte do `why`, ať se na ni
-    // nezapomene.
-    const gap = downPaymentGap(state);
-    if (gap > 0) {
-      const monthly = allocations.downPayment > 0 ? allocations.downPayment : free;
-      const thinAfter = postPurchaseRunwayMonths(state) < RESERVE_MONTHS;
-      const reserveNote = thinAfter
-        ? ` Počítejte k tomu ještě s rezervou ${czk(necessaryExpensesAfterPurchase(state) * RESERVE_MONTHS)}: po zaplacení akontace by vám jinak nezbylo na nečekané výdaje.`
-        : '';
+    if (plan.cashGap > 0) {
+      const monthly = allocations.downPayment + allocations.reserve;
+      const { purchaseMonth } = wealthTimeline(state, { allocations });
+      const age = youngestApplicantAge(state);
+      const ageMayChange = purchaseMonth !== null && age !== undefined && age < 36
+        && purchaseMonth >= (35 - age) * 12;
       return {
         key: 'down_payment',
         action: monthly > 0
-          ? `Dospořte akontaci, chybí ${czk(gap)}.`
-          : `Na akontaci chybí ${czk(gap)}, ale zatím na ni nic nezbývá.`,
-        // Částka chybějící akontace je už ve větě nahoře, tady se neopakuje.
-        why: (monthly > 0
-          ? 'Při téhle částce ji máte celou v uvedeném termínu, a teprve pak má '
-            + 'smysl obcházet banky. Dřív vám nabídku stejně nedají.'
-          : 'Peníze na ni musí odněkud přijít, jinak se koupě neposune.')
-          + reserveNote,
+          ? `Dospořte na koupi ${czk(plan.cashGap)}.`
+          : `Na koupi chybí ${czk(plan.cashGap)}. Nastavte odkládání.`,
+        why: `Částka zahrnuje vlastní vklad, jednorázové náklady a rezervu na ${formatMonths(plan.reserveMonths)}.`
+          + (purchaseMonth === null ? ' Při nastaveném spoření zatím koupě nemá termín.' : '')
+          + (ageMayChange ? ' Před koupí ověřte, jestli mladšímu žadateli bude ještě méně než 36 let. Potom může být potřeba vyšší vlastní vklad.' : ''),
         monthly: monthly > 0 ? monthly : undefined,
-        // Termín ze simulace, aby seděl na dlaždici i na stuhu. Prosté
-        // `gap / monthly` platí jen tehdy, když domácnosti každý měsíc
-        // opravdu tolik zbývá; během rodičovské nezbývá.
-        done: monthly > 0 ? monthYearIn(monthsUntilDownPaymentReady(state, allocations)) : undefined,
+        done: purchaseMonth === null ? undefined : monthYearIn(purchaseMonth),
         section: 'bydleni',
         actionLabel: 'Nastavit odkládání',
       };

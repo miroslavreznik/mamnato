@@ -25,6 +25,8 @@ Celá aplikace běží v prohlížeči, **žádný backend, žádné přihláše
 
 ## Co aplikace umí
 
+Z úvodu lze otevřít krátký průchod **Prověřit konkrétní byt** nebo **Zjistit, jak drahý byt hledat**. Tři kroky pokrývají příjmy a dostupné úspory, běžné výdaje a parametry koupě. Pro další cíle slouží volba **Sestavit finanční plán**. Rozpracovaný hypoteční plán lze rozšířit i z výsledků.
+
 ### Průvodce (wizard)
 Krok za krokem se zeptá na vše potřebné. Kroky se přizpůsobují podle režimu a zvolených cílů:
 
@@ -64,12 +66,14 @@ Přehled je rozdělený do **záložek**, na širokém okně jako sloupec vlevo,
 #### Vaše cíle
 - **Důchodový plánovač**, projekce portfolia z toho, co už máte naspořeno, pravidlo 4 %, porovnání nástrojů, přepínač nominálních a reálných částek. Připravenost a verdikt porovnávají rentu v dnešních cenách s vaší požadovanou částkou.
 
-Ručně nastavené měsíční odkládání na akontaci, rezervu, důchod a vlastní cíle se ukládá do plánu a přenáší sdíleným odkazem, včetně nulových částek. Jednorázové poplatky při koupi jsou samostatná informativní poznámka; časová osa, rezerva ani verdikt je automaticky neodečítají.
+Ručně nastavené měsíční odkládání na akontaci, rezervu, důchod a vlastní cíle se ukládá do plánu a přenáší sdíleným odkazem, včetně nulových částek. Při výpočtu termínu koupě se kontroluje hotovost na vlastní vklad, jednorázové náklady, požadovanou rezervu a případný souběh nájmu s financováním rekonstrukce. Přehled ukazuje hotovost v okamžiku koupě a měsíční rozpočet po nastěhování.
 - **Náklady na dítě** dle věku
 - **Rodičovská: co udělá s rozpočtem** *(pár/rodina s cílem dítě)*, mateřská a rodičovský příspěvek zvlášť, protože se výrazně liší; ukáže, co zbyde v nejhorším měsíci a jestli rezerva pokryje celou dobu
 - **Plánovač vlastních cílů**, cíl je měsíční částka z volných peněz a appka řekne, jestli s ní termín vyjde
 
 #### Co kdyby
+
+U plánované koupě lze porovnat dočasný pokles jednoho příjmu, vyšší sazbu po fixaci nebo obojí najednou. Nová splátka se počítá ze zbývající jistiny a splatnosti.
 Samostatné pískoviště: každý cíl má **přepínač** (včetně „nekupovat"), pod zapnutým cílem jsou jeho parametry (cena nemovitosti, sazba, délka rodičovské). Živá časová osa se překresluje hned a původní scénář zůstává vidět jako přerušovaný obrys, takže je poznat, jestli si člověk pomohl. Dlaždice pod grafem ukazují rozdíl proti původnímu scénáři.
 
 ### Napříč aplikací
@@ -101,8 +105,8 @@ Průvodce (React UI)  →  Výpočetní jádro (čisté funkce)  →  Výsledky 
 
 Předvyplněné hodnoty vychází z veřejných dat **ČSÚ** a **ČNB** (datum platnosti v `src/engine/defaults.ts`, aktuálně `2026-07`). Uživatel může vše přepsat.
 
-**Regulace ČNB (úvěrové ukazatele).** Aplikace odráží stav, kdy je závazný už jen limit **LTV** (poměr výše úvěru k ceně):
-- max **80 %**, u žadatelů **do 36 let až 90 %** → povinná akontace **20 %**, resp. **10 %**.
+**Regulace ČNB (úvěrové ukazatele).** Pro vlastní bydlení model pracuje s **LTV**, poměrem výše úvěru k hodnotě zástavy. Pokud bankovní odhad neznáte, model použije kupní cenu.
+- Standardně **80 %** hodnoty zástavy. Při splnění podmínek pro žadatele mladší 36 let **90 %**. Vlastní vklad závisí také na rozdílu kupní ceny a bankovního odhadu.
 - Horní limity **DSTI** (od 7/2023) a **DTI** (od 1/2024) ČNB závazně nevyžaduje. Aplikace je proto ukazuje jako **orientační bankovní vodítko** (banky je i tak běžně posuzují, typicky DSTI ~45 %, DTI ~8,5×), ne jako závazný limit.
 
 **Další výpočty:**

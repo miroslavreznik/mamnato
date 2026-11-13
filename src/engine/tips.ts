@@ -1,12 +1,12 @@
 import type { WizardState } from '../types';
-import { MIN_RESERVE_MONTHS_AFTER_PURCHASE, type GoalReadiness } from './readiness';
+import { type GoalReadiness } from './readiness';
 import type { BudgetView } from './budget';
 import type { LeaveImpact } from './parentalLeave';
 import type { OverallStatusKey } from './verdict';
 import { evaluateScenario } from './scenarios';
-import { postPurchaseRunwayMonths } from './mortgage';
 import { czk } from './format';
 import { plannedChildren } from './childCost';
+import { purchaseCashPlan } from './purchasePlan';
 
 /**
  * Rady „co můžete udělat" pod verdiktem.
@@ -120,14 +120,13 @@ export function buildTips(
     tips.push(...evaluateScenario(state).tips.slice(0, 2).map((text) => ({ text })));
   }
 
-  // 3. Rezerva po zaplacení akontace. Výchozí nastavení dává do akontace
-  //    všechny úspory, takže domácnosti po koupi nezbyde nic na nečekané
-  //    výdaje. Appka to dřív říkala jen šedým číslem v dlaždici.
-  if (property && postPurchaseRunwayMonths(state) < MIN_RESERVE_MONTHS_AFTER_PURCHASE) {
+  // 3. Pro koupi je potřeba současně pokrýt vklad, náklady i rezervu.
+  const purchase = property ? purchaseCashPlan(state) : null;
+  if (purchase && purchase.cashGap > 0) {
     tips.push({
-      text: `Po zaplacení akontace by vám nezbyla rezerva na nečekané výdaje. Nechte si stranou ${MIN_RESERVE_MONTHS_AFTER_PURCHASE} až 6 měsíců výdajů a dejte do akontace míň.`,
+      text: `Aby vám po vlastním vkladu a jednorázových nákladech zůstala rezerva na nečekané výdaje, na koupi ještě potřebujete ${czk(purchase.cashGap)}.`,
       section: 'bydleni',
-      actionLabel: 'Upravit akontaci',
+      actionLabel: 'Projít hotovost na koupi',
     });
   }
 

@@ -7,7 +7,7 @@ import NumField from '../../ui/NumField';
 import StepNavigation from '../StepNavigation';
 import { formatNumber as fmt } from '../../../engine/format';
 import { fieldClass } from '../../ui/fieldClass';
-import { NECESSARY_EXPENSE_FIELDS, DISCRETIONARY_EXPENSE_FIELD } from '../../../engine/expenseFields';
+import { NECESSARY_EXPENSE_FIELDS, DISCRETIONARY_EXPENSE_FIELD, AGGREGATE_EXPENSE_FIELD } from '../../../engine/expenseFields';
 import Callout from '../../ui/Callout';
 import PlausibilityNotes from '../../ui/PlausibilityNotes';
 
@@ -43,19 +43,20 @@ export default function Step3Expenses() {
   const groups = discretionaryGroupTotals(breakdown);
 
   const visibleCategories = NECESSARY_EXPENSE_FIELDS.filter((c) => !c.familyOnly || isFamily);
+  if (state.expenses.essentials !== undefined) visibleCategories.push(AGGREGATE_EXPENSE_FIELD);
 
 
   return (
     <div>
       <h2 className="type-section text-ink mb-2">Vaše výdaje</h2>
-      <p className="text-ink-muted mb-6">Zadejte měsíční výdaje po kategoriích. Hodnoty jsou předvyplněny průměrem ČR.</p>
+      <p className="text-ink-muted mb-6">{state.expenses.essentials === undefined ? 'Zadejte měsíční výdaje po kategoriích. Výchozí částky jsou orientační odhady pro ČR.' : 'Upravte částky z rychlého výpočtu nebo souhrnný výdaj rozdělte do jednotlivých kategorií.'}</p>
 
       <h3 className="text-sm font-semibold text-ink-label mb-3">Nezbytné výdaje</h3>
       {visibleCategories.map((cat) => (
         <NumberInput
           key={cat.field}
           label={cat.label}
-          value={state.expenses[cat.field as keyof typeof state.expenses] as number}
+          value={(state.expenses[cat.field as keyof typeof state.expenses] as number | undefined) ?? 0}
           onChange={(v) => dispatch({ type: 'UPDATE_EXPENSES', field: cat.field, value: v })}
           tooltip={cat.tooltip}
           step={cat.step}

@@ -1,6 +1,6 @@
 import { useReducer, useEffect } from 'react';
-import { WizardContext, wizardReducer, createInitialState } from '../../store/wizardStore';
-import { saveState, loadState } from '../../store/localStorage';
+import { WizardContext, wizardReducer } from '../../store/wizardStore';
+import type { WizardState } from '../../types';
 import StepIndicator from './StepIndicator';
 import LivePreview from './LivePreview';
 import type { StepItem } from './StepIndicator';
@@ -21,9 +21,9 @@ const BASE_STEPS: StepItem[] = [
 ];
 
 interface WizardContainerProps {
-  onComplete: () => void;
-  returnToStep?: number | null;
-  resumeSavedState?: boolean;
+  initialState: WizardState;
+  onStateChange: (state: WizardState) => void;
+  onComplete: (state: WizardState) => void;
   /**
    * Zpátky na přehled bez doklikání zbytku kroků.
    *
@@ -35,27 +35,16 @@ interface WizardContainerProps {
   onBackToResults?: () => void;
 }
 
-export default function WizardContainer({ onComplete, returnToStep, resumeSavedState, onBackToResults }: WizardContainerProps) {
-  // Počáteční stav odvodíme rovnou z prohlížeče (líný inicializátor), takže
-  // není potřeba efekt na načtení ani příznak „initialized".
-  const [state, dispatch] = useReducer(wizardReducer, { returnToStep, resumeSavedState }, (init) => {
-    const saved = loadState();
-    if (saved) {
-      if (init.returnToStep) return { ...saved, currentStep: init.returnToStep };
-      if (init.resumeSavedState) return saved;
-    }
-    return createInitialState();
-  });
-
-  useEffect(() => {
-    saveState(state);
-  }, [state]);
+export default function WizardContainer({ initialState, onStateChange, onComplete, onBackToResults }: WizardContainerProps) {
+  const [state, dispatch] = useReducer(wizardReducer, initialState);
 
   useEffect(() => {
     if (state.currentStep > 7) {
-      onComplete();
+      onComplete(state);
+    } else {
+      onStateChange(state);
     }
-  }, [state.currentStep, onComplete]);
+  }, [state, onComplete, onStateChange]);
 
   const steps: Record<number, React.ReactNode> = {
     1: <Step1Mode />,

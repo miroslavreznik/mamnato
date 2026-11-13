@@ -71,9 +71,11 @@ export default function LivePreview() {
         ))}
       </dl>
 
-      <p className="mt-3 text-xs text-ink-muted leading-relaxed">
-        Předvyplněno průměry pro ČR. Přepište jen to, co u vás sedí jinak.
-      </p>
+      {state.expenses.essentials === undefined && (
+        <p className="mt-3 text-xs text-ink-muted leading-relaxed">
+          Výchozí částky jsou orientační odhady pro ČR. Upravte je podle své domácnosti.
+        </p>
+      )}
     </div>
   );
 }

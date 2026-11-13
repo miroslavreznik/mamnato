@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { downPaymentTradeoff, MIN_RESERVE_MONTHS, COMPARISON_STEP } from '../../src/engine/downPayment';
+import { downPaymentTradeoff, COMPARISON_STEP } from '../../src/engine/downPayment';
+import { purchaseCashPlan } from '../../src/engine/purchasePlan';
 import { purchasingPowerAfter } from '../../src/engine/savings';
 import { mortgagePayment, ownershipCosts, loanAmount, mortgageRate, loanTermYears, totalLoanInterest } from '../../src/engine/mortgage';
 import { necessaryMonthlyExpenses } from '../../src/engine/cashflow';
@@ -28,10 +29,16 @@ describe('rozvaha nad akontací', () => {
     expect(t.monthlyNeedAfter).toBeCloseTo(expected, 6);
   });
 
-  it('bezpečné maximum nechá rezervu na šest měsíců', () => {
-    const t = downPaymentTradeoff(makeState());
-    const zbyde = 1500000 - t.safeMax;
-    expect(zbyde / t.monthlyNeedAfter).toBeCloseTo(MIN_RESERVE_MONTHS, 6);
+  it('bezpečné maximum nechá požadovanou rezervu po zaplacení poplatků', () => {
+    const state = makeState({ reserveMonths: 6 });
+    const { safeMax } = downPaymentTradeoff(state);
+    expect(safeMax).toBeGreaterThan(0);
+    const purchaseWith = (downPaymentFromSavings: number) => purchaseCashPlan({
+      ...state, savings: { ...state.savings, downPaymentFromSavings },
+    });
+    const atLimit = purchaseWith(safeMax);
+    expect(atLimit.cashAfterClosing).toBeGreaterThanOrEqual(atLimit.reserveTarget);
+    expect(purchaseWith(safeMax + 1).cashGap).toBeGreaterThan(0);
   });
 
   it('u malých úspor bezpečné maximum spadne na nulu, ne pod ni', () => {

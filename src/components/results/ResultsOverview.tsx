@@ -5,11 +5,11 @@ import { evaluateOverall } from '../../engine/summary';
 import type { GoalStatus } from '../../engine/summary';
 import { journey } from '../../engine/journey';
 import { monthlyDisposable, savingsRate, emergencyRunwayMonths } from '../../engine/cashflow';
-import { postPurchaseRunwayMonths, mortgagePayment, downPaymentGap, dti, dsti, requiredDownPayment, downPaymentFraction, totalProjectCost } from '../../engine/mortgage';
-import { monthsUntilDownPaymentReady } from '../../engine/wealthTimeline';
+import { mortgagePayment, dti, dsti, necessaryExpensesAfterPurchase, isUnder36 } from '../../engine/mortgage';
+import { targetMonthlySurplus, type AffordableProperty } from '../../engine/purchasePlan';
 import { DEFAULTS } from '../../engine/defaults';
 import { plannedChildren } from '../../engine/childCost';
-import { czkMonthly, decimal, formatMonths, formatNumber as fmt } from '../../engine/format';
+import { czk, czkMonthly, decimal, formatMonths, formatNumber as fmt } from '../../engine/format';
 import Tooltip from '../ui/Tooltip';
 import BudgetSummary from './BudgetSummary';
 import Card from '../ui/Card';
@@ -29,6 +29,8 @@ interface Props {
   onOpenSection?: (id: string) => void;
   /** Posun puntíku „Dítě" po ose. Zapisuje se do stavu, viz `childInMonths`. */
   onChangeChildTiming?: (months: number) => void;
+  affordableProperty?: AffordableProperty;
+  onExpandPlan?: () => void;
 }
 
 type Tone = 'good' | 'caution' | 'danger' | 'plain';
@@ -56,14 +58,21 @@ const goalBadge: Record<GoalStatus, { label: string; status: Status }> = {
   warning: { label: 'Nevychází', status: 'danger' },
 };
 
-export default function ResultsOverview({ state, allocations, onOpenSection, onChangeChildTiming }: Props) {
-  const summary = evaluateOverall(state, allocations);
+export default function ResultsOverview({ state, allocations, onOpenSection, onChangeChildTiming, affordableProperty, onExpandPlan }: Props) {
   const disposable = monthlyDisposable(state);
   const rate = savingsRate(state);
-  // U kupujících je relevantní rezerva PO zaplacení akontace (úspory se z velké
-  // části utratí a místo nájmu se platí hypotéka).
-  const hasProperty = state.goals.includes('property');
-  const runway = hasProperty ? postPurchaseRunwayMonths(state) : emergencyRunwayMonths(state);
+  const hasProperty = state.goals.includes('property') && state.property.targetPrice > 0;
+  const [purchaseAt, setPurchaseAt] = useState(0);
+  const journeyData = journey(state, { purchaseNotBeforeMonth: purchaseAt, allocations });
+  const summary = evaluateOverall(state, allocations, journeyData.timeline);
+  const closing = summary.purchase;
+  const purchaseMonth = closing?.purchaseMonth ?? null;
+  const postBudget = summary.budgetAfter;
+  const remaining = closing?.projectedClosingCash ?? null;
+  const essential = hasProperty ? necessaryExpensesAfterPurchase(state) : 0;
+  const runway = hasProperty
+    ? (essential <= 0 ? Infinity : Math.max(0, remaining ?? closing?.cashAfterClosing ?? 0) / essential)
+    : emergencyRunwayMonths(state);
 
   // Desetinné místo dává smysl u „8,5 měs.", u nuly vypadá jako chyba měření.
   const runwayLabel = runway === Infinity
@@ -93,41 +102,26 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
           };
         })(),
         (() => {
-          const gap = downPaymentGap(state);
-          // Termín ze simulace, ne z prostého dělení: během rodičovské se
-          // neodkládá, tak jak dlaždice slibovala, a stuha vedle kupovala
-          // o tři měsíce později. Pravdivé je to pomalejší číslo.
-          const months = monthsUntilDownPaymentReady(state, allocations);
-          // Požadovaná akontace se počítá z celé investice včetně rekonstrukce,
-          // stejně jako `downPaymentGap`. Z holé ceny by proužek u projektu
-          // s rekonstrukcí ukazoval větší pokrytí, než jaké je.
-          const required = requiredDownPayment(totalProjectCost(state), downPaymentFraction(state));
+          const gap = closing?.cashGap ?? 0;
+          const required = closing?.cashRequired ?? 0;
           return {
-            label: 'Chybějící akontace',
-            tooltip: 'Rozdíl mezi akontací, kterou banka požaduje (20 % ceny, u žadatelů mladších 36 let 10 %), a tím, co pokryjete z úspor. Bez ní vám banka hypotéku neposkytne.',
+            label: 'Kolik dnes chybí na koupi',
+            tooltip: 'Částka, která chybí na vlastní vklad, jednorázové náklady a nastavenou rezervu.',
             value: gap > 0 ? fmt(gap) : '0',
             unit: 'Kč',
             sub: gap > 0
-              ? (isFinite(months) ? `naspoříte za ${formatMonths(months, true)}` : 'zatím na ni nic neodkládáte')
-              : 'akontaci máte pokrytou',
-            tone: gap > 0 ? (isFinite(months) ? 'caution' : 'danger') : 'good',
-            // Kolik z požadované akontace je už pokryto.
+              ? (purchaseMonth != null ? `koupě za ${formatMonths(purchaseMonth, true)}` : 'termín koupě zatím nevychází')
+              : 'potřebnou hotovost máte',
+            tone: gap > 0 ? (purchaseMonth != null ? 'caution' : 'danger') : 'good',
             meter: required > 0 ? (required - gap) / required : 1,
           };
         })(),
         {
           label: 'Rezerva po koupi vydrží',
-          tooltip: 'Kolik měsíců by úspory pokryly nezbytné výdaje při výpadku příjmu, počítáno PO zaplacení akontace a s hypotékou místo nájmu. Ideál je 3–6 měsíců.'
-            + (downPaymentGap(state) > 0
-              ? ' Počítá se z dnešních úspor, tedy jako byste kupovali hned. Časová osa vedle počítá s tím, že do koupě ještě něco naspoříte, proto tam vychází víc.'
-              : ''),
+          tooltip: 'Počet měsíců nezbytných výdajů, které pokryje hotovost po zaplacení vlastního vkladu a jednorázových nákladů.',
           value: runwayLabel,
           unit: 'měs.',
-          // Bez akontace se kupovat nedá, takže je to odpověď na „co kdybych
-          // koupil dnes". Časová osa počítá s koupí až v okamžiku, kdy je na ni
-          // naspořeno, a dá jiné číslo. Dvě různá čísla o téže věci vedle sebe
-          // vypadají jako chyba, dokud se nenapíše, čeho se každé týká.
-          sub: downPaymentGap(state) > 0 ? 'kdybyste kupovali dnes' : undefined,
+          sub: purchaseMonth == null ? 'podle dnešních úspor' : undefined,
           tone: runwayTone,
           months: runway === Infinity ? 6 : runway,
         },
@@ -164,52 +158,42 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
   // v přehledu chyběla, přestože je to ten největší závazek ze všech.
   const readinessGoals = summary.goals;
 
-  // Kdy koupit: taky úvaha nad grafem. Nula znamená „hned, jak to půjde",
-  // tedy jakmile je na akontaci naspořeno; odsud se dá koupě odsouvat.
-  // Neukládá se ze stejného důvodu jako dítě a nemění akontaci ani splátku,
-  // jen termín. Co se mezitím naspoří, zůstane v rezervě.
-  const [purchaseAt, setPurchaseAt] = useState(0);
-  // Termín dítěte si bere časová osa ze stavu sama, proto se nepředává.
-  const journeyData = journey(state, { purchaseNotBeforeMonth: purchaseAt, allocations });
-
-  // Bankovní obezřetnost, vlastní rozpočet a nouzová rezerva jsou tři
-  // různé odpovědi. Když se slily do jedné nálepky, uživatel nevěděl,
-  // jestli ho brzdí banka, život po koupi, nebo chybějící polštář.
-  const propertyDecisionRows = hasProperty && summary.budgetAfter
-    ? (() => {
-        const gap = downPaymentGap(state);
-        const dtiValue = dti(state);
-        const dstiValue = dsti(state);
-        const bankCaution = dtiValue > DEFAULTS.dtiCaution || dstiValue > DEFAULTS.dstiCaution;
-        const bankStatus: GoalStatus = bankCaution || gap > 0 ? 'caution' : 'good';
-        const bankAnswer = bankCaution
-          ? `DTI ${decimal(dtiValue)}× nebo DSTI ${decimal(dstiValue * 100)} % je v pásmu zvýšené obezřetnosti. Nejde o automatické zamítnutí.`
-          : gap > 0
-            ? `Splátka je pod orientačními hranicemi obezřetnosti, ale na akontaci ještě chybí ${fmt(gap)} Kč.`
-            : 'Splátka i akontace jsou pod orientačními hranicemi zvýšené obezřetnosti.';
-
-        const after = summary.budgetAfter;
-        const budgetStatus: GoalStatus = !after.fits || after.disposable <= 0
-          ? 'warning'
-          : after.surplus < 3000 ? 'caution' : 'good';
-        const budgetAnswer = after.surplus < 0
-          ? `Po koupi by na zvolené cíle chybělo ${czkMonthly(Math.abs(after.surplus))}.`
-          : after.surplus < 3000
-            ? `Po koupi a odkládání na cíle by zbývalo jen ${czkMonthly(after.surplus)}.`
-            : `Po koupi a odkládání na cíle by zbývalo ${czkMonthly(after.surplus)}.`;
-
-        const reserveStatus: GoalStatus = runway < 3 ? 'warning' : runway < 6 ? 'caution' : 'good';
-        const reserveAnswer = runway === Infinity
-          ? 'Rezerva pokryje nezbytné výdaje bez omezení.'
-          : `Po koupi by rezerva pokryla ${formatMonths(runway)} nezbytných výdajů.`;
-
-        return [
-          { label: 'Bankovní dostupnost', status: bankStatus, answer: bankAnswer },
-          { label: 'Rozpočet po koupi', status: budgetStatus, answer: budgetAnswer },
-          { label: 'Rezerva po koupi', status: reserveStatus, answer: reserveAnswer },
-        ];
-      })()
-    : [];
+  const bankCaution = hasProperty && (dti(state) > DEFAULTS.dtiCaution || dsti(state) > DEFAULTS.dstiCaution);
+  const affordabilityLimit = affordableProperty?.limiting === 'cash'
+    ? 'Cenu omezují úspory po odečtení nákladů a rezervy.'
+    : affordableProperty?.limiting === 'monthly'
+      ? 'Cenu omezuje částka, kterou můžete měsíčně dát za bydlení.'
+      : 'Cenu omezuje kombinace úspor a měsíčního rozpočtu.';
+  const shortfall = closing?.monthlyShortfall ?? 0;
+  const purchaseHeadline = purchaseMonth === 0
+    ? 'Podle rozpočtu můžete koupit už teď.'
+    : purchaseMonth != null
+      ? `Koupě vychází za ${formatMonths(purchaseMonth)}.`
+      : 'Koupě v tomto plánu zatím nevychází.';
+  const propertyDecisionRows: { label: string; status: GoalStatus; answer: string }[] = closing && postBudget ? [
+    {
+      label: 'Peníze při koupi',
+      status: closing.cashGap > 0 ? 'caution' : 'good',
+      answer: closing.cashGap > 0
+        ? `Potřebujete ${czk(closing.cashRequired)} včetně nákladů a rezervy. Dnes chybí ${czk(closing.cashGap)}.`
+        : `Potřebných ${czk(closing.cashRequired)} včetně nákladů a rezervy máte.`,
+    },
+    {
+      label: 'Rozpočet po nastěhování',
+      status: postBudget.surplus < 0 ? 'warning' : shortfall > 0 ? 'caution' : 'good',
+      answer: postBudget.surplus < 0
+        ? `Po výdajích a odkládání na cíle by chybělo ${czkMonthly(-postBudget.surplus)}.`
+        : `Po výdajích a odkládání na cíle by zbývalo ${czkMonthly(postBudget.surplus)}.`
+          + (shortfall > 0 ? ` Chcete si nechat ${czkMonthly(targetMonthlySurplus(state))}.` : ''),
+    },
+    {
+      label: 'Rezerva po koupi',
+      status: remaining == null ? 'caution' : runway >= closing.reserveMonths - 0.001 ? 'good' : 'warning',
+      answer: remaining == null
+        ? 'Zůstatek ukážeme, až v plánu vyjde termín koupě.'
+        : `Po zaplacení vkladu a nákladů zbude ${czk(remaining)}${runway === Infinity ? '.' : `, přibližně na ${decimal(runway)} měs. nezbytných výdajů.`}`,
+    },
+  ] : [];
 
   // Doleva jen k měsíci, kdy je na akontaci naspořeno: dřív koupit nejde.
   // Doprava deset let, ale ne až k důchodu; za obzorem plánu už odklad
@@ -250,13 +234,23 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
           a rozpad na dílčí otázky pod ní. */}
       <div>
           <h2 className="type-verdict text-ink max-w-[54ch]">
-            {summary.verdict.headline}
-            {summary.verdict.qualifier && <>, {summary.verdict.qualifier}</>}
-            {summary.verdict.answer === 'yes' || summary.verdict.answer === 'no' ? '.' : '…'}
+            {affordableProperty
+              ? affordableProperty.price > 0
+                ? `Hledejte byt do ${czk(affordableProperty.price)}.`
+                : 'V tomto rozpočtu zatím cena bytu nevychází.'
+              : hasProperty
+                ? purchaseHeadline
+                : <>
+                    {summary.verdict.headline}
+                    {summary.verdict.qualifier && <>, {summary.verdict.qualifier}</>}
+                    {summary.verdict.answer === 'yes' || summary.verdict.answer === 'no' ? '.' : '…'}
+                  </>}
           </h2>
-          <p className="mt-3 text-[15px] text-ink-body max-w-[62ch] leading-relaxed">
-            {summary.verdict.reason}
-          </p>
+          {(affordableProperty || !hasProperty || state.goals.some((goal) => goal !== 'property')) && (
+            <p className="mt-3 text-[15px] text-ink-body max-w-[62ch] leading-relaxed">
+              {affordableProperty ? affordabilityLimit : summary.verdict.reason}
+            </p>
+          )}
 
         {/* U vlastního bydlení jsou otázky ve skutečnosti dvě: jestli na něj
             dosáhnete a jestli po něm zbyde na zbytek. Jedna nálepka je slučuje
@@ -277,12 +271,30 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
             })}
           </div>
         )}
+        {hasProperty && (
+          <p className={`mt-3 text-sm ${bankCaution ? 'text-caution' : 'text-ink-muted'}`}>
+            {bankCaution
+              ? 'Splátky nebo celkové zadlužení jsou v pásmu zvýšené bankovní obezřetnosti. Výši úvěru si ověřte u banky.'
+              : 'Dostupnou výši úvěru potvrdí banka podle vašich údajů a hodnoty bytu.'}
+          </p>
+        )}
+        {hasProperty && isUnder36(state) && (
+          <p className="mt-2 text-sm text-ink-muted">
+            Model používá až 90 % hodnoty zástavy podle dnešního věku. Banka ověří podmínky při poskytnutí úvěru
+            {state.mode === 'individual' ? '.' : ', včetně podmínek pro společné žadatele.'}
+          </p>
+        )}
+        {onExpandPlan && (
+          <button type="button" onClick={onExpandPlan} className="no-print mt-3 min-h-[44px] font-semibold text-brand hover:underline">
+            Přidat další finanční cíle
+          </button>
+        )}
       </div>
 
       {/* „A co teď": jeden krok s částkou a termínem, hned pod odpovědí.
           Druhá otázka po „mám na to" je „tak co mám udělat", a na tu přehled
           dosud odpovídal jen seznamem možností v pravém sloupci. */}
-      <NextStepCard state={state} allocations={allocations} onOpenSection={onOpenSection} />
+      {(!affordableProperty || hasProperty) && <NextStepCard state={state} allocations={allocations} onOpenSection={onOpenSection} />}
 
       {/* Časová osa: život až do důchodu jako jedna stuha. Hrdina obrazovky. */}
       <div className="rounded-2xl bg-sunken p-5 sm:p-6">
@@ -315,21 +327,10 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
             ten graf kreslil tutéž řadu podruhé, jen v jiné barvě, a při jeho
             zrušení by se ta poznámka ztratila. Patří k řadě, ne ke kartě. */}
         <div className="mt-4 rounded-xl border border-line bg-card/70 p-3 text-sm text-ink-body">
-          <strong className="text-ink">Hodnota nemovitosti v této ose není.</strong>{' '}
-          Při koupi proto úspory klesnou o akontaci, ale peníze se neztratí: mění se
-          na vlastní kapitál v nemovitosti.
-          {onOpenSection && (
-            <>
-              {' '}
-              <button type="button" onClick={() => onOpenSection('bydleni')} className="font-semibold text-brand hover:underline">
-                Zobrazit čisté jmění
-              </button>
-            </>
-          )}
+          Časová osa ukazuje dostupné peníze. Při koupi z nich odečte vlastní vklad a jednorázové náklady.
         </div>
         <p className="mt-3 text-xs text-ink-faint">
-          Model počítá s konstantními příjmy a výdaji, bez výnosů z investic a inflace,
-          tedy v dnešních cenách. Spoření na cíle z křivky nemizí, peníze se jen přesouvají.
+          Částky jsou v dnešních cenách. Osa zahrnuje zadané změny příjmů a výdajů.
         </p>
         {/* Bez tohohle vypadá cesta u někoho, kdo na akontaci zatím nedosáhne,
             jako klidná zelená čára, zatímco verdikt nad ní říká „zatím na to
@@ -337,8 +338,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
             u ní říct proč. */}
         {hasProperty && !journeyData.events.some((e) => e.key === 'purchase') && (
           <p className="mt-3 text-sm text-caution">
-            Koupě na časové ose není: na akontaci do {Math.round(journeyData.horizonMonths / 12)} let
-            zatím nedosáhnete, takže osa ukazuje život bez ní.
+            V zadaném horizontu nevychází koupě s potřebnou hotovostí a udržitelným měsíčním rozpočtem.
           </p>
         )}
       </div>
@@ -366,7 +366,7 @@ export default function ResultsOverview({ state, allocations, onOpenSection, onC
       )}
 
       {/* Rozpočtový souhrn: dnes a po koupi */}
-      {summary.budget && <BudgetSummary now={summary.budget} after={summary.budgetAfter} />}
+      {summary.budget && <BudgetSummary now={summary.budget} after={postBudget ?? null} />}
       </div>
 
       {/* Pravý sloupec: čísla, na kterých verdikt stojí, a co s tím jde dělat.

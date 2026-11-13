@@ -1,9 +1,10 @@
 import type { WizardState } from '../../types';
 import {
-  requiredDownPayment,
+  minimumDownPayment,
   downPaymentGap,
   downPaymentFraction,
   effectiveDownPayment,
+  plannedDownPayment,
   mortgageRate,
   loanTermYears,
   loanAmount as loanAmountOf,
@@ -12,8 +13,7 @@ import {
   totalProjectCost,
   renovationCost,
 } from '../../engine/mortgage';
-import { monthsToSaveAtAllocation } from '../../engine/allocation';
-import { formatMonths, formatYears, czk, czkPerMonth, formatRate } from '../../engine/format';
+import { formatYears, czk, czkPerMonth, formatRate } from '../../engine/format';
 import { Row } from './property/shared';
 import DownPaymentSlider from './property/DownPaymentSlider';
 import MonthlySavingSlider from './property/MonthlySavingSlider';
@@ -21,6 +21,8 @@ import RateSlider from './property/RateSlider';
 import OneOffCosts from './property/OneOffCosts';
 import Card from '../ui/Card';
 import Callout from '../ui/Callout';
+import Disclosure from '../ui/Disclosure';
+import PurchaseFields, { type PurchaseFieldsProps } from '../wizard/PurchaseFields';
 
 interface Props {
   state: WizardState;
@@ -33,6 +35,7 @@ interface Props {
   // proto se z něj počítá i čas na naspoření a ukusuje z rozpočtu.
   monthlySaving?: number;
   onChangeMonthlySaving?: (value: number) => void;
+  onChangePurchaseSetting?: PurchaseFieldsProps['onChange'];
 }
 
 /**
@@ -48,43 +51,34 @@ export default function PropertyAffordability({
   onChangeRate,
   monthlySaving = 0,
   onChangeMonthlySaving,
+  onChangePurchaseSetting,
 }: Props) {
   const projectCost = totalProjectCost(state);
   const renovation = renovationCost(state);
   const dpFraction = downPaymentFraction(state);
   const dpPct = Math.round(dpFraction * 100);
-  const dp = requiredDownPayment(projectCost, dpFraction);
+  const dp = minimumDownPayment(state);
   const gap = downPaymentGap(state);
-  const months = monthsToSaveAtAllocation(state, monthlySaving);
   const fixationYears = fixationYearsOf(state);
 
   return (
     <Card title="Kalkulačka nemovitosti">
       <div className="space-y-3 text-sm">
         <Row label="Cena nemovitosti" value={czk(state.property.targetPrice)} />
-        {/* Rekonstrukce se do akontace i hypotéky počítá, protože banka půjčuje
-            proti hodnotě po ní. Bez těchhle dvou řádků ale zůstala neviditelná
-            a čísla pod sebou si odporovala: u ceny 7,5 milionu a rekonstrukce
-            za 900 tisíc stála hned pod cenou „potřebná akontace (20 %)
-            1 680 000 Kč", což je pětina osmi a půl milionu, ne sedmi a půl. */}
         {renovation > 0 && (
           <>
             <Row label="Rekonstrukce" value={czk(renovation)} />
             <Row
               label="Celková investice"
               value={czk(projectCost)}
-              tooltip="Cena plus rozpočet na rekonstrukci. Akontace i výše hypotéky se počítají z téhle částky, protože banka půjčuje proti hodnotě nemovitosti po rekonstrukci."
+              tooltip="Kupní cena a rozpočet na rekonstrukci. Maximální výši úvěru určuje hodnota zástavy podle banky."
             />
           </>
         )}
         <Row
-          label={`Potřebná akontace (${dpPct} %${renovation > 0 ? ' z investice' : ''})`}
+          label={renovation > 0 || state.property.bankAppraisal != null ? 'Minimální akontace podle hodnoty zástavy' : `Potřebná akontace (${dpPct} %)`}
           value={czk(dp)}
-          tooltip={
-            dpPct === 10
-              ? 'Žadateli mladšímu 36 let banka půjčí až 90 % ceny (LTV), takže z vlastního stačí 10 %.'
-              : 'Kolik banka požaduje zaplatit z vlastních peněz. Obvykle 20 % ceny nemovitosti (LTV 80 %), zbytek pokryje hypotéka.'
-          }
+          tooltip={`Vlastní peníze, které potřebujete při odhadu úvěru do ${100 - dpPct} % hodnoty zástavy. Banka může nabídnout nižší úvěr.`}
         />
         <Row
           label="Pokryto z vlastních úspor"
@@ -95,10 +89,11 @@ export default function PropertyAffordability({
           label="Chybějící akontace"
           value={czk(gap)}
           highlight={gap > 0 ? 'red' : 'green'}
-          tooltip="Rozdíl mezi potřebnou akontací a tím, co pokryjete z úspor. Tuto částku je potřeba ještě naspořit, než se dá o hypotéku požádat."
+          tooltip="Rozdíl mezi potřebnou akontací a částkou z úspor. Rezerva a další náklady se počítají zvlášť."
         />
 
-        {onChangeDownPayment && <DownPaymentSlider state={state} onChange={onChangeDownPayment} />}
+        {gap > 0 && <Row label="Akontace při plánované koupi" value={czk(plannedDownPayment(state))} />}
+        {onChangeDownPayment && state.mortgageFlow !== 'price' && <DownPaymentSlider state={state} onChange={onChangeDownPayment} />}
         {onChangeMonthlySaving && (
           <MonthlySavingSlider state={state} value={monthlySaving} onChange={onChangeMonthlySaving} />
         )}
@@ -112,27 +107,20 @@ export default function PropertyAffordability({
         <Row label="Délka hypotéky" value={`${loanTermYears(state)} let`} />
         <Row label="Fixace sazby" value={formatYears(fixationYears)} />
 
-        {/* Termín naspoření hlásí posuvník rovnou u sebe. Bez posuvníku (režim
-            jen ke čtení) by ale chyběl úplně, proto ten řádek zbývá tady. */}
-        {!onChangeMonthlySaving && gap > 0 && months !== Infinity && (
-          <>
-            <div className="border-t border-line pt-3" />
-            <Row
-              label="Čas na naspoření chybějící akontace"
-              value={formatMonths(months)}
-              tooltip={`Chybějící akontace (${czk(gap)}) dělená tím, co na ni měsíčně odkládáte (${czk(monthlySaving)}).`}
-            />
-          </>
-        )}
       </div>
 
       <OneOffCosts state={state} />
+      {onChangePurchaseSetting && (
+        <Disclosure summary="Upravit náklady a rezervu" className="mt-2">
+          <PurchaseFields state={state} onChange={onChangePurchaseSetting} />
+        </Disclosure>
+      )}
 
-      <Callout tone="brand" className="mt-4">
-        <span className="font-semibold">Nezapomeňte na refixaci.</span>{' '}
-        Za {formatYears(fixationYears)} vám končí fixace úrokové sazby.
-        Zhruba rok předem začněte porovnávat nabídky refinancování u jiných bank. Po skončení fixace lze hypotéku bez sankce přenést jinam.
-      </Callout>
+      {loanAmountOf(state) > 0 && fixationYears < loanTermYears(state) && (
+        <Callout tone="brand" className="mt-4">
+          Fixace skončí {formatYears(fixationYears)} od začátku splácení. Dopad jiné sazby si můžete vyzkoušet v části Co kdyby.
+        </Callout>
+      )}
     </Card>
   );
 }

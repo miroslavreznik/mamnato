@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { evaluateRenovation, renovationWithOverrun, RENOVATION_OVERRUN } from '../../src/engine/renovation';
-import { totalProjectCost, loanAmount, mortgagePayment, requiredDownPayment, downPaymentFraction } from '../../src/engine/mortgage';
+import { totalProjectCost, loanAmount, mortgagePayment, minimumDownPayment } from '../../src/engine/mortgage';
 import type { WizardState } from '../../src/types';
 
 // Scénář z reálného použití: koupě za 10 M, rekonstrukce za 2,5 M,
@@ -27,18 +27,17 @@ function renovator(overrides: Partial<WizardState['property']> = {}, rest: Parti
 }
 
 describe('rekonstrukce v celkové investici', () => {
-  it('se přičítá k ceně, protože banka půjčuje proti hodnotě po rekonstrukci', () => {
+  it('rozpočet na rekonstrukci zvětší projekt, limit úvěru vychází z odhadu zástavy', () => {
     const state = renovator();
     expect(totalProjectCost(state)).toBe(12500000);
-    expect(loanAmount(state)).toBe(12500000 - 2510000);
+    expect(loanAmount(state)).toBe(8000000);
+    expect(loanAmount(renovator({ bankAppraisal: 12500000 }))).toBe(12500000 - 2510000);
   });
 
   it('zvyšuje i požadovanou akontaci', () => {
     const withRenovation = renovator();
     const without = renovator({ renovation: undefined });
-    const dpWith = requiredDownPayment(totalProjectCost(withRenovation), downPaymentFraction(withRenovation));
-    const dpWithout = requiredDownPayment(totalProjectCost(without), downPaymentFraction(without));
-    expect(dpWith).toBeGreaterThan(dpWithout);
+    expect(minimumDownPayment(withRenovation) - minimumDownPayment(without)).toBe(2500000);
   });
 
   it('bez rekonstrukce se nic nemění', () => {
@@ -65,7 +64,7 @@ describe('postupné čerpání během rekonstrukce', () => {
   it('na začátku se úročí jen to, co šlo na koupi', () => {
     const state = renovator();
     const phase = evaluateRenovation(state)!;
-    const drawnAtPurchase = 10000000 - 2510000;
+    const drawnAtPurchase = 10000000 - 4500000;
     expect(phase.interestOnlyStart).toBeCloseTo((drawnAtPurchase * 0.053) / 12, 6);
   });
 

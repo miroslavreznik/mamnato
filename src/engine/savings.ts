@@ -1,17 +1,21 @@
 import type { WizardState, CustomGoal } from '../types';
 import { DEFAULTS } from './defaults';
-import { monthlyDisposable, necessaryMonthlyExpenses } from './cashflow';
+import { liquidSavings, monthlyDisposable, necessaryMonthlyExpenses } from './cashflow';
 import {
   effectiveDownPayment,
   mortgageRate,
   loanTermYears,
   loanAmount,
   mortgagePayment,
+  ownedUtilities,
+  plannedDownPayment,
   totalProjectCost,
   ownershipCosts,
   oldestApplicantAge,
-  necessaryExpensesAfterPurchase,
 } from './mortgage';
+import { purchaseClosingCosts } from './purchaseCosts';
+import { purchaseCashPlan } from './purchasePlan';
+import { reserveTargetMonths } from './reserve';
 
 /**
  * Jak je na tom jeden vlastní cíl s částkou, kterou na něj uživatel dává.
@@ -97,7 +101,7 @@ export function savingsProjection(
  * k milionům, což se na grafu o jmění nedalo číst.
  *
  * Model drží obě strany symetricky:
- *  - startují se stejnou částkou (vlastník ji dá do akontace, nájemník investuje),
+ *  - startují se stejnou hotovostí, vlastník ji dá do akontace a poplatků, nájemník ji má k dispozici,
  *  - každý měsíc platí vlastník splátku a náklady na vlastnictví, nájemník nájem,
  *  - kdo má ten měsíc nižší náklady, ten rozdíl investuje.
  *
@@ -112,13 +116,15 @@ export function investmentComparison(
   rentGrowth: number = 0.03,
   years: number = 30
 ): InvestmentProjectionPoint[] {
-  const downPayment = effectiveDownPayment(state);
+  const downPayment = plannedDownPayment(state);
+  const startingCash = downPayment + purchaseClosingCosts(state);
   const price = totalProjectCost(state);
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
   const loan = loanAmount(state);
   const payment = mortgagePayment(state);
   const ownership = ownershipCosts(state);
+  const newUtilities = ownedUtilities(state);
   const monthlyRent = state.expenses.rent + state.expenses.utilities;
 
   const monthlyR = rate / 12;
@@ -127,7 +133,7 @@ export function investmentComparison(
 
   // Vlastník i nájemník mohou mít přebytek, podle toho, kdo zrovna platí míň.
   let ownerPortfolio = 0;
-  let renterPortfolio = downPayment;
+  let renterPortfolio = startingCash;
   let remainingLoan = loan;
 
   const result: InvestmentProjectionPoint[] = [];
@@ -140,7 +146,7 @@ export function investmentComparison(
       propertyNetWorth: Math.round(propertyValue - remainingLoan + ownerPortfolio),
       rentInvestNetWorth: Math.round(renterPortfolio),
       // Kdo rozdíl neinvestuje, tomu zůstane jen to, s čím začínal.
-      rentNoInvestNetWorth: Math.round(downPayment),
+      rentNoInvestNetWorth: Math.round(startingCash),
     });
 
     for (let m = 0; m < 12; m++) {
@@ -160,7 +166,7 @@ export function investmentComparison(
       // Po splacení hypotéky vlastník splátku neplatí. Dřív se s ní počítalo
       // i po splacení, takže u kratší hypotéky nájemník „investoval" rozdíl
       // proti splátce, která už neexistovala.
-      const currentOwnerCost = (repaid ? 0 : payment) + (ownership + state.expenses.utilities) * inflation;
+      const currentOwnerCost = (repaid ? 0 : payment) + (ownership + newUtilities) * inflation;
 
       const diff = currentOwnerCost - currentRent;
       ownerPortfolio = ownerPortfolio * (1 + monthlyReturn) + (diff < 0 ? -diff : 0);
@@ -285,18 +291,14 @@ export function retirementReturn(state: WizardState): number {
 }
 
 export function retirementStartingCapital(state: WizardState): number {
-  // Kdo kupuje, tomu se rezerva poměřuje výdaji po koupi: splátka bývá skoro
-  // dvojnásobek nájmu, takže „tři měsíce" znamenají skoro dvakrát tolik peněz.
-  // S dnešními výdaji tady vycházel důchodový kapitál vyšší, než kolik po
-  // odečtení opravdové rezervy zbývá, a karta „A co teď" vedle toho počítala
-  // tu větší rezervu.
-  const buying = state.goals.includes('property');
-  const monthlyNeed = buying ? necessaryExpensesAfterPurchase(state) : necessaryMonthlyExpenses(state);
-  const reserve = monthlyNeed * 3;
-  const tiedInDownPayment = buying ? effectiveDownPayment(state) : 0;
-  // Zaokrouhleně: je to částka do pole, ne mezivýsledek. Bez toho v něm
-  // stálo „526 787,195 Kč", protože splátka hypotéky má haléře.
-  return Math.round(Math.max(0, state.savings.totalSavings - tiedInDownPayment - reserve));
+  // Potřebná hotovost a investice mají odlišný účel. Z investic si zde
+  // potichu neukrajujeme, ani když hotovost na koupi nebo rezervu ještě chybí.
+  const earmarkedCash = state.goals.includes('property')
+    ? purchaseCashPlan(state).cashRequired
+    : necessaryMonthlyExpenses(state) * reserveTargetMonths(state);
+  const available = liquidSavings(state);
+  const invested = state.savings.breakdown?.investments ?? 0;
+  return Math.round(Math.max(0, available - earmarkedCash) + invested);
 }
 
 export function retirementProjection(

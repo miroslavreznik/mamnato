@@ -1,6 +1,8 @@
 import type { WizardState } from '../types';
 import {
-  effectiveDownPayment,
+  clampDownPayment,
+  liquidSavings,
+  minimumDownPayment,
   loanAmount as loanAmountOf,
   mortgagePayment,
   mortgageRate,
@@ -9,7 +11,7 @@ import {
   totalLoanInterest,
   monthlyMortgagePayment,
 } from './mortgage';
-import { reserveTargetMonths } from './reserve';
+import { purchaseCashPlan } from './purchasePlan';
 
 /**
  * Kolik dát z úspor na akontaci: čísla, ze kterých se to rozhoduje.
@@ -35,32 +37,17 @@ export const STOCK_RETURN = 0.07;
 /** Modelová částka, na které se ukazuje, co akontace navíc přinese. */
 export const COMPARISON_STEP = 100000;
 
-/**
- * Rezerva, pod kterou se akontace přestává vyplácet (měsíců výdajů).
- *
- * Šest je horní konec doporučeného pásma 3–6: u největší jednorázové částky
- * v celém plánu je namístě opatrnější konec. Kdo si ale zapne cíl „nouzová
- * rezerva" a nastaví si vlastní počet měsíců, má platit **jeho** číslo:
- * jinak by mu posuvník v Bydlení počítal bezpečné maximum proti šesti
- * měsícům, zatímco karta cíle vedle hlásí dvanáct.
- */
-export const MIN_RESERVE_MONTHS = 6;
-
 /** Kolik měsíců výdajů má po koupi zbýt, podle plánu uživatele. */
-export function reserveMonthsForTradeoff(state: WizardState): number {
-  return state.goals.includes('reserve')
-    ? reserveTargetMonths(state)
-    : MIN_RESERVE_MONTHS;
-}
+export { reserveTargetMonths as reserveMonthsForTradeoff } from './reserve';
 
 export interface DownPaymentTradeoff {
   /** Nezbytné měsíční výdaje po koupi (splátka a vlastnictví místo nájmu). */
   monthlyNeedAfter: number;
-  /** Co po akontaci zbyde v úsporách. */
+  /** Co zbyde v hotovosti po zaplacení akontace a poplatků. */
   reserve: number;
   /** Na kolik měsíců ta rezerva vystačí. */
   reserveMonths: number;
-  /** Nejvyšší akontace, po které ještě zbyde rezerva na `MIN_RESERVE_MONTHS`. */
+  /** Nejvyšší akontace, po které ještě zbyde zvolená rezerva. */
   safeMax: number;
   /** Totéž jako podíl z úspor, pro popisek posuvníku. */
   safePct: number;
@@ -75,9 +62,9 @@ export interface DownPaymentTradeoff {
 }
 
 export function downPaymentTradeoff(state: WizardState): DownPaymentTradeoff {
-  const totalSavings = state.savings.totalSavings;
-  const dpValue = effectiveDownPayment(state);
-  const reserve = Math.max(0, totalSavings - dpValue);
+  const totalSavings = liquidSavings(state);
+  const maxDownPayment = clampDownPayment(state, totalSavings);
+  const reserve = Math.max(0, purchaseCashPlan(state).cashAfterClosing);
 
   const rate = mortgageRate(state);
   const term = loanTermYears(state);
@@ -87,14 +74,30 @@ export function downPaymentTradeoff(state: WizardState): DownPaymentTradeoff {
   // Nezbytné výdaje po koupi. Minimum 1, aby dělení nikdy nespadlo.
   const monthlyNeedAfter = Math.max(1, necessaryExpensesAfterPurchase(state));
 
-  const safeMax = Math.max(0, Math.min(totalSavings, totalSavings - reserveMonthsForTradeoff(state) * monthlyNeedAfter));
+  const canCover = (downPaymentFromSavings: number) => purchaseCashPlan({
+    ...state, savings: { ...state.savings, downPaymentFromSavings },
+  }).cashRequired <= totalSavings;
+  const minimum = minimumDownPayment(state);
+  let safeMax = 0;
+  if (minimum <= maxDownPayment && canCover(minimum)) {
+    // Vyšší akontace sníží splátku i cílovou rezervu. Každou částku proto
+    // porovnáváme s rezervou pro její vlastní splátku.
+    let left = minimum;
+    let right = Math.floor(maxDownPayment) + 1;
+    while (right - left > 1) {
+      const midpoint = Math.floor((right + left) / 2);
+      if (canCover(midpoint)) left = midpoint;
+      else right = midpoint;
+    }
+    safeMax = left;
+  }
 
   return {
     monthlyNeedAfter,
     reserve,
     reserveMonths: reserve / monthlyNeedAfter,
     safeMax,
-    safePct: totalSavings > 0 ? Math.round((safeMax / totalSavings) * 100) : 0,
+    safePct: maxDownPayment > 0 ? Math.round((safeMax / maxDownPayment) * 100) : 0,
     paymentDelta: loan > COMPARISON_STEP
       ? payment - monthlyMortgagePayment(loan - COMPARISON_STEP, rate, term)
       : payment,

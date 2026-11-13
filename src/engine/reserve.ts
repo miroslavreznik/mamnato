@@ -1,6 +1,7 @@
 import type { WizardState } from '../types';
 import { necessaryMonthlyExpenses } from './cashflow';
-import { effectiveDownPayment, necessaryExpensesAfterPurchase } from './mortgage';
+import { liquidSavings, necessaryExpensesAfterPurchase, plannedDownPayment } from './mortgage';
+import { purchaseClosingCosts } from './purchaseCosts';
 
 /**
  * Nouzová rezerva jako sledovaný cíl.
@@ -73,10 +74,10 @@ export function reserveStatus(state: WizardState): ReserveStatus {
     ? necessaryExpensesAfterPurchase(state)
     : necessaryMonthlyExpenses(state);
   const targetMonths = reserveTargetMonths(state);
-  const target = Math.round(Math.max(0, monthlyNeed) * targetMonths);
-  const current = Math.round(Math.max(0, buying
-    ? state.savings.totalSavings - effectiveDownPayment(state)
-    : state.savings.totalSavings));
+  const target = Math.ceil(Math.max(0, monthlyNeed) * targetMonths);
+  const current = Math.round(Math.max(0, liquidSavings(state) - (buying
+    ? plannedDownPayment(state) + purchaseClosingCosts(state)
+    : 0)));
   return {
     afterPurchase: buying,
     monthlyNeed,

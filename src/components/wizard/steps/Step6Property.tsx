@@ -1,11 +1,13 @@
 import { useWizard } from '../../../store/wizardStore';
 import { DEFAULTS, DEFAULTS_DATE } from '../../../engine/defaults';
-import { requiredDownPayment, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRateForFixation, ownershipCostsEstimate, mortgageRateEstimate, totalProjectCost } from '../../../engine/mortgage';
+import { clampDownPayment, effectiveDownPayment, liquidSavings, minimumDownPayment, mortgagePayment, loanAmount, monthlyMortgagePayment, downPaymentFraction, youngestApplicantAge, oldestApplicantAge, mortgageRate, loanTermYears, fixationYears, suggestedRateForFixation, ownershipCostsEstimate, mortgageRateEstimate, totalProjectCost } from '../../../engine/mortgage';
 import { formatYears, czk, czkMonthly, percentCompact } from '../../../engine/format';
-import { totalMonthlyExpenses } from '../../../engine/cashflow';
+import { purchaseCashPlan } from '../../../engine/purchasePlan';
 import NumberInput from '../../ui/NumberInput';
 import EstimateNote from '../../ui/EstimateNote';
+import Disclosure from '../../ui/Disclosure';
 import StepNavigation from '../StepNavigation';
+import PurchaseFields from '../PurchaseFields';
 import RenovationSection from './RenovationSection';
 import { fieldClass } from '../../ui/fieldClass';
 
@@ -32,21 +34,15 @@ export default function Step6Property() {
   const fixationDiff = rateEstimate.suggested - suggestedRateForFixation(5);
   const dpFraction = downPaymentFraction(state);
   const reqDpPct = Math.round(dpFraction * 100);
-  // Akontace i úvěr se počítají z celé investice (cena + rekonstrukce),
-  // protože banka půjčuje proti hodnotě nemovitosti po rekonstrukci.
   const projectCost = totalProjectCost(state);
-  const reqDp = requiredDownPayment(projectCost, dpFraction);
-  const totalSavings = state.savings.totalSavings;
-
-  // Default down payment: required fraction of price or all savings (whichever is less)
-  const dpValue = state.savings.downPaymentFromSavings ?? Math.min(totalSavings, reqDp);
-  const reserve = totalSavings - dpValue;
-  const loanAmount = Math.max(0, projectCost - dpValue);
-  const payment = monthlyMortgagePayment(loanAmount, rate, term);
-  const paymentAtFiveYearFix = monthlyMortgagePayment(loanAmount, suggestedRateForFixation(5), term);
+  const reqDp = minimumDownPayment(state);
+  const totalSavings = liquidSavings(state);
+  const maxDownPayment = clampDownPayment(state, totalSavings);
+  const dpValue = effectiveDownPayment(state);
+  const cashPlan = purchaseCashPlan(state);
+  const payment = mortgagePayment(state);
+  const paymentAtFiveYearFix = monthlyMortgagePayment(loanAmount(state), suggestedRateForFixation(5), term);
   const dpPercent = projectCost > 0 ? ((dpValue / projectCost) * 100).toFixed(1) : '0';
-  const recommendedReserve = totalMonthlyExpenses(state) * 3;
-  const lowReserve = reserve < recommendedReserve && reserve < totalSavings;
 
   const hasOther = state.goals.includes('other');
   const youngest = youngestApplicantAge(state);
@@ -56,8 +52,7 @@ export default function Step6Property() {
   const termTooLongForAge = ageAtPayoff !== undefined && ageAtPayoff > DEFAULTS.mortgageMaxAge;
 
   const setDownPayment = (v: number) => {
-    const clamped = Math.max(0, Math.min(v, totalSavings));
-    dispatch({ type: 'UPDATE_SAVINGS', field: 'downPaymentFromSavings', value: clamped });
+    dispatch({ type: 'UPDATE_SAVINGS', field: 'downPaymentFromSavings', value: clampDownPayment(state, v) });
   };
 
   return (
@@ -71,17 +66,16 @@ export default function Step6Property() {
         value={price}
         onChange={(v) => dispatch({ type: 'UPDATE_PROPERTY', field: 'targetPrice', value: v })}
         tooltip="Cena včetně DPH, bez nákladů na rekonstrukci."
-        min={500000}
         step={50000}
-        error={price > 0 && price < 500000 ? 'Zkontrolujte zadanou cenu (min. 500 000 Kč)' : undefined}
       />
 
       {/* Akontace dle věku (ČNB: žadatelé mladší 36 let → LTV až 90 %) */}
       {youngest !== undefined ? (
         <div className="mb-6 text-xs text-ink-muted">
           {youngest < 36
-            ? `Nejmladšímu žadateli je ${youngest} let, díky vyššímu LTV pro žadatele mladší 36 let stačí akontace ${reqDpPct} % místo 20 %.`
-            : `Nejmladšímu žadateli je ${youngest} let, povinná akontace je ${reqDpPct} % (LTV 80 %).`}
+            ? `Nejmladšímu žadateli je ${youngest} let. Model počítá s úvěrem do 90 % hodnoty zástavy.`
+            : `Nejmladšímu žadateli je ${youngest} let. Model počítá s úvěrem do 80 % hodnoty zástavy.`}
+          {youngest < 36 && ' Rozhoduje věk při poskytnutí úvěru. Pokud je jen jednomu ze společných žadatelů méně než 36 let, ověřte podmínky u banky.'}
         </div>
       ) : (
         <div className="mb-6 text-xs text-ink-muted">
@@ -90,7 +84,7 @@ export default function Step6Property() {
       )}
 
       {/* Down payment allocation section */}
-      {totalSavings > 0 && (
+      {maxDownPayment > 0 && (
         <div className="mb-6 p-4 bg-sunken rounded-xl">
           <h3 className="text-sm font-semibold text-ink-label mb-1">Jak rozdělíte své úspory?</h3>
           <p className="text-xs text-ink-muted mb-3">
@@ -100,7 +94,7 @@ export default function Step6Property() {
           <label className="block text-sm text-ink-label mb-2">
             Akontace: <span className="font-semibold">{dpValue.toLocaleString('cs-CZ')} Kč</span>
             {' '}
-            <span className={`text-xs ${Number(dpPercent) >= reqDpPct ? 'text-good' : 'text-caution'}`}>
+            <span className={`text-xs ${dpValue >= reqDp ? 'text-good' : 'text-caution'}`}>
               ({dpPercent} % z celkové investice)
             </span>
           </label>
@@ -108,26 +102,27 @@ export default function Step6Property() {
           <input
             type="range"
             min={0}
-            max={totalSavings}
+            max={maxDownPayment}
             step={10000}
             value={dpValue}
             onChange={(e) => setDownPayment(Number(e.target.value))}
+            aria-label="Akontace z úspor"
             className="w-full h-2 bg-shell rounded-lg appearance-none cursor-pointer accent-brand"
           />
 
           <div className="flex justify-between text-xs text-ink-faint mt-1 mb-3">
             <span>0 Kč</span>
-            <span>{totalSavings.toLocaleString('cs-CZ')} Kč</span>
+            <span>{czk(maxDownPayment)}</span>
           </div>
 
           <div className="flex justify-between text-sm">
-            <span className="text-ink-body">Zbývající rezerva:</span>
-            <span className="font-semibold text-ink">{reserve.toLocaleString('cs-CZ')} Kč</span>
+            <span className="text-ink-body">Hotovost po zaplacení akontace a poplatků</span>
+            <span className="font-semibold text-ink">{czk(Math.max(0, cashPlan.cashAfterClosing))}</span>
           </div>
 
-          {lowReserve && (
+          {cashPlan.cashGap > 0 && (
             <p className="mt-2 text-xs text-caution">
-              Rezerva je nízká. Doporučujeme mít stranou aspoň {recommendedReserve.toLocaleString('cs-CZ')} Kč (3 měsíce výdajů) pro nečekané situace.
+              Ke koupi s nastavenou rezervou chybí {czk(cashPlan.cashGap)}.
             </p>
           )}
         </div>
@@ -137,7 +132,7 @@ export default function Step6Property() {
         label="Odhadované náklady na bydlení při vlastnictví"
         value={ownershipEstimate.value}
         onChange={(v) => dispatch({ type: 'UPDATE_PROPERTY', field: 'ownershipCosts', value: v })}
-        tooltip={`Fond oprav, opravy a údržba, pojištění nemovitosti a daň z nemovitých věcí. Energie sem nepatří, ty platíte stejně jako v nájmu a máte je zadané v kroku Výdaje. Odhadujeme ${ownershipPct()} % z ceny nemovitosti ročně, což je běžné pravidlo pro údržbu a opravy. Skutečnost závisí hlavně na stáří domu a výši fondu oprav, klidně částku přepište.`}
+        tooltip={`Fond oprav, opravy a údržba, pojištění nemovitosti a daň z nemovitých věcí. Energie a zálohy se zadávají zvlášť. Odhadujeme ${ownershipPct()} % z ceny nemovitosti ročně, skutečnost závisí hlavně na stavu domu a výši fondu oprav.`}
         step={500}
       />
 
@@ -161,7 +156,14 @@ export default function Step6Property() {
         onRevert={() => dispatch({ type: 'CLEAR_PROPERTY_ESTIMATE', field: 'ownershipCosts' })}
       />
 
-      <RenovationSection />
+      <RenovationSection state={state} onChange={(value) => dispatch({ type: 'SET_RENOVATION', value })} />
+
+      <Disclosure summary="Upřesnit hodnotu bytu, výdaje a rezervu">
+        <PurchaseFields state={state} onChange={(field, value) => {
+          if (field === 'reserveMonths') dispatch({ type: 'SET_RESERVE_MONTHS', value });
+          else dispatch({ type: 'UPDATE_PROPERTY', field, value });
+        }} />
+      </Disclosure>
 
       <h3 className="text-sm font-semibold text-ink-label mb-3 mt-6 pt-6 border-t border-line">Parametry hypotéky</h3>
       <NumberInput
@@ -242,11 +244,11 @@ export default function Step6Property() {
 
       <div className="mt-4 space-y-2 p-4 bg-sunken rounded-lg text-sm">
         <div className="flex justify-between">
-          <span className="text-ink-body">Doporučená akontace ({reqDpPct} %):</span>
+          <span className="text-ink-body">{state.property.bankAppraisal == null && !state.property.renovation ? `Doporučená akontace (${reqDpPct} %):` : 'Minimální akontace podle hodnoty zástavy'}</span>
           <span className="font-semibold text-ink">{reqDp.toLocaleString('cs-CZ')} Kč</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-ink-body">Odhadovaná měsíční splátka:</span>
+          <span className="text-ink-body">Měsíční splátka při plánované koupi</span>
           <span className="font-semibold text-ink">{Math.round(payment).toLocaleString('cs-CZ')} Kč</span>
         </div>
       </div>
@@ -256,7 +258,7 @@ export default function Step6Property() {
         onBack={() => dispatch({ type: 'PREV_STEP' })}
         onNext={() => dispatch({ type: 'GO_TO_STEP', step: hasOther ? 7 : 8 })}
         nextLabel={hasOther ? 'Další' : 'Zobrazit výsledky'}
-        nextDisabled={price < 500000}
+        nextDisabled={price <= 0}
       />
     </div>
   );

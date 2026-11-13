@@ -1,4 +1,4 @@
-import { useWizard } from '../../../store/wizardStore';
+import type { WizardState } from '../../../types';
 import { evaluateRenovation, renovationWithOverrun } from '../../../engine/renovation';
 import { czk, czkPerMonth, formatMonths } from '../../../engine/format';
 import NumberInput from '../../ui/NumberInput';
@@ -10,8 +10,7 @@ import NumberInput from '../../ui/NumberInput';
  * odkazem. Kdo nerekonstruuje, uvidí krok stejný jako dřív. Po zapnutí se
  * ptáme na tři věci a hned pod nimi je vidět, co z nich plyne.
  */
-export default function RenovationSection() {
-  const { state, dispatch } = useWizard();
+export default function RenovationSection({ state, onChange }: { state: WizardState; onChange: (value: WizardState['property']['renovation']) => void }) {
   const renovation = state.property.renovation;
   const renovationPhase = evaluateRenovation(state);
 
@@ -22,7 +21,7 @@ export default function RenovationSection() {
       {!renovation ? (
         <button
           type="button"
-          onClick={() => dispatch({ type: 'SET_RENOVATION', value: { cost: 0, months: 6, payingRentMeanwhile: true } })}
+          onClick={() => onChange({ cost: 0, months: 6, payingRentMeanwhile: true })}
           className="text-sm text-brand hover:underline min-h-[44px]"
         >
           + Budu rekonstruovat
@@ -33,30 +32,30 @@ export default function RenovationSection() {
             <h3 className="text-sm font-semibold text-ink-label">Rekonstrukce po koupi</h3>
             <button
               type="button"
-              onClick={() => dispatch({ type: 'SET_RENOVATION', value: undefined })}
+              onClick={() => onChange(undefined)}
               className="text-xs text-ink-faint hover:text-ink-body shrink-0"
             >
               Zrušit
             </button>
           </div>
           <p className="text-xs text-ink-muted mb-3">
-            Rozpočet na rekonstrukci se přičítá k ceně, protože banka půjčuje proti hodnotě
-            nemovitosti po rekonstrukci. Zvyšuje se tím i potřebná akontace.
+            Rozpočet na rekonstrukci se přičítá ke kupní ceně. Pokud banka zohlední budoucí stav bytu,
+            zadejte její odhad hodnoty do nastavení nákladů a rezervy.
           </p>
 
           <NumberInput
             label="Rozpočet na rekonstrukci"
             value={renovation.cost}
-            onChange={(v) => dispatch({ type: 'SET_RENOVATION', value: { ...renovation, cost: v } })}
+            onChange={(cost) => onChange({ ...renovation, cost })}
             tooltip="Materiál i práce. Stavební práce se běžně prodraží o 15 až 20 %, počítejte s tím i v rezervě."
             step={50000}
           />
           <NumberInput
             label="Jak dlouho potrvá"
             value={renovation.months}
-            onChange={(v) => dispatch({ type: 'SET_RENOVATION', value: { ...renovation, months: Math.max(1, v) } })}
+            onChange={(v) => onChange({ ...renovation, months: Math.min(48, Math.max(1, Math.round(v))) })}
             tooltip="Po tuhle dobu se do nemovitosti nedá nastěhovat. Hypotéka se zatím čerpá postupně, takže se platí jen úrok z vyčerpané části."
-            suffix="měs."
+            suffix="měsíců"
             min={1}
             max={48}
             step={1}
@@ -66,7 +65,7 @@ export default function RenovationSection() {
             <input
               type="checkbox"
               checked={renovation.payingRentMeanwhile}
-              onChange={(e) => dispatch({ type: 'SET_RENOVATION', value: { ...renovation, payingRentMeanwhile: e.target.checked } })}
+              onChange={(e) => onChange({ ...renovation, payingRentMeanwhile: e.target.checked })}
               className="mt-1 w-5 h-5 accent-brand shrink-0"
             />
             <span>

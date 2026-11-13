@@ -97,7 +97,7 @@ async function walk(page: Page, tag: string, width: number, height: number) {
   await shoot(page, `${tag}-uvitani.png`, width)
 
   await reset()
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
   await next(page)
   await next(page)
   await shoot(page, `${tag}-vydaje.png`, width)

@@ -1,6 +1,6 @@
 import type { WizardState } from '../types';
 import { totalMonthlyIncome } from './cashflow';
-import { mortgagePayment, ownershipCosts } from './mortgage';
+import { mortgagePayment, ownedUtilities, ownershipCosts } from './mortgage';
 import type { GoalAllocations } from './allocation';
 import { plannedChildren } from './childCost';
 
@@ -42,7 +42,7 @@ export function expenseCategories(
   let housing: number;
   let housingLabel: string;
   if (afterPurchase) {
-    housing = Math.round(mortgagePayment(state)) + ownershipCosts(state) + e.utilities;
+    housing = Math.round(mortgagePayment(state)) + ownershipCosts(state) + ownedUtilities(state);
     housingLabel = 'Hypotéka + vlastnictví + energie';
   } else {
     housing = e.rent + e.utilities;
@@ -56,6 +56,7 @@ export function expenseCategories(
     { key: 'insurance', label: 'Pojistky', amount: e.insurance, necessary: true },
     { key: 'existingLoans', label: 'Splátky úvěrů', amount: e.existingLoans, necessary: true },
     { key: 'children', label: 'Výdaje na děti', amount: e.children, necessary: true },
+    { key: 'essentials', label: 'Souhrn nezbytných výdajů', amount: e.essentials ?? 0, necessary: true },
     { key: 'other', label: 'Zábava, dovolená, koníčky', amount: e.other, necessary: false },
   ];
 
@@ -74,6 +75,7 @@ export function withExcludedExpenses(state: WizardState, excluded: Set<string>):
   if (excluded.has('insurance')) e.insurance = 0;
   if (excluded.has('existingLoans')) e.existingLoans = 0;
   if (excluded.has('children')) e.children = 0;
+  if (excluded.has('essentials')) e.essentials = 0;
 
   if (excluded.has('other')) {
     e.other = 0;

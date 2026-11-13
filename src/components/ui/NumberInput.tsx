@@ -14,6 +14,7 @@ interface NumberInputProps {
   showSpinner?: boolean;
   error?: string;
   liveFormat?: boolean; // enable thousand separators while typing (default true for Kč)
+  commitOnBlur?: boolean; // wait until the amount is complete before updating dependent values
   disabled?: boolean;
 }
 
@@ -29,6 +30,7 @@ export default function NumberInput({
   showSpinner = true,
   error,
   liveFormat,
+  commitOnBlur = false,
   disabled = false,
 }: NumberInputProps) {
   // Default liveFormat: true for Kč, false for %, roky, měsíců, let, dětí
@@ -46,6 +48,7 @@ export default function NumberInput({
   const prevValueRef = useRef(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const cursorRef = useRef<number | null>(null);
+  const pendingValueRef = useRef<number | null>(null);
   // Popisek nebyl s polem svázaný, takže odečítač obrazovky četl jen „editační
   // pole" a klepnutí na popisek pole nezaostřilo. Jméno drží aria-label, aby
   // se do něj nezapočítal tooltip vložený uvnitř <label>.
@@ -72,6 +75,7 @@ export default function NumberInput({
   });
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    pendingValueRef.current = null;
     setIsFocused(true);
     if (shouldLiveFormat) {
       // Keep formatted display, select all
@@ -94,9 +98,10 @@ export default function NumberInput({
       const multiplier = unit === 'k' ? 1_000 : 1_000_000;
       if (!isNaN(base)) {
         const val = base * multiplier;
-        onChange(val);
+        if (commitOnBlur) pendingValueRef.current = val;
+        else onChange(val);
         setDisplayValue(formatForDisplay(val));
-        setIsFocused(false);
+        if (!commitOnBlur) setIsFocused(false);
         return;
       }
     }
@@ -110,9 +115,9 @@ export default function NumberInput({
       setDisplayValue(formatted);
       cursorRef.current = caret;
 
-      // Commit to state on every keystroke
       const parsed = parseInt(stripGroupSeparators(formatted).replace(/\D/g, ''), 10) || 0;
-      onChange(Math.max(min, parsed));
+      if (commitOnBlur) pendingValueRef.current = parsed;
+      else onChange(Math.max(min, parsed));
     } else {
       setDisplayValue(raw);
     }
@@ -121,8 +126,11 @@ export default function NumberInput({
   const handleBlur = () => {
     setIsFocused(false);
     if (shouldLiveFormat) {
-      // Already committed on every keystroke, just reformat display
-      setDisplayValue(formatForDisplay(value));
+      const pending = pendingValueRef.current;
+      pendingValueRef.current = null;
+      const committed = pending == null ? value : Math.min(max, Math.max(min, pending));
+      if (pending != null && committed !== value) onChange(committed);
+      setDisplayValue(formatForDisplay(committed));
       return;
     }
     const normalized = stripGroupSeparators(displayValue).replace(',', '.').replace(/[^0-9.-]/g, '');

@@ -1,6 +1,6 @@
 import type { WizardState } from '../../types';
-import { wealthTimeline, monthsUntilDownPaymentReady, downPaymentTarget } from '../../engine/wealthTimeline';
-import { downPaymentGap } from '../../engine/mortgage';
+import { wealthTimeline } from '../../engine/wealthTimeline';
+import { purchaseCashPlan } from '../../engine/purchasePlan';
 import type { GoalAllocations } from '../../engine/allocation';
 import { monthlyDisposable } from '../../engine/cashflow';
 import { formatMonths, czkPerMonth } from '../../engine/format';
@@ -27,17 +27,11 @@ interface Props {
 export default function SavingsChart({ state, allocations }: Props) {
   const monthlySaving = allocations.downPayment;
   const colors = useChartColors();
-  const gap = downPaymentGap(state);
+  const purchase = purchaseCashPlan(state);
 
-  // Akontaci už máte našetřenou → graf „za jak dlouho na ni dosáhnu" nedává
-  // smysl, kartu proto vůbec nezobrazujeme (pokrytí akontace řeší kalkulačka
-  // nemovitosti).
-  if (gap <= 0) return null;
+  if (purchase.cashGap <= 0) return null;
 
   const disposable = monthlyDisposable(state);
-  // Cíl z celé investice včetně rekonstrukce, stejně jako `downPaymentGap`
-  // a časová osa. Z holé ceny by graf hlásil dosažení dřív, než nastane.
-  const downPayment = downPaymentTarget(state);
 
   if (disposable <= 0) {
     return (
@@ -50,29 +44,29 @@ export default function SavingsChart({ state, allocations }: Props) {
   // přímka `akontace + částka × měsíc`, která neví o rodičovské, takže graf
   // sliboval dosažení akontace o měsíce dřív než osa o obrazovku výš.
   const timeline = wealthTimeline(state, { months: HORIZON_MONTHS, allocations });
-  const ready = monthsUntilDownPaymentReady(state, allocations);
-  const intersectMonth = isFinite(ready) && ready <= HORIZON_MONTHS ? ready : undefined;
-
-  const chartData = timeline.points
-    .filter((_, i) => i % 12 === 0 || i === timeline.points.length - 1)
+  const ready = timeline.earliestCashReadyMonth;
+  const endMonth = timeline.purchaseMonth ?? HORIZON_MONTHS;
+  const chartData = timeline.points.slice(0, endMonth + 1)
+    .filter((p) => p.month % 12 === 0 || p.month === ready || p.month === endMonth)
     .map((p) => ({
-      year: Math.round(p.month / 12),
-      savings: p.downPaymentFund,
+      month: p.month,
+      savings: p.purchaseFund ?? p.availableCash ?? p.cash,
     }));
 
   return (
     <Card>
       <h3 className="type-section text-ink mb-1">Vývoj úspor v čase</h3>
-      {intersectMonth !== undefined && intersectMonth > 0 && (
+      {ready != null && ready > 0 && (
         <p className="text-sm text-good mb-4">
-          Při odkládání {czkPerMonth(monthlySaving)} na akontaci dosáhnete za {formatMonths(intersectMonth)}.
+          Při odkládání {czkPerMonth(monthlySaving)} byste hotovost potřebnou ke koupi měli za {formatMonths(ready)}.
+          {timeline.purchaseMonth == null && ' Po nastěhování ale zatím nevychází měsíční rozpočet.'}
         </p>
       )}
-      {intersectMonth === undefined && (
+      {ready == null && (
         <p className="text-sm text-caution mb-4">
           {monthlySaving > 0
-            ? `Při odkládání ${czkPerMonth(monthlySaving)} na akontaci do 10 let nedosáhnete. Zkuste částku zvýšit posuvníkem v kalkulačce níže.`
-            : 'Dokud na akontaci nic měsíčně neodkládáte, nenaspoříte ji. Částku nastavíte posuvníkem v kalkulačce níže.'}
+            ? `Při odkládání ${czkPerMonth(monthlySaving)} potřebnou hotovost nenaspoříte do 10 let. Částku můžete upravit v kalkulačce bydlení.`
+            : 'Částku, kterou chcete měsíčně odkládat na koupi, nastavíte v kalkulačce bydlení.'}
         </p>
       )}
 
@@ -85,18 +79,18 @@ export default function SavingsChart({ state, allocations }: Props) {
             </linearGradient>
           </defs>
           <CartesianGrid {...gridProps(colors)} />
-          <XAxis dataKey="year" {...axisProps(colors)} label={{ value: 'Roky', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
+          <XAxis dataKey="month" type="number" domain={[0, endMonth]} tickFormatter={(month) => (month / 12).toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} {...axisProps(colors)} label={{ value: 'Roky', position: 'insideBottom', offset: -3, fill: colors.tick, fontSize: 12 }} />
           <YAxis tickFormatter={fmtKcShort} {...axisProps(colors)} />
           <Tooltip
             formatter={(value) => [`${Number(value).toLocaleString('cs-CZ')} Kč`, 'Úspory']}
-            labelFormatter={(label) => `Rok ${label}`}
+            labelFormatter={(label) => formatMonths(Number(label))}
             contentStyle={{ background: colors.surface, border: `1px solid ${colors.grid}`, borderRadius: 8, fontSize: 13 }}
           />
           <ReferenceLine
-            y={downPayment}
+            y={purchaseCashPlan(state, ready ?? 0).cashRequired}
             stroke={colors.negative}
             strokeDasharray="5 5"
-            label={{ value: `Akontace: ${Math.round(downPayment).toLocaleString('cs-CZ')} Kč`, position: 'insideTopRight', fill: colors.negative, fontSize: 12 }}
+            label={{ value: 'Potřebná hotovost', position: 'insideTopRight', fill: colors.negative, fontSize: 12 }}
           />
           <Area type="monotone" dataKey="savings" stroke={colors.primary} strokeWidth={2} fill="url(#savings-grad)" dot={false} />
         </AreaChart>

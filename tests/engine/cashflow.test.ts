@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { totalMonthlyIncome, totalMonthlyExpenses, monthlyDisposable, savingsRate, necessaryMonthlyExpenses, discretionaryMonthlyExpenses, emergencyRunwayMonths } from '../../src/engine/cashflow';
+import { totalMonthlyIncome, monthlyIncomeAt, totalMonthlyExpenses, monthlyDisposable, savingsRate, necessaryMonthlyExpenses, discretionaryMonthlyExpenses, emergencyRunwayMonths } from '../../src/engine/cashflow';
 import type { WizardState } from '../../src/types';
 
 function makeState(overrides: Partial<WizardState> = {}): WizardState {
@@ -36,6 +36,22 @@ describe('totalMonthlyIncome', () => {
       income: { person1NetMonthly: 36000, person2NetMonthly: 25000, parentalAllowance: 13000 },
     });
     expect(totalMonthlyIncome(state)).toBe(74000);
+  });
+
+  it('ends current parental allowance without removing other regular income', () => {
+    const state = makeState({
+      mode: 'family',
+      income: {
+        person1NetMonthly: 40000,
+        person2NetMonthly: 18000,
+        otherNetMonthly: 2000,
+        parentalAllowance: 10000,
+        parentalAllowanceRemainingMonths: 3,
+      },
+    });
+    expect(totalMonthlyIncome(state)).toBe(70000);
+    expect(monthlyIncomeAt(state, 2)).toBe(70000);
+    expect(monthlyIncomeAt(state, 3)).toBe(60000);
   });
 });
 

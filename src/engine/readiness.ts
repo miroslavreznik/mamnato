@@ -1,10 +1,10 @@
 import type { WizardState } from '../types';
 import type { GoalAllocations } from './allocation';
-import { downPaymentGap, postPurchaseRunwayMonths } from './mortgage';
-import { monthsUntilDownPaymentReady } from './wealthTimeline';
+import { wealthTimeline, type WealthTimelineResult } from './wealthTimeline';
+import { purchaseCashPlan, targetMonthlySurplus } from './purchasePlan';
 import { evaluateScenario } from './scenarios';
 import { retirementProjection, retirementStartingCapital, goalProgress, yearsUntilRetirement, retirementAge, retirementReturn, SAFE_WITHDRAWAL_RATE } from './savings';
-import { evaluateParentalLeave } from './parentalLeave';
+import { evaluateParentalLeave, type LeaveImpact } from './parentalLeave';
 import { reserveStatus, monthsToFillReserve, DEFAULT_RESERVE_MONTHS } from './reserve';
 import { DEFAULTS } from './defaults';
 import { formatMonths, czk, czkMonthly, childWord, percentCompact } from './format';
@@ -48,10 +48,14 @@ export interface GoalReadiness {
 // Čas na akontaci se počítá z toho, kolik na ni uživatel opravdu odkládá,
 // ne z celé disponibilní částky. Jinak by přehled sliboval termín, který
 // platí jen pro toho, kdo nespoří na nic jiného.
-export function propertyReadiness(state: WizardState, allocations: GoalAllocations): GoalReadiness {
+export function propertyReadiness(
+  state: WizardState,
+  allocations: GoalAllocations,
+  timeline: WealthTimelineResult = wealthTimeline(state, { allocations })
+): GoalReadiness {
   const scenario = evaluateScenario(state);
-  const months = monthsUntilDownPaymentReady(state, allocations);
-  const gap = downPaymentGap(state);
+  const plan = purchaseCashPlan(state);
+  const months = timeline.purchaseMonth;
   const statusByScenario: Record<string, GoalStatus> = {
     cannot_afford_cashflow: 'warning',
     cannot_afford_dsti: 'warning',
@@ -63,35 +67,25 @@ export function propertyReadiness(state: WizardState, allocations: GoalAllocatio
   };
   let status = statusByScenario[scenario.id] ?? 'caution';
 
-  // Rezerva po zaplacení akontace. Scénář ji nezná, protože sleduje jen
-  // dostupnost hypotéky, takže bez tohohle kroku appka označila za „v pořádku"
-  // i koupi, po které domácnosti nezbyde ani koruna na nečekané výdaje.
-  const thinReserve = postPurchaseRunwayMonths(state) < MIN_RESERVE_MONTHS_AFTER_PURCHASE;
-  if (thinReserve && status === 'good') status = 'caution';
-  const reservePart = thinReserve
-    ? ' Po zaplacení akontace by vám ale nezbyla rezerva na nečekané výdaje.'
-    : '';
-
-  // Konkrétní čísla (splátka, DSTI, chybějící akontace, termín) jsou
-  // v dlaždicích nad tímhle seznamem. Věta u cíle na ně nesahá a odpovídá
-  // na to, co dlaždice neříkají: co z těch čísel plyne pro samotný cíl.
   let headline: string;
-  if (scenario.id === 'cannot_afford_cashflow') {
-    headline = 'Rozpočet nevychází už dnes, takže na splátku hypotéky by nebylo z čeho.';
+  if (plan.monthlySurplus < targetMonthlySurplus(state)) {
+    status = 'warning';
+    headline = `Po nastěhování by do zvoleného měsíčního rozpočtu chybělo ${czkMonthly(targetMonthlySurplus(state) - plan.monthlySurplus)}.`;
+  } else if (months !== null && months > 0) {
+    status = 'caution';
+    headline = `Koupě vychází za ${formatMonths(months, true)}, včetně jednorázových nákladů a rezervy.`;
+  } else if (months === null && plan.cashGap > 0) {
+    status = 'warning';
+    headline = `Na vlastní vklad, výdaje při koupi a rezervu chybí ${czk(plan.cashGap)}. Při nastaveném spoření nemá koupě v plánu termín.`;
   } else if (scenario.id === 'cannot_afford_dsti') {
+    status = 'caution';
     headline = 'Splátka je v pásmu zvýšené bankovní obezřetnosti. Pomoci může nižší cena, delší splatnost nebo vyšší akontace; konečné posouzení udělá banka.';
-  } else if (gap > 0 && !isFinite(months)) {
-    headline = 'Akontace ještě chybí a zatím na ni nic neodkládáte. Nastavte si měsíční částku v sekci Bydlení.';
-  } else if (gap > 0) {
-    headline = thinReserve
-      ? `Než na koupi dosáhnete, je potřeba dospořit akontaci.${reservePart}`
-      : 'Akontaci ještě dospořujete, splátku byste ale unesli.';
-  } else if (thinReserve) {
-    headline = `Akontaci máte pokrytou a na splátku dosáhnete.${reservePart}`;
+  } else if (months === null) {
+    status = 'warning';
+    headline = 'Po nastěhování by v rozpočtu nezbylo dost na vaše další cíle.';
   } else {
-    headline = status === 'good'
-      ? 'Akontaci máte pokrytou a splátku unesete.'
-      : 'Akontaci máte pokrytou, ale splátka je na hraně toho, co rozpočet unese.';
+    if (scenario.id === 'cannot_afford_cashflow') status = 'caution';
+    headline = 'Vlastní vklad, jednorázové náklady a rezerva jsou pokryté. Měsíční rozpočet po nastěhování vychází.';
   }
   return { key: 'property', label: 'Vlastní bydlení', status, headline };
 }
@@ -142,20 +136,17 @@ const MIN_RUNWAY_AFTER_LEAVE = 3;
 // celé volno a co po něm zbyde. Dřív stačilo jediné minusové číslo a celý
 // verdikt spadl na „Zatím na to nemáte", i když rezerva schodek pokrývala
 // několikrát.
-export function leaveReadiness(state: WizardState): GoalReadiness | null {
-  const leave = evaluateParentalLeave(state);
+export function leaveReadiness(state: WizardState, leave: LeaveImpact | null = evaluateParentalLeave(state)): GoalReadiness | null {
   if (!leave) return null;
-  const relevant = leave.disposableDuringLeaveAfterPurchase !== null
-    ? leave.disposableDuringLeaveAfterPurchase
-    : leave.disposableDuringLeave;
+  const relevant = leave.worstMonthlyDisposable;
 
   if (relevant >= 0) {
     // Posuzuje se nejhorší měsíc volna, ne průměr. Mateřská je vyšší a kratší
     // než rodičovský příspěvek, takže průměr slibuje částku, která platí jen
     // prvního půl roku; „zbyde vám 13 790 Kč" u volna, kde po půl roce zbývá
     // 9 548 Kč, není pravda, jen průměr.
-    const worst = Math.min(relevant, leave.worstMonthlyDisposable);
-    const varies = Math.round(worst) !== Math.round(relevant);
+    const worst = leave.worstMonthlyDisposable;
+    const varies = leave.phases.length > 1;
     return {
       key: 'leave',
       label: 'Rodičovská',

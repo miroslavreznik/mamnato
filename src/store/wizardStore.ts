@@ -2,6 +2,14 @@ import { createContext, useContext } from 'react';
 import type { WizardState, UserMode, FinancialGoal, SavingsBreakdown, ParentalLeave } from '../types';
 import { DEFAULTS } from '../engine/defaults';
 import { defaultCaringParent } from '../engine/parentalLeave';
+import { clampDownPayment } from '../engine/mortgage';
+
+export function constrainDownPayment(state: WizardState): WizardState {
+  const chosen = state.savings.downPaymentFromSavings;
+  if (chosen == null) return state;
+  const clamped = clampDownPayment(state, chosen);
+  return clamped === chosen ? state : { ...state, savings: { ...state.savings, downPaymentFromSavings: clamped } };
+}
 
 export function createInitialState(): WizardState {
   return {
@@ -47,18 +55,19 @@ export type WizardAction =
   | { type: 'PREV_STEP' }
   | { type: 'GO_TO_STEP'; step: number }
   | { type: 'SET_MODE'; mode: UserMode; numberOfChildren?: number }
-  | { type: 'UPDATE_INCOME'; field: string; value: number }
+  | { type: 'UPDATE_INCOME'; field: keyof WizardState['income']; value: number }
   | { type: 'UPDATE_EXPENSES'; field: string; value: number }
   | { type: 'UPDATE_DISCRETIONARY_ITEM'; key: string; value: number }
   | { type: 'CLEAR_DISCRETIONARY_BREAKDOWN' }
-  | { type: 'UPDATE_SAVINGS'; field: string; value: number }
+  | { type: 'UPDATE_SAVINGS'; field: 'totalSavings' | 'downPaymentFromSavings'; value: number }
   | { type: 'UPDATE_SAVINGS_BREAKDOWN'; field: keyof SavingsBreakdown; value: number }
   | { type: 'UPDATE_DEBT_PRINCIPAL'; value: number }
   // Odklepnutí kontroly reálnosti vstupů („u nás to tak je").
   | { type: 'DISMISS_CHECK'; key: string }
   | { type: 'SET_GOALS'; goals: FinancialGoal[] }
   | { type: 'SET_RETIREMENT_RENT'; value: number }
-  | { type: 'UPDATE_PROPERTY'; field: string; value: number }
+  | { type: 'SET_RESERVE_MONTHS'; value: number | undefined }
+  | { type: 'UPDATE_PROPERTY'; field: keyof WizardState['property']; value: number | undefined }
   // Odebrání ručně zadané hodnoty vrátí odhad. Jedna akce pro všechna pole,
   // která umí odhad (viz engine/estimate.ts); dřív na to byly dvě skoro
   // shodné akce a s každým dalším odhadovaným polem by přibyla další.
@@ -107,6 +116,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
           person1NetMonthly: state.income.person1NetMonthly,
           person2NetMonthly: state.income.person2NetMonthly ?? DEFAULTS.income.person1NetMonthly,
           parentalAllowance: state.income.parentalAllowance ?? 0,
+          parentalAllowanceRemainingMonths: state.income.parentalAllowanceRemainingMonths,
+          otherNetMonthly: state.income.otherNetMonthly,
         };
         updates.expenses = {
           ...state.expenses,
@@ -140,15 +151,18 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       void _drop;
       return { ...state, expenses };
     }
-    case 'UPDATE_SAVINGS':
-      return { ...state, savings: { ...state.savings, [action.field]: action.value } };
+    case 'UPDATE_SAVINGS': {
+      const savings = { ...state.savings, [action.field]: Math.max(0, action.value) };
+      if (action.field === 'totalSavings') delete savings.breakdown;
+      return constrainDownPayment({ ...state, savings });
+    }
     case 'UPDATE_SAVINGS_BREAKDOWN': {
       const prev: SavingsBreakdown = state.savings.breakdown
         ?? { current: 0, savingsAccount: 0, investments: 0 };
-      const breakdown: SavingsBreakdown = { ...prev, [action.field]: action.value };
+      const breakdown: SavingsBreakdown = { ...prev, [action.field]: Math.max(0, action.value) };
       // Když je rozpad vyplněn, celkové úspory se drží jako jeho součet.
       const totalSavings = breakdown.current + breakdown.savingsAccount + breakdown.investments;
-      return { ...state, savings: { ...state.savings, breakdown, totalSavings } };
+      return constrainDownPayment({ ...state, savings: { ...state.savings, breakdown, totalSavings } });
     }
     case 'UPDATE_DEBT_PRINCIPAL':
       return { ...state, existingDebtPrincipal: action.value };
@@ -180,6 +194,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         ...state,
         retirementMonthlyRent: Math.min(500000, Math.max(0, Math.round(action.value))),
       };
+    case 'SET_RESERVE_MONTHS':
+      return { ...state, reserveMonths: action.value };
     case 'UPDATE_PROPERTY':
       return { ...state, property: { ...state.property, [action.field]: action.value } };
     case 'CLEAR_PROPERTY_ESTIMATE': {
@@ -194,7 +210,7 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
     case 'SET_PARENTAL_LEAVE':
       return { ...state, parentalLeave: action.value };
     case 'LOAD_STATE':
-      return action.state;
+      return constrainDownPayment(action.state);
     case 'RESET':
       return createInitialState();
     default:

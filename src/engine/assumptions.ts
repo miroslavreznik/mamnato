@@ -7,13 +7,16 @@ import {
   isRateOverridden,
   ownershipCosts,
   isOwnershipCostsOverridden,
-  effectiveDownPayment,
+  plannedDownPayment,
+  bankAppraisal,
   loanAmount,
   totalProjectCost,
   renovationCost,
   downPaymentFraction,
 } from './mortgage';
 import { evaluateParentalLeave } from './parentalLeave';
+import { totalMonthlyIncome } from './cashflow';
+import { purchaseCashPlan } from './purchasePlan';
 import { planHorizonMonths } from './wealthTimeline';
 import { formatMonths, formatYears, czk, czkMonthly, percentCompact } from './format';
 
@@ -46,7 +49,8 @@ export function buildAssumptions(state: WizardState): Assumption[] {
     rows.push({
       label: 'Cena nemovitosti',
       value: czk(state.property.targetPrice),
-      source: 'user',
+      source: state.mortgageFlow === 'price' ? 'estimate' : 'user',
+      note: state.mortgageFlow === 'price' ? 'Nejvyšší modelová cena podle úspor a měsíčního rozpočtu.' : undefined,
     });
 
     if (renovation > 0) {
@@ -63,17 +67,28 @@ export function buildAssumptions(state: WizardState): Assumption[] {
         label: 'Celková investice',
         value: czk(totalProjectCost(state)),
         source: 'estimate',
-        note: 'Cena plus rekonstrukce. Akontace i LTV se počítají z téhle částky, protože banka půjčuje proti hodnotě po rekonstrukci.',
+        note: 'Kupní cena plus rozpočet na rekonstrukci.',
       });
     }
 
     rows.push({
-      label: 'Akontace z vlastních peněz',
-      value: `${czk(effectiveDownPayment(state))} (${percentCompact(effectiveDownPayment(state) / Math.max(1, totalProjectCost(state)))} z investice)`,
-      source: state.savings.downPaymentFromSavings != null ? 'user' : 'estimate',
-      note: state.savings.downPaymentFromSavings != null
-        ? undefined
-        : `Bez vlastního nastavení počítáme s povinným minimem ${percentCompact(downPaymentFraction(state))}, zbytek úspor zůstává jako rezerva.`,
+      label: 'Hodnota bytu pro banku',
+      value: czk(bankAppraisal(state)),
+      source: state.property.bankAppraisal == null ? 'estimate' : 'user',
+      note: state.property.bankAppraisal == null ? 'Výchozí odhad odpovídá kupní ceně.' : undefined,
+    });
+    rows.push({
+      label: 'Akontace při plánované koupi',
+      value: czk(plannedDownPayment(state)),
+      source: 'estimate',
+      note: `Podle dnes zadaného věku počítáme s úvěrem do ${percentCompact(1 - downPaymentFraction(state))} hodnoty zástavy. Věkovou podmínku banka posuzuje při poskytnutí úvěru.`,
+    });
+    const purchase = purchaseCashPlan(state);
+    rows.push({
+      label: 'Jednorázové náklady při koupi',
+      value: czk(purchase.oneOffCosts),
+      source: state.property.purchaseCosts == null ? 'estimate' : 'user',
+      note: state.property.purchaseCosts == null ? 'Střed výchozího rozpětí poplatků při koupi.' : undefined,
     });
 
     rows.push({ label: 'Výše hypotéky', value: czk(loanAmount(state)), source: 'estimate' });
@@ -125,9 +140,18 @@ export function buildAssumptions(state: WizardState): Assumption[] {
 
   rows.push({
     label: 'Čisté měsíční příjmy',
-    value: czk((state.income.person1NetMonthly ?? 0) + (state.income.person2NetMonthly ?? 0) + (state.income.parentalAllowance ?? 0)),
+    value: czk(totalMonthlyIncome(state)),
     source: 'user',
   });
+  if (state.income.parentalAllowance && state.income.parentalAllowanceRemainingMonths != null) {
+    rows.push({
+      label: 'Současný rodičovský příspěvek',
+      value: state.income.parentalAllowanceRemainingMonths > 0
+        ? `${czkMonthly(state.income.parentalAllowance)} po dobu ${formatMonths(state.income.parentalAllowanceRemainingMonths)}`
+        : 'Skončil',
+      source: 'user',
+    });
+  }
   rows.push({ label: 'Naspořeno', value: czk(state.savings.totalSavings), source: 'user' });
 
   // Poslední řádek schválně: je to předpoklad o celém přehledu, ne o jednom

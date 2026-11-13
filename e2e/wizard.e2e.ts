@@ -38,10 +38,10 @@ async function expectResults(page: Page) {
   await expect(page.getByTestId('results')).toBeVisible()
 }
 
-// Spustí průvodce z uvítací obrazovky (čistý kontext = tlačítko „Spustit přehled").
+// Spustí průvodce z uvítací obrazovky (čistý kontext = tlačítko „Sestavit finanční plán").
 async function start(page: Page) {
   await page.goto('/')
-  await page.getByRole('button', { name: /Spustit přehled/ }).click()
+  await page.getByRole('button', { name: /Sestavit finanční plán/ }).click()
 }
 
 // Odhadovaná měsíční splátka z karty nemovitosti jako číslo.
@@ -75,7 +75,7 @@ test('začít znovu se uloženými daty vyžaduje potvrzení', async ({ page }) 
   await expect(page.getByText('Kdo plánuje?')).toBeVisible()
   await page.getByRole('button', { name: 'MámNaTo? Domů' }).click()
 
-  const startAgain = page.getByRole('button', { name: /Začít znovu/ })
+  const startAgain = page.getByRole('button', { name: 'Sestavit finanční plán', exact: true })
   await expect(startAgain).toBeVisible()
   const dialogPromise = page.waitForEvent('dialog')
   const clickPromise = startAgain.click()
@@ -213,20 +213,20 @@ test('akontací jde hýbat ve výsledcích a přepočítá hypotéku', async ({ 
   await next(page) // → Výdaje
   await next(page) // → Úspory
   const savings = page.locator('input[inputmode="decimal"]').first()
-  await savings.fill('1000000')
+  await savings.fill('1800000')
   await next(page) // → Cíle
   await pickGoal(page, 'property')
   await next(page) // → krok Vlastní bydlení
   await finish(page)
   await openTab(page, 'bydleni')
-  // posuvník akontace ve výsledcích → hypotéka = 5 500 000 − 200 000
-  await page.getByRole('slider', { name: 'Akontace z úspor' }).fill('200000')
-  await expect(page.getByText(/5\s?300\s?000 Kč/).first()).toBeVisible()
+  // Vyšší vklad než povinné minimum sníží plánovanou výši úvěru.
+  await page.getByRole('slider', { name: 'Akontace z úspor' }).fill('1500000')
+  await expect(page.locator('#bydleni').getByText('Výše hypotéky', { exact: true }).locator('..')).toContainText(/4\s000\s000 Kč/)
   // rozhodovací nápovědy u posuvníku
   // Oddělovač tisíců je nezlomitelná mezera, proto \s a ne obyčejná mezera.
   await expect(page.getByText(/Každých \+100\s000\s?Kč akontace/)).toBeVisible()
   await expect(page.getByText(/Alternativa:/)).toBeVisible()
-  await expect(page.getByText(/Bezpečné maximum|za bezpečnou hranicí|6měsíční rezervu/).first()).toBeVisible()
+  await expect(page.getByText(/Bezpečné maximum|za bezpečnou hranicí|3měsíční rezervu/).first()).toBeVisible()
 })
 
 test('souhrn ukáže rozpočet dnes i po koupi a odkládání na akontaci', async ({ page }) => {
@@ -259,12 +259,12 @@ test('souhrn ukáže rozpočet dnes i po koupi a odkládání na akontaci', asyn
   }
   expect(await disposableIn('Po koupi')).toBeLessThan(await disposableIn('Dnes'))
 
-  // Odkládání na akontaci je cíl s vlastním posuvníkem a termínem.
+  // Odkládání na koupi je cíl s vlastním posuvníkem a termínem.
   await openTab(page, 'bydleni')
   const bydleni = page.locator('#bydleni')
-  const saving = bydleni.getByRole('slider', { name: 'Měsíční odkládání na akontaci' })
+  const saving = bydleni.getByRole('slider', { name: 'Měsíční odkládání na koupi' })
   await saving.fill('10000')
-  await expect(bydleni.getByText(/naspoříte za/).first()).toBeVisible()
+  await expect(bydleni.getByText(/Celou potřebnou hotovost byste měli za/)).toBeVisible()
 })
 
 test('sazbou jde hýbat ve výsledcích a radí podle LTV', async ({ page }) => {
@@ -287,11 +287,11 @@ test('sazbou jde hýbat ve výsledcích a radí podle LTV', async ({ page }) => 
   await page.getByRole('slider', { name: 'Úroková sazba' }).fill('7')
   await expect(page.getByText(/7,0 % ročně/).first()).toBeVisible()
   expect(await monthlyPayment(page)).toBeGreaterThan(before)
-  // Nižší akontace → horší pásmo LTV a tip, kolik doplatit
+  // Než se naspoří povinná akontace, kalkulačka ukazuje stále splátku při plánované koupi.
   await page.getByRole('slider', { name: 'Akontace z úspor' }).fill('600000')
-  await expect(page.getByText(/Vaše LTV je 89 %/)).toBeVisible()
-  await expect(page.getByText(/dostanete se pod 80 % LTV/)).toBeVisible()
-  await expect(page.getByText(/Riziko refixace/)).toBeVisible()
+  await expect(page.getByText(/Vaše LTV je 80 %/)).toBeVisible()
+  await expect(page.locator('#bydleni').getByText(/^Chybějící akontace/).locator('..')).toContainText(/500\s000 Kč/)
+  await expect(page.getByText(/fixace by zvýšení sazby/)).toBeVisible()
 })
 
 test('ve výsledcích jdou hodnoty měnit tlačítky + a − i na mobilu', async ({ browser }) => {
@@ -523,7 +523,7 @@ test('délka fixace mění nabízenou sazbu i splátku', async ({ page }) => {
 
   // Splátka ze souhrnu pod formulářem (v kroku průvodce je bez „/měs.").
   const payment = async () => {
-    const row = page.getByText('Odhadovaná měsíční splátka:').locator('xpath=..')
+    const row = page.getByText('Měsíční splátka při plánované koupi', { exact: true }).locator('xpath=..')
     return Number(((await row.textContent()) ?? '').replace(/\D/g, ''))
   }
 
@@ -565,8 +565,8 @@ test('schodek na rodičovské krytý úsporami neshodí verdikt', async ({ page 
   await page.getByRole('button', { name: /Osoba 2/ }).click()
 
   await openTab(page, 'souhrn')
-  await expect(page.getByText('Máte na to').first()).toBeVisible()
-  await expect(page.getByText(/během rodičovské budete sahat do úspor/i)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Podle rozpočtu můžete koupit už teď.' })).toBeVisible()
+  await expect(page.locator('#souhrn').getByText(/rodičovsk/i).first()).toBeVisible()
 })
 
 test('rekonstrukce se přičte k investici a během ní se platí jen úrok', async ({ page }) => {
@@ -581,15 +581,15 @@ test('rekonstrukce se přičte k investici a během ní se platí jen úrok', as
 
   await page.getByRole('textbox', { name: 'Cílová cena nemovitosti', exact: true }).fill('10000000')
   const requiredDp = async () =>
-    Number(((await page.getByText(/Doporučená akontace/).locator('xpath=..').textContent()) ?? '').replace(/\D/g, ''))
+    Number(((await page.getByText(/Doporučená akontace|Minimální akontace podle hodnoty zástavy/).locator('xpath=../span[2]').textContent()) ?? '').replace(/\D/g, ''))
   const before = await requiredDp()
 
   // Ve výchozím stavu se na rekonstrukci nikdo neptá, je to jen odkaz.
   await page.getByRole('button', { name: '+ Budu rekonstruovat' }).click()
   await page.getByRole('textbox', { name: 'Rozpočet na rekonstrukci', exact: true }).fill('2500000')
 
-  // Akontace se počítá z celé investice, takže povyskočí.
-  await expect.poll(requiredDp).toBeGreaterThan(before)
+  // Při nezměněné hodnotě zástavy se celá rekonstrukce přičte k vlastním penězům.
+  await expect.poll(requiredDp).toBe(before + 2500000)
   // A během rekonstrukce se platí jen úrok z vyčerpané části.
   await expect(page.getByText(/Během rekonstrukce zaplatíte bance míň/)).toBeVisible()
 })
@@ -702,6 +702,7 @@ test('graf koupě vs. nájem vysvětlí čáry i závěr', async ({ page }) => {
   await openTab(page, 'bydleni')
 
   // Všechny tři čáry jsou vysvětlené, ne jen pojmenované v legendě.
+  await page.getByRole('button', { name: 'Srovnání koupě a nájmu' }).click()
   // Vysvětlení je pod klapkou: na telefonu zabíralo třetinu obrazovky nad
   // grafem, ale dostupné být musí.
   await expect(page.getByText(/Koupě vs\. nájem: vývoj čistého jmění/)).toBeVisible()
@@ -925,8 +926,8 @@ test('„A co teď" dá jeden krok s částkou a termínem', async ({ page }) =>
 
   const card = page.locator('#souhrn').getByText('A co teď').locator('..')
   await expect(card).toBeVisible()
-  // Chybí akontace, takže krok je o ní a nese měsíční částku i termín.
-  await expect(card).toContainText('akontaci')
+  // Chybí hotovost na koupi, takže krok nese měsíční částku i termín.
+  await expect(card).toContainText(/na koupi/i)
   await expect(card).toContainText('odkládat měsíčně')
   // `\w` v JS neumí česká písmena bez unicode escapes, proto `\S`.
   await expect(card).toContainText(/hotovo v \S+ 20\d\d/)
@@ -936,7 +937,7 @@ test('„A co teď" dá jeden krok s částkou a termínem', async ({ page }) =>
   await expect(page.locator('#tab-bydleni')).toHaveAttribute('aria-selected', 'true')
 })
 
-test('přehled bydlení oddělí banku, rozpočet a rezervu', async ({ page }) => {
+test('přehled bydlení oddělí hotovost, měsíční rozpočet a rezervu', async ({ page }) => {
   await start(page)
   await next(page)
   await page.getByRole('textbox', { name: 'Můj věk', exact: true }).fill('31')
@@ -948,8 +949,8 @@ test('přehled bydlení oddělí banku, rozpočet a rezervu', async ({ page }) =
   await finish(page)
 
   const overview = page.locator('#souhrn')
-  await expect(overview.getByText('Bankovní dostupnost:', { exact: true })).toBeVisible()
-  await expect(overview.getByText('Rozpočet po koupi:', { exact: true })).toBeVisible()
+  await expect(overview.getByText('Peníze při koupi:', { exact: true })).toBeVisible()
+  await expect(overview.getByText('Rozpočet po nastěhování:', { exact: true })).toBeVisible()
   await expect(overview.getByText('Rezerva po koupi:', { exact: true })).toBeVisible()
 })
 
