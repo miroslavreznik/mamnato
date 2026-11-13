@@ -6,7 +6,7 @@ import ResultsDashboard from './components/results/ResultsDashboard';
 import WelcomeScreen from './components/WelcomeScreen';
 import AppBar from './components/ui/AppBar';
 import Callout from './components/ui/Callout';
-import { targetMonthlySurplus } from './engine/purchasePlan';
+import { maxAffordableProperty, targetMonthlySurplus } from './engine/purchasePlan';
 import { loadState, clearState, saveState } from './store/localStorage';
 import { createInitialState } from './store/wizardStore';
 import { createQuickMortgageState } from './store/quickMortgageState';
@@ -99,9 +99,15 @@ function App() {
 
   const handleExpandPlan = () => {
     if (!state?.mortgageFlow) return;
+    const estimate = state.mortgageFlow === 'price' ? maxAffordableProperty(state) : null;
     handleStateChange({
       ...state,
-      property: { ...state.property, targetMonthlySurplus: targetMonthlySurplus(state) },
+      property: {
+        ...state.property,
+        targetPrice: estimate?.price ?? state.property.targetPrice,
+        targetMonthlySurplus: targetMonthlySurplus(state),
+      },
+      savings: estimate ? { ...state.savings, downPaymentFromSavings: estimate.downPayment } : state.savings,
       mortgageFlow: undefined,
       currentStep: 5,
       completedSteps: [1, 2, 3, 4],
